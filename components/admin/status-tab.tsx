@@ -31,7 +31,7 @@ export function StatusTab({
             <CardTitle>서비스 상태</CardTitle>
           </CardHeader>
           <CardContent className="grid gap-4 md:grid-cols-4">
-            <MetricCard label="서비스" value={health?.status ?? "not_loaded"} note={health?.service ?? "미로딩"} />
+            <MetricCard label="서비스" value={health?.status ?? "not_loaded"} note={health?.service ?? "미로드"} />
             <MetricCard
               label="현재 provider"
               value={health?.dataProvider.lastUsed?.provider ?? health?.dataProvider.configured.provider ?? "unknown"}
@@ -68,8 +68,16 @@ export function StatusTab({
             <CardTitle>유니버스 스캔 상태</CardTitle>
           </CardHeader>
           <CardContent className="grid gap-4 md:grid-cols-4">
-            <MetricCard label="후보 생성 시각" value={dailyCandidates ? formatDateTime(dailyCandidates.generatedAt) : "없음"} note="daily-candidates 기준" />
-            <MetricCard label="대상 종목" value={String(dailyCandidates?.totalTickers ?? 0)} note={`배치 크기 ${dailyCandidates?.batchSize ?? 0}`} />
+            <MetricCard
+              label="후보 생성 시각"
+              value={dailyCandidates ? formatDateTime(dailyCandidates.generatedAt) : "없음"}
+              note="daily-candidates 기준"
+            />
+            <MetricCard
+              label="대상 종목"
+              value={String(dailyCandidates?.totalTickers ?? 0)}
+              note={`배치 크기 ${dailyCandidates?.batchSize ?? 0}`}
+            />
             <MetricCard
               label="성공 배치"
               value={`${dailyCandidates?.succeededBatches ?? 0}/${dailyCandidates?.totalBatches ?? 0}`}

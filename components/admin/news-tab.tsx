@@ -33,7 +33,7 @@ export function NewsTab({
         <div>
           <CardTitle>뉴스 큐레이션</CardTitle>
           <p className="mt-2 text-sm text-muted-foreground">
-            기사 부족 구간은 운영자 큐레이션으로 보강하고, 영향도와 운영 메모를 함께 남깁니다.
+            기사 부족 구간은 운영자 큐레이션으로 보강하고, 영향도와 운영 메모를 함께 관리합니다.
           </p>
         </div>
         <div className="flex gap-2">
@@ -52,19 +52,34 @@ export function NewsTab({
             <div key={item.id} className="rounded-2xl border border-border/70 bg-secondary/35 p-4">
               <div className="grid gap-4 lg:grid-cols-2">
                 <Field label="헤드라인">
-                  <Input value={item.headline} onChange={(event) => updateNewsItem(item.id, (current) => ({ ...current, headline: event.target.value }))} />
+                  <Input
+                    value={item.headline}
+                    onChange={(event) =>
+                      updateNewsItem(item.id, (current) => ({ ...current, headline: event.target.value }))
+                    }
+                  />
                 </Field>
                 <Field label="출처">
-                  <Input value={item.source} onChange={(event) => updateNewsItem(item.id, (current) => ({ ...current, source: event.target.value }))} />
+                  <Input
+                    value={item.source}
+                    onChange={(event) =>
+                      updateNewsItem(item.id, (current) => ({ ...current, source: event.target.value }))
+                    }
+                  />
                 </Field>
                 <Field label="URL">
-                  <Input value={item.url} onChange={(event) => updateNewsItem(item.id, (current) => ({ ...current, url: event.target.value }))} />
+                  <Input
+                    value={item.url}
+                    onChange={(event) => updateNewsItem(item.id, (current) => ({ ...current, url: event.target.value }))}
+                  />
                 </Field>
                 <Field label="일자">
                   <Input
                     type="date"
                     value={item.date.slice(0, 10)}
-                    onChange={(event) => updateNewsItem(item.id, (current) => ({ ...current, date: event.target.value }))}
+                    onChange={(event) =>
+                      updateNewsItem(item.id, (current) => ({ ...current, date: event.target.value }))
+                    }
                   />
                 </Field>
               </div>
@@ -92,18 +107,30 @@ export function NewsTab({
                     <input
                       type="checkbox"
                       checked={item.pinned}
-                      onChange={(event) => updateNewsItem(item.id, (current) => ({ ...current, pinned: event.target.checked }))}
+                      onChange={(event) =>
+                        updateNewsItem(item.id, (current) => ({ ...current, pinned: event.target.checked }))
+                      }
                     />
                     상단 고정
                   </label>
                 </Field>
                 <Field label="운영 메모">
-                  <Input value={item.operatorNote} onChange={(event) => updateNewsItem(item.id, (current) => ({ ...current, operatorNote: event.target.value }))} />
+                  <Input
+                    value={item.operatorNote}
+                    onChange={(event) =>
+                      updateNewsItem(item.id, (current) => ({ ...current, operatorNote: event.target.value }))
+                    }
+                  />
                 </Field>
               </div>
               <div className="mt-4 grid gap-4 lg:grid-cols-[1fr_auto]">
                 <Field label="요약">
-                  <Textarea value={item.summary} onChange={(event) => updateNewsItem(item.id, (current) => ({ ...current, summary: event.target.value }))} />
+                  <Textarea
+                    value={item.summary}
+                    onChange={(event) =>
+                      updateNewsItem(item.id, (current) => ({ ...current, summary: event.target.value }))
+                    }
+                  />
                 </Field>
                 <div className="flex items-end">
                   <Button variant="outline" onClick={() => removeNewsItem(item.id)}>

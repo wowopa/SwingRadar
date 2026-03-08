@@ -31,7 +31,7 @@ export function EditorialTab({
         <div>
           <CardTitle>초안 편집</CardTitle>
           <p className="mt-2 text-sm text-muted-foreground">
-            종목별 신호 라벨, 근거, 무효화, 분석 메모를 직접 교정합니다.
+            종목별 신호 라벨, 근거, 무효화 조건, 분석 메모를 직접 교정합니다.
           </p>
         </div>
         <Button onClick={onSave} disabled={disabled}>
@@ -81,7 +81,7 @@ export function EditorialTab({
                   }
                 />
               </Field>
-              <Field label="추천 무효화">
+              <Field label="추천 무효화 조건">
                 <Textarea
                   value={activeDraftItem.recommendation.invalidation}
                   onChange={(event) =>
@@ -117,7 +117,7 @@ export function EditorialTab({
                   }
                 />
               </Field>
-              <Field label="분석 무효화">
+              <Field label="분석 무효화 조건">
                 <Textarea
                   value={activeDraftItem.analysis.invalidation}
                   onChange={(event) =>

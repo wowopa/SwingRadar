@@ -31,7 +31,8 @@ export function HistoryTab({
                 <div>
                   <p className="text-sm font-semibold text-white">{formatDateTime(item.publishedAt)}</p>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    작성자 {item.publishedBy} | 단계 {formatApprovalStage(item.approvalStage)} | 종목 {item.tickers}개 | 변경 {item.diffCount}건
+                    작성자 {item.publishedBy} | 단계 {formatApprovalStage(item.approvalStage)} | 종목 {item.tickers}개 | 변경{" "}
+                    {item.diffCount}건
                   </p>
                 </div>
                 <div className="flex gap-2">

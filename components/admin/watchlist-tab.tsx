@@ -51,7 +51,11 @@ export function WatchlistTab({
             </p>
           </div>
           <div className="flex gap-2">
-            <Input value={symbolQuery} onChange={(event) => setSymbolQuery(event.target.value)} placeholder="티커, 종목명, 섹터 검색" />
+            <Input
+              value={symbolQuery}
+              onChange={(event) => setSymbolQuery(event.target.value)}
+              placeholder="티커, 종목명, 섹터 검색"
+            />
             <Button onClick={onSearch} variant="secondary">
               <Search className="h-4 w-4" />
               검색
@@ -70,7 +74,7 @@ export function WatchlistTab({
                 </div>
                 <Button onClick={() => addWatchlistSymbol(item.ticker)} disabled={loading || item.status === "ready"}>
                   <PlusCircle className="h-4 w-4" />
-                  {item.status === "ready" ? "분석 가능" : "감시 추가"}
+                  {item.status === "ready" ? "편입 완료" : "감시 추가"}
                 </Button>
               </div>
             ))
@@ -85,7 +89,7 @@ export function WatchlistTab({
           <div>
             <CardTitle>메타데이터 보정</CardTitle>
             <p className="mt-2 text-sm text-muted-foreground">
-              뉴스 쿼리, 키워드, 도메인 규칙을 조정하고 저장 전 diff로 검토합니다.
+              뉴스 쿼리, 키워드, 도메인 규칙을 조정하고 저장 전 diff로 검토할 수 있습니다.
             </p>
           </div>
           <WatchlistPreviewDialog changes={watchlistChanges} disabled={!activeWatchlist || loading} onConfirm={onSaveMetadata} />

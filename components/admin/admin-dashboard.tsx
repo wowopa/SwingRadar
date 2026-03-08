@@ -10,7 +10,13 @@ import { HistoryTab } from "@/components/admin/history-tab";
 import { NewsTab } from "@/components/admin/news-tab";
 import { StatusTab } from "@/components/admin/status-tab";
 import { WatchlistTab } from "@/components/admin/watchlist-tab";
-import { Banner, PublishDialog, APPROVAL_STAGE_OPTIONS, buildWatchlistChanges, createClientId } from "@/components/admin/dashboard-shared";
+import {
+  APPROVAL_STAGE_OPTIONS,
+  Banner,
+  PublishDialog,
+  buildWatchlistChanges,
+  createClientId
+} from "@/components/admin/dashboard-shared";
 import type {
   AuditItem,
   CuratedNewsItem,
@@ -61,10 +67,7 @@ export function AdminDashboard() {
     () => draft?.items.find((item) => item.ticker === activeTicker) ?? null,
     [activeTicker, draft]
   );
-  const activeNews = useMemo(
-    () => news?.items.filter((item) => item.ticker === activeTicker) ?? [],
-    [activeTicker, news]
-  );
+  const activeNews = useMemo(() => news?.items.filter((item) => item.ticker === activeTicker) ?? [], [activeTicker, news]);
   const activeWatchlist = useMemo(
     () => watchlist.find((item) => item.ticker === activeWatchlistTicker) ?? null,
     [activeWatchlistTicker, watchlist]
@@ -389,7 +392,13 @@ export function AdminDashboard() {
             </p>
             <Input type="password" placeholder="관리자 토큰" value={token} onChange={(event) => setToken(event.target.value)} />
           </div>
-          <Button onClick={() => { void loadDashboard(); }} disabled={loading} variant="secondary">
+          <Button
+            onClick={() => {
+              void loadDashboard();
+            }}
+            disabled={loading}
+            variant="secondary"
+          >
             <RefreshCw className="h-4 w-4" />
             새로고침
           </Button>

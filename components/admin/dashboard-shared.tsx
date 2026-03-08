@@ -4,10 +4,24 @@ import type { ReactNode } from "react";
 import { AlertTriangle, CheckCircle2, Eye, RotateCcw, Save, Send } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogClose, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger
+} from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 
-import type { CuratedNewsImpact, EditorialDiffItem, PublishHistoryItem, WatchlistChange, WatchlistEntry } from "@/components/admin/dashboard-types";
+import type {
+  CuratedNewsImpact,
+  EditorialDiffItem,
+  PublishHistoryItem,
+  WatchlistChange,
+  WatchlistEntry
+} from "@/components/admin/dashboard-types";
 
 export const IMPACT_OPTIONS: CuratedNewsImpact[] = ["긍정", "중립", "주의"];
 
@@ -214,8 +228,8 @@ export function DiffDialog({ item }: { item: EditorialDiffItem }) {
           {item.details.map((detail) => (
             <div key={detail.field} className="rounded-2xl border border-border/70 bg-secondary/35 p-4">
               <p className="text-sm font-semibold text-white">{detail.label}</p>
-              <p className="mt-2 text-xs text-muted-foreground">이전값: {detail.before || "(empty)"}</p>
-              <p className="mt-1 text-xs text-primary">새 값: {detail.after || "(empty)"}</p>
+              <p className="mt-2 text-xs text-muted-foreground">이전값 {detail.before || "(empty)"}</p>
+              <p className="mt-1 text-xs text-primary">현재값 {detail.after || "(empty)"}</p>
             </div>
           ))}
         </div>
@@ -251,7 +265,7 @@ export function HistoryDialog({ item }: { item: PublishHistoryItem }) {
               </div>
             ))
           ) : (
-            <p className="text-sm text-muted-foreground">기록된 변경 항목이 없습니다.</p>
+            <p className="text-sm text-muted-foreground">기록된 변경 종목이 없습니다.</p>
           )}
         </div>
       </DialogContent>
@@ -330,8 +344,8 @@ export function WatchlistPreviewDialog({
             changes.map((change) => (
               <div key={change.field} className="rounded-2xl border border-border/70 bg-secondary/35 p-4">
                 <p className="text-sm font-semibold text-white">{formatWatchlistField(change.field)}</p>
-                <p className="mt-2 text-xs text-muted-foreground">이전값: {change.before || "(empty)"}</p>
-                <p className="mt-1 text-xs text-primary">새 값: {change.after || "(empty)"}</p>
+                <p className="mt-2 text-xs text-muted-foreground">이전값 {change.before || "(empty)"}</p>
+                <p className="mt-1 text-xs text-primary">현재값 {change.after || "(empty)"}</p>
               </div>
             ))
           ) : (
