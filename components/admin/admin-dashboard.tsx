@@ -346,10 +346,47 @@ export function AdminDashboard() {
   }
 
   async function promoteUniverseCandidate(ticker: string) {
-    await saveUniverseReview(ticker, "promoted", "watchlist 편입 실행");
-    setTab("watchlist");
-    setActiveWatchlistTicker(ticker);
-    await addWatchlistSymbol(ticker);
+    if (!authHeaders) {
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+    setMessage(null);
+
+    try {
+      const json = await fetchJson<{
+        review: UniverseCandidateReview;
+        watchlist: { added: boolean; estimate?: string };
+      }>("/api/admin/universe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...authHeaders },
+        body: JSON.stringify({ ticker, note: "watchlist 편입 실행" })
+      });
+
+      setDailyCandidates((current) =>
+        current
+          ? {
+              ...current,
+              topCandidates: current.topCandidates.map((candidate) =>
+                candidate.ticker === ticker ? { ...candidate, review: json.review } : candidate
+              )
+            }
+          : current
+      );
+      setTab("watchlist");
+      setActiveWatchlistTicker(ticker);
+      setMessage(
+        json.watchlist.added
+          ? `${ticker} 후보를 watchlist에 편입하고 후속 파이프라인까지 반영했습니다.`
+          : `${ticker} 후보는 이미 watchlist에 있어 편입 상태만 정리했습니다.`
+      );
+      await loadDashboard();
+    } catch (promoteError) {
+      setError(promoteError instanceof Error ? promoteError.message : "후보 편입 처리에 실패했습니다.");
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function saveWatchlistMetadata() {

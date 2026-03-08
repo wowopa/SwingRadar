@@ -19,6 +19,7 @@ const mocks = vi.hoisted(() => ({
   getDailyCandidates: vi.fn(),
   listUniverseCandidateReviews: vi.fn(),
   saveUniverseCandidateReview: vi.fn(),
+  promoteUniverseCandidate: vi.fn(),
   listWatchlistEntries: vi.fn(),
   addSymbolToWatchlist: vi.fn(),
   updateWatchlistEntry: vi.fn(),
@@ -70,6 +71,10 @@ vi.mock("@/lib/server/universe-candidate-reviews", () => ({
   saveUniverseCandidateReview: mocks.saveUniverseCandidateReview
 }));
 
+vi.mock("@/lib/server/universe-promotion", () => ({
+  promoteUniverseCandidate: mocks.promoteUniverseCandidate
+}));
+
 vi.mock("@/lib/server/watchlist-manager", () => ({
   listWatchlistEntries: mocks.listWatchlistEntries,
   addSymbolToWatchlist: mocks.addSymbolToWatchlist,
@@ -88,7 +93,7 @@ import { GET as getNewsCurationRoute, POST as postNewsCurationRoute } from "@/ap
 import { POST as postPublishRoute } from "@/app/api/admin/publish/route";
 import { POST as postRollbackRoute } from "@/app/api/admin/rollback/route";
 import { GET as getStatusRoute } from "@/app/api/admin/status/route";
-import { GET as getUniverseRoute, PUT as putUniverseRoute } from "@/app/api/admin/universe/route";
+import { GET as getUniverseRoute, POST as postUniverseRoute, PUT as putUniverseRoute } from "@/app/api/admin/universe/route";
 import { GET as getWatchlistRoute, POST as postWatchlistRoute, PUT as putWatchlistRoute } from "@/app/api/admin/watchlist/route";
 
 function createRequest(url: string, init?: RequestInit) {
@@ -153,6 +158,21 @@ describe("admin routes", () => {
       note: "follow up",
       updatedAt: "2026-03-08T00:00:00.000Z",
       updatedBy: "admin-editor"
+    });
+    mocks.promoteUniverseCandidate.mockResolvedValue({
+      review: {
+        ticker: "005930",
+        status: "promoted",
+        note: "watchlist 편입 실행",
+        updatedAt: "2026-03-08T00:00:00.000Z",
+        updatedBy: "admin-editor"
+      },
+      watchlist: {
+        added: true,
+        entry: { ticker: "005930", company: "Samsung" },
+        estimate: "ok",
+        timings: { pipelineMs: 100, ingestMs: 40, totalMs: 140 }
+      }
     });
     mocks.saveNewsCuration.mockResolvedValue({
       updatedAt: "2026-03-08T00:00:00.000Z",
@@ -555,6 +575,57 @@ describe("admin routes", () => {
           ticker: "005930",
           status: "hold",
           note: "wait for the next batch"
+        }
+      });
+    });
+
+    it("promotes a universe candidate into the watchlist on POST", async () => {
+      const response = await postUniverseRoute(
+        createRequest("http://localhost/api/admin/universe", {
+          method: "POST",
+          body: JSON.stringify({
+            ticker: "005930",
+            note: "watchlist 편입 실행"
+          })
+        })
+      );
+      const payload = await parseJson<{
+        ok: boolean;
+        requestId: string;
+        review: { ticker: string; status: string; note: string };
+        watchlist: { added: boolean };
+      }>(response);
+
+      expect(response.status).toBe(200);
+      expect(mocks.promoteUniverseCandidate).toHaveBeenCalledWith({
+        ticker: "005930",
+        note: "watchlist 편입 실행",
+        updatedBy: "admin-editor"
+      });
+      expect(mocks.recordAuditLog).toHaveBeenCalledWith(
+        expect.objectContaining({
+          eventType: "universe_review_update",
+          status: "success",
+          requestId: "req-test"
+        })
+      );
+      expect(mocks.recordAuditLog).toHaveBeenCalledWith(
+        expect.objectContaining({
+          eventType: "watchlist_add",
+          status: "success",
+          requestId: "req-test"
+        })
+      );
+      expect(payload).toMatchObject({
+        ok: true,
+        requestId: "req-test",
+        review: {
+          ticker: "005930",
+          status: "promoted",
+          note: "watchlist 편입 실행"
+        },
+        watchlist: {
+          added: true
         }
       });
     });
