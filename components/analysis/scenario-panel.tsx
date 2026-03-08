@@ -16,9 +16,9 @@ export function ScenarioPanel({ scenarios }: { scenarios: Scenario[] }) {
               <span className="text-sm text-primary">{scenario.probability}%</span>
             </div>
             <Progress className="mt-3" value={scenario.probability} />
-            <p className="mt-3 text-sm leading-6 text-slate-200">{scenario.expectation}</p>
+            <p className="mt-3 text-sm leading-6 text-foreground/82">{scenario.expectation}</p>
             <p className="mt-3 text-xs uppercase tracking-[0.2em] text-muted-foreground">트리거</p>
-            <p className="mt-1 text-sm text-slate-300">{scenario.trigger}</p>
+            <p className="mt-1 text-sm text-foreground/72">{scenario.trigger}</p>
           </div>
         ))}
       </CardContent>

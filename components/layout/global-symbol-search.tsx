@@ -92,7 +92,7 @@ export function GlobalSymbolSearch() {
       </div>
 
       {showDropdown ? (
-        <div className="absolute left-0 right-0 top-[calc(100%+0.75rem)] z-[140] overflow-hidden rounded-[28px] border border-border/80 bg-white p-2 shadow-[0_28px_60px_rgba(66,50,34,0.18)]">
+        <div className="absolute left-0 right-0 top-[calc(100%+0.75rem)] z-[140] rounded-[28px] border border-border/80 bg-white p-2 shadow-[0_28px_60px_rgba(66,50,34,0.18)]">
           <div className="flex items-center justify-between px-3 py-2">
             <div className="flex items-center gap-2 text-xs uppercase tracking-[0.24em] text-muted-foreground">
               <Sparkles className="h-3.5 w-3.5" />

@@ -26,7 +26,7 @@ export function AnalysisDecisionPanel({ levels, notes }: { levels: KeyLevel[]; n
         </CardHeader>
         <CardContent className="space-y-3">
           {notes.map((note) => (
-            <div key={note} className="rounded-2xl border border-border/70 bg-secondary/35 px-4 py-3 text-sm leading-6 text-slate-200">
+            <div key={note} className="rounded-2xl border border-border/70 bg-secondary/35 px-4 py-3 text-sm leading-6 text-foreground/82">
               {note}
             </div>
           ))}

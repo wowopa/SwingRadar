@@ -15,8 +15,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-radar-grid">
       <div className="mx-auto flex min-h-screen w-full max-w-[1440px] flex-col px-4 pb-10 pt-5 sm:px-6 lg:px-8">
-        <header className="relative z-40 mb-8 overflow-hidden rounded-[36px] border border-border/70 bg-white/72 px-5 py-5 shadow-panel backdrop-blur-xl sm:px-7 sm:py-7">
-          <div className="pointer-events-none absolute inset-x-0 top-0 h-28 bg-gradient-to-r from-accent/60 via-transparent to-primary/10" />
+        <header className="relative z-40 mb-8 rounded-[36px] border border-border/70 bg-white/72 px-5 py-5 shadow-panel backdrop-blur-xl sm:px-7 sm:py-7">
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-28 rounded-t-[36px] bg-gradient-to-r from-accent/60 via-transparent to-primary/10" />
           <div className="relative flex flex-col gap-8">
             <div className="flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
               <div className="max-w-3xl space-y-4">
