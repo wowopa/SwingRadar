@@ -136,6 +136,12 @@ Auto-heal report:
 - Use the status tab to inspect freshness, audit logs, and universe scan summaries.
 - Use draft save and publish actions for editorial updates.
 - Use watchlist tools to add symbols and rerun the pipeline when needed.
+- Adding a symbol now runs a lighter follow-up refresh for that symbol first, then rebuilds the shared snapshots.
+
+Refresh one watchlist symbol manually:
+```powershell
+& "C:\Program Files\nodejs\npm.cmd" run watchlist:refresh:entry -- --ticker 005930
+```
 
 ## 8. Observability checks
 - Every API route emits one JSON log line to stdout with `route`, `status`, `durationMs`, and `requestId`.

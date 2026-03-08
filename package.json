@@ -26,6 +26,7 @@
     "symbols:import": "node scripts/import-symbol-master.mjs",
     "symbols:prepare:krx": "node scripts/prepare-krx-symbols.mjs",
     "symbols:sync": "node scripts/sync-symbol-master.mjs",
+    "watchlist:refresh:entry": "node scripts/refresh-watchlist-entry.mjs",
     "universe:watchlist": "node scripts/build-universe-watchlist.mjs",
     "universe:scan": "node scripts/scan-universe-batches.mjs",
     "universe:daily": "node scripts/run-daily-universe-cycle.mjs"

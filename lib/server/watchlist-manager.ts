@@ -72,9 +72,9 @@ async function saveWatchlistDocument(document: WatchlistDocument) {
   await writeFile(getWatchlistPath(), `${JSON.stringify(document, null, 2)}\n`, "utf8");
 }
 
-async function runNodeScript(scriptName: string) {
+async function runNodeScript(scriptName: string, args: string[] = []) {
   const startedAt = Date.now();
-  await execFileAsync(process.execPath, [path.join(projectRoot, "scripts", scriptName)], {
+  await execFileAsync(process.execPath, [path.join(projectRoot, "scripts", scriptName), ...args], {
     cwd: projectRoot,
     env: process.env
   });
@@ -135,7 +135,7 @@ export async function addSymbolToWatchlist(symbol: SymbolMasterItem) {
     return {
       added: false,
       entry: existing,
-      estimate: "이미 감시 리스트에 포함되어 있습니다.",
+      estimate: "이미 관심 종목에 들어 있어 바로 확인하실 수 있습니다.",
       timings: null
     };
   }
@@ -144,17 +144,16 @@ export async function addSymbolToWatchlist(symbol: SymbolMasterItem) {
   document.tickers.push(entry);
   await saveWatchlistDocument(document);
 
-  const pipelineMs = await runNodeScript("refresh-external-pipeline.mjs");
-  const ingestMs = await runNodeScript("ingest-postgres.mjs");
+  const pipelineMs = await runNodeScript("refresh-watchlist-entry.mjs", ["--ticker", symbol.ticker]);
 
   return {
     added: true,
     entry,
-    estimate: "일반적으로 15초~60초 안에 분석 페이지 반영이 시작됩니다.",
+    estimate: "보통 15초~60초 안에 새 종목 분석이 화면에 반영됩니다.",
     timings: {
       pipelineMs,
-      ingestMs,
-      totalMs: pipelineMs + ingestMs
+      ingestMs: null,
+      totalMs: pipelineMs
     }
   };
 }
@@ -191,8 +190,7 @@ export async function updateWatchlistEntry(
     };
   }
 
-  const pipelineMs = await runNodeScript("refresh-external-pipeline.mjs");
-  const ingestMs = await runNodeScript("ingest-postgres.mjs");
+  const pipelineMs = await runNodeScript("refresh-watchlist-entry.mjs", ["--ticker", ticker]);
 
   return {
     updated: true,
@@ -201,8 +199,8 @@ export async function updateWatchlistEntry(
     changes,
     timings: {
       pipelineMs,
-      ingestMs,
-      totalMs: pipelineMs + ingestMs
+      ingestMs: null,
+      totalMs: pipelineMs
     }
   };
 }

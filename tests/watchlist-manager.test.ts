@@ -150,7 +150,7 @@ describe("watchlist manager", () => {
 
     expect(result).toMatchObject({
       added: false,
-      estimate: "\uC774\uBBF8 \uAC10\uC2DC \uB9AC\uC2A4\uD2B8\uC5D0 \uD3EC\uD568\uB418\uC5B4 \uC788\uC2B5\uB2C8\uB2E4.",
+      estimate: "\uC774\uBBF8 \uAD00\uC2EC \uC885\uBAA9\uC5D0 \uB4E4\uC5B4 \uC788\uC5B4 \uBC14\uB85C \uD655\uC778\uD558\uC2E4 \uC218 \uC788\uC2B5\uB2C8\uB2E4.",
       timings: null
     });
     expect(mocks.execFile).not.toHaveBeenCalled();
@@ -185,10 +185,13 @@ describe("watchlist manager", () => {
       marketSymbol: "035420.KS"
     });
     expect(result.estimate).toBe(
-      "\uC77C\uBC18\uC801\uC73C\uB85C 15\uCD08~60\uCD08 \uC548\uC5D0 \uBD84\uC11D \uD398\uC774\uC9C0 \uBC18\uC601\uC774 \uC2DC\uC791\uB429\uB2C8\uB2E4."
+      "\uBCF4\uD1B5 15\uCD08~60\uCD08 \uC548\uC5D0 \uC0C8 \uC885\uBAA9 \uBD84\uC11D\uC774 \uD654\uBA74\uC5D0 \uBC18\uC601\uB429\uB2C8\uB2E4."
     );
     expect(document.tickers.map((item) => item.ticker)).toEqual(["005930", "035420"]);
-    expect(mocks.execFile).toHaveBeenCalledTimes(2);
+    expect(mocks.execFile).toHaveBeenCalledTimes(1);
+    expect(mocks.execFile.mock.calls[0]?.[1]).toEqual(
+      expect.arrayContaining([expect.stringContaining("refresh-watchlist-entry.mjs"), "--ticker", "035420"])
+    );
   });
 
   it("builds the correct market symbol for non-KRX markets", async () => {
@@ -262,5 +265,26 @@ describe("watchlist manager", () => {
       minArticleScore: 18
     });
     expect(mocks.execFile).not.toHaveBeenCalled();
+  });
+
+  it("reruns the lighter single-entry refresh when metadata needs a refresh", async () => {
+    const result = await updateWatchlistEntry(
+      "005930",
+      {
+        newsQuery: "Samsung Electronics"
+      },
+      { rerunPipeline: true }
+    );
+
+    expect(result).toMatchObject({
+      updated: true,
+      timings: {
+        ingestMs: null
+      }
+    });
+    expect(mocks.execFile).toHaveBeenCalledTimes(1);
+    expect(mocks.execFile.mock.calls[0]?.[1]).toEqual(
+      expect.arrayContaining([expect.stringContaining("refresh-watchlist-entry.mjs"), "--ticker", "005930"])
+    );
   });
 });
