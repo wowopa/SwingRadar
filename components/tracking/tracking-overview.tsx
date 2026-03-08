@@ -4,16 +4,16 @@ import { formatPercent } from "@/lib/utils";
 
 export function TrackingOverview({ items }: { items: SignalHistoryEntry[] }) {
   const successCount = items.filter((item) => item.result === "성공").length;
-  const invalidatedCount = items.filter((item) => item.result === "무효화").length;
+  const reviewAgainCount = items.filter((item) => item.result === "무효화").length;
   const avgHolding = items.length ? (items.reduce((sum, item) => sum + item.holdingDays, 0) / items.length).toFixed(1) : "0.0";
   const avgMfe = items.length ? items.reduce((sum, item) => sum + item.mfe, 0) / items.length : 0;
 
   return (
     <section className="grid gap-4 lg:grid-cols-4">
-      <OverviewCard label="추적 이력" value={`${items.length}건`} detail="신호 발생 후 사후 검증 전체 수" />
-      <OverviewCard label="성공 케이스" value={`${successCount}건`} detail={`무효화 ${invalidatedCount}건`} />
-      <OverviewCard label="평균 보유" value={`${avgHolding}일`} detail="신호별 추적 기간 평균" />
-      <OverviewCard label="평균 MFE" value={formatPercent(avgMfe)} detail="사후 기대값 복기 지표" />
+      <OverviewCard label="살펴본 기록" value={`${items.length}건`} detail="지금까지 확인한 전체 흐름 수" />
+      <OverviewCard label="좋았던 사례" value={`${successCount}건`} detail={`다시 봐야 했던 사례 ${reviewAgainCount}건`} />
+      <OverviewCard label="평균 본 기간" value={`${avgHolding}일`} detail="얼마나 오래 지켜봤는지 평균" />
+      <OverviewCard label="평균 최고 상승폭" value={formatPercent(avgMfe)} detail="이후 가장 많이 오른 폭의 평균" />
     </section>
   );
 }

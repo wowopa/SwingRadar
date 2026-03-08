@@ -17,7 +17,7 @@ export function HistoryTable({ items, activeId, favoriteTickers, onSelect, onTog
   return (
     <Card>
       <CardHeader>
-        <CardTitle>신호 이력</CardTitle>
+        <CardTitle>지난 기록</CardTitle>
       </CardHeader>
       <CardContent>
         <ScrollArea className="w-full">
@@ -25,14 +25,14 @@ export function HistoryTable({ items, activeId, favoriteTickers, onSelect, onTog
             <thead className="text-xs uppercase tracking-[0.22em] text-muted-foreground">
               <tr className="border-b border-border">
                 <th className="pb-3 pr-5">즐겨찾기</th>
-                <th className="pb-3 pr-5">티커</th>
-                <th className="pb-3 pr-5">신호일</th>
+                <th className="pb-3 pr-5">종목</th>
+                <th className="pb-3 pr-5">날짜</th>
                 <th className="pb-3 pr-5">톤</th>
                 <th className="pb-3 pr-5">결과</th>
-                <th className="pb-3 pr-5">MFE</th>
-                <th className="pb-3 pr-5">MAE</th>
-                <th className="pb-3 pr-5">보유일</th>
-                <th className="pb-3">드릴다운</th>
+                <th className="pb-3 pr-5">가장 많이 오른 폭</th>
+                <th className="pb-3 pr-5">가장 많이 밀린 폭</th>
+                <th className="pb-3 pr-5">본 기간</th>
+                <th className="pb-3">자세히</th>
               </tr>
             </thead>
             <tbody>
@@ -66,7 +66,7 @@ export function HistoryTable({ items, activeId, favoriteTickers, onSelect, onTog
                       onClick={() => onSelect(item.id)}
                       type="button"
                     >
-                      상세 보기
+                      보기
                     </button>
                   </td>
                 </tr>

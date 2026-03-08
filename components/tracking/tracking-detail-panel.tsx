@@ -79,7 +79,7 @@ export function TrackingDetailPanel({ history, details }: TrackingDetailPanelPro
   if (!activeEntry || !activeDetail) {
     return (
       <Card>
-        <CardContent className="p-6 text-sm text-muted-foreground">조건에 맞는 추적 데이터가 없습니다.</CardContent>
+        <CardContent className="p-6 text-sm text-muted-foreground">조건에 맞는 기록이 없습니다.</CardContent>
       </Card>
     );
   }
@@ -91,13 +91,13 @@ export function TrackingDetailPanel({ history, details }: TrackingDetailPanelPro
         <Card>
           <CardHeader className="flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div>
-              <CardTitle>트래킹 필터와 탐색</CardTitle>
+              <CardTitle>지난 기록 찾기</CardTitle>
               <p className="mt-2 text-sm text-muted-foreground">
-                종목, 결과 판정, 섹터, 즐겨찾기 여부를 기준으로 사후 추적 기록을 빠르게 좁힐 수 있습니다.
+                종목, 결과, 업종, 즐겨찾기 기준으로 지난 흐름을 빠르게 골라볼 수 있습니다.
               </p>
             </div>
             <div className="grid w-full gap-3 lg:max-w-5xl lg:grid-cols-[1fr_180px_180px_180px]">
-              <Input placeholder="종목명, 티커, 섹터 검색" value={query} onChange={(event) => setQuery(event.target.value)} />
+              <Input placeholder="종목명, 티커, 업종 검색" value={query} onChange={(event) => setQuery(event.target.value)} />
               <select
                 value={resultFilter}
                 onChange={(event) => setResultFilter(event.target.value as ResultFilter)}
@@ -107,14 +107,14 @@ export function TrackingDetailPanel({ history, details }: TrackingDetailPanelPro
                 <option value="진행중">진행중</option>
                 <option value="성공">성공</option>
                 <option value="실패">실패</option>
-                <option value="무효화">무효화</option>
+                <option value="무효화">다시 보기 필요</option>
               </select>
               <select
                 value={sectorFilter}
                 onChange={(event) => setSectorFilter(event.target.value)}
                 className="flex h-11 w-full rounded-2xl border border-border bg-background px-3 text-sm text-foreground outline-none transition focus:border-primary/50"
               >
-                <option value="all">전체 섹터</option>
+                <option value="all">전체 업종</option>
                 {sectors.map((sector) => (
                   <option key={sector} value={sector}>
                     {sector}
@@ -133,7 +133,7 @@ export function TrackingDetailPanel({ history, details }: TrackingDetailPanelPro
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="text-sm text-muted-foreground">
-              필터링 결과 <span className="font-semibold text-foreground">{filteredHistory.length}</span>건
+              찾은 기록 <span className="font-semibold text-foreground">{filteredHistory.length}</span>건
             </div>
             <HistoryTable
               items={filteredHistory}
@@ -149,7 +149,7 @@ export function TrackingDetailPanel({ history, details }: TrackingDetailPanelPro
             <CardHeader>
               <div className="flex items-center gap-2">
                 <CardTitle>
-                  {activeEntry.company} {activeEntry.ticker} 상세 분석
+                  {activeEntry.company} {activeEntry.ticker} 자세히 보기
                 </CardTitle>
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -157,18 +157,18 @@ export function TrackingDetailPanel({ history, details }: TrackingDetailPanelPro
                       <Info className="h-4 w-4" />
                     </button>
                   </TooltipTrigger>
-                  <TooltipContent>사후 복기 관점에서 결과, 위험, 뉴스, 점수 변화 로그를 함께 확인합니다.</TooltipContent>
+                  <TooltipContent>이후 결과, 가격 흐름, 뉴스, 점수 변화를 함께 볼 수 있습니다.</TooltipContent>
                 </Tooltip>
               </div>
               <p className="text-sm text-muted-foreground">
-                {activeSector} · {activeEntry.signalDate} 신호 · {favorites.includes(activeEntry.ticker) ? "즐겨찾기 종목" : "일반 관찰 종목"}
+                {activeSector} · {activeEntry.signalDate} 기준 · {favorites.includes(activeEntry.ticker) ? "즐겨찾기 종목" : "일반 관찰 종목"}
               </p>
             </CardHeader>
             <CardContent className="grid gap-4 md:grid-cols-4">
-              <SummaryMetric label="결과 판정" value={activeEntry.result} />
-              <SummaryMetric label="MFE" value={formatPercent(activeEntry.mfe)} emphasis="text-positive" />
-              <SummaryMetric label="MAE" value={formatPercent(activeEntry.mae)} emphasis="text-caution" />
-              <SummaryMetric label="보유 기간" value={`${activeEntry.holdingDays}일`} />
+              <SummaryMetric label="현재 결과" value={activeEntry.result === "무효화" ? "다시 보기 필요" : activeEntry.result} />
+              <SummaryMetric label="가장 많이 오른 폭" value={formatPercent(activeEntry.mfe)} emphasis="text-positive" />
+              <SummaryMetric label="가장 많이 밀린 폭" value={formatPercent(activeEntry.mae)} emphasis="text-caution" />
+              <SummaryMetric label="본 기간" value={`${activeEntry.holdingDays}일`} />
             </CardContent>
             <CardContent className="grid gap-4 pt-0 md:grid-cols-3">
               {activeDetail.metrics.map((metric) => (
@@ -182,10 +182,10 @@ export function TrackingDetailPanel({ history, details }: TrackingDetailPanelPro
           </Card>
           <Tabs defaultValue="review" className="w-full">
             <TabsList>
-              <TabsTrigger value="review">복기</TabsTrigger>
-              <TabsTrigger value="chart">차트</TabsTrigger>
-              <TabsTrigger value="news">뉴스</TabsTrigger>
-              <TabsTrigger value="log">로그</TabsTrigger>
+              <TabsTrigger value="review">요약</TabsTrigger>
+              <TabsTrigger value="chart">가격 흐름</TabsTrigger>
+              <TabsTrigger value="news">관련 뉴스</TabsTrigger>
+              <TabsTrigger value="log">점수 변화</TabsTrigger>
             </TabsList>
             <TabsContent value="review">
               <TrackingReviewPanel detail={activeDetail} />
