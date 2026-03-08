@@ -25,11 +25,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   Swing Radar Workspace
                 </div>
                 <div className="space-y-3">
-                  <h1 className="max-w-2xl text-3xl font-semibold tracking-[-0.04em] text-foreground sm:text-4xl lg:text-[3.4rem] lg:leading-[1.02]">
-                    관찰 신호부터 사후 추적까지 한 화면에서 정리하는 스윙 워크스페이스
+                  <h1 className="max-w-2xl text-3xl font-semibold tracking-[-0.04em] text-foreground sm:text-4xl lg:text-[3.1rem] lg:leading-[1.04]">
+                    신호와 추적을 한곳에서
                   </h1>
                   <p className="max-w-2xl text-sm leading-6 text-muted-foreground sm:text-base">
-                    추천 근거, 무효화 조건, 검증 메모, 운영 상태를 차분하고 구조적인 대시보드 흐름으로 이어갑니다.
+                    근거, 무효화, 검증, 운영 상태를 간결하게 이어보는 스윙 대시보드입니다.
                   </p>
                 </div>
               </div>

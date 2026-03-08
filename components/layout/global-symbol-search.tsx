@@ -68,9 +68,9 @@ export function GlobalSymbolSearch() {
   const showDropdown = focused && (query.trim().length > 0 || items.length > 0);
 
   return (
-    <div className="relative z-50 w-full">
-      <div className="rounded-[28px] border border-border/70 bg-white/78 p-2 shadow-panel backdrop-blur-xl">
-        <div className="flex items-center gap-3 rounded-[22px] border border-border/60 bg-background/70 px-4 py-3">
+    <div className="relative z-[120] w-full">
+      <div className="rounded-[28px] border border-border/70 bg-white/88 p-2 shadow-panel backdrop-blur-xl">
+        <div className="flex items-center gap-3 rounded-[22px] border border-border/60 bg-background/85 px-4 py-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-accent/70 text-foreground">
             <Search className="h-4 w-4" />
           </div>
@@ -85,14 +85,14 @@ export function GlobalSymbolSearch() {
               className="h-auto border-0 bg-transparent px-0 pb-0 pt-1 text-base shadow-none focus-visible:ring-0"
             />
           </div>
-          <div className="hidden rounded-full border border-border/70 bg-white/80 px-3 py-1.5 text-xs text-muted-foreground sm:block">
+          <div className="hidden rounded-full border border-border/70 bg-white px-3 py-1.5 text-xs text-muted-foreground sm:block">
             KRX 우선
           </div>
         </div>
       </div>
 
       {showDropdown ? (
-        <div className="absolute left-0 right-0 top-[calc(100%+0.75rem)] z-50 overflow-hidden rounded-[28px] border border-border/70 bg-white/92 p-2 shadow-panel backdrop-blur-xl">
+        <div className="absolute left-0 right-0 top-[calc(100%+0.75rem)] z-[140] overflow-hidden rounded-[28px] border border-border/80 bg-white p-2 shadow-[0_28px_60px_rgba(66,50,34,0.18)]">
           <div className="flex items-center justify-between px-3 py-2">
             <div className="flex items-center gap-2 text-xs uppercase tracking-[0.24em] text-muted-foreground">
               <Sparkles className="h-3.5 w-3.5" />

@@ -52,14 +52,14 @@ export function HistoryTable({ items, activeId, favoriteTickers, onSelect, onTog
                     <div className="font-medium text-foreground">{item.company}</div>
                     <div className="text-xs text-muted-foreground">{item.ticker}</div>
                   </td>
-                  <td className="py-4 pr-5 text-slate-200">{item.signalDate}</td>
+                  <td className="py-4 pr-5 text-foreground/80">{item.signalDate}</td>
                   <td className="py-4 pr-5">
                     <SignalToneBadge tone={item.signalTone} />
                   </td>
-                  <td className="py-4 pr-5 text-slate-200">{item.result}</td>
+                  <td className="py-4 pr-5 text-foreground/80">{item.result}</td>
                   <td className="py-4 pr-5 text-positive">{formatPercent(item.mfe)}</td>
                   <td className="py-4 pr-5 text-caution">{formatPercent(item.mae)}</td>
-                  <td className="py-4 pr-5 text-slate-200">{item.holdingDays}일</td>
+                  <td className="py-4 pr-5 text-foreground/80">{item.holdingDays}일</td>
                   <td className="py-4">
                     <button
                       className="rounded-lg border border-border px-3 py-1.5 text-sm text-primary transition hover:border-primary/30 hover:bg-accent"
