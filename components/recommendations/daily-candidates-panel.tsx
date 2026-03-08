@@ -56,7 +56,7 @@ export function DailyCandidatesPanel({ dailyScan }: { dailyScan: DailyScanSummar
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <p className="text-sm font-semibold text-white">{item.company}</p>
+                      <p className="text-sm font-semibold text-foreground">{item.company}</p>
                       <p className="mt-1 text-xs text-muted-foreground">
                         {item.ticker} · {item.sector}
                       </p>
@@ -66,11 +66,11 @@ export function DailyCandidatesPanel({ dailyScan }: { dailyScan: DailyScanSummar
                   <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
                     <div className="rounded-xl border border-border/70 px-3 py-2">
                       <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">후보 점수</p>
-                      <p className="mt-1 font-semibold text-white">{item.candidateScore}</p>
+                      <p className="mt-1 font-semibold text-foreground">{item.candidateScore}</p>
                     </div>
                     <div className="rounded-xl border border-border/70 px-3 py-2">
                       <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">커버리지</p>
-                      <p className="mt-1 font-semibold text-white">{item.eventCoverage}</p>
+                      <p className="mt-1 font-semibold text-foreground">{item.eventCoverage}</p>
                     </div>
                   </div>
                   <p className="mt-4 text-sm leading-6 text-muted-foreground line-clamp-3">{item.rationale}</p>

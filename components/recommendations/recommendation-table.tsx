@@ -42,7 +42,7 @@ export function RecommendationTable({
             <tbody>
               {items.map((item) => {
                 return (
-                  <tr key={item.ticker} className="border-b border-border/60 text-slate-200 last:border-0">
+                  <tr key={item.ticker} className="border-b border-border/60 text-foreground/80 last:border-0">
                     <td className="py-4 pr-6">
                       {item.featuredRank ? (
                         <span className="rounded-full border border-primary/30 bg-primary/10 px-2 py-1 text-[11px] font-medium text-primary">
@@ -56,13 +56,13 @@ export function RecommendationTable({
                       <FavoriteTickerButton active={favorites.includes(item.ticker)} label={`${item.company} 즐겨찾기`} onClick={() => onToggleFavorite(item.ticker)} />
                     </td>
                     <td className="py-4 pr-6">
-                      <div className="font-medium text-white">{item.company}</div>
+                      <div className="font-medium text-foreground">{item.company}</div>
                       <div className="text-xs text-muted-foreground">{item.ticker}</div>
                     </td>
                     <td className="py-4 pr-6"><SignalToneBadge tone={item.signalTone} /></td>
                     <td className="py-4 pr-6">{item.score}</td>
                     <td className="py-4 pr-6">
-                      <div className="text-white">{item.signalLabel}</div>
+                      <div className="text-foreground">{item.signalLabel}</div>
                       <div className="text-xs text-muted-foreground">{item.observationWindow}</div>
                     </td>
                     <td className="py-4 pr-6">{item.validation.sampleSize}</td>

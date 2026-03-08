@@ -133,7 +133,7 @@ export function TrackingDetailPanel({ history, details }: TrackingDetailPanelPro
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="text-sm text-muted-foreground">
-              필터링 결과 <span className="font-semibold text-white">{filteredHistory.length}</span>건
+              필터링 결과 <span className="font-semibold text-foreground">{filteredHistory.length}</span>건
             </div>
             <HistoryTable
               items={filteredHistory}
@@ -174,7 +174,7 @@ export function TrackingDetailPanel({ history, details }: TrackingDetailPanelPro
               {activeDetail.metrics.map((metric) => (
                 <div key={metric.label} className="rounded-2xl border border-border/70 bg-secondary/35 p-4">
                   <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">{metric.label}</p>
-                  <p className="mt-2 text-lg font-semibold text-white">{metric.value}</p>
+                  <p className="mt-2 text-lg font-semibold text-foreground">{metric.value}</p>
                   <p className="mt-2 text-sm leading-6 text-muted-foreground">{metric.note}</p>
                 </div>
               ))}
@@ -218,7 +218,7 @@ function SummaryMetric({
   return (
     <div className="rounded-2xl border border-border/70 bg-secondary/35 p-4">
       <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">{label}</p>
-      <p className={`mt-2 text-lg font-semibold text-white ${emphasis ?? ""}`}>{value}</p>
+      <p className={`mt-2 text-lg font-semibold text-foreground ${emphasis ?? ""}`}>{value}</p>
     </div>
   );
 }

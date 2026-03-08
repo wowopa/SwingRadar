@@ -38,7 +38,7 @@ export function NewsImpactList({ items }: { items: NewsImpactItem[] }) {
                     {formatEventType(item.eventType)}
                   </span>
                 </div>
-                <p className="font-medium text-white">{item.headline}</p>
+                <p className="font-medium text-foreground">{item.headline}</p>
                 <p className="mt-2 text-sm leading-6 text-muted-foreground">{item.summary}</p>
                 {item.url ? (
                   <a

@@ -30,7 +30,7 @@ export function RecommendationCard({
                 </span>
               ) : null}
             </div>
-            <CardTitle className="mt-2 text-2xl text-white">
+            <CardTitle className="mt-2 text-2xl text-foreground">
               {item.company} <span className="text-base font-medium text-muted-foreground">{item.ticker}</span>
             </CardTitle>
             <p className="mt-2 text-sm text-primary">{item.signalLabel}</p>
@@ -50,11 +50,11 @@ export function RecommendationCard({
       <CardContent className="space-y-5">
         <section className="space-y-2">
           <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">관찰 근거</p>
-          <p className="text-sm leading-6 text-slate-200">{item.rationale}</p>
+          <p className="text-sm leading-6 text-foreground/80">{item.rationale}</p>
         </section>
         <section className="space-y-2">
           <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">무효화 조건</p>
-          <p className="text-sm leading-6 text-slate-300">{item.invalidation}</p>
+          <p className="text-sm leading-6 text-foreground/72">{item.invalidation}</p>
         </section>
         <section className="grid gap-3 sm:grid-cols-3">
           <DetailStat label="무효화 거리" value={formatPercent(item.invalidationDistance)} />
@@ -65,7 +65,7 @@ export function RecommendationCard({
           <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">관찰 체크포인트</p>
           <div className="flex flex-wrap gap-2">
             {item.checkpoints.map((checkpoint) => (
-              <span key={checkpoint} className="rounded-full border border-border/70 bg-secondary/45 px-3 py-1.5 text-xs text-slate-200">
+              <span key={checkpoint} className="rounded-full border border-border/70 bg-secondary/45 px-3 py-1.5 text-xs text-foreground/80">
                 {checkpoint}
               </span>
             ))}
@@ -75,7 +75,7 @@ export function RecommendationCard({
           <div className="flex items-start justify-between gap-3">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">기본 검증 메모</p>
-              <p className="mt-2 text-sm leading-6 text-slate-200">{item.validationSummary}</p>
+              <p className="mt-2 text-sm leading-6 text-foreground/80">{item.validationSummary}</p>
             </div>
             {item.candidateScore ? (
               <div className="shrink-0 rounded-2xl border border-primary/30 bg-primary/10 px-3 py-2 text-right">
@@ -113,7 +113,7 @@ function Metric({
       </div>
       <div>
         <p className="text-xs text-muted-foreground">{label}</p>
-        <p className="text-sm font-semibold text-white">{value}</p>
+        <p className="text-sm font-semibold text-foreground">{value}</p>
       </div>
     </div>
   );
@@ -123,7 +123,7 @@ function DetailStat({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-2xl border border-border/70 bg-secondary/35 p-3">
       <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">{label}</p>
-      <p className="mt-2 text-sm font-semibold text-white">{value}</p>
+      <p className="mt-2 text-sm font-semibold text-foreground">{value}</p>
     </div>
   );
 }

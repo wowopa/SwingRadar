@@ -20,7 +20,7 @@ export function RouteErrorState({ title, description, reset }: RouteErrorStatePr
             <AlertTriangle className="h-5 w-5" />
           </div>
           <div className="space-y-2">
-            <CardTitle className="text-2xl text-white">{title}</CardTitle>
+            <CardTitle className="text-2xl text-foreground">{title}</CardTitle>
             <p className="max-w-2xl text-sm leading-6 text-muted-foreground">{description}</p>
           </div>
         </CardHeader>
@@ -29,7 +29,7 @@ export function RouteErrorState({ title, description, reset }: RouteErrorStatePr
             <RotateCcw className="h-4 w-4" />
             다시 시도
           </Button>
-          <p className="text-sm text-muted-foreground">일시적인 fetch 실패나 서버 응답 오류일 수 있습니다.</p>
+          <p className="text-sm text-muted-foreground">일시적인 fetch 실패 또는 서버 응답 오류일 수 있습니다.</p>
         </CardContent>
       </Card>
     </main>

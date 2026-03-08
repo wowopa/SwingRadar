@@ -64,19 +64,19 @@ export function EventCoveragePanel({ items }: { items: NewsImpactItem[] }) {
         <div className="grid gap-3 sm:grid-cols-4">
           <div className="rounded-2xl border border-border/70 bg-secondary/35 p-4">
             <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">신뢰도</p>
-            <p className="mt-2 text-xl font-semibold text-white">{coverage.confidence}</p>
+            <p className="mt-2 text-xl font-semibold text-foreground">{coverage.confidence}</p>
           </div>
           <div className="rounded-2xl border border-border/70 bg-secondary/35 p-4">
             <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">공시</p>
-            <p className="mt-2 text-xl font-semibold text-white">{coverage.disclosure}건</p>
+            <p className="mt-2 text-xl font-semibold text-foreground">{coverage.disclosure}건</p>
           </div>
           <div className="rounded-2xl border border-border/70 bg-secondary/35 p-4">
             <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">큐레이션</p>
-            <p className="mt-2 text-xl font-semibold text-white">{coverage.curated}건</p>
+            <p className="mt-2 text-xl font-semibold text-foreground">{coverage.curated}건</p>
           </div>
           <div className="rounded-2xl border border-border/70 bg-secondary/35 p-4">
             <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">외부 기사</p>
-            <p className="mt-2 text-xl font-semibold text-white">{coverage.externalNews}건</p>
+            <p className="mt-2 text-xl font-semibold text-foreground">{coverage.externalNews}건</p>
           </div>
         </div>
         <p className="text-sm leading-6 text-muted-foreground">{coverage.note}</p>

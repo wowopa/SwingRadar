@@ -13,7 +13,7 @@ export function ScoreLogPanel({ items }: { items: ScoreLogEntry[] }) {
           <div key={`${item.timestamp}-${item.factor}`} className="rounded-2xl border border-border/70 bg-secondary/35 p-4">
             <div className="flex items-center justify-between gap-4">
               <div>
-                <p className="font-medium text-white">{item.factor}</p>
+                <p className="font-medium text-foreground">{item.factor}</p>
                 <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">{item.timestamp}</p>
               </div>
               <p className={item.delta >= 0 ? "font-semibold text-positive" : "font-semibold text-caution"}>

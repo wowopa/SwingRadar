@@ -64,7 +64,7 @@ function OverviewCard({
         <CardTitle className="text-sm text-muted-foreground">{label}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-2">
-        <p className="text-2xl font-semibold tracking-tight text-white">{value}</p>
+        <p className="text-2xl font-semibold tracking-tight text-foreground">{value}</p>
         <p className="text-sm leading-6 text-muted-foreground">{detail}</p>
       </CardContent>
     </Card>

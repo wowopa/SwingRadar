@@ -71,7 +71,7 @@ function SnapshotBody({
         {points.map((point) => (
           <div key={point.label} className="rounded-xl border border-border/70 bg-secondary/35 p-3 text-center">
             <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">{point.label}</p>
-            <p className="mt-2 text-sm font-semibold text-white">{point.price.toLocaleString()}원</p>
+            <p className="mt-2 text-sm font-semibold text-foreground">{point.price.toLocaleString()}원</p>
           </div>
         ))}
       </div>

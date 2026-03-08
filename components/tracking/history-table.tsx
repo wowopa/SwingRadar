@@ -49,7 +49,7 @@ export function HistoryTable({ items, activeId, favoriteTickers, onSelect, onTog
                     />
                   </td>
                   <td className="py-4 pr-5">
-                    <div className="font-medium text-white">{item.company}</div>
+                    <div className="font-medium text-foreground">{item.company}</div>
                     <div className="text-xs text-muted-foreground">{item.ticker}</div>
                   </td>
                   <td className="py-4 pr-5 text-slate-200">{item.signalDate}</td>

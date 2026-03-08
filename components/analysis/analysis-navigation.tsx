@@ -22,12 +22,7 @@ type AnalysisNavigationProps = {
 const STORAGE_KEY = "swing-radar.recent-analysis";
 const MAX_RECENT_ITEMS = 5;
 
-export function AnalysisNavigation({
-  currentTicker,
-  previous,
-  next,
-  readyItems
-}: AnalysisNavigationProps) {
+export function AnalysisNavigation({ currentTicker, previous, next, readyItems }: AnalysisNavigationProps) {
   const [recentTickers, setRecentTickers] = useState<string[]>([]);
 
   useEffect(() => {
@@ -49,7 +44,7 @@ export function AnalysisNavigation({
     <section className="mb-6 grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
       <Card>
         <CardHeader>
-          <CardTitle className="text-base text-white">분석 이동</CardTitle>
+          <CardTitle className="text-base text-foreground">분석 이동</CardTitle>
         </CardHeader>
         <CardContent className="grid gap-3 sm:grid-cols-2">
           <NavigationLink
@@ -73,7 +68,7 @@ export function AnalysisNavigation({
       </Card>
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base text-white">
+          <CardTitle className="flex items-center gap-2 text-base text-foreground">
             <History className="h-4 w-4" />
             최근 본 종목
           </CardTitle>
@@ -84,10 +79,10 @@ export function AnalysisNavigation({
               <Link
                 key={item.ticker}
                 href={`/analysis/${item.ticker}`}
-                className="flex items-center justify-between rounded-2xl border border-border/70 bg-secondary/40 px-4 py-3 transition hover:border-primary/30 hover:bg-accent"
+                className="flex items-center justify-between rounded-2xl border border-border/70 bg-secondary/40 px-4 py-3 transition hover:border-primary/30 hover:bg-accent/50"
               >
                 <div>
-                  <p className="text-sm font-medium text-white">{item.company}</p>
+                  <p className="text-sm font-medium text-foreground">{item.company}</p>
                   <p className="text-xs text-muted-foreground">
                     {item.ticker} · {item.sector}
                   </p>
@@ -129,7 +124,7 @@ function NavigationLink({
         "rounded-2xl border px-4 py-4 transition",
         disabled
           ? "border-dashed border-border/70 bg-secondary/20 text-muted-foreground"
-          : "border-border/70 bg-secondary/40 hover:border-primary/30 hover:bg-accent",
+          : "border-border/70 bg-secondary/40 hover:border-primary/30 hover:bg-accent/50",
         align === "right" ? "text-right" : "text-left"
       ].join(" ")}
     >
@@ -138,7 +133,7 @@ function NavigationLink({
         <span>{title}</span>
         {align === "right" ? icon : null}
       </div>
-      <p className={`text-sm font-medium ${disabled ? "text-muted-foreground" : "text-white"}`}>{label}</p>
+      <p className={`text-sm font-medium ${disabled ? "text-muted-foreground" : "text-foreground"}`}>{label}</p>
       <p className="mt-2 text-xs leading-5 text-muted-foreground">{note}</p>
     </div>
   );

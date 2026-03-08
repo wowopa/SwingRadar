@@ -126,7 +126,7 @@ export function RecommendationExplorer({
           </select>
         </div>
         <div className="rounded-2xl border border-border/70 bg-secondary/35 px-4 py-3 text-sm text-muted-foreground">
-          결과 <span className="font-semibold text-white">{filteredItems.length}</span>건
+          결과 <span className="font-semibold text-foreground">{filteredItems.length}</span>건
         </div>
       </section>
       <section className="mb-6">
@@ -150,7 +150,7 @@ export function RecommendationExplorer({
         </>
       ) : (
         <section className="rounded-3xl border border-border/70 bg-card/40 p-8 text-center">
-          <p className="text-lg font-semibold text-white">조건에 맞는 관찰 신호가 없습니다.</p>
+          <p className="text-lg font-semibold text-foreground">조건에 맞는 관찰 신호가 없습니다.</p>
           <p className="mt-3 text-sm leading-6 text-muted-foreground">
             검색어를 줄이거나 톤, 섹터, 즐겨찾기 필터를 완화하면 더 많은 종목을 볼 수 있습니다.
           </p>

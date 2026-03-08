@@ -25,7 +25,7 @@ export function RecommendationFramework() {
         <CardContent className="grid gap-4 md:grid-cols-3">
           {frameworkItems.map((item) => (
             <div key={item.title} className="rounded-2xl border border-border/70 bg-secondary/35 p-4">
-              <p className="text-sm font-semibold text-white">{item.title}</p>
+              <p className="text-sm font-semibold text-foreground">{item.title}</p>
               <p className="mt-3 text-sm leading-6 text-muted-foreground">{item.body}</p>
             </div>
           ))}

@@ -12,7 +12,7 @@ export function ScenarioPanel({ scenarios }: { scenarios: Scenario[] }) {
         {scenarios.map((scenario) => (
           <div key={scenario.label} className="rounded-2xl border border-border/70 bg-secondary/35 p-4">
             <div className="flex items-center justify-between">
-              <p className="text-lg font-semibold text-white">{scenario.label}</p>
+              <p className="text-lg font-semibold text-foreground">{scenario.label}</p>
               <span className="text-sm text-primary">{scenario.probability}%</span>
             </div>
             <Progress className="mt-3" value={scenario.probability} />

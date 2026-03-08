@@ -38,7 +38,7 @@ export function NewsHistoryCards({ items }: { items: TrackingNewsCard[] }) {
                     {formatEventType(item.eventType)}
                   </span>
                 </div>
-                <p className="mt-1 font-medium text-white">{item.headline}</p>
+                <p className="mt-1 font-medium text-foreground">{item.headline}</p>
                 <p className="mt-2 text-sm text-muted-foreground">{item.note}</p>
                 {item.url ? (
                   <a

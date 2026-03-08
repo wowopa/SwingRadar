@@ -13,7 +13,7 @@ export function ScoreBreakdown({ items }: { items: ScoreBreakdownItem[] }) {
           <div key={item.label} className="rounded-2xl border border-border/70 bg-secondary/35 p-4">
             <div className="mb-3 flex items-center justify-between gap-4">
               <div>
-                <p className="font-medium text-white">{item.label}</p>
+                <p className="font-medium text-foreground">{item.label}</p>
                 <p className="text-sm text-muted-foreground">{item.description}</p>
               </div>
               <p className="text-lg font-semibold text-primary">{item.score}</p>
