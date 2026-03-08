@@ -1,4 +1,4 @@
-﻿import symbolMasterData from "@/data/config/symbol-master.json";
+import symbolMasterData from "@/data/config/symbol-master.json";
 
 export type SymbolSearchStatus = "ready" | "pending";
 export type SymbolMarket = "KOSPI" | "KOSDAQ";
@@ -101,7 +101,64 @@ function hydrateSymbol(item: RawSymbolMasterItem): SymbolMasterItem {
 export const symbolMaster: SymbolMasterItem[] = (symbolMasterData as RawSymbolMasterItem[]).map(hydrateSymbol);
 
 function normalize(value: string) {
-  return value.trim().toLowerCase();
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, "")
+    .replace(/["'`.,/\\|()[\]{}_-]+/g, "");
+}
+
+function buildSearchTerms(item: SymbolMasterItem) {
+  return unique([
+    item.ticker,
+    item.company,
+    item.sector,
+    item.newsQuery,
+    ...item.aliases,
+    ...item.newsQueries,
+    ...item.newsQueriesKr,
+    ...item.requiredKeywords,
+    ...item.contextKeywords
+  ]);
+}
+
+function getMatchScore(item: SymbolMasterItem, query: string) {
+  const searchTerms = buildSearchTerms(item).map((term) => ({
+    raw: term,
+    normalized: normalize(term)
+  }));
+  const ticker = normalize(item.ticker);
+  const company = normalize(item.company);
+
+  if (ticker === query) {
+    return 1000;
+  }
+  if (company === query) {
+    return 950;
+  }
+  if (ticker.startsWith(query)) {
+    return 900;
+  }
+  if (company.startsWith(query)) {
+    return 850;
+  }
+
+  const exactTerm = searchTerms.find((term) => term.normalized === query);
+  if (exactTerm) {
+    return 800;
+  }
+
+  const prefixTerm = searchTerms.find((term) => term.normalized.startsWith(query));
+  if (prefixTerm) {
+    return 700;
+  }
+
+  const containsTerm = searchTerms.find((term) => term.normalized.includes(query));
+  if (containsTerm) {
+    return 600;
+  }
+
+  return -1;
 }
 
 export function buildSymbolSuggestion(symbol: SymbolMasterItem): SymbolMasterSuggestion {
@@ -125,18 +182,38 @@ export function buildSymbolSuggestion(symbol: SymbolMasterItem): SymbolMasterSug
 
 export function searchSymbols(query: string, limit = 8) {
   const normalized = normalize(query);
-  const items = normalized
-    ? symbolMaster.filter((item) => {
-        const haystacks = [item.ticker, item.company, item.sector, item.newsQuery, ...item.aliases];
-        return haystacks.some((value) => normalize(value).includes(normalized));
-      })
-    : symbolMaster;
+  if (!normalized) {
+    return symbolMaster.slice(0, limit);
+  }
 
-  return items.slice(0, limit);
+  return symbolMaster
+    .map((item) => ({ item, score: getMatchScore(item, normalized) }))
+    .filter((entry) => entry.score >= 0)
+    .sort((left, right) => {
+      if (right.score !== left.score) {
+        return right.score - left.score;
+      }
+
+      if (left.item.status !== right.item.status) {
+        return left.item.status === "ready" ? -1 : 1;
+      }
+
+      return left.item.ticker.localeCompare(right.item.ticker);
+    })
+    .slice(0, limit)
+    .map((entry) => entry.item);
 }
 
 export function getFeaturedSymbols(limit = 8) {
-  return symbolMaster.slice(0, limit);
+  return [...symbolMaster]
+    .sort((left, right) => {
+      if (left.status !== right.status) {
+        return left.status === "ready" ? -1 : 1;
+      }
+
+      return left.ticker.localeCompare(right.ticker);
+    })
+    .slice(0, limit);
 }
 
 export function getReadySymbols() {
