@@ -52,16 +52,16 @@ export default async function AnalysisPage({ params }: { params: Promise<{ ticke
             <div className="flex items-center justify-between gap-4">
               <div>
                 <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">현재 신호</p>
-                <CardTitle className="mt-2 text-3xl text-white">{formatScore(analysis.score)}</CardTitle>
+                <CardTitle className="mt-2 text-3xl text-foreground">{formatScore(analysis.score)}</CardTitle>
               </div>
               <SignalToneBadge tone={analysis.signalTone} />
             </div>
           </CardHeader>
           <CardContent className="space-y-5">
-            <p className="text-base leading-7 text-slate-100">{analysis.headline}</p>
+            <p className="text-base leading-7 text-foreground/82">{analysis.headline}</p>
             <div className="rounded-2xl border border-caution/20 bg-caution/8 p-4">
               <p className="text-xs uppercase tracking-[0.22em] text-caution">무효화 조건</p>
-              <p className="mt-3 text-sm leading-6 text-slate-200">{analysis.invalidation}</p>
+              <p className="mt-3 text-sm leading-6 text-foreground/78">{analysis.invalidation}</p>
             </div>
           </CardContent>
         </Card>

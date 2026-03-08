@@ -38,7 +38,7 @@ export const postgresDataProvider: SwingRadarDataProvider = {
       from recommendation_snapshots
       inner join latest_snapshot
         on recommendation_snapshots.generated_at = latest_snapshot.generated_at
-      order by (recommendation_snapshots.payload->>'score')::int desc
+      order by (recommendation_snapshots.payload->>'score')::numeric desc nulls last
       `
     );
 
