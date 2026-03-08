@@ -7,7 +7,6 @@ import { buildSymbolSuggestion, type SymbolMasterItem } from "@/lib/symbols/mast
 
 const execFileAsync = promisify(execFile);
 const projectRoot = process.cwd();
-const watchlistPath = path.join(projectRoot, "data", "config", "watchlist.json");
 
 export type WatchlistEntry = {
   ticker: string;
@@ -37,6 +36,12 @@ type WatchlistDocument = {
   tickers: WatchlistEntry[];
 };
 
+function getWatchlistPath() {
+  return process.env.SWING_RADAR_WATCHLIST_FILE
+    ? path.resolve(process.env.SWING_RADAR_WATCHLIST_FILE)
+    : path.join(projectRoot, "data", "config", "watchlist.json");
+}
+
 function buildMarketSymbol(symbol: SymbolMasterItem) {
   return `${symbol.ticker}.${symbol.market === "KOSPI" ? "KS" : "KQ"}`;
 }
@@ -64,11 +69,11 @@ function buildWatchlistEntry(symbol: SymbolMasterItem): WatchlistEntry {
 }
 
 async function loadWatchlistDocument() {
-  return JSON.parse(await readFile(watchlistPath, "utf8")) as WatchlistDocument;
+  return JSON.parse(await readFile(getWatchlistPath(), "utf8")) as WatchlistDocument;
 }
 
 async function saveWatchlistDocument(document: WatchlistDocument) {
-  await writeFile(watchlistPath, `${JSON.stringify(document, null, 2)}\n`, "utf8");
+  await writeFile(getWatchlistPath(), `${JSON.stringify(document, null, 2)}\n`, "utf8");
 }
 
 async function runNodeScript(scriptName: string) {

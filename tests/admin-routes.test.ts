@@ -9,6 +9,8 @@ const mocks = vi.hoisted(() => ({
   recordAuditLog: vi.fn(),
   publishEditorialDraft: vi.fn(),
   rollbackPublishedSnapshot: vi.fn(),
+  loadNewsCuration: vi.fn(),
+  saveNewsCuration: vi.fn(),
   listWatchlistEntries: vi.fn(),
   addSymbolToWatchlist: vi.fn(),
   updateWatchlistEntry: vi.fn(),
@@ -35,6 +37,11 @@ vi.mock("@/lib/server/editorial-draft", () => ({
   rollbackPublishedSnapshot: mocks.rollbackPublishedSnapshot
 }));
 
+vi.mock("@/lib/server/news-curation", () => ({
+  loadNewsCuration: mocks.loadNewsCuration,
+  saveNewsCuration: mocks.saveNewsCuration
+}));
+
 vi.mock("@/lib/server/watchlist-manager", () => ({
   listWatchlistEntries: mocks.listWatchlistEntries,
   addSymbolToWatchlist: mocks.addSymbolToWatchlist,
@@ -48,6 +55,7 @@ vi.mock("@/lib/symbols/master", () => ({
 }));
 
 import { GET as getIngestRoute, POST as postIngestRoute } from "@/app/api/admin/ingest/route";
+import { GET as getNewsCurationRoute, POST as postNewsCurationRoute } from "@/app/api/admin/news-curation/route";
 import { POST as postPublishRoute } from "@/app/api/admin/publish/route";
 import { POST as postRollbackRoute } from "@/app/api/admin/rollback/route";
 import { GET as getWatchlistRoute, POST as postWatchlistRoute, PUT as putWatchlistRoute } from "@/app/api/admin/watchlist/route";
@@ -80,6 +88,16 @@ describe("admin routes", () => {
       recommendations: { generatedAt: "2026-03-08T00:00:00.000Z", items: [], dailyScan: null },
       analysis: { generatedAt: "2026-03-08T00:00:00.000Z", items: [] },
       tracking: { generatedAt: "2026-03-08T00:00:00.000Z", history: [], details: {} }
+    });
+    mocks.loadNewsCuration.mockResolvedValue({
+      updatedAt: "2026-03-08T00:00:00.000Z",
+      updatedBy: "system",
+      items: []
+    });
+    mocks.saveNewsCuration.mockResolvedValue({
+      updatedAt: "2026-03-08T00:00:00.000Z",
+      updatedBy: "admin-editor",
+      items: []
     });
   });
 
@@ -214,6 +232,126 @@ describe("admin routes", () => {
         ok: true,
         requestId: "req-test",
         rollback: { historyId: "hist-1", diffCount: 3 }
+      });
+    });
+  });
+
+  describe("admin news curation route", () => {
+    it("returns the current curation document on GET", async () => {
+      mocks.loadNewsCuration.mockResolvedValue({
+        updatedAt: "2026-03-08T00:00:00.000Z",
+        updatedBy: "admin-editor",
+        items: [
+          {
+            id: "curated-1",
+            ticker: "005930",
+            headline: "\uC6B4\uC601 \uCCB4\uD06C",
+            summary: "\uC694\uC57D \uBA54\uBAA8",
+            source: "desk",
+            url: "https://example.com/news",
+            date: "2026-03-08",
+            impact: "\uC8FC\uC758",
+            pinned: true,
+            operatorNote: "\uD655\uC778"
+          }
+        ]
+      });
+
+      const response = await getNewsCurationRoute(createRequest("http://localhost/api/admin/news-curation"));
+      const payload = await parseJson<{
+        document: {
+          updatedBy: string;
+          items: Array<{ headline: string; impact: string }>;
+        };
+      }>(response);
+
+      expect(response.status).toBe(200);
+      expect(payload.document.updatedBy).toBe("admin-editor");
+      expect(payload.document.items[0]).toMatchObject({
+        headline: "\uC6B4\uC601 \uCCB4\uD06C",
+        impact: "\uC8FC\uC758"
+      });
+    });
+
+    it("saves the curation document on POST", async () => {
+      mocks.saveNewsCuration.mockResolvedValue({
+        updatedAt: "2026-03-08T00:00:00.000Z",
+        updatedBy: "admin-editor",
+        items: [
+          {
+            id: "curated-1",
+            ticker: "005930",
+            headline: "\uC6B4\uC601 \uCCB4\uD06C",
+            summary: "\uC694\uC57D",
+            source: "desk",
+            url: "https://example.com/news",
+            date: "2026-03-08",
+            impact: "\uC8FC\uC758",
+            pinned: true,
+            operatorNote: "\uD655\uC778"
+          }
+        ]
+      });
+
+      const response = await postNewsCurationRoute(
+        createRequest("http://localhost/api/admin/news-curation", {
+          method: "POST",
+          body: JSON.stringify({
+            updatedAt: "2026-03-08T00:00:00.000Z",
+            updatedBy: "tester",
+            items: [
+              {
+                id: "curated-1",
+                ticker: "005930",
+                headline: "\uC6B4\uC601 \uCCB4\uD06C",
+                summary: "\uC694\uC57D \uBA54\uBAA8",
+                source: "desk",
+                url: "https://example.com/news",
+                date: "2026-03-08",
+                impact: "\uC8FC\uC758",
+                pinned: true,
+                operatorNote: "\uD655\uC778"
+              }
+            ]
+          })
+        })
+      );
+      const payload = await parseJson<{
+        ok: boolean;
+        requestId: string;
+        document: { updatedBy: string; items: Array<{ impact: string }> };
+      }>(response);
+
+      expect(response.status).toBe(200);
+      expect(mocks.saveNewsCuration).toHaveBeenCalledWith(
+        {
+          updatedAt: "2026-03-08T00:00:00.000Z",
+          updatedBy: "tester",
+          items: [
+            {
+              id: "curated-1",
+              ticker: "005930",
+              headline: "\uC6B4\uC601 \uCCB4\uD06C",
+              summary: "\uC694\uC57D \uBA54\uBAA8",
+              source: "desk",
+              url: "https://example.com/news",
+              date: "2026-03-08",
+              impact: "\uC8FC\uC758",
+              pinned: true,
+              operatorNote: "\uD655\uC778"
+            }
+          ]
+        },
+        "admin-editor",
+        "req-test"
+      );
+      expect(payload).toMatchObject({
+        ok: true,
+        requestId: "req-test",
+        document: {
+          updatedBy: "admin-editor",
+          items: [{ impact: "\uC8FC\uC758" }]
+        }
       });
     });
   });
