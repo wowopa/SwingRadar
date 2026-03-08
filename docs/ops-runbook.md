@@ -51,22 +51,27 @@ Expected provider fields:
 ## 5. Daily symbol sync
 자동 심볼 동기화를 daily cycle에 포함하려면 아래 환경값을 사용합니다.
 
-KRX 원본 CSV를 importer 형식으로 먼저 변환해야 할 때:
-```powershell
-& "C:\Program Files\nodejs\npm.cmd" run symbols:prepare:krx -- --input C:\path\to\krx-download.csv --output C:\path\to\krx-symbol-master.csv
-```
-
-로컬 CSV 기준:
+KRX 다운로드 폴더에서 최신 CSV를 집어오는 방식:
 ```powershell
 $env:SWING_RADAR_SYMBOL_SYNC_ENABLED="true"
-$env:SWING_RADAR_SYMBOL_SYNC_INPUT="C:\path\to\krx-symbol-master.csv"
+$env:SWING_RADAR_SYMBOL_SYNC_KRX="true"
+$env:SWING_RADAR_KRX_DOWNLOADS_DIR="C:\Users\eugen\Downloads"
+$env:SWING_RADAR_KRX_DOWNLOAD_PATTERN="전종목"
 $env:SWING_RADAR_SYMBOL_SYNC_MERGE="false"
 ```
 
-원격 CSV URL 기준:
+KRX 원격 CSV URL 기준:
 ```powershell
 $env:SWING_RADAR_SYMBOL_SYNC_ENABLED="true"
-$env:SWING_RADAR_SYMBOL_SYNC_URL="https://example.com/krx-full.csv"
+$env:SWING_RADAR_SYMBOL_SYNC_KRX="true"
+$env:SWING_RADAR_KRX_SOURCE_URL="https://example.com/krx-download.csv"
+$env:SWING_RADAR_SYMBOL_SYNC_MERGE="false"
+```
+
+이미 importer 형식으로 정리된 로컬 CSV 기준:
+```powershell
+$env:SWING_RADAR_SYMBOL_SYNC_ENABLED="true"
+$env:SWING_RADAR_SYMBOL_SYNC_INPUT="C:\path\to\krx-symbol-master.csv"
 $env:SWING_RADAR_SYMBOL_SYNC_MERGE="false"
 ```
 
@@ -79,7 +84,9 @@ $env:SWING_RADAR_SYMBOL_SYNC_MERGE="false"
 KRX 기준 일일 실행:
 ```powershell
 $env:SWING_RADAR_SYMBOL_SYNC_ENABLED="true"
-$env:SWING_RADAR_SYMBOL_SYNC_INPUT="C:\path\to\krx-symbol-master.csv"
+$env:SWING_RADAR_SYMBOL_SYNC_KRX="true"
+$env:SWING_RADAR_KRX_DOWNLOADS_DIR="C:\Users\eugen\Downloads"
+$env:SWING_RADAR_KRX_DOWNLOAD_PATTERN="전종목"
 & "C:\Program Files\nodejs\npm.cmd" run universe:daily -- --sync-symbols --markets KOSPI,KOSDAQ --batch-size 20
 ```
 

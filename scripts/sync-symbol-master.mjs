@@ -1,4 +1,4 @@
-import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, readFile, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import process from "node:process";
@@ -20,13 +20,17 @@ function printHelp() {
 SWING-RADAR symbol master sync
 
 Usage:
-  node scripts/sync-symbol-master.mjs [--input <csv-path> | --source-url <url>] [--output <json-path>] [--status <ready|pending>] [--merge]
+  node scripts/sync-symbol-master.mjs [--input <csv-path> | --source-url <url>] [--output <json-path>] [--status <ready|pending>] [--merge] [--krx]
 
 Environment:
   SWING_RADAR_SYMBOL_SYNC_INPUT
   SWING_RADAR_SYMBOL_SYNC_URL
   SWING_RADAR_SYMBOL_SYNC_STATUS
   SWING_RADAR_SYMBOL_SYNC_MERGE=true
+  SWING_RADAR_SYMBOL_SYNC_KRX=true
+  SWING_RADAR_KRX_SOURCE_URL
+  SWING_RADAR_KRX_DOWNLOADS_DIR
+  SWING_RADAR_KRX_DOWNLOAD_PATTERN
 `);
 }
 
@@ -37,6 +41,7 @@ function parseArgs(argv) {
     output: path.join(projectRoot, "data", "config", "symbol-master.json"),
     status: process.env.SWING_RADAR_SYMBOL_SYNC_STATUS ?? "pending",
     merge: process.env.SWING_RADAR_SYMBOL_SYNC_MERGE === "true",
+    krx: process.env.SWING_RADAR_SYMBOL_SYNC_KRX === "true",
     help: false
   };
 
@@ -70,20 +75,24 @@ function parseArgs(argv) {
       options.merge = true;
       continue;
     }
+    if (arg === "--krx") {
+      options.krx = true;
+      continue;
+    }
     throw new Error(`Unknown argument: ${arg}`);
   }
 
-  if (!options.help && !options.input && !options.sourceUrl) {
+  if (!options.help && !options.krx && !options.input && !options.sourceUrl) {
     throw new Error("Either --input or --source-url is required");
   }
 
   return options;
 }
 
-async function runImport(args) {
+async function runNodeScript(scriptName, args) {
   const { stdout, stderr } = await execFileAsync(
     process.execPath,
-    [path.join(projectRoot, "scripts", "import-symbol-master.mjs"), ...args],
+    [path.join(projectRoot, "scripts", scriptName), ...args],
     {
       cwd: projectRoot,
       env: process.env
@@ -98,18 +107,6 @@ async function runImport(args) {
   }
 }
 
-async function downloadCsv(sourceUrl, tempRoot) {
-  const response = await fetch(sourceUrl, { headers: { "user-agent": "swing-radar-symbol-sync/1.0" } });
-  if (!response.ok) {
-    throw new Error(`Failed to download symbol CSV: ${response.status} ${response.statusText}`);
-  }
-
-  const content = await response.text();
-  const filePath = path.join(tempRoot, "symbol-master-sync.csv");
-  await writeFile(filePath, content, "utf8");
-  return filePath;
-}
-
 async function main() {
   const options = parseArgs(process.argv.slice(2));
   if (options.help) {
@@ -120,17 +117,40 @@ async function main() {
   const tempRoot = await mkdtemp(path.join(os.tmpdir(), "swing-radar-symbol-sync-"));
 
   try {
-    const inputPath = options.sourceUrl
-      ? await downloadCsv(options.sourceUrl, tempRoot)
-      : path.resolve(options.input);
+    let inputPath = options.input ? path.resolve(options.input) : null;
 
-    console.log(`[symbol-sync] start: ${options.sourceUrl ? "remote-url" : "local-file"}`);
-    if (options.sourceUrl) {
-      console.log(`[symbol-sync] source-url: ${options.sourceUrl}`);
+    if (options.krx) {
+      const rawKrxPath = path.join(tempRoot, "krx-source.csv");
+      const preparedKrxPath = path.join(tempRoot, "krx-symbol-master.csv");
+
+      await runNodeScript("fetch-krx-symbols.mjs", [
+        ...(options.sourceUrl ? ["--source-url", options.sourceUrl] : []),
+        "--output",
+        rawKrxPath
+      ]);
+      await runNodeScript("prepare-krx-symbols.mjs", ["--input", rawKrxPath, "--output", preparedKrxPath]);
+
+      inputPath = preparedKrxPath;
+      console.log(`[symbol-sync] prepared KRX CSV: ${inputPath}`);
+    } else if (options.sourceUrl) {
+      const downloadPath = path.join(tempRoot, "symbol-master-sync.csv");
+      const response = await fetch(options.sourceUrl, { headers: { "user-agent": "swing-radar-symbol-sync/1.0" } });
+      if (!response.ok) {
+        throw new Error(`Failed to download symbol CSV: ${response.status} ${response.statusText}`);
+      }
+      const { writeFile } = await import("node:fs/promises");
+      await writeFile(downloadPath, await response.text(), "utf8");
+      inputPath = downloadPath;
     }
+
+    if (!inputPath) {
+      throw new Error("Resolved input path is missing");
+    }
+
+    console.log(`[symbol-sync] start: ${options.krx ? "krx" : options.sourceUrl ? "remote-url" : "local-file"}`);
     console.log(`[symbol-sync] input: ${inputPath}`);
 
-    await runImport([
+    await runNodeScript("import-symbol-master.mjs", [
       "--input",
       inputPath,
       "--output",

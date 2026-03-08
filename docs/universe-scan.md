@@ -29,10 +29,15 @@ ticker,company,market,sector,dartCorpCode,aliases
 - KRX: `KOSPI`, `KOSDAQ`
 - US: `NYSE`, `NASDAQ`, `AMEX`
 
+KRX 다운로드 CSV를 먼저 importer 형식으로 변환:
+```powershell
+& "C:\Program Files\nodejs\npm.cmd" run symbols:prepare:krx -- --input C:\path\to\krx-download.csv --output C:\path\to\krx-symbol-master.csv
+```
+
 KRX 전체를 새로 적재:
 ```powershell
 cd C:\Users\eugen\Documents\SwingRadar
-& "C:\Program Files\nodejs\npm.cmd" run symbols:import -- --input data/config/krx-full.csv
+& "C:\Program Files\nodejs\npm.cmd" run symbols:import -- --input C:\path\to\krx-symbol-master.csv
 ```
 
 기존 KRX 마스터에 미국 종목을 병합:
@@ -100,6 +105,10 @@ KOSDAQ만:
 3. `/recommendations`와 `/admin`에서 오늘의 상위 후보를 검토
 4. 운영실에서 watchlist / 뉴스 / 검증 보정 필요 항목만 수동 조정
 5. 이후 미국 종목 CSV를 `--merge`로 병합
+
+자동화 기준:
+- `symbols:sync --krx`는 KRX 원본 fetch, CSV 정규화, symbol master import를 한 번에 수행할 수 있습니다.
+- `universe:daily -- --sync-symbols`에 붙이면 장 마감 후 심볼 마스터 갱신까지 daily cycle에 포함됩니다.
 
 ## 주의
 - 전체 종목을 한 번에 외부 뉴스/시장 API로 돌리면 rate limit이 걸릴 수 있습니다.
