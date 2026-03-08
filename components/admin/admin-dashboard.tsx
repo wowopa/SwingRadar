@@ -23,6 +23,7 @@ import type {
   EditorialDraftItem,
   HealthPayload,
   NewsCurationDocument,
+  OperationalIncident,
   OpsHealthReportPayload,
   PublishHistoryItem,
   SymbolSearchItem,
@@ -50,6 +51,7 @@ export function AdminDashboard() {
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [health, setHealth] = useState<HealthPayload | null>(null);
+  const [incidents, setIncidents] = useState<OperationalIncident[]>([]);
   const [opsHealthReport, setOpsHealthReport] = useState<OpsHealthReportPayload | null>(null);
   const [dailyCycleReport, setDailyCycleReport] = useState<DailyCycleReportPayload | null>(null);
   const [audits, setAudits] = useState<AuditItem[]>([]);
@@ -154,6 +156,7 @@ export function AdminDashboard() {
       ]);
 
       setHealth(statusJson.health);
+      setIncidents(statusJson.incidents ?? []);
       setOpsHealthReport(statusJson.opsHealthReport ?? null);
       setDailyCycleReport(statusJson.dailyCycleReport ?? null);
       setAudits(auditJson.items ?? []);
@@ -530,6 +533,7 @@ export function AdminDashboard() {
         <TabsContent value="status">
           <StatusTab
             health={health}
+            incidents={incidents}
             audits={audits}
             opsHealthReport={opsHealthReport}
             dailyCycleReport={dailyCycleReport}

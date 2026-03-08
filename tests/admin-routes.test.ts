@@ -246,9 +246,11 @@ describe("admin routes", () => {
         ok: boolean;
         requestId: string;
         operationalMode: string;
+        overallStatus: string;
         health: { status: string; recentAuditCount: number; warnings: string[] };
         opsHealthReport: { finalHealth: { status: string } } | null;
         dailyCycleReport: { status: string; summary: { failedBatchCount: number } | null } | null;
+        incidents: Array<{ id: string; severity: string }>;
       }>(response);
 
       expect(response.status).toBe(200);
@@ -259,13 +261,24 @@ describe("admin routes", () => {
         ok: true,
         requestId: "req-test",
         operationalMode: "postgres",
+        overallStatus: "warning",
         health: {
           status: "warning",
           recentAuditCount: 3,
           warnings: ["analysis snapshot is 42 minutes old (warning)"]
         },
         opsHealthReport: null,
-        dailyCycleReport: null
+        dailyCycleReport: null,
+        incidents: [
+          {
+            id: "health-analysis",
+            severity: "warning"
+          },
+          {
+            id: "provider-fallback",
+            severity: "warning"
+          }
+        ]
       });
     });
 
@@ -304,22 +317,38 @@ describe("admin routes", () => {
         },
         error: null
       });
+      mocks.listAuditLogs.mockResolvedValue([
+        {
+          id: 4,
+          eventType: "provider_fallback",
+          actor: "system",
+          status: "warning",
+          requestId: "req-fallback",
+          summary: "Provider fallback detected by health check",
+          metadata: {},
+          createdAt: "2026-03-08T18:00:00.000Z"
+        }
+      ]);
 
       const response = await getStatusRoute(createRequest("http://localhost/api/admin/status"));
       const payload = await parseJson<{
+        overallStatus: string;
         opsHealthReport: { finalHealth: { status: string } } | null;
         dailyCycleReport: { status: string; summary: { failedBatchCount: number } | null } | null;
+        incidents: Array<{ id: string; severity: string }>;
       }>(response);
 
       expect(response.status).toBe(200);
       expect(payload).toMatchObject({
+        overallStatus: "warning",
         opsHealthReport: {
           finalHealth: { status: "ok" }
         },
         dailyCycleReport: {
           status: "warning",
           summary: { failedBatchCount: 1 }
-        }
+        },
+        incidents: [{ id: "daily-cycle-warning", severity: "warning" }]
       });
     });
 

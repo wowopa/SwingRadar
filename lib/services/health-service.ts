@@ -5,7 +5,7 @@ import { getOperationalPolicy } from "@/lib/server/operations-policy";
 import { buildStaleDataIndicator } from "@/lib/server/stale-data";
 
 export interface HealthReport {
-  status: "ok" | "warning";
+  status: "ok" | "warning" | "critical";
   service: string;
   timestamp: string;
   dataProvider: ProviderExecutionMeta;
@@ -35,30 +35,43 @@ export async function getHealthReport(requestId: string): Promise<HealthReport> 
     .filter((item) => item.stale)
     .map((item) => `${item.label} snapshot is ${item.ageMinutes} minutes old (${item.severity})`);
 
+  const recentFallbackAuditCount = audits.filter((item) => item.eventType === "provider_fallback").length;
+
   if (providerMeta.fallbackTriggered && providerMeta.lastUsed) {
     warnings.push(`Primary provider fallback triggered. Serving from ${providerMeta.lastUsed.provider}.`);
   }
+
+  const hasCriticalFreshness = freshness.some((item) => item.severity === "critical");
+  const fallbackEscalated =
+    providerMeta.fallbackTriggered && recentFallbackAuditCount >= policy.escalation.providerFallbackAuditCount;
+  const status: HealthReport["status"] = hasCriticalFreshness || fallbackEscalated ? "critical" : warnings.length ? "warning" : "ok";
 
   if (warnings.length) {
     await recordAuditLog({
       eventType: providerMeta.fallbackTriggered ? "provider_fallback" : "health_warning",
       actor: "system",
-      status: "warning",
+      status: status === "critical" ? "failure" : "warning",
       requestId,
       summary: providerMeta.fallbackTriggered
-        ? "Provider fallback detected by health check"
-        : "Stale snapshot detected by health check",
+        ? status === "critical"
+          ? "Provider fallback escalated by health check"
+          : "Provider fallback detected by health check"
+        : status === "critical"
+          ? "Critical stale snapshot detected by health check"
+          : "Stale snapshot detected by health check",
       metadata: {
         warnings,
         configuredProvider: providerMeta.configured.provider,
         actualProvider: providerMeta.lastUsed?.provider ?? null,
-        fallbackProvider: providerMeta.fallback?.provider ?? null
+        fallbackProvider: providerMeta.fallback?.provider ?? null,
+        recentFallbackAuditCount,
+        escalated: status === "critical"
       }
     });
   }
 
   return {
-    status: warnings.length ? "warning" : "ok",
+    status,
     service: "swing-radar",
     timestamp: new Date().toISOString(),
     dataProvider: providerMeta,

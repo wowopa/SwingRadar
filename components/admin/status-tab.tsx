@@ -14,6 +14,7 @@ import type {
   AuditItem,
   DailyCycleReportPayload,
   HealthPayload,
+  OperationalIncident,
   OpsHealthReportPayload,
   UniverseDailyCandidates,
   UniverseReviewStatus
@@ -38,6 +39,7 @@ function formatDuration(durationMs: number | null) {
 
 export function StatusTab({
   health,
+  incidents,
   audits,
   opsHealthReport,
   dailyCycleReport,
@@ -48,6 +50,7 @@ export function StatusTab({
   loading
 }: {
   health: HealthPayload | null;
+  incidents: OperationalIncident[];
   audits: AuditItem[];
   opsHealthReport: OpsHealthReportPayload | null;
   dailyCycleReport: DailyCycleReportPayload | null;
@@ -75,6 +78,35 @@ export function StatusTab({
 
   return (
     <div className="grid gap-6">
+      {incidents.length ? (
+        <Card className={incidents.some((item) => item.severity === "critical") ? "border-destructive/30" : "border-caution/30"}>
+          <CardHeader>
+            <CardTitle>운영 에스컬레이션</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {incidents.slice(0, 4).map((item) => (
+              <div
+                key={item.id}
+                className={
+                  item.severity === "critical"
+                    ? "rounded-[24px] border border-destructive/25 bg-destructive/5 p-4"
+                    : "rounded-[24px] border border-caution/25 bg-caution/8 p-4"
+                }
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-sm font-semibold text-foreground">{item.summary}</p>
+                  <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">{item.severity}</p>
+                </div>
+                <p className="mt-2 text-sm leading-6 text-foreground/78">{item.detail}</p>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  {item.source} | {formatDateTime(item.detectedAt)}
+                </p>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      ) : null}
+
       <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
         <Card>
           <CardHeader>

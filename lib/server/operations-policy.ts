@@ -2,6 +2,7 @@ const DEFAULT_STALE_WARNING_MINUTES = 180;
 const DEFAULT_STALE_CRITICAL_MINUTES = 360;
 const DEFAULT_HEALTH_AUDIT_LOOKBACK = 5;
 const DEFAULT_ADMIN_AUDIT_LIMIT = 30;
+const DEFAULT_PROVIDER_FALLBACK_ESCALATION_COUNT = 3;
 
 export interface OperationalPolicy {
   stale: {
@@ -11,6 +12,9 @@ export interface OperationalPolicy {
   audit: {
     healthLookbackLimit: number;
     adminListLimit: number;
+  };
+  escalation: {
+    providerFallbackAuditCount: number;
   };
 }
 
@@ -39,6 +43,12 @@ export function getOperationalPolicy(): OperationalPolicy {
     audit: {
       healthLookbackLimit: parsePositiveInt(process.env.SWING_RADAR_HEALTH_AUDIT_LIMIT, DEFAULT_HEALTH_AUDIT_LOOKBACK),
       adminListLimit: parsePositiveInt(process.env.SWING_RADAR_ADMIN_AUDIT_LIMIT, DEFAULT_ADMIN_AUDIT_LIMIT)
+    },
+    escalation: {
+      providerFallbackAuditCount: parsePositiveInt(
+        process.env.SWING_RADAR_PROVIDER_FALLBACK_ESCALATION_COUNT,
+        DEFAULT_PROVIDER_FALLBACK_ESCALATION_COUNT
+      )
     }
   };
 }

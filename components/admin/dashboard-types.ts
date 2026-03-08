@@ -1,7 +1,7 @@
 "use client";
 
 export type HealthPayload = {
-  status: "ok" | "warning";
+  status: "ok" | "warning" | "critical";
   service: string;
   recentAuditCount: number;
   dataProvider: {
@@ -10,6 +10,15 @@ export type HealthPayload = {
     fallbackTriggered: boolean;
   };
   warnings: string[];
+};
+
+export type OperationalIncident = {
+  id: string;
+  severity: "warning" | "critical";
+  source: "health" | "provider" | "daily-cycle" | "ops-recovery";
+  summary: string;
+  detail: string;
+  detectedAt: string;
 };
 
 export type OpsHealthReportPayload = {
@@ -59,9 +68,11 @@ export type AdminStatusPayload = {
   ok: boolean;
   requestId: string;
   operationalMode: string;
+  overallStatus: "ok" | "warning" | "critical";
   health: HealthPayload;
   opsHealthReport: OpsHealthReportPayload | null;
   dailyCycleReport: DailyCycleReportPayload | null;
+  incidents: OperationalIncident[];
 };
 
 export type UniverseReviewStatus = "new" | "reviewing" | "hold" | "promoted" | "rejected";

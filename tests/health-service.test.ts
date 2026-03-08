@@ -75,6 +75,33 @@ describe("getHealthReport", () => {
     expect(mocks.recordAuditLog).toHaveBeenCalledWith(
       expect.objectContaining({
         eventType: "provider_fallback",
+        status: "warning",
+        requestId: "req-health"
+      })
+    );
+  });
+
+  it("escalates to critical when a stale snapshot is critical", async () => {
+    mocks.getProviderMeta.mockReturnValue({
+      configured: { provider: "postgres", mode: "external" },
+      fallback: { provider: "file", mode: "mock" },
+      lastUsed: { provider: "postgres", mode: "external" },
+      fallbackTriggered: false
+    });
+    mocks.listAuditLogs.mockResolvedValue([]);
+    mocks.buildStaleDataIndicator
+      .mockReset()
+      .mockReturnValueOnce({ label: "recommendations", stale: false, ageMinutes: 2, severity: "ok" })
+      .mockReturnValueOnce({ label: "analysis", stale: true, ageMinutes: 401, severity: "critical" })
+      .mockReturnValueOnce({ label: "tracking", stale: false, ageMinutes: 5, severity: "ok" });
+
+    const result = await getHealthReport("req-health");
+
+    expect(result.status).toBe("critical");
+    expect(mocks.recordAuditLog).toHaveBeenCalledWith(
+      expect.objectContaining({
+        eventType: "health_warning",
+        status: "failure",
         requestId: "req-health"
       })
     );
