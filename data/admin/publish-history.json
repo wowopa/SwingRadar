@@ -1,0 +1,857 @@
+[
+  {
+    "id": "ef57ea64-2016-4e16-a382-cdbf2592c36f",
+    "publishedAt": "2026-03-08T15:02:43.819Z",
+    "publishedBy": "admin-editor",
+    "requestId": "01a9fafa-d17b-4b8a-a4b0-d28df4078fbb",
+    "approvalStage": "final_publish",
+    "tickers": 3,
+    "diffCount": 0,
+    "notes": [],
+    "changes": [],
+    "bundle": {
+      "recommendations": {
+        "generatedAt": "2026-03-08T15:02:43.819Z",
+        "items": [
+          {
+            "ticker": "005930",
+            "company": "삼성전자",
+            "sector": "반도체",
+            "signalTone": "중립",
+            "score": 65,
+            "signalLabel": "확인 후 추적 가능",
+            "rationale": "삼성전자 관찰 신호는 추세 25점, 수급 12점, 변동성 5점을 기반으로 구성됩니다. 외부 기사 커버리지는 제한적입니다. 이벤트 커버리지는 취약으로 평가됩니다.",
+            "invalidation": "164,971원 하회 시 관찰 가설을 재평가합니다.",
+            "invalidationDistance": -12.3,
+            "riskRewardRatio": "1 : 1.5",
+            "validationSummary": "검증 표본 41건 기준 hitRate 63%, 평균 수익 +5.8%, 최대 역행 -4.2%입니다. 유사 구조에서 추세 지속 확률이 상대적으로 높게 확인됩니다.",
+            "checkpoints": [
+              "164,971원 하단 방어 확인",
+              "218,000원 돌파 유무 확인",
+              "230,012원 확장 구간 대응"
+            ],
+            "validation": {
+              "hitRate": 63,
+              "avgReturn": 5.8,
+              "sampleSize": 41,
+              "maxDrawdown": -4.2
+            },
+            "observationWindow": "5~15거래일",
+            "updatedAt": "2026-03-08T15:02:43.819Z"
+          },
+          {
+            "ticker": "035420",
+            "company": "NAVER",
+            "sector": "인터넷",
+            "signalTone": "주의",
+            "score": 48,
+            "signalLabel": "관찰 신호 유지",
+            "rationale": "NAVER 관찰 신호는 추세 8점, 수급 12점, 변동성 5점을 기반으로 구성됩니다. 외부 기사 커버리지는 제한적입니다. 이벤트 커버리지는 취약으로 평가됩니다.",
+            "invalidation": "206,960원 하회 시 관찰 가설을 재평가합니다.",
+            "invalidationDistance": -7,
+            "riskRewardRatio": "1 : 0.9",
+            "validationSummary": "검증 표본 29건 기준 hitRate 54%, 평균 수익 +3.1%, 최대 역행 -5.5%입니다. 확인형 진입에서 성과가 우세했지만 무효화 관리가 중요합니다.",
+            "checkpoints": [
+              "206,960원 하단 방어 확인",
+              "260,500원 돌파 유무 확인",
+              "250,472원 확장 구간 대응"
+            ],
+            "validation": {
+              "hitRate": 54,
+              "avgReturn": 3.1,
+              "sampleSize": 29,
+              "maxDrawdown": -5.5
+            },
+            "observationWindow": "3~10거래일",
+            "updatedAt": "2026-03-08T15:02:43.819Z"
+          },
+          {
+            "ticker": "068270",
+            "company": "셀트리온",
+            "sector": "제약/바이오",
+            "signalTone": "중립",
+            "score": 59.1,
+            "signalLabel": "확인 후 추적 가능",
+            "rationale": "셀트리온 관찰 신호는 추세 19점, 수급 11점, 변동성 5점을 기반으로 구성됩니다. 상위 이벤트 '셀트리온, '스텔라라 시밀러' 3상결과 국제학술지 게재'가 반영됩니다. 이벤트 커버리지는 제한적으로 평가됩니다.",
+            "invalidation": "196,413원 하회 시 관찰 가설을 재평가합니다.",
+            "invalidationDistance": -7.6,
+            "riskRewardRatio": "1 : 1.5",
+            "validationSummary": "검증 표본 22건 기준 hitRate 38%, 평균 수익 -1.4%, 최대 역행 -8.7%입니다. 사후 성과 분산이 커서 보수적 추적 해석이 필요합니다.",
+            "checkpoints": [
+              "196,413원 하단 방어 확인",
+              "248,500원 돌파 유무 확인",
+              "241,457원 확장 구간 대응"
+            ],
+            "validation": {
+              "hitRate": 38,
+              "avgReturn": -1.4,
+              "sampleSize": 22,
+              "maxDrawdown": -8.7
+            },
+            "observationWindow": "1~7거래일",
+            "updatedAt": "2026-03-08T15:02:43.819Z"
+          }
+        ]
+      },
+      "analysis": {
+        "generatedAt": "2026-03-08T15:02:43.819Z",
+        "items": [
+          {
+            "ticker": "005930",
+            "company": "삼성전자",
+            "signalTone": "중립",
+            "score": 65,
+            "headline": "삼성전자 관찰 신호는 확인 후 추적 가능 관점에서 해석합니다.",
+            "invalidation": "164,971원 하회 시 관찰 가설을 재평가합니다.",
+            "analysisSummary": [
+              {
+                "label": "추세",
+                "value": "25점",
+                "note": "중기 구조 흐름"
+              },
+              {
+                "label": "수급",
+                "value": "12점",
+                "note": "거래대금 / 회전 흐름"
+              },
+              {
+                "label": "변동성",
+                "value": "5점",
+                "note": "무효화 거리 기준"
+              },
+              {
+                "label": "데이터 품질",
+                "value": "양호",
+                "note": "시세 / 뉴스 정합성"
+              }
+            ],
+            "keyLevels": [
+              {
+                "label": "무효화",
+                "price": "164,971원",
+                "meaning": "관찰 가설 재점검 구간"
+              },
+              {
+                "label": "확인",
+                "price": "218,000원",
+                "meaning": "추가 돌파 확인 구간"
+              },
+              {
+                "label": "확장",
+                "price": "230,012원",
+                "meaning": "상단 확장 구간"
+              }
+            ],
+            "decisionNotes": [
+              "검증 hitRate 63% / avgReturn +5.8% 기준으로 해석합니다.",
+              "무효화 거리는 164,971원 기준으로 관리합니다.",
+              "이벤트 커버리지가 적어 가격과 무효화 기준 비중을 높여 해석합니다.",
+              "커버리지 평가: 취약 | 공시 0건 / 큐레이션 0건 / 외부기사 0건"
+            ],
+            "scoreBreakdown": [
+              {
+                "label": "추세",
+                "score": 25,
+                "description": "중기 추세 구조 점검"
+              },
+              {
+                "label": "수급",
+                "score": 12,
+                "description": "거래량 / 회전 흐름"
+              },
+              {
+                "label": "변동성",
+                "score": 5,
+                "description": "무효화 거리 기준"
+              },
+              {
+                "label": "이벤트",
+                "score": 8,
+                "description": "기사 / 공시 / 큐레이션 반영"
+              },
+              {
+                "label": "품질",
+                "score": 15,
+                "description": "데이터 정합성"
+              }
+            ],
+            "scenarios": [
+              {
+                "label": "기본",
+                "probability": 58,
+                "expectation": "현 구조 유지 가정",
+                "trigger": "218,000원 안착 여부"
+              },
+              {
+                "label": "강세",
+                "probability": 21,
+                "expectation": "확장 구간 시도",
+                "trigger": "230,012원 돌파"
+              },
+              {
+                "label": "약세",
+                "probability": 21,
+                "expectation": "무효화 구간 접근",
+                "trigger": "164,971원 하회"
+              }
+            ],
+            "riskChecklist": [
+              {
+                "label": "무효화 거리",
+                "status": "주의",
+                "note": "-12.3% 기준"
+              },
+              {
+                "label": "이벤트 리스크",
+                "status": "양호",
+                "note": "공시 0건 / 큐레이션 0건 / 기사 0건"
+              },
+              {
+                "label": "과열 여부",
+                "status": "양호",
+                "note": "가격 / 회전 점검"
+              }
+            ],
+            "newsImpact": [],
+            "dataQuality": [
+              {
+                "label": "시세",
+                "value": "실시간 스냅샷",
+                "note": "Yahoo chart API 기준"
+              },
+              {
+                "label": "이벤트",
+                "value": "0건",
+                "note": "해당 없음"
+              },
+              {
+                "label": "커버리지",
+                "value": "취약",
+                "note": "확인된 외부 이벤트가 부족해 점수 해석을 보수적으로 가져가야 합니다."
+              },
+              {
+                "label": "품질",
+                "value": "양호",
+                "note": "score 15"
+              }
+            ]
+          },
+          {
+            "ticker": "035420",
+            "company": "NAVER",
+            "signalTone": "주의",
+            "score": 48,
+            "headline": "NAVER 관찰 신호는 관찰 신호 유지 관점에서 해석합니다.",
+            "invalidation": "206,960원 하회 시 관찰 가설을 재평가합니다.",
+            "analysisSummary": [
+              {
+                "label": "추세",
+                "value": "8점",
+                "note": "중기 구조 흐름"
+              },
+              {
+                "label": "수급",
+                "value": "12점",
+                "note": "거래대금 / 회전 흐름"
+              },
+              {
+                "label": "변동성",
+                "value": "5점",
+                "note": "무효화 거리 기준"
+              },
+              {
+                "label": "데이터 품질",
+                "value": "양호",
+                "note": "시세 / 뉴스 정합성"
+              }
+            ],
+            "keyLevels": [
+              {
+                "label": "무효화",
+                "price": "206,960원",
+                "meaning": "관찰 가설 재점검 구간"
+              },
+              {
+                "label": "확인",
+                "price": "260,500원",
+                "meaning": "추가 돌파 확인 구간"
+              },
+              {
+                "label": "확장",
+                "price": "250,472원",
+                "meaning": "상단 확장 구간"
+              }
+            ],
+            "decisionNotes": [
+              "검증 hitRate 54% / avgReturn +3.1% 기준으로 해석합니다.",
+              "무효화 거리는 206,960원 기준으로 관리합니다.",
+              "이벤트 커버리지가 적어 가격과 무효화 기준 비중을 높여 해석합니다.",
+              "커버리지 평가: 취약 | 공시 0건 / 큐레이션 0건 / 외부기사 0건"
+            ],
+            "scoreBreakdown": [
+              {
+                "label": "추세",
+                "score": 8,
+                "description": "중기 추세 구조 점검"
+              },
+              {
+                "label": "수급",
+                "score": 12,
+                "description": "거래량 / 회전 흐름"
+              },
+              {
+                "label": "변동성",
+                "score": 5,
+                "description": "무효화 거리 기준"
+              },
+              {
+                "label": "이벤트",
+                "score": 8,
+                "description": "기사 / 공시 / 큐레이션 반영"
+              },
+              {
+                "label": "품질",
+                "score": 15,
+                "description": "데이터 정합성"
+              }
+            ],
+            "scenarios": [
+              {
+                "label": "기본",
+                "probability": 49,
+                "expectation": "현 구조 유지 가정",
+                "trigger": "260,500원 안착 여부"
+              },
+              {
+                "label": "강세",
+                "probability": 21,
+                "expectation": "확장 구간 시도",
+                "trigger": "250,472원 돌파"
+              },
+              {
+                "label": "약세",
+                "probability": 30,
+                "expectation": "무효화 구간 접근",
+                "trigger": "206,960원 하회"
+              }
+            ],
+            "riskChecklist": [
+              {
+                "label": "무효화 거리",
+                "status": "주의",
+                "note": "-7.0% 기준"
+              },
+              {
+                "label": "이벤트 리스크",
+                "status": "양호",
+                "note": "공시 0건 / 큐레이션 0건 / 기사 0건"
+              },
+              {
+                "label": "과열 여부",
+                "status": "양호",
+                "note": "가격 / 회전 점검"
+              }
+            ],
+            "newsImpact": [],
+            "dataQuality": [
+              {
+                "label": "시세",
+                "value": "실시간 스냅샷",
+                "note": "Yahoo chart API 기준"
+              },
+              {
+                "label": "이벤트",
+                "value": "0건",
+                "note": "해당 없음"
+              },
+              {
+                "label": "커버리지",
+                "value": "취약",
+                "note": "확인된 외부 이벤트가 부족해 점수 해석을 보수적으로 가져가야 합니다."
+              },
+              {
+                "label": "품질",
+                "value": "양호",
+                "note": "score 15"
+              }
+            ]
+          },
+          {
+            "ticker": "068270",
+            "company": "셀트리온",
+            "signalTone": "중립",
+            "score": 59.1,
+            "headline": "셀트리온 관찰 신호는 확인 후 추적 가능 관점에서 해석합니다.",
+            "invalidation": "196,413원 하회 시 관찰 가설을 재평가합니다.",
+            "analysisSummary": [
+              {
+                "label": "추세",
+                "value": "19점",
+                "note": "중기 구조 흐름"
+              },
+              {
+                "label": "수급",
+                "value": "11점",
+                "note": "거래대금 / 회전 흐름"
+              },
+              {
+                "label": "변동성",
+                "value": "5점",
+                "note": "무효화 거리 기준"
+              },
+              {
+                "label": "데이터 품질",
+                "value": "양호",
+                "note": "시세 / 뉴스 정합성"
+              }
+            ],
+            "keyLevels": [
+              {
+                "label": "무효화",
+                "price": "196,413원",
+                "meaning": "관찰 가설 재점검 구간"
+              },
+              {
+                "label": "확인",
+                "price": "248,500원",
+                "meaning": "추가 돌파 확인 구간"
+              },
+              {
+                "label": "확장",
+                "price": "241,457원",
+                "meaning": "상단 확장 구간"
+              }
+            ],
+            "decisionNotes": [
+              "검증 hitRate 38% / avgReturn -1.4% 기준으로 해석합니다.",
+              "무효화 거리는 196,413원 기준으로 관리합니다.",
+              "상위 이벤트: 셀트리온, '스텔라라 시밀러' 3상결과 국제학술지 게재",
+              "커버리지 평가: 제한적 | 공시 0건 / 큐레이션 0건 / 외부기사 4건"
+            ],
+            "scoreBreakdown": [
+              {
+                "label": "추세",
+                "score": 19,
+                "description": "중기 추세 구조 점검"
+              },
+              {
+                "label": "수급",
+                "score": 11,
+                "description": "거래량 / 회전 흐름"
+              },
+              {
+                "label": "변동성",
+                "score": 5,
+                "description": "무효화 거리 기준"
+              },
+              {
+                "label": "이벤트",
+                "score": 9.1,
+                "description": "기사 / 공시 / 큐레이션 반영"
+              },
+              {
+                "label": "품질",
+                "score": 15,
+                "description": "데이터 정합성"
+              }
+            ],
+            "scenarios": [
+              {
+                "label": "기본",
+                "probability": 55,
+                "expectation": "현 구조 유지 가정",
+                "trigger": "248,500원 안착 여부"
+              },
+              {
+                "label": "강세",
+                "probability": 21,
+                "expectation": "확장 구간 시도",
+                "trigger": "241,457원 돌파"
+              },
+              {
+                "label": "약세",
+                "probability": 24,
+                "expectation": "무효화 구간 접근",
+                "trigger": "196,413원 하회"
+              }
+            ],
+            "riskChecklist": [
+              {
+                "label": "무효화 거리",
+                "status": "주의",
+                "note": "-7.6% 기준"
+              },
+              {
+                "label": "이벤트 리스크",
+                "status": "양호",
+                "note": "공시 0건 / 큐레이션 0건 / 기사 4건"
+              },
+              {
+                "label": "과열 여부",
+                "status": "양호",
+                "note": "가격 / 회전 점검"
+              }
+            ],
+            "newsImpact": [
+              {
+                "headline": "셀트리온, '스텔라라 시밀러' 3상결과 국제학술지 게재",
+                "impact": "중립",
+                "summary": "바이오스펙테이터=이주연 기자 | 스텔라라 시밀러 ‘스테키마’ 3상 장기임상 데이터 공개..오리지널서 전환 및 장기투여 효과 \"유사성 확인\" 셀트리온( Celltrion )은 자가면역질환 치료제 ‘스테키마(Steqeyma...",
+                "source": "naver-search",
+                "url": "http://www.biospectator.com/view/news_view.php?varAtcId=28007",
+                "date": "2026-03-06",
+                "eventType": "news"
+              },
+              {
+                "headline": "셀트리온 최대주주 셀트리온홀딩스, 셀트리온 주식 등의 수 12만7770주 증...",
+                "impact": "중립",
+                "summary": "제약바이오 기업 셀트리온(068270)의 최대주주 셀트리온홀딩스는 셀트리온 주식 등 보유 상황을 6일 공시했다. 셀트리온홀딩스는 이번 보고서에서 셀트리온 주식 등의 수를 12만7770주 늘렸으며, 보유 비율은 0.04...",
+                "source": "naver-search",
+                "url": "https://www.digitaltoday.co.kr/news/articleView.html?idxno=638120",
+                "date": "2026-03-06",
+                "eventType": "news"
+              },
+              {
+                "headline": "'창업 공신' 김형기 셀트리온 부회장 퇴임…\"글로벌 직판 체제 구축\"",
+                "impact": "중립",
+                "summary": "셀트리온 헬스케어의 합병 이후 안정화에 기여했다. 지난해부터 셀트리온 은 영업이익률 상승 등 실적 측면에서 합병 효과가 본격화했고, 바이오시밀러에서 신약으로 영역을 넓히며 새로운 성장 단계에 진입했다.",
+                "source": "naver-search",
+                "url": "https://www.mt.co.kr/thebio/2026/03/06/2026030617395786444",
+                "date": "2026-03-06",
+                "eventType": "news"
+              },
+              {
+                "headline": "셀트리온 , 자사주 911만주 소각 추진... 1조 9,268억원 규모",
+                "impact": "중립",
+                "summary": "셀트리온 은 앞서 공시한 제 35기 정기주주총회 안건에서 주식 매수선택권(스톡옵션) 보상 목적 보유분을 제외한 약 611만주를 소각하는 내용의 '자기 주식 보유처분 계획 승인 및 소각 안건'을 상정했다. 해당 목적으로...",
+                "source": "naver-search",
+                "url": "https://www.gukjenews.com/news/articleView.html?idxno=3522166",
+                "date": "2026-03-06",
+                "eventType": "news"
+              }
+            ],
+            "dataQuality": [
+              {
+                "label": "시세",
+                "value": "실시간 스냅샷",
+                "note": "Yahoo chart API 기준"
+              },
+              {
+                "label": "이벤트",
+                "value": "4건",
+                "note": "셀트리온, '스텔라라 시밀러' 3상결과 국제학술지 게재"
+              },
+              {
+                "label": "커버리지",
+                "value": "제한적",
+                "note": "기사 커버리지가 제한적이어서 시세와 무효화 기준을 함께 봐야 합니다."
+              },
+              {
+                "label": "품질",
+                "value": "양호",
+                "note": "score 15"
+              }
+            ]
+          }
+        ]
+      },
+      "tracking": {
+        "generatedAt": "2026-03-08T15:02:43.819Z",
+        "history": [
+          {
+            "id": "hist-005930-20260301",
+            "ticker": "005930",
+            "company": "삼성전자",
+            "signalDate": "2026-03-01",
+            "signalTone": "중립",
+            "entryScore": 79,
+            "result": "진행중",
+            "mfe": 4.8,
+            "mae": -1.9,
+            "holdingDays": 5
+          },
+          {
+            "id": "hist-035420-20260220",
+            "ticker": "035420",
+            "company": "NAVER",
+            "signalDate": "2026-02-20",
+            "signalTone": "주의",
+            "entryScore": 66,
+            "result": "성공",
+            "mfe": 7.2,
+            "mae": -2.4,
+            "holdingDays": 11
+          },
+          {
+            "id": "hist-068270-20260214",
+            "ticker": "068270",
+            "company": "셀트리온",
+            "signalDate": "2026-02-14",
+            "signalTone": "중립",
+            "entryScore": 48,
+            "result": "무효화",
+            "mfe": 1.3,
+            "mae": -6.8,
+            "holdingDays": 4
+          }
+        ],
+        "details": {
+          "hist-005930-20260301": {
+            "historyId": "hist-005930-20260301",
+            "summary": "삼성전자 관찰 신호는 진입 점수 79점에서 시작했고, 현재 MFE +4.8%, MAE -1.9%를 기록했습니다. 검증 hitRate 63% 기준으로는 관찰 시나리오 진행 구간으로 해석합니다.",
+            "invalidationReview": "무효화 기준은 아직 유지되고 있습니다. 다만 단기 과열 여부와 거래대금 둔화는 계속 점검해야 합니다.",
+            "afterActionReview": "아직 결론을 내리기보다 경로를 관찰해야 하는 상태입니다. MFE/MAE 비율은 양호하지만 확장 구간 확인이 더 필요합니다.",
+            "reviewChecklist": [
+              "초기 1.9% 역행 구간에서 무효화 방어가 유지됐는지 확인",
+              "5거래일 동안 거래대금과 추세가 신호 방향과 동행했는지 확인",
+              "MFE +4.8% 대비 MAE -1.9%가 허용 범위인지 복기"
+            ],
+            "metrics": [
+              {
+                "label": "사후 판정",
+                "value": "관찰 지속",
+                "note": "결과 진행중"
+              },
+              {
+                "label": "경로 효율",
+                "value": "양호",
+                "note": "MFE +4.8% / MAE -1.9%"
+              },
+              {
+                "label": "이벤트 커버리지",
+                "value": "취약",
+                "note": "공시 0건 / 큐레이션 0건 / 기사 0건"
+              }
+            ],
+            "chartSnapshot": [
+              {
+                "label": "D1",
+                "price": 188200
+              },
+              {
+                "label": "D2",
+                "price": 186412
+              },
+              {
+                "label": "D3",
+                "price": 192717
+              },
+              {
+                "label": "D4",
+                "price": 194975
+              },
+              {
+                "label": "D5",
+                "price": 195982
+              }
+            ],
+            "historicalNews": [],
+            "scoreLog": [
+              {
+                "timestamp": "2026-03-01 09:00",
+                "factor": "초기 구조",
+                "delta": 5,
+                "reason": "초기 진입 점수 65점 기반"
+              },
+              {
+                "timestamp": "2026-03-01 13:00",
+                "factor": "사후 경로",
+                "delta": 2,
+                "reason": "최대 유리구간 +4.8% 반영"
+              },
+              {
+                "timestamp": "2026-03-01 15:00",
+                "factor": "리스크 반영",
+                "delta": -1,
+                "reason": "최대 불리구간 -1.9% 반영"
+              }
+            ]
+          },
+          "hist-035420-20260220": {
+            "historyId": "hist-035420-20260220",
+            "summary": "NAVER 관찰 신호는 진입 점수 66점에서 시작했고, 현재 MFE +7.2%, MAE -2.4%를 기록했습니다. 검증 hitRate 54% 기준으로는 기본 시나리오 이상 구간으로 해석합니다.",
+            "invalidationReview": "무효화 기준은 아직 유지되고 있습니다. 다만 단기 과열 여부와 거래대금 둔화는 계속 점검해야 합니다.",
+            "afterActionReview": "사후 성과는 평균 검증치 +3.1%를 상회했습니다. 추세 지속형 패턴이 유효했던 케이스로 분류할 수 있습니다.",
+            "reviewChecklist": [
+              "초기 2.4% 역행 구간에서 무효화 방어가 유지됐는지 확인",
+              "11거래일 동안 거래대금과 추세가 신호 방향과 동행했는지 확인",
+              "MFE +7.2% 대비 MAE -2.4%가 허용 범위인지 복기"
+            ],
+            "metrics": [
+              {
+                "label": "사후 판정",
+                "value": "기준 상회",
+                "note": "결과 성공"
+              },
+              {
+                "label": "경로 효율",
+                "value": "양호",
+                "note": "MFE +7.2% / MAE -2.4%"
+              },
+              {
+                "label": "이벤트 커버리지",
+                "value": "취약",
+                "note": "공시 0건 / 큐레이션 0건 / 기사 0건"
+              }
+            ],
+            "chartSnapshot": [
+              {
+                "label": "D1",
+                "price": 222500
+              },
+              {
+                "label": "D2",
+                "price": 219830
+              },
+              {
+                "label": "D3",
+                "price": 228908
+              },
+              {
+                "label": "D4",
+                "price": 232112
+              },
+              {
+                "label": "D5",
+                "price": 235316
+              },
+              {
+                "label": "D6",
+                "price": 236651
+              }
+            ],
+            "historicalNews": [],
+            "scoreLog": [
+              {
+                "timestamp": "2026-02-20 09:00",
+                "factor": "초기 구조",
+                "delta": 4,
+                "reason": "초기 진입 점수 48점 기반"
+              },
+              {
+                "timestamp": "2026-02-20 13:00",
+                "factor": "사후 경로",
+                "delta": 4,
+                "reason": "최대 유리구간 +7.2% 반영"
+              },
+              {
+                "timestamp": "2026-02-20 15:00",
+                "factor": "리스크 반영",
+                "delta": -1,
+                "reason": "최대 불리구간 -2.4% 반영"
+              }
+            ]
+          },
+          "hist-068270-20260214": {
+            "historyId": "hist-068270-20260214",
+            "summary": "셀트리온 관찰 신호는 진입 점수 48점에서 시작했고, 현재 MFE +1.3%, MAE -6.8%를 기록했습니다. 검증 hitRate 38% 기준으로는 보수적 재평가 구간으로 해석합니다.",
+            "invalidationReview": "196,413원 하회 시 관찰 가설을 재평가합니다. 기준이 훼손되어 관찰 가설을 종료했습니다. 이후 동일 구조 재진입 여부는 별도 확인이 필요합니다.",
+            "afterActionReview": "관찰 신호 자체보다 무효화 거리와 이벤트 민감도가 더 크게 작용했습니다. 이후에는 초기 손익비 검증을 더 엄격하게 볼 필요가 있습니다.",
+            "reviewChecklist": [
+              "초기 6.8% 역행 구간에서 무효화 방어가 유지됐는지 확인",
+              "4거래일 동안 거래대금과 추세가 신호 방향과 동행했는지 확인",
+              "MFE +1.3% 대비 MAE -6.8%가 허용 범위인지 복기"
+            ],
+            "metrics": [
+              {
+                "label": "사후 판정",
+                "value": "기준 훼손",
+                "note": "결과 무효화"
+              },
+              {
+                "label": "경로 효율",
+                "value": "불리",
+                "note": "MFE +1.3% / MAE -6.8%"
+              },
+              {
+                "label": "이벤트 커버리지",
+                "value": "제한적",
+                "note": "공시 0건 / 큐레이션 0건 / 기사 4건"
+              }
+            ],
+            "chartSnapshot": [
+              {
+                "label": "D1",
+                "price": 212500
+              },
+              {
+                "label": "D2",
+                "price": 205275
+              },
+              {
+                "label": "D3",
+                "price": 214342
+              },
+              {
+                "label": "D4",
+                "price": 210205
+              }
+            ],
+            "historicalNews": [
+              {
+                "id": "068270-news-1",
+                "date": "2026-03-06",
+                "headline": "셀트리온, '스텔라라 시밀러' 3상결과 국제학술지 게재",
+                "impact": "중립",
+                "note": "바이오스펙테이터=이주연 기자 | 스텔라라 시밀러 ‘스테키마’ 3상 장기임상 데이터 공개..오리지널서 전환 및 장기투여 효과 \"유사성 확인\" 셀트리온( Celltrion )은 자가면역질환 치료제 ‘스테키마(Steqeyma...",
+                "source": "naver-search",
+                "url": "http://www.biospectator.com/view/news_view.php?varAtcId=28007",
+                "eventType": "news"
+              },
+              {
+                "id": "068270-news-2",
+                "date": "2026-03-06",
+                "headline": "셀트리온 최대주주 셀트리온홀딩스, 셀트리온 주식 등의 수 12만7770주 증...",
+                "impact": "중립",
+                "note": "제약바이오 기업 셀트리온(068270)의 최대주주 셀트리온홀딩스는 셀트리온 주식 등 보유 상황을 6일 공시했다. 셀트리온홀딩스는 이번 보고서에서 셀트리온 주식 등의 수를 12만7770주 늘렸으며, 보유 비율은 0.04...",
+                "source": "naver-search",
+                "url": "https://www.digitaltoday.co.kr/news/articleView.html?idxno=638120",
+                "eventType": "news"
+              },
+              {
+                "id": "068270-news-3",
+                "date": "2026-03-06",
+                "headline": "'창업 공신' 김형기 셀트리온 부회장 퇴임…\"글로벌 직판 체제 구축\"",
+                "impact": "중립",
+                "note": "셀트리온 헬스케어의 합병 이후 안정화에 기여했다. 지난해부터 셀트리온 은 영업이익률 상승 등 실적 측면에서 합병 효과가 본격화했고, 바이오시밀러에서 신약으로 영역을 넓히며 새로운 성장 단계에 진입했다.",
+                "source": "naver-search",
+                "url": "https://www.mt.co.kr/thebio/2026/03/06/2026030617395786444",
+                "eventType": "news"
+              },
+              {
+                "id": "068270-news-4",
+                "date": "2026-03-06",
+                "headline": "셀트리온 , 자사주 911만주 소각 추진... 1조 9,268억원 규모",
+                "impact": "중립",
+                "note": "셀트리온 은 앞서 공시한 제 35기 정기주주총회 안건에서 주식 매수선택권(스톡옵션) 보상 목적 보유분을 제외한 약 611만주를 소각하는 내용의 '자기 주식 보유처분 계획 승인 및 소각 안건'을 상정했다. 해당 목적으로...",
+                "source": "naver-search",
+                "url": "https://www.gukjenews.com/news/articleView.html?idxno=3522166",
+                "eventType": "news"
+              }
+            ],
+            "scoreLog": [
+              {
+                "timestamp": "2026-02-14 09:00",
+                "factor": "초기 구조",
+                "delta": 5,
+                "reason": "초기 진입 점수 59.1점 기반"
+              },
+              {
+                "timestamp": "2026-02-14 13:00",
+                "factor": "사후 경로",
+                "delta": 1,
+                "reason": "최대 유리구간 +1.3% 반영"
+              },
+              {
+                "timestamp": "2026-02-14 15:00",
+                "factor": "리스크 반영",
+                "delta": -3,
+                "reason": "최대 불리구간 -6.8% 반영"
+              }
+            ]
+          }
+        }
+      }
+    }
+  }
+]

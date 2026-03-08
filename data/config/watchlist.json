@@ -189,6 +189,86 @@
       "minArticleScore": 14,
       "market": "KOSPI",
       "dartCorpCode": "00413046"
+    },
+    {
+      "ticker": "000660",
+      "company": "SK하이닉스",
+      "sector": "반도체",
+      "marketSymbol": "000660.KS",
+      "newsQuery": "SK하이닉스",
+      "newsQueries": [
+        "SK hynix",
+        "SK hynix Korea"
+      ],
+      "newsQueriesKr": [
+        "\"SK하이닉스\" 주식",
+        "\"SK하이닉스\" 반도체",
+        "\"SK하이닉스\" 실적"
+      ],
+      "requiredKeywords": [
+        "sk하이닉스",
+        "sk hynix",
+        "000660"
+      ],
+      "contextKeywords": [
+        "반도체",
+        "HBM",
+        "메모리",
+        "DRAM",
+        "낸드",
+        "실적"
+      ],
+      "blockedKeywords": [
+        "미국주식",
+        "채용"
+      ],
+      "blockedDomains": [],
+      "preferredDomains": [
+        "hankyung.com",
+        "mk.co.kr",
+        "edaily.co.kr",
+        "yna.co.kr"
+      ],
+      "minArticleScore": 14,
+      "market": "KOSPI",
+      "dartCorpCode": "00164779"
+    },
+    {
+      "ticker": "005380",
+      "company": "현대차",
+      "sector": "자동차",
+      "marketSymbol": "005380.KS",
+      "newsQuery": "현대차",
+      "newsQueries": [
+        "현대차"
+      ],
+      "newsQueriesKr": [
+        "\"현대차\" 주식",
+        "\"현대차\" 자동차",
+        "\"현대차\" 실적"
+      ],
+      "requiredKeywords": [
+        "현대차",
+        "현대자동차",
+        "Hyundai Motor",
+        "005380"
+      ],
+      "contextKeywords": [
+        "자동차",
+        "실적",
+        "주가"
+      ],
+      "blockedKeywords": [],
+      "blockedDomains": [],
+      "preferredDomains": [
+        "hankyung.com",
+        "mk.co.kr",
+        "edaily.co.kr",
+        "yna.co.kr"
+      ],
+      "minArticleScore": 12,
+      "market": "KOSPI",
+      "dartCorpCode": ""
     }
   ]
 }
