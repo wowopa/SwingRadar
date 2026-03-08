@@ -148,6 +148,34 @@ export function StatusTab({
           </CardContent>
         </Card>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>최근 배치 요약</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {dailyCandidates?.batchSummaries.length ? (
+            dailyCandidates.batchSummaries.slice(0, 5).map((batch) => (
+              <div key={`${batch.batch}-${batch.generatedAt}`} className="rounded-2xl border border-border/70 bg-secondary/35 p-4">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <p className="text-sm font-semibold text-white">
+                    배치 {batch.batch} | 종목 {batch.count}개 | tracking {batch.trackingRows}행
+                  </p>
+                  <p className="text-xs text-muted-foreground">{formatDateTime(batch.generatedAt)}</p>
+                </div>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  대표 종목 {batch.topTicker ?? "없음"}
+                </p>
+                {batch.warnings?.length ? (
+                  <p className="mt-2 text-xs text-destructive">{batch.warnings.join(" | ")}</p>
+                ) : null}
+              </div>
+            ))
+          ) : (
+            <p className="text-sm text-muted-foreground">아직 기록된 배치 요약이 없습니다.</p>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

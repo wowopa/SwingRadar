@@ -17,11 +17,7 @@ vi.mock("@/lib/symbols/master", () => ({
   buildSymbolSuggestion: mocks.buildSymbolSuggestion
 }));
 
-import {
-  addSymbolToWatchlist,
-  listWatchlistEntries,
-  updateWatchlistEntry
-} from "@/lib/server/watchlist-manager";
+import { addSymbolToWatchlist, listWatchlistEntries, updateWatchlistEntry } from "@/lib/server/watchlist-manager";
 
 async function readJsonFile<T>(filePath: string): Promise<T> {
   return JSON.parse(await readFile(filePath, "utf8")) as T;
@@ -51,7 +47,7 @@ describe("watchlist manager", () => {
               marketSymbol: "005930.KS",
               newsQuery: "Samsung",
               newsQueries: ["Samsung"],
-              newsQueriesKr: ['"Samsung" 주식'],
+              newsQueriesKr: ['"Samsung" \uC8FC\uC2DD'],
               requiredKeywords: ["Samsung"],
               contextKeywords: ["Semiconductor"],
               blockedKeywords: [],
@@ -69,10 +65,18 @@ describe("watchlist manager", () => {
       "utf8"
     );
 
-    mocks.execFile.mockImplementation((_file, _args, _options, callback?: (error: Error | null, result: { stdout: string; stderr: string }) => void) => {
-      callback?.(null, { stdout: "", stderr: "" });
-      return {} as never;
-    });
+    mocks.execFile.mockImplementation(
+      (
+        _file,
+        _args,
+        _options,
+        callback?: (error: Error | null, result: { stdout: string; stderr: string }) => void
+      ) => {
+        callback?.(null, { stdout: "", stderr: "" });
+        return {} as never;
+      }
+    );
+
     mocks.buildSymbolSuggestion.mockReturnValue({
       ticker: "035420",
       company: "NAVER",
@@ -80,7 +84,7 @@ describe("watchlist manager", () => {
       market: "KOSPI",
       newsQuery: "NAVER",
       newsQueries: ["NAVER", "NAVER Korea"],
-      newsQueriesKr: ['"NAVER" 주식', '"NAVER" 인터넷', '"NAVER" 실적'],
+      newsQueriesKr: ['"NAVER" \uC8FC\uC2DD', '"NAVER" \uC778\uD130\uB137', '"NAVER" \uC2E4\uC801'],
       requiredKeywords: ["NAVER", "035420"],
       contextKeywords: ["Internet", "AI"],
       blockedKeywords: ["recruiting"],
@@ -121,7 +125,7 @@ describe("watchlist manager", () => {
       status: "ready",
       newsQuery: "Samsung",
       newsQueries: ["Samsung"],
-      newsQueriesKr: ['"Samsung" 주식'],
+      newsQueriesKr: ['"Samsung" \uC8FC\uC2DD'],
       requiredKeywords: ["Samsung"],
       contextKeywords: ["Semiconductor"],
       blockedKeywords: [],
@@ -133,7 +137,7 @@ describe("watchlist manager", () => {
 
     expect(result).toMatchObject({
       added: false,
-      estimate: "이미 감시 리스트에 포함되어 있습니다.",
+      estimate: "\uC774\uBBF8 \uAC10\uC2DC \uB9AC\uC2A4\uD2B8\uC5D0 \uD3EC\uD568\uB418\uC5B4 \uC788\uC2B5\uB2C8\uB2E4.",
       timings: null
     });
     expect(mocks.execFile).not.toHaveBeenCalled();
@@ -149,7 +153,7 @@ describe("watchlist manager", () => {
       status: "ready",
       newsQuery: "NAVER",
       newsQueries: ["NAVER"],
-      newsQueriesKr: ['"NAVER" 주식'],
+      newsQueriesKr: ['"NAVER" \uC8FC\uC2DD'],
       requiredKeywords: ["NAVER"],
       contextKeywords: ["Internet"],
       blockedKeywords: [],
@@ -167,7 +171,9 @@ describe("watchlist manager", () => {
       newsQuery: "NAVER",
       marketSymbol: "035420.KS"
     });
-    expect(result.estimate).toBe("일반적으로 15초~60초 안에 분석 페이지 반영이 시작됩니다.");
+    expect(result.estimate).toBe(
+      "\uC77C\uBC18\uC801\uC73C\uB85C 15\uCD08~60\uCD08 \uC548\uC5D0 \uBD84\uC11D \uD398\uC774\uC9C0 \uBC18\uC601\uC774 \uC2DC\uC791\uB429\uB2C8\uB2E4."
+    );
     expect(document.tickers.map((item) => item.ticker)).toEqual(["005930", "035420"]);
     expect(mocks.execFile).toHaveBeenCalledTimes(2);
   });
