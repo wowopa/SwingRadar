@@ -1,7 +1,8 @@
 import symbolMasterData from "@/data/config/symbol-master.json";
 
 export type SymbolSearchStatus = "ready" | "pending";
-export type SymbolMarket = "KOSPI" | "KOSDAQ";
+export type SymbolMarket = "KOSPI" | "KOSDAQ" | "NYSE" | "NASDAQ" | "AMEX";
+export type SymbolRegion = "KR" | "US";
 
 export type SymbolMasterItem = {
   ticker: string;
@@ -9,6 +10,7 @@ export type SymbolMasterItem = {
   aliases: string[];
   sector: string;
   market: SymbolMarket;
+  region: SymbolRegion;
   status: SymbolSearchStatus;
   newsQuery: string;
   newsQueries: string[];
@@ -46,6 +48,7 @@ type RawSymbolMasterItem = {
   aliases?: string[];
   sector: string;
   market: SymbolMarket;
+  region?: SymbolRegion;
   status: SymbolSearchStatus;
   newsQuery?: string;
   newsQueries?: string[];
@@ -84,6 +87,7 @@ function hydrateSymbol(item: RawSymbolMasterItem): SymbolMasterItem {
     aliases,
     sector: item.sector,
     market: item.market,
+    region: item.region ?? (item.market === "KOSPI" || item.market === "KOSDAQ" ? "KR" : "US"),
     status: item.status,
     newsQuery,
     newsQueries,
@@ -99,6 +103,18 @@ function hydrateSymbol(item: RawSymbolMasterItem): SymbolMasterItem {
 }
 
 export const symbolMaster: SymbolMasterItem[] = (symbolMasterData as RawSymbolMasterItem[]).map(hydrateSymbol);
+
+export function buildMarketSymbol(ticker: string, market: SymbolMarket) {
+  const suffixByMarket: Record<SymbolMarket, string> = {
+    KOSPI: "KS",
+    KOSDAQ: "KQ",
+    NYSE: "NY",
+    NASDAQ: "NQ",
+    AMEX: "AM"
+  };
+
+  return `${ticker}.${suffixByMarket[market]}`;
+}
 
 function normalize(value: string) {
   return value

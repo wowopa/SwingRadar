@@ -10,7 +10,7 @@ type SearchItem = {
   ticker: string;
   company: string;
   sector: string;
-  market: "KOSPI" | "KOSDAQ";
+  market: "KOSPI" | "KOSDAQ" | "NYSE" | "NASDAQ" | "AMEX";
   status: "ready" | "pending";
 };
 

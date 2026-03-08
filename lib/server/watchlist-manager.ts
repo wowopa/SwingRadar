@@ -3,7 +3,7 @@ import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { promisify } from "node:util";
 
-import { buildSymbolSuggestion, type SymbolMasterItem } from "@/lib/symbols/master";
+import { buildMarketSymbol, buildSymbolSuggestion, type SymbolMasterItem } from "@/lib/symbols/master";
 
 const execFileAsync = promisify(execFile);
 const projectRoot = process.cwd();
@@ -42,10 +42,6 @@ function getWatchlistPath() {
     : path.join(projectRoot, "data", "config", "watchlist.json");
 }
 
-function buildMarketSymbol(symbol: SymbolMasterItem) {
-  return `${symbol.ticker}.${symbol.market === "KOSPI" ? "KS" : "KQ"}`;
-}
-
 function buildWatchlistEntry(symbol: SymbolMasterItem): WatchlistEntry {
   const suggestion = buildSymbolSuggestion(symbol);
 
@@ -53,7 +49,7 @@ function buildWatchlistEntry(symbol: SymbolMasterItem): WatchlistEntry {
     ticker: symbol.ticker,
     company: symbol.company,
     sector: suggestion.sector,
-    marketSymbol: buildMarketSymbol(symbol),
+    marketSymbol: buildMarketSymbol(symbol.ticker, symbol.market),
     newsQuery: suggestion.newsQuery,
     newsQueries: suggestion.newsQueries,
     newsQueriesKr: suggestion.newsQueriesKr,

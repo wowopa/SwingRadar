@@ -8,7 +8,7 @@ import { listUniverseCandidateReviews, saveUniverseCandidateReview } from "@/lib
 import { buildResponseMeta, withRouteTelemetry } from "@/lib/server/telemetry";
 
 const reviewPayloadSchema = z.object({
-  ticker: z.string().min(6).max(6),
+  ticker: z.string().trim().min(1).max(16).regex(/^[A-Za-z0-9._-]+$/),
   status: z.enum(["new", "reviewing", "hold", "promoted", "rejected"]),
   note: z.string().max(1000).optional()
 });

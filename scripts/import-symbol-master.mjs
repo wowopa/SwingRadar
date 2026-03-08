@@ -1,4 +1,4 @@
-﻿import { readFile, writeFile } from "node:fs/promises";
+import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
@@ -6,13 +6,14 @@ import { fileURLToPath } from "node:url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const projectRoot = path.resolve(__dirname, "..");
+const allowedMarkets = new Set(["KOSPI", "KOSDAQ", "NYSE", "NASDAQ", "AMEX"]);
 
 function printHelp() {
   console.log(`
 SWING-RADAR symbol master importer
 
 Usage:
-  node scripts/import-symbol-master.mjs --input <csv-path> [--output <json-path>] [--status <ready|pending>]
+  node scripts/import-symbol-master.mjs --input <csv-path> [--output <json-path>] [--status <ready|pending>] [--merge]
 
 Expected CSV columns:
   ticker,company,market,sector,dartCorpCode,aliases
@@ -22,7 +23,8 @@ Expected CSV columns:
 function parseArgs(argv) {
   const options = {
     output: path.join(projectRoot, "data", "config", "symbol-master.json"),
-    status: "pending"
+    status: "pending",
+    merge: false
   };
 
   for (let index = 0; index < argv.length; index += 1) {
@@ -44,6 +46,10 @@ function parseArgs(argv) {
     if (arg === "--status") {
       options.status = argv[index + 1];
       index += 1;
+      continue;
+    }
+    if (arg === "--merge") {
+      options.merge = true;
       continue;
     }
     throw new Error(`Unknown argument: ${arg}`);
@@ -89,12 +95,29 @@ function parseCsvLine(line) {
 }
 
 function normalizeMarket(value) {
-  if (value === "KOSDAQ") return "KOSDAQ";
-  return "KOSPI";
+  const normalized = value.trim().toUpperCase();
+
+  if (!allowedMarkets.has(normalized)) {
+    throw new Error(`Unsupported market: ${value}`);
+  }
+
+  return normalized;
+}
+
+function normalizeRegion(market) {
+  return market === "KOSPI" || market === "KOSDAQ" ? "KR" : "US";
 }
 
 function toRecord(headers, values) {
   return Object.fromEntries(headers.map((header, index) => [header, values[index] ?? ""]));
+}
+
+async function loadExisting(outputPath) {
+  try {
+    return JSON.parse((await readFile(outputPath, "utf8")).replace(/^\uFEFF/, ""));
+  } catch {
+    return [];
+  }
 }
 
 async function main() {
@@ -109,22 +132,41 @@ async function main() {
   const headers = parseCsvLine(lines[0]);
   const items = lines.slice(1).map((line) => toRecord(headers, parseCsvLine(line)));
 
-  const master = items.map((item) => ({
-    ticker: item.ticker,
-    company: item.company,
-    aliases: item.aliases ? item.aliases.split("|").map((value) => value.trim()).filter(Boolean) : [],
-    sector: item.sector || "미분류",
-    market: normalizeMarket(item.market),
-    status: options.status,
-    dartCorpCode: item.dartCorpCode || undefined
-  }));
+  const imported = items.map((item) => {
+    const market = normalizeMarket(item.market);
 
-  await writeFile(path.resolve(options.output), `${JSON.stringify(master, null, 2)}\n`, "utf8");
+    return {
+      ticker: item.ticker.trim().toUpperCase(),
+      company: item.company.trim(),
+      aliases: item.aliases ? item.aliases.split("|").map((value) => value.trim()).filter(Boolean) : [],
+      sector: item.sector || "미분류",
+      market,
+      region: normalizeRegion(market),
+      status: options.status,
+      dartCorpCode: item.dartCorpCode || undefined
+    };
+  });
+
+  const outputPath = path.resolve(options.output);
+  const master = options.merge ? await loadExisting(outputPath) : [];
+  const merged = new Map(master.map((item) => [item.ticker, item]));
+
+  for (const item of imported) {
+    merged.set(item.ticker, {
+      ...merged.get(item.ticker),
+      ...item
+    });
+  }
+
+  const nextMaster = [...merged.values()].sort((left, right) => left.ticker.localeCompare(right.ticker));
+  await writeFile(outputPath, `${JSON.stringify(nextMaster, null, 2)}\n`, "utf8");
 
   console.log("Symbol master imported.");
   console.log(`- input: ${path.resolve(options.input)}`);
-  console.log(`- output: ${path.resolve(options.output)}`);
-  console.log(`- count: ${master.length}`);
+  console.log(`- output: ${outputPath}`);
+  console.log(`- imported: ${imported.length}`);
+  console.log(`- total: ${nextMaster.length}`);
+  console.log(`- merge: ${options.merge ? "yes" : "no"}`);
 }
 
 main().catch((error) => {

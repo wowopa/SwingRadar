@@ -60,17 +60,39 @@ function unique(values) {
   return [...new Set(values.map((value) => value.trim()).filter(Boolean))];
 }
 
+function buildMarketSymbol(item) {
+  const suffixByMarket = {
+    KOSPI: "KS",
+    KOSDAQ: "KQ",
+    NYSE: "NY",
+    NASDAQ: "NQ",
+    AMEX: "AM"
+  };
+
+  return `${item.ticker}.${suffixByMarket[item.market] ?? item.market}`;
+}
+
+function defaultNewsQueriesKr(item) {
+  return item.market === "KOSPI" || item.market === "KOSDAQ"
+    ? [`"${item.company}" 주식`, `"${item.company}" ${item.sector}`, `"${item.company}" 실적`]
+    : [`"${item.company}" stock`, `"${item.company}" earnings`, `"${item.company}" ${item.sector}`];
+}
+
+function defaultContextKeywords(item) {
+  return item.market === "KOSPI" || item.market === "KOSDAQ" ? [item.sector, "실적", "주가"] : [item.sector, "earnings", "stock"];
+}
+
 function buildEntry(item) {
   return {
     ticker: item.ticker,
     company: item.company,
     sector: item.sector,
-    marketSymbol: `${item.ticker}.${item.market === "KOSPI" ? "KS" : "KQ"}`,
+    marketSymbol: buildMarketSymbol(item),
     newsQuery: item.newsQuery || item.company,
     newsQueries: unique(item.newsQueries || [item.newsQuery || item.company]),
-    newsQueriesKr: unique(item.newsQueriesKr || [`"${item.company}" 주식`, `"${item.company}" ${item.sector}`, `"${item.company}" 실적`]),
+    newsQueriesKr: unique(item.newsQueriesKr || defaultNewsQueriesKr(item)),
     requiredKeywords: unique(item.requiredKeywords || [item.company, ...(item.aliases || []), item.ticker]),
-    contextKeywords: unique(item.contextKeywords || [item.sector, "실적", "주가"]),
+    contextKeywords: unique(item.contextKeywords || defaultContextKeywords(item)),
     blockedKeywords: unique(item.blockedKeywords || []),
     blockedDomains: unique(item.blockedDomains || []),
     preferredDomains: unique(item.preferredDomains || ["hankyung.com", "mk.co.kr", "edaily.co.kr", "yna.co.kr"]),
@@ -105,6 +127,7 @@ async function main() {
   console.log(`- input: ${inputPath}`);
   console.log(`- output: ${outputPath}`);
   console.log(`- count: ${document.count}`);
+  console.log(`- markets: ${options.markets.join(",")}`);
 }
 
 main().catch((error) => {

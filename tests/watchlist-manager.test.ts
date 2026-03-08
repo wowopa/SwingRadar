@@ -6,7 +6,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   execFile: vi.fn(),
-  buildSymbolSuggestion: vi.fn()
+  buildSymbolSuggestion: vi.fn(),
+  buildMarketSymbol: vi.fn()
 }));
 
 vi.mock("node:child_process", () => ({
@@ -14,7 +15,8 @@ vi.mock("node:child_process", () => ({
 }));
 
 vi.mock("@/lib/symbols/master", () => ({
-  buildSymbolSuggestion: mocks.buildSymbolSuggestion
+  buildSymbolSuggestion: mocks.buildSymbolSuggestion,
+  buildMarketSymbol: mocks.buildMarketSymbol
 }));
 
 import { addSymbolToWatchlist, listWatchlistEntries, updateWatchlistEntry } from "@/lib/server/watchlist-manager";
@@ -76,6 +78,17 @@ describe("watchlist manager", () => {
         return {} as never;
       }
     );
+    mocks.buildMarketSymbol.mockImplementation((ticker: string, market: string) => {
+      const suffixByMarket: Record<string, string> = {
+        KOSPI: "KS",
+        KOSDAQ: "KQ",
+        NYSE: "NY",
+        NASDAQ: "NQ",
+        AMEX: "AM"
+      };
+
+      return `${ticker}.${suffixByMarket[market] ?? market}`;
+    });
 
     mocks.buildSymbolSuggestion.mockReturnValue({
       ticker: "035420",
@@ -176,6 +189,50 @@ describe("watchlist manager", () => {
     );
     expect(document.tickers.map((item) => item.ticker)).toEqual(["005930", "035420"]);
     expect(mocks.execFile).toHaveBeenCalledTimes(2);
+  });
+
+  it("builds the correct market symbol for non-KRX markets", async () => {
+    mocks.buildSymbolSuggestion.mockReturnValueOnce({
+      ticker: "AAPL",
+      company: "Apple Inc",
+      sector: "Consumer Electronics",
+      market: "NASDAQ",
+      newsQuery: "Apple",
+      newsQueries: ["Apple", "Apple Inc"],
+      newsQueriesKr: ['"Apple" stock'],
+      requiredKeywords: ["Apple", "AAPL"],
+      contextKeywords: ["iPhone", "earnings"],
+      blockedKeywords: [],
+      preferredDomains: ["wsj.com"],
+      blockedDomains: [],
+      minArticleScore: 15,
+      dartCorpCode: ""
+    });
+
+    const result = await addSymbolToWatchlist({
+      ticker: "AAPL",
+      company: "Apple Inc",
+      aliases: ["Apple"],
+      sector: "Consumer Electronics",
+      market: "NASDAQ",
+      status: "pending",
+      newsQuery: "Apple",
+      newsQueries: ["Apple"],
+      newsQueriesKr: ['"Apple" stock'],
+      requiredKeywords: ["Apple", "AAPL"],
+      contextKeywords: ["iPhone"],
+      blockedKeywords: [],
+      preferredDomains: ["wsj.com"],
+      blockedDomains: [],
+      minArticleScore: 15,
+      dartCorpCode: ""
+    });
+
+    expect(result.entry).toMatchObject({
+      ticker: "AAPL",
+      marketSymbol: "AAPL.NQ",
+      market: "NASDAQ"
+    });
   });
 
   it("updates metadata and skips rerun when requested", async () => {
