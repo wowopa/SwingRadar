@@ -98,9 +98,9 @@ describe("getDataProvider", () => {
       fallbackTriggered: false
     });
 
-    mocks.applyNewsCurationToRecommendations.mockImplementation(async (payload) => payload);
-    mocks.applyNewsCurationToAnalysis.mockImplementation(async (payload) => payload);
-    mocks.applyNewsCurationToTracking.mockImplementation(async (payload) => payload);
+    mocks.applyNewsCurationToRecommendations.mockImplementation((payload: unknown) => Promise.resolve(payload));
+    mocks.applyNewsCurationToAnalysis.mockImplementation((payload: unknown) => Promise.resolve(payload));
+    mocks.applyNewsCurationToTracking.mockImplementation((payload: unknown) => Promise.resolve(payload));
   });
 
   afterEach(() => {

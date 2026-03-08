@@ -24,10 +24,7 @@ export const editorialDraftSchema = z.object({
 
 export const editorialPublishSchema = z.object({
   ingestToPostgres: z.boolean().optional().default(false),
-  approvalStage: z
-    .enum(["editorial_review", "risk_review", "final_publish"])
-    .optional()
-    .default("final_publish")
+  approvalStage: z.enum(["editorial_review", "risk_review", "final_publish"]).optional().default("final_publish")
 });
 
 export const editorialRollbackSchema = z.object({

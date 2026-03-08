@@ -1,5 +1,5 @@
-import { mkdir, readFile, writeFile } from "fs/promises";
 import { randomUUID } from "crypto";
+import { mkdir, readFile, writeFile } from "fs/promises";
 import path from "path";
 
 import type {
@@ -101,7 +101,7 @@ function groupByTicker(items: CuratedNewsItem[]) {
 function toAnalysisNews(item: CuratedNewsItem): AnalysisResponseDto["items"][number]["newsImpact"][number] {
   return {
     headline: item.headline,
-    impact: item.impact as AnalysisResponseDto["items"][number]["newsImpact"][number]["impact"],
+    impact: item.impact,
     summary: item.operatorNote
       ? `[운영자 큐레이션] ${item.summary} | ${item.operatorNote}`
       : `[운영자 큐레이션] ${item.summary}`,
@@ -117,7 +117,7 @@ function toTrackingNews(item: CuratedNewsItem): TrackingResponseDto["details"][s
     id: item.id,
     date: item.date,
     headline: item.headline,
-    impact: item.impact as TrackingResponseDto["details"][string]["historicalNews"][number]["impact"],
+    impact: item.impact,
     note: item.operatorNote
       ? `${item.summary} | source ${item.source} | ${item.operatorNote}`
       : `${item.summary} | source ${item.source}`,
@@ -125,6 +125,22 @@ function toTrackingNews(item: CuratedNewsItem): TrackingResponseDto["details"][s
     url: item.url,
     eventType: "curated-news"
   };
+}
+
+function enrichDataQuality(
+  dataQuality: AnalysisResponseDto["items"][number]["dataQuality"],
+  mergedNewsCount: number,
+  curatedCount: number
+) {
+  return dataQuality.map((entry) =>
+    entry.label === "뉴스"
+      ? {
+          ...entry,
+          value: `${mergedNewsCount}건`,
+          note: `${curatedCount}건의 운영자 큐레이션 포함`
+        }
+      : entry
+  );
 }
 
 export async function loadNewsCuration(): Promise<NewsCurationDocument> {
@@ -211,20 +227,10 @@ export async function applyNewsCurationToAnalysis(
 
       const mergedNews = dedupeNews([...curated.map(toAnalysisNews), ...item.newsImpact]).slice(0, 6);
 
-      const nextDataQuality = item.dataQuality.map((entry) =>
-        entry.label === "뉴스"
-          ? {
-              ...entry,
-              value: `${mergedNews.length}건`,
-              note: `${curated.length}건의 운영자 큐레이션 포함`
-            }
-          : entry
-      );
-
       return {
         ...item,
         newsImpact: mergedNews,
-        dataQuality: nextDataQuality
+        dataQuality: enrichDataQuality(item.dataQuality, mergedNews.length, curated.length)
       };
     })
   };

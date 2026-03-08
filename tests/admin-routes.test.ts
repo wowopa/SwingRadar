@@ -63,6 +63,10 @@ function createRequest(url: string, init?: RequestInit) {
   });
 }
 
+async function parseJson<T>(response: Response): Promise<T> {
+  return JSON.parse(await response.text()) as T;
+}
+
 describe("admin routes", () => {
   let infoSpy: ReturnType<typeof vi.spyOn>;
 
@@ -88,7 +92,11 @@ describe("admin routes", () => {
       mocks.ingestSnapshotBundle.mockResolvedValue({ recommendations: 0, analysis: 0, tracking: 0 });
 
       const response = await postIngestRoute(createRequest("http://localhost/api/admin/ingest", { method: "POST" }));
-      const payload = await response.json();
+      const payload = await parseJson<{
+        ok: boolean;
+        requestId: string;
+        ingest: { recommendations: number; analysis: number; tracking: number };
+      }>(response);
 
       expect(response.status).toBe(200);
       expect(mocks.loadSnapshotBundleFromDisk).toHaveBeenCalledTimes(1);
@@ -117,7 +125,7 @@ describe("admin routes", () => {
       });
 
       const response = await getIngestRoute(createRequest("http://localhost/api/admin/ingest"));
-      const payload = await response.json();
+      const payload = await parseJson<{ code: string; requestId: string }>(response);
 
       expect(response.status).toBe(403);
       expect(mocks.recordAuditLog).toHaveBeenCalledWith(
@@ -150,7 +158,11 @@ describe("admin routes", () => {
           body: JSON.stringify({ ingestToPostgres: true, approvalStage: "risk_review" })
         })
       );
-      const payload = await response.json();
+      const payload = await parseJson<{
+        ok: boolean;
+        requestId: string;
+        publish: { id: string; diffCount: number };
+      }>(response);
 
       expect(response.status).toBe(200);
       expect(mocks.publishEditorialDraft).toHaveBeenCalledWith({
@@ -184,7 +196,11 @@ describe("admin routes", () => {
           })
         })
       );
-      const payload = await response.json();
+      const payload = await parseJson<{
+        ok: boolean;
+        requestId: string;
+        rollback: { historyId: string; diffCount: number };
+      }>(response);
 
       expect(response.status).toBe(200);
       expect(mocks.rollbackPublishedSnapshot).toHaveBeenCalledWith({
@@ -207,29 +223,33 @@ describe("admin routes", () => {
       mocks.getFeaturedSymbols.mockReturnValue([
         {
           ticker: "005930",
-          company: "삼성전자"
+          company: "Samsung"
         }
       ]);
-      mocks.listWatchlistEntries.mockResolvedValue([{ ticker: "005930", company: "삼성전자" }]);
+      mocks.listWatchlistEntries.mockResolvedValue([{ ticker: "005930", company: "Samsung" }]);
       mocks.getSymbolSuggestionByTicker.mockReturnValue({
         ticker: "005930",
-        newsQuery: "삼성전자",
-        newsQueries: ["삼성전자"]
+        newsQuery: "Samsung",
+        newsQueries: ["Samsung"]
       });
 
       const response = await getWatchlistRoute(createRequest("http://localhost/api/admin/watchlist"));
-      const payload = await response.json();
+      const payload = await parseJson<{
+        items: Array<{ ticker: string; company: string }>;
+        watchlist: Array<{ ticker: string; company: string }>;
+        suggestions: Record<string, { ticker: string; newsQuery: string }>;
+      }>(response);
 
       expect(response.status).toBe(200);
       expect(mocks.getFeaturedSymbols).toHaveBeenCalledWith(12);
       expect(mocks.searchSymbols).not.toHaveBeenCalled();
       expect(payload).toMatchObject({
-        items: [{ ticker: "005930", company: "삼성전자" }],
-        watchlist: [{ ticker: "005930", company: "삼성전자" }]
+        items: [{ ticker: "005930", company: "Samsung" }],
+        watchlist: [{ ticker: "005930", company: "Samsung" }]
       });
       expect(payload.suggestions["005930"]).toMatchObject({
         ticker: "005930",
-        newsQuery: "삼성전자"
+        newsQuery: "Samsung"
       });
     });
 
@@ -237,16 +257,16 @@ describe("admin routes", () => {
       mocks.searchSymbols.mockReturnValue([
         {
           ticker: "005930",
-          company: "삼성전자",
-          aliases: ["삼전"],
-          sector: "반도체",
+          company: "Samsung",
+          aliases: ["SEC"],
+          sector: "Semiconductor",
           market: "KOSPI",
           status: "ready",
-          newsQuery: "삼성전자",
-          newsQueries: ["삼성전자"],
-          newsQueriesKr: ['"삼성전자" 주식'],
-          requiredKeywords: ["삼성전자"],
-          contextKeywords: ["반도체"],
+          newsQuery: "Samsung",
+          newsQueries: ["Samsung"],
+          newsQueriesKr: ['"Samsung" stock'],
+          requiredKeywords: ["Samsung"],
+          contextKeywords: ["Semiconductor"],
           blockedKeywords: [],
           preferredDomains: [],
           blockedDomains: [],
@@ -256,7 +276,7 @@ describe("admin routes", () => {
       ]);
       mocks.addSymbolToWatchlist.mockResolvedValue({
         added: true,
-        entry: { ticker: "005930", company: "삼성전자" },
+        entry: { ticker: "005930", company: "Samsung" },
         estimate: "ok",
         timings: { pipelineMs: 100, ingestMs: 50, totalMs: 150 }
       });
@@ -267,10 +287,14 @@ describe("admin routes", () => {
           body: JSON.stringify({ ticker: "005930" })
         })
       );
-      const payload = await response.json();
+      const payload = await parseJson<{
+        ok: boolean;
+        requestId: string;
+        result: { added: boolean };
+      }>(response);
 
       expect(response.status).toBe(200);
-      expect(mocks.addSymbolToWatchlist).toHaveBeenCalledWith(expect.objectContaining({ ticker: "005930", company: "삼성전자" }));
+      expect(mocks.addSymbolToWatchlist).toHaveBeenCalledWith(expect.objectContaining({ ticker: "005930", company: "Samsung" }));
       expect(mocks.recordAuditLog).toHaveBeenCalledWith(
         expect.objectContaining({
           eventType: "watchlist_add",
@@ -288,14 +312,14 @@ describe("admin routes", () => {
     it("normalizes watchlist metadata updates before calling the manager", async () => {
       mocks.getSymbolSuggestionByTicker.mockReturnValue({
         ticker: "005930",
-        company: "삼성전자",
-        sector: "반도체",
+        company: "Samsung",
+        sector: "Semiconductor",
         market: "KOSPI",
-        newsQuery: "삼성전자",
-        newsQueries: ["삼성전자", "Samsung Electronics"],
-        newsQueriesKr: ['"삼성전자" 주식'],
-        requiredKeywords: ["삼성전자"],
-        contextKeywords: ["반도체"],
+        newsQuery: "Samsung",
+        newsQueries: ["Samsung", "Samsung Electronics"],
+        newsQueriesKr: ['"Samsung" stock'],
+        requiredKeywords: ["Samsung"],
+        contextKeywords: ["Semiconductor"],
         blockedKeywords: [],
         preferredDomains: ["hankyung.com"],
         blockedDomains: [],
@@ -315,12 +339,12 @@ describe("admin routes", () => {
           method: "PUT",
           body: JSON.stringify({
             ticker: "005930",
-            sector: " 반도체 ",
-            newsQuery: " 삼성전자 ",
+            sector: " Semiconductor ",
+            newsQuery: " Samsung ",
             dartCorpCode: "00126380",
-            requiredKeywords: ["삼성전자", ""],
-            contextKeywords: ["반도체", ""],
-            blockedKeywords: ["루머", ""],
+            requiredKeywords: ["Samsung", ""],
+            contextKeywords: ["Semiconductor", ""],
+            blockedKeywords: ["Rumor", ""],
             blockedDomains: ["spam.com", ""],
             preferredDomains: ["hankyung.com", ""],
             minArticleScore: 20,
@@ -328,23 +352,27 @@ describe("admin routes", () => {
           })
         })
       );
-      const payload = await response.json();
+      const payload = await parseJson<{
+        ok: boolean;
+        requestId: string;
+        result: { updated: boolean };
+      }>(response);
 
       expect(response.status).toBe(200);
       expect(mocks.updateWatchlistEntry).toHaveBeenCalledWith(
         "005930",
         {
-          sector: "반도체",
-          newsQuery: "삼성전자",
+          sector: "Semiconductor",
+          newsQuery: "Samsung",
           dartCorpCode: "00126380",
-          requiredKeywords: ["삼성전자"],
-          contextKeywords: ["반도체"],
-          blockedKeywords: ["루머"],
+          requiredKeywords: ["Samsung"],
+          contextKeywords: ["Semiconductor"],
+          blockedKeywords: ["Rumor"],
           blockedDomains: ["spam.com"],
           preferredDomains: ["hankyung.com"],
           minArticleScore: 20,
-          newsQueries: ["삼성전자", "Samsung Electronics"],
-          newsQueriesKr: ['"삼성전자" 주식', '"삼성전자" 반도체', '"삼성전자" 실적']
+          newsQueries: ["Samsung", "Samsung Electronics"],
+          newsQueriesKr: ['"Samsung" 주식', '"Samsung" Semiconductor', '"Samsung" 실적']
         },
         { rerunPipeline: false }
       );
