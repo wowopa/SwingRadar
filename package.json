@@ -19,6 +19,8 @@
     "etl:fetch:disclosures": "node scripts/fetch-disclosures-source.mjs",
     "etl:sync:external": "node scripts/sync-external-raw.mjs",
     "etl:refresh:external": "node scripts/refresh-external-pipeline.mjs",
+    "ops:check": "node scripts/ops-health-check.mjs",
+    "ops:heal": "node scripts/ops-health-check.mjs --auto-recover",
     "symbols:import": "node scripts/import-symbol-master.mjs",
     "universe:watchlist": "node scripts/build-universe-watchlist.mjs",
     "universe:scan": "node scripts/scan-universe-batches.mjs",
