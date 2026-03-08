@@ -62,15 +62,17 @@ const config: Config = {
         sm: "calc(var(--radius) - 4px)"
       },
       backgroundImage: {
-        "radar-grid": "radial-gradient(circle at top, hsl(var(--primary) / 0.18), transparent 42%), linear-gradient(hsl(var(--foreground) / 0.03) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--foreground) / 0.03) 1px, transparent 1px)",
-        "panel-sheen": "linear-gradient(135deg, hsl(var(--primary) / 0.14), transparent 35%, transparent 65%, hsl(var(--foreground) / 0.03))"
+        "radar-grid":
+          "radial-gradient(circle at top left, hsl(var(--accent) / 0.35), transparent 28%), radial-gradient(circle at top right, hsl(var(--primary) / 0.12), transparent 24%), linear-gradient(hsl(var(--foreground) / 0.025) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--foreground) / 0.025) 1px, transparent 1px)",
+        "panel-sheen":
+          "linear-gradient(135deg, hsl(var(--accent) / 0.28), transparent 30%, transparent 70%, hsl(var(--primary) / 0.06))"
       },
       backgroundSize: {
         "radar-grid": "auto, 32px 32px, 32px 32px"
       },
       boxShadow: {
-        glow: "0 0 0 1px hsl(var(--primary) / 0.10), 0 20px 60px hsl(220 50% 4% / 0.45)",
-        panel: "0 12px 30px hsl(220 50% 4% / 0.35)"
+        glow: "0 1px 0 hsl(0 0% 100% / 0.7) inset, 0 18px 44px hsl(24 28% 35% / 0.12)",
+        panel: "0 18px 40px hsl(24 24% 40% / 0.10), 0 2px 8px hsl(24 18% 30% / 0.06)"
       },
       fontFamily: {
         sans: ["Pretendard", "system-ui", "sans-serif"]

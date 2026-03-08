@@ -4,30 +4,30 @@
 
 @layer base {
   :root {
-    --background: 215 56% 8%;
-    --foreground: 210 45% 94%;
-    --card: 215 49% 11%;
-    --card-foreground: 210 45% 94%;
-    --popover: 215 41% 12%;
-    --popover-foreground: 210 45% 94%;
-    --primary: 193 100% 60%;
-    --primary-foreground: 205 65% 10%;
-    --secondary: 216 41% 16%;
-    --secondary-foreground: 210 40% 90%;
-    --muted: 216 39% 15%;
-    --muted-foreground: 214 25% 66%;
-    --accent: 211 43% 22%;
-    --accent-foreground: 210 45% 94%;
-    --destructive: 0 82% 65%;
-    --destructive-foreground: 210 45% 96%;
-    --border: 214 43% 22%;
-    --input: 214 38% 22%;
-    --ring: 193 100% 60%;
-    --positive: 149 68% 49%;
-    --neutral: 41 100% 64%;
-    --caution: 0 100% 74%;
-    --radius: 1rem;
-    color-scheme: dark;
+    --background: 28 18% 96%;
+    --foreground: 220 18% 16%;
+    --card: 0 0% 100%;
+    --card-foreground: 220 18% 16%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 18% 16%;
+    --primary: 160 43% 34%;
+    --primary-foreground: 42 33% 97%;
+    --secondary: 35 30% 92%;
+    --secondary-foreground: 220 18% 18%;
+    --muted: 30 24% 93%;
+    --muted-foreground: 220 10% 42%;
+    --accent: 14 71% 90%;
+    --accent-foreground: 220 18% 18%;
+    --destructive: 3 68% 54%;
+    --destructive-foreground: 42 33% 97%;
+    --border: 30 16% 84%;
+    --input: 30 18% 88%;
+    --ring: 160 43% 34%;
+    --positive: 149 43% 38%;
+    --neutral: 38 84% 56%;
+    --caution: 12 78% 60%;
+    --radius: 1.35rem;
+    color-scheme: light;
   }
 
   * {
@@ -42,9 +42,22 @@
     @apply bg-background text-foreground antialiased;
     min-height: 100vh;
     background:
-      radial-gradient(circle at top, hsl(var(--primary) / 0.10), transparent 28%),
-      linear-gradient(180deg, hsl(215 56% 8%) 0%, hsl(216 54% 10%) 45%, hsl(215 51% 6%) 100%);
+      radial-gradient(circle at top left, hsl(22 86% 88% / 0.65), transparent 28%),
+      radial-gradient(circle at top right, hsl(155 30% 84% / 0.75), transparent 26%),
+      linear-gradient(180deg, hsl(30 33% 98%) 0%, hsl(36 20% 95%) 52%, hsl(30 24% 92%) 100%);
     font-family: Pretendard, system-ui, sans-serif;
+  }
+
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background-image:
+      linear-gradient(hsl(220 12% 20% / 0.035) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(220 12% 20% / 0.035) 1px, transparent 1px);
+    background-size: 32px 32px;
+    mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.22), transparent 75%);
   }
 
   a {
@@ -53,21 +66,23 @@
   }
 
   ::selection {
-    background: hsl(var(--primary) / 0.26);
+    background: hsl(var(--primary) / 0.18);
   }
 }
 
 @layer components {
   .surface-panel {
-    @apply border border-border/80 bg-card/75 backdrop-blur-xl shadow-panel;
-    background-image: var(--tw-gradient-stops), theme(backgroundImage.panel-sheen);
+    @apply border border-border/70 bg-card shadow-panel backdrop-blur-xl;
+    background-image:
+      linear-gradient(180deg, hsl(0 0% 100% / 0.7), hsl(0 0% 100% / 0.86)),
+      theme(backgroundImage.panel-sheen);
   }
 
   .data-chip {
-    @apply rounded-full border border-border/70 bg-secondary/45 px-3 py-1.5 text-xs text-foreground/90;
+    @apply rounded-full border border-border/70 bg-secondary/75 px-3 py-1.5 text-xs text-foreground/85;
   }
 
   .eyebrow-label {
-    @apply text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground;
+    @apply text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground;
   }
 }
