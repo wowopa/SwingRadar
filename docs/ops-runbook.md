@@ -90,6 +90,11 @@ $env:SWING_RADAR_KRX_DOWNLOAD_PATTERN="전종목"
 & "C:\Program Files\nodejs\npm.cmd" run universe:daily -- --sync-symbols --markets KOSPI,KOSDAQ --batch-size 20
 ```
 
+작업 스케줄러용 PowerShell 래퍼:
+```powershell
+powershell -ExecutionPolicy Bypass -File C:\Users\eugen\Documents\SwingRadar\scripts\run-daily-krx-cycle.ps1
+```
+
 이 흐름은 다음 순서로 실행합니다.
 1. symbol master sync
 2. universe watchlist build
