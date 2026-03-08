@@ -12,6 +12,16 @@ export type HealthPayload = {
   warnings: string[];
 };
 
+export type UniverseReviewStatus = "new" | "reviewing" | "hold" | "promoted" | "rejected";
+
+export type UniverseCandidateReview = {
+  ticker: string;
+  status: UniverseReviewStatus;
+  note: string;
+  updatedAt: string;
+  updatedBy: string;
+};
+
 export type UniverseCandidateItem = {
   batch: number;
   ticker: string;
@@ -25,6 +35,7 @@ export type UniverseCandidateItem = {
   observationWindow: string;
   rationale: string;
   eventCoverage: string;
+  review?: UniverseCandidateReview;
 };
 
 export type UniverseFailedBatch = {

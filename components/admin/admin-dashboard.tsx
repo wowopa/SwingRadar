@@ -28,7 +28,9 @@ import type {
   NewsCurationDocument,
   PublishHistoryItem,
   SymbolSearchItem,
+  UniverseCandidateReview,
   UniverseDailyCandidates,
+  UniverseReviewStatus,
   WatchlistEntry
 } from "@/components/admin/dashboard-types";
 import { Button } from "@/components/ui/button";
@@ -138,7 +140,10 @@ export function AdminDashboard() {
           `/api/admin/watchlist${symbolQuery.trim() ? `?q=${encodeURIComponent(symbolQuery.trim())}` : ""}`,
           { headers: authHeaders }
         ),
-        fetchJson<{ dailyCandidates: UniverseDailyCandidates | null }>("/api/admin/universe", { headers: authHeaders })
+        fetchJson<{
+          dailyCandidates: UniverseDailyCandidates | null;
+          reviews: Record<string, UniverseCandidateReview>;
+        }>("/api/admin/universe", { headers: authHeaders })
       ]);
 
       setAudits(auditJson.items ?? []);
@@ -291,7 +296,43 @@ export function AdminDashboard() {
     }
   }
 
+  async function saveUniverseReview(ticker: string, status: UniverseReviewStatus, note: string) {
+    if (!authHeaders) {
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+    setMessage(null);
+
+    try {
+      const json = await fetchJson<{ review: UniverseCandidateReview }>("/api/admin/universe", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", ...authHeaders },
+        body: JSON.stringify({ ticker, status, note })
+      });
+
+      setDailyCandidates((current) =>
+        current
+          ? {
+              ...current,
+              topCandidates: current.topCandidates.map((candidate) =>
+                candidate.ticker === ticker ? { ...candidate, review: json.review } : candidate
+              )
+            }
+          : current
+      );
+      setMessage(`${ticker} 후보 검토 상태를 저장했습니다.`);
+      await loadDashboard();
+    } catch (saveError) {
+      setError(saveError instanceof Error ? saveError.message : "후보 검토 상태 저장에 실패했습니다.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
   async function promoteUniverseCandidate(ticker: string) {
+    await saveUniverseReview(ticker, "promoted", "watchlist 편입 실행");
     setTab("watchlist");
     setActiveWatchlistTicker(ticker);
     await addWatchlistSymbol(ticker);
@@ -487,6 +528,7 @@ export function AdminDashboard() {
             dailyCandidates={dailyCandidates}
             watchlistTickers={watchlistTickers}
             onPromoteCandidate={(ticker) => void promoteUniverseCandidate(ticker)}
+            onSaveReview={(ticker, status, note) => void saveUniverseReview(ticker, status, note)}
             loading={loading}
           />
         </TabsContent>

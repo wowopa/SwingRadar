@@ -19,6 +19,7 @@ import type {
   CuratedNewsImpact,
   EditorialDiffItem,
   PublishHistoryItem,
+  UniverseReviewStatus,
   WatchlistChange,
   WatchlistEntry
 } from "@/components/admin/dashboard-types";
@@ -30,6 +31,14 @@ export const APPROVAL_STAGE_OPTIONS = [
   { value: "risk_review", label: "리스크 검토" },
   { value: "final_publish", label: "최종 발행" }
 ] as const;
+
+export const UNIVERSE_REVIEW_STATUS_OPTIONS: Array<{ value: UniverseReviewStatus; label: string }> = [
+  { value: "new", label: "미분류" },
+  { value: "reviewing", label: "검토중" },
+  { value: "hold", label: "보류" },
+  { value: "promoted", label: "편입 완료" },
+  { value: "rejected", label: "제외" }
+];
 
 export function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
@@ -116,6 +125,7 @@ export function formatAuditEventType(eventType: string) {
     admin_publish: "발행",
     watchlist_add: "감시리스트 추가",
     watchlist_update: "감시리스트 수정",
+    universe_review_update: "유니버스 후보 검토",
     provider_fallback: "데이터 대체"
   };
 
@@ -124,6 +134,10 @@ export function formatAuditEventType(eventType: string) {
 
 export function formatApprovalStage(stage: string) {
   return APPROVAL_STAGE_OPTIONS.find((option) => option.value === stage)?.label ?? stage;
+}
+
+export function formatUniverseReviewStatus(status: UniverseReviewStatus) {
+  return UNIVERSE_REVIEW_STATUS_OPTIONS.find((option) => option.value === status)?.label ?? status;
 }
 
 export function formatDateTime(value: string) {

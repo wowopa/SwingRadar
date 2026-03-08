@@ -10,6 +10,7 @@ export type AuditEventType =
   | "admin_publish"
   | "watchlist_add"
   | "watchlist_update"
+  | "universe_review_update"
   | "provider_fallback";
 
 export interface AuditLogRecord {

@@ -14,6 +14,8 @@ const mocks = vi.hoisted(() => ({
   loadNewsCuration: vi.fn(),
   saveNewsCuration: vi.fn(),
   getDailyCandidates: vi.fn(),
+  listUniverseCandidateReviews: vi.fn(),
+  saveUniverseCandidateReview: vi.fn(),
   listWatchlistEntries: vi.fn(),
   addSymbolToWatchlist: vi.fn(),
   updateWatchlistEntry: vi.fn(),
@@ -54,6 +56,11 @@ vi.mock("@/lib/repositories/daily-candidates", () => ({
   getDailyCandidates: mocks.getDailyCandidates
 }));
 
+vi.mock("@/lib/server/universe-candidate-reviews", () => ({
+  listUniverseCandidateReviews: mocks.listUniverseCandidateReviews,
+  saveUniverseCandidateReview: mocks.saveUniverseCandidateReview
+}));
+
 vi.mock("@/lib/server/watchlist-manager", () => ({
   listWatchlistEntries: mocks.listWatchlistEntries,
   addSymbolToWatchlist: mocks.addSymbolToWatchlist,
@@ -72,7 +79,7 @@ import { GET as getNewsCurationRoute, POST as postNewsCurationRoute } from "@/ap
 import { POST as postPublishRoute } from "@/app/api/admin/publish/route";
 import { POST as postRollbackRoute } from "@/app/api/admin/rollback/route";
 import { GET as getStatusRoute } from "@/app/api/admin/status/route";
-import { GET as getUniverseRoute } from "@/app/api/admin/universe/route";
+import { GET as getUniverseRoute, PUT as putUniverseRoute } from "@/app/api/admin/universe/route";
 import { GET as getWatchlistRoute, POST as postWatchlistRoute, PUT as putWatchlistRoute } from "@/app/api/admin/watchlist/route";
 
 function createRequest(url: string, init?: RequestInit) {
@@ -127,6 +134,14 @@ describe("admin routes", () => {
       items: []
     });
     mocks.getDailyCandidates.mockResolvedValue(null);
+    mocks.listUniverseCandidateReviews.mockResolvedValue({});
+    mocks.saveUniverseCandidateReview.mockResolvedValue({
+      ticker: "005930",
+      status: "reviewing",
+      note: "follow up",
+      updatedAt: "2026-03-08T00:00:00.000Z",
+      updatedBy: "admin-editor"
+    });
     mocks.saveNewsCuration.mockResolvedValue({
       updatedAt: "2026-03-08T00:00:00.000Z",
       updatedBy: "admin-editor",
@@ -311,6 +326,108 @@ describe("admin routes", () => {
           totalTickers: 100,
           failedBatches: [{ batch: 5 }],
           topCandidates: [{ ticker: "005930" }]
+        }
+      });
+    });
+
+    it("merges saved universe reviews into candidate payloads", async () => {
+      mocks.getDailyCandidates.mockResolvedValue({
+        generatedAt: "2026-03-08T12:00:00.000Z",
+        batchSize: 20,
+        totalTickers: 100,
+        totalBatches: 5,
+        succeededBatches: 4,
+        failedBatches: [],
+        topCandidates: [
+          {
+            batch: 2,
+            ticker: "005930",
+            company: "Samsung Electronics",
+            sector: "Semiconductor",
+            signalTone: "중립",
+            score: 78,
+            candidateScore: 88,
+            invalidation: "Break below support",
+            validationSummary: "volume stable",
+            observationWindow: "5d",
+            rationale: "check follow-through",
+            eventCoverage: "earnings"
+          }
+        ],
+        batchSummaries: []
+      });
+      mocks.listUniverseCandidateReviews.mockResolvedValue({
+        "005930": {
+          ticker: "005930",
+          status: "reviewing",
+          note: "operator note",
+          updatedAt: "2026-03-08T12:30:00.000Z",
+          updatedBy: "admin-editor"
+        }
+      });
+
+      const response = await getUniverseRoute(createRequest("http://localhost/api/admin/universe"));
+      const payload = await parseJson<{
+        dailyCandidates: { topCandidates: Array<{ ticker: string; review?: { status: string; note: string } }> };
+      }>(response);
+
+      expect(response.status).toBe(200);
+      expect(mocks.listUniverseCandidateReviews).toHaveBeenCalledTimes(1);
+      expect(payload.dailyCandidates.topCandidates[0]).toMatchObject({
+        ticker: "005930",
+        review: {
+          status: "reviewing",
+          note: "operator note"
+        }
+      });
+    });
+
+    it("saves universe review updates on PUT", async () => {
+      mocks.saveUniverseCandidateReview.mockResolvedValueOnce({
+        ticker: "005930",
+        status: "hold",
+        note: "wait for the next batch",
+        updatedAt: "2026-03-08T12:45:00.000Z",
+        updatedBy: "admin-editor"
+      });
+
+      const response = await putUniverseRoute(
+        createRequest("http://localhost/api/admin/universe", {
+          method: "PUT",
+          body: JSON.stringify({
+            ticker: "005930",
+            status: "hold",
+            note: "wait for the next batch"
+          })
+        })
+      );
+      const payload = await parseJson<{
+        ok: boolean;
+        requestId: string;
+        review: { ticker: string; status: string; note: string };
+      }>(response);
+
+      expect(response.status).toBe(200);
+      expect(mocks.saveUniverseCandidateReview).toHaveBeenCalledWith({
+        ticker: "005930",
+        status: "hold",
+        note: "wait for the next batch",
+        updatedBy: "admin-editor"
+      });
+      expect(mocks.recordAuditLog).toHaveBeenCalledWith(
+        expect.objectContaining({
+          eventType: "universe_review_update",
+          status: "success",
+          requestId: "req-test"
+        })
+      );
+      expect(payload).toMatchObject({
+        ok: true,
+        requestId: "req-test",
+        review: {
+          ticker: "005930",
+          status: "hold",
+          note: "wait for the next batch"
         }
       });
     });
