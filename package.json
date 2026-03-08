@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint app components lib tests --max-warnings=0",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "db:ingest": "node scripts/ingest-postgres.mjs",
     "db:ingest:schema": "node scripts/ingest-postgres.mjs --apply-schema",
     "admin:ingest": "node scripts/admin-ingest.mjs",
@@ -40,13 +42,19 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@eslint/js": "^9.36.0",
     "@types/node": "^22.13.10",
     "@types/pg": "^8.18.0",
     "@types/react": "^19.0.12",
     "@types/react-dom": "^19.0.4",
     "autoprefixer": "^10.4.20",
+    "eslint": "^9.36.0",
+    "eslint-config-next": "^15.5.4",
+    "globals": "^16.4.0",
     "postcss": "^8.5.3",
     "tailwindcss": "^3.4.17",
-    "typescript": "^5.8.2"
+    "typescript": "^5.8.2",
+    "typescript-eslint": "^8.44.1",
+    "vitest": "^3.2.4"
   }
 }

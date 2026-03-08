@@ -14,7 +14,7 @@ export function useFavoriteTickers() {
         return;
       }
 
-      const parsed = JSON.parse(raw);
+      const parsed: unknown = JSON.parse(raw);
       if (Array.isArray(parsed)) {
         setFavorites(parsed.filter((item): item is string => typeof item === "string"));
       }

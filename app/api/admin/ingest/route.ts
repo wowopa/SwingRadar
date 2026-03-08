@@ -9,9 +9,9 @@ export async function POST(request: Request) {
   return withRouteTelemetry(request, { route: "/api/admin/ingest" }, async (context) => {
     assertAdminRequest(request);
 
-    const body = await request.json().catch(() => null);
-    const payload = body
-      ? ingestPayloadSchema.parse(body)
+    const unknownBody: unknown = await request.json().catch(() => null);
+    const payload = unknownBody
+      ? ingestPayloadSchema.parse(unknownBody)
       : {
           applySchema: false,
           ...(await loadSnapshotBundleFromDisk())

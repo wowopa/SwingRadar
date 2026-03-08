@@ -1,16 +1,14 @@
 # SWING-RADAR Backend API Spec
 
-## 紐⑹쟻
-SWING-RADAR??醫낅ぉ 異붿쿇 ?쒕퉬?ㅺ? ?꾨땲?? 愿李??좏샇??洹쇨굅, 臾댄슚??議곌굔, 寃利??듦퀎, ?ы썑 異붿쟻 寃곌낵瑜?援ъ“?곸쑝濡??쒓났?섎뒗 ?쒕퉬?ㅻ떎.
-諛깆뿏?쒕뒗 ?꾨옒 ?먯튃??留뚯”?댁빞 ?쒕떎.
+## 목적
+SWING-RADAR는 종목 추천 서비스가 아니라, 관찰 신호의 강도와 근거, 무효화 조건, 검증 통계, 사후 추적 결과를 구조적으로 제공하는 서비스입니다.
 
-- UI???쒓뎅??以묒떖 ?띿뒪?몃? 洹몃?濡??뚮뜑留곹븷 ???덉뼱???쒕떎.
-- 醫낅ぉ 異붿쿇 臾멸뎄蹂대떎 愿李??좏샇, 臾댄슚?? 寃利? ?ы썑 異붿쟻???곗꽑?대떎.
-- ?묐떟? summary-only媛 ?꾨땲??rationale/invalidation/validation/tracking???④퍡 ?쒓났?댁빞 ?쒕떎.
-- ?꾨줎?몃뒗 ?꾩옱 App Router ?쒕쾭 fetch 湲곕컲?쇰줈 ?숈옉?섎?濡?JSON API ?묐떟???덉젙?곸씠?댁빞 ?쒕떎.
+핵심 원칙은 다음과 같습니다.
+- 종목 추천 문구보다 관찰 신호, 무효화, 검증, 사후 추적을 우선합니다.
+- 응답은 summary-only가 아니라 `rationale`, `invalidation`, `validation`, `tracking`까지 함께 제공해야 합니다.
+- App Router와 서버 컴포넌트가 직접 활용할 수 있도록 JSON API 중심으로 설계합니다.
 
-## 怨듯넻 洹쒖튃
-
+## 공통 규칙
 ### Base URL
 - Local: `http://localhost:3000/api`
 - Production example: `https://api.swing-radar.com/v1`
@@ -21,12 +19,13 @@ SWING-RADAR??醫낅ぉ 異붿쿇 ?쒕퉬?ㅺ? ?꾨땲?? 愿李??좏샇??洹쇨
 - Optional: `X-Request-Id: <uuid>`
 
 ### Time format
-- 紐⑤뱺 ?쒓컙? ISO 8601 ?ъ슜
-- ?덉떆: `2026-03-07T01:00:00+09:00`
+- 모든 시간은 ISO 8601 사용
+- 예시: `2026-03-07T01:00:00+09:00`
 
 ### Locale
-- ?ㅻ챸 ?띿뒪???꾨뱶??湲곕낯?곸쑝濡??쒓뎅??諛섑솚
-- ?ㅺ뎅???뺤옣???꾩슂?섎㈃ `locale=ko-KR` query param 異붽? 媛??
+- 기본 로케일은 `ko-KR`
+- 필요하면 `locale=ko-KR` 같은 query param으로 확장 가능
+
 ### Error response
 ```json
 {
@@ -40,8 +39,9 @@ SWING-RADAR??醫낅ぉ 異붿쿇 ?쒕퉬?ㅺ? ?꾨땲?? 愿李??좏샇??洹쇨
 - `GET /api/recommendations`
 - `GET /api/analysis/:ticker`
 - `GET /api/tracking`
+- `GET /api/health`
 
-?ν썑 ?뺤옣 ?꾨낫:
+향후 분리 가능 후보:
 - `GET /api/tracking/:historyId`
 - `GET /api/news?ticker=005930&from=2026-03-01&to=2026-03-07`
 - `GET /api/validation/:ticker`
@@ -51,11 +51,11 @@ SWING-RADAR??醫낅ぉ 異붿쿇 ?쒕퉬?ㅺ? ?꾨땲?? 愿李??좏샇??洹쇨
 ## 1. Recommendations
 
 ### GET `/api/recommendations`
-愿李??좏샇 蹂대뱶??紐⑸줉 ?곗씠??
+관찰 신호 보드의 목록 데이터입니다.
 
 ### Query Params
 - `market`: `KRX` | `KOSPI` | `KOSDAQ`
-- `signalTone`: `湲띿젙` | `以묐┰` | `二쇱쓽`
+- `signalTone`: `긍정` | `중립` | `주의`
 - `limit`: integer
 - `sort`: `score_desc` | `updatedAt_desc` | `hitRate_desc`
 
@@ -66,50 +66,54 @@ SWING-RADAR??醫낅ぉ 異붿쿇 ?쒕퉬?ㅺ? ?꾨땲?? 愿李??좏샇??洹쇨
   "items": [
     {
       "ticker": "005930",
-      "company": "?쇱꽦?꾩옄",
-      "sector": "諛섎룄泥?,
-      "signalTone": "湲띿젙",
+      "company": "삼성전자",
+      "sector": "반도체",
+      "signalTone": "긍정",
       "score": 82,
-      "signalLabel": "?뚰뙆 ???뚮┝ 媛먯떆",
-      "rationale": "嫄곕옒?湲??뚮났怨?諛뺤뒪 ?곷떒 ?щ룎??..",
-      "invalidation": "醫낃? 湲곗? 5?쇱꽑 ?댄깉??2???곗냽 諛쒖깮...",
+      "signalLabel": "박스 상단 재돌파 관찰",
+      "rationale": "거래대금 회복과 단기 수급 반전이 함께 확인됩니다.",
+      "invalidation": "72,000원 지지 이탈 시 구조 재평가",
       "invalidationDistance": -4.1,
       "riskRewardRatio": "1 : 2.3",
-      "validationSummary": "?좎궗 援ъ“ 41嫄?湲곗?...",
-      "checkpoints": ["72,000??吏吏 ?щ?", "?멸뎅???쒕ℓ??吏??],
+      "validationSummary": "유사 구조 41건 기준 승률 63%",
+      "checkpoints": ["72,000원 지지 유지", "실적 추정 상향 여부"],
       "validation": {
         "hitRate": 63,
         "avgReturn": 5.8,
         "sampleSize": 41,
         "maxDrawdown": -4.2
       },
-      "observationWindow": "5~15嫄곕옒??,
+      "observationWindow": "5~15거래일",
       "updatedAt": "2026-03-06 08:40"
     }
-  ]
+  ],
+  "dailyScan": null
 }
 ```
 
 ### Required calculation fields
-- `score`: 0~100 ?뺤닔 沅뚯옣
-- `signalTone`: score 援ш컙怨?由ъ뒪??猷곗쓣 ?④퍡 諛섏쁺
-- `invalidationDistance`: ?꾩옱媛 ?鍮?臾댄슚???덈꺼 嫄곕━, percent
-- `riskRewardRatio`: ?띿뒪???뚮뜑留곸슜 鍮꾩쑉
-- `validation.hitRate`: ?좎궗 ?⑦꽩 ?ы썑 ?곸쨷瑜?- `validation.avgReturn`: 愿李??덈룄??湲곗? ?됯퇏 ?섏씡瑜?- `validation.maxDrawdown`: ?숈씪 議곌굔 ?ы썑 理쒕? ?숉룺 ?됯퇏 ?먮뒗 ??쒖튂
+- `score`: 0~100 범위 권장
+- `signalTone`: score, invalidationDistance, validation 등을 종합한 분류
+- `invalidationDistance`: 현재가 대비 무효화 가격까지의 거리, percent
+- `riskRewardRatio`: 리스크 대비 기대 보상 비율
+- `validation.hitRate`: 유사 패턴 사후 적중률
+- `validation.avgReturn`: 관찰 윈도우 평균 수익률
+- `validation.maxDrawdown`: 동일 조건 사후 최대 낙폭
 
 ### Backend notes
-- UI??`rationale`, `invalidation`, `validationSummary`, `checkpoints`瑜?洹몃?濡??ъ슜?쒕떎.
-- null ???媛?ν븳 ??鍮?諛곗뿴/鍮?臾몄옄?대낫??紐낆떆?곸씤 媛?諛섑솚 沅뚯옣.
+- UI는 `rationale`, `invalidation`, `validationSummary`, `checkpoints`를 그대로 사용합니다.
+- null 대신 명시적 빈 배열/빈 문자열을 반환하는 편이 안전합니다.
 
 ---
 
 ## 2. Analysis
 
 ### GET `/api/analysis/:ticker`
-媛쒕퀎 ?곗빱 ?ы솕 遺꾩꽍 ?섏씠吏???곗씠??
+단일 종목 심화 분석 데이터입니다.
 
 ### Path Params
-- `ticker`: ?쒓뎅 二쇱떇 ?곗빱 臾몄옄??
+- `ticker`: 종목 코드
+
 ### Query Params
 - `includeNews=true|false`
 - `includeQuality=true|false`
@@ -119,58 +123,58 @@ SWING-RADAR??醫낅ぉ 異붿쿇 ?쒕퉬?ㅺ? ?꾨땲?? 愿李??좏샇??洹쇨
 ```json
 {
   "ticker": "005930",
-  "company": "?쇱꽦?꾩옄",
-  "signalTone": "湲띿젙",
+  "company": "삼성전자",
+  "signalTone": "긍정",
   "score": 82,
-  "headline": "異붿꽭 蹂듭썝??愿李??좏샇...",
-  "invalidation": "醫낃? 湲곗? 72,000???섑쉶...",
+  "headline": "추세 복원 여부를 관찰할 구간입니다.",
+  "invalidation": "72,000원 이탈 시 관찰 구조 재정의",
   "analysisSummary": [
-    { "label": "?꾩옱 ?댁꽍", "value": "?곗긽??蹂듭썝", "note": "異붿꽭 ?ъ쭊?????뚮┝ ?뚰솕 援ш컙" }
+    { "label": "추세 구조", "value": "박스 상단 회복", "note": "중기 추세 전환 가능성 확인 구간" }
   ],
   "keyLevels": [
-    { "label": "臾댄슚??, "price": "72,000??, "meaning": "?댄깉 ??愿李??쒕굹由ъ삤 ?먭린" }
+    { "label": "무효화", "price": "72,000원", "meaning": "지지 이탈 시 관찰 종료" }
   ],
-  "decisionNotes": ["怨쇱뿴 異붽꺽蹂대떎 ?뚮┝ ?좎? ?щ? ?뺤씤???곗꽑?낅땲??"],
+  "decisionNotes": ["추격보다 눌림 확인이 우선", "거래대금 동반 여부 체크"],
   "scoreBreakdown": [
-    { "label": "異붿꽭 援ъ“", "score": 23, "description": "以묎린 異붿꽭???곹쉶? ?꾧퀬???ъ떆??媛?μ꽦." }
+    { "label": "추세 구조", "score": 23, "description": "중기 추세 복원 가능성" }
   ],
   "scenarios": [
-    { "label": "湲곕낯", "probability": 55, "expectation": "?꾨쭔???곗긽??, "trigger": "72,000??吏吏 ?좎?" }
+    { "label": "기본 시나리오", "probability": 55, "expectation": "완만한 상방", "trigger": "72,000원 지지 유지" }
   ],
   "riskChecklist": [
-    { "label": "臾댄슚???덈꺼 嫄곕━", "status": "?묓샇", "note": "?꾩옱媛 ?鍮?-4.1% ?섏?" }
+    { "label": "무효화 거리", "status": "주의", "note": "현재가 대비 -4.1%" }
   ],
   "newsImpact": [
-    { "headline": "硫붾え由??낇솴 媛쒖꽑 湲곕?", "impact": "湲띿젙", "summary": "?ㅼ쟻 異붿젙 ?곹뼢 湲곕?" }
+    { "headline": "메모리 가격 개선 기대", "impact": "긍정", "summary": "수급 측면 우호적 변수", "source": "연합뉴스", "url": "https://example.com", "date": "2026-03-06", "eventType": "news" }
   ],
   "dataQuality": [
-    { "label": "媛寃??곗씠??, "value": "?뺤긽", "note": "遺꾨큺/?쇰큺 ?쇨????뺤씤" }
+    { "label": "뉴스", "value": "6건", "note": "최근 7일 기준" }
   ]
 }
 ```
 
 ### Required calculation fields
-- `scoreBreakdown[*].score`: 珥앺빀 ?먮뒗 遺遺꾪빀???꾩껜 score? ?쇨??섏뼱????- `scenarios[*].probability`: ?⑷퀎 100 沅뚯옣
-- `riskChecklist[*].status`: `?묓샇 | ?뺤씤 ?꾩슂 | 二쇱쓽`
-- `newsImpact[*].impact`: `湲띿젙 | 以묐┰ | 二쇱쓽`
-- `dataQuality[*].value`: ?꾨줎?몃뒗 臾몄옄??洹몃?濡?異쒕젰
+- `scoreBreakdown[*].score`: 부분 점수 합산이 전체 score와 연결되어야 함
+- `scenarios[*].probability`: 총합 100 기준 권장
+- `riskChecklist[*].status`: `양호` | `확인 필요` | `주의`
+- `newsImpact[*].impact`: `긍정` | `중립` | `주의`
+- `dataQuality[*].value`: UI에 바로 노출 가능한 문자열
 
 ### Backend notes
-- `headline`? ?ъ옄 沅뚯쑀 臾멸뎄瑜??쇳븯怨?愿李고삎 臾몄옣?쇰줈 ?좎?
-- `decisionNotes`??2~4媛?沅뚯옣
-- `keyLevels`??理쒖냼 3媛?沅뚯옣: 臾댄슚??/ ?ы솗??/ ?뺤옣
+- `headline`은 투자 권유 문구가 아니라 관찰형 문장으로 유지
+- `decisionNotes`는 2~4개 권장
+- `keyLevels`는 최소 3개 권장: 무효화 / 확장 / 확인
 
 ---
 
 ## 3. Tracking
 
 ### GET `/api/tracking`
-?ы썑 異붿쟻 ?섏씠吏???대젰 紐⑸줉 + ?곸꽭 留?
-?꾩옱 ?꾨줎?몃뒗 ??踰덉쓽 payload濡?history? detail map??媛숈씠 諛쏅뒗??
+사후 추적 요약과 상세 맵을 한 번에 내려주는 엔드포인트입니다.
 
 ### Query Params
 - `ticker`
-- `result`: `吏꾪뻾以?| ?깃났 | ?ㅽ뙣 | 臾댄슚??
+- `result`
 - `from`, `to`
 - `limit`
 
@@ -182,11 +186,11 @@ SWING-RADAR??醫낅ぉ 異붿쿇 ?쒕퉬?ㅺ? ?꾨땲?? 愿李??좏샇??洹쇨
     {
       "id": "hist-005930-20260301",
       "ticker": "005930",
-      "company": "?쇱꽦?꾩옄",
+      "company": "삼성전자",
       "signalDate": "2026-03-01",
-      "signalTone": "湲띿젙",
+      "signalTone": "긍정",
       "entryScore": 79,
-      "result": "吏꾪뻾以?,
+      "result": "관찰 유지",
       "mfe": 4.8,
       "mae": -1.9,
       "holdingDays": 5
@@ -195,19 +199,19 @@ SWING-RADAR??醫낅ぉ 異붿쿇 ?쒕퉬?ㅺ? ?꾨땲?? 愿李??좏샇??洹쇨
   "details": {
     "hist-005930-20260301": {
       "historyId": "hist-005930-20260301",
-      "summary": "珥덇린 ?뚰뙆 ???뚮┝??吏㏐쾶 諛쒖깮...",
-      "invalidationReview": "?꾩옱源뚯? 臾댄슚??議곌굔 誘몄땐議?..",
-      "afterActionReview": "湲곕낯 ?쒕굹由ъ삤媛 ?좎??섍퀬 ?덉쑝硫?..",
-      "reviewChecklist": ["嫄곕옒?湲?利앷? ?좎? ?뺤씤"],
+      "summary": "추세 회복 가능성을 관찰한 사례입니다.",
+      "invalidationReview": "무효화 이탈 없이 지지가 유지되었습니다.",
+      "afterActionReview": "추격보다 눌림 확인 위주 접근이 유효했습니다.",
+      "reviewChecklist": ["거래대금 증가 확인"],
       "metrics": [
-        { "label": "?ы썑 ?먯젙", "value": "?좏슚 吏꾪뻾以?, "note": "臾댄슚??誘몄땐議??곹깭" }
+        { "label": "사후 판정", "value": "관찰 유지", "note": "무효화 전 도달" }
       ],
       "chartSnapshot": [{ "label": "D1", "price": 70600 }],
       "historicalNews": [
-        { "id": "news-1", "date": "2026-03-02", "headline": "硫붾え由??낇솴 媛쒖꽑 湲곕? ?뺤궛", "impact": "湲띿젙", "note": "?섍툒 ?좎엯怨??④퍡 ?좏샇 ?먯닔 ?좎???湲곗뿬." }
+        { "id": "news-1", "date": "2026-03-02", "headline": "메모리 가격 개선 기대", "impact": "긍정", "note": "수급 개선 기대", "source": "연합뉴스", "url": "https://example.com", "eventType": "news" }
       ],
       "scoreLog": [
-        { "timestamp": "2026-03-01 09:10", "factor": "嫄곕옒?湲?, "delta": 6, "reason": "20???됯퇏 ?鍮?1.7諛?利앷?" }
+        { "timestamp": "2026-03-01 09:10", "factor": "거래대금", "delta": 6, "reason": "20일 평균 대비 1.7배 증가" }
       ]
     }
   }
@@ -215,47 +219,46 @@ SWING-RADAR??醫낅ぉ 異붿쿇 ?쒕퉬?ㅺ? ?꾨땲?? 愿李??좏샇??洹쇨
 ```
 
 ### Required calculation fields
-- `mfe`: 理쒕? ?좊━ 蹂?숉룺, percent
-- `mae`: 理쒕? 遺덈━ 蹂?숉룺, percent
-- `holdingDays`: ?좏샇 ?좎? 湲곌컙
-- `result`: ?꾩옱 ?꾨줎?몃뒗 `吏꾪뻾以?| ?깃났 | ?ㅽ뙣 | 臾댄슚??
-- `scoreLog[*].delta`: ?먯닔 蹂?숇텇, signed number
+- `mfe`: 최대 유리 구간, percent
+- `mae`: 최대 불리 구간, percent
+- `holdingDays`: 관찰 유지 기간
+- `result`: 후행 판정 문자열
+- `scoreLog[*].delta`: signed number
 
 ### Backend notes
-- ?꾩옱 ?꾨줎?몃뒗 `history`? `details`瑜??④퍡 諛쏆?留? 異뷀썑 `GET /api/tracking/:historyId`濡?遺꾨━ 媛??- `reviewChecklist`???ы썑 蹂듦린 媛?ν븳 臾몄옣??諛곗뿴 沅뚯옣
-- `metrics`??移대뱶??硫뷀??곗씠?곕줈 理쒖냼 3媛?沅뚯옣
+- 현재는 `history`와 `details`를 한 번에 반환하지만, 추후 `GET /api/tracking/:historyId`로 분리 가능
+- `reviewChecklist`는 사후 복기용 문장 배열 권장
+- `metrics`는 카드형 메타데이터로 최소 3개 권장
 
 ---
 
-## Signal / Invalidation / Validation Computation Rules
+## Signal / Invalidation / Validation Rules
 
 ### Signal tone rule example
-- `湲띿젙`: score >= 75 and invalidationDistance <= -3 and validation.hitRate >= 55
-- `以묐┰`: score 55~74
-- `二쇱쓽`: score < 55 or event risk high or invalidationDistance > -2.5
+- `긍정`: score >= 75 and invalidationDistance <= -3 and validation.hitRate >= 55
+- `중립`: score 55~74
+- `주의`: score < 55 or event risk high or invalidationDistance > -2.5
 
 ### Score input factors
-沅뚯옣 factor set:
-- 異붿꽭 援ъ“
-- ?섍툒
-- 蹂?숈꽦
-- ?대깽???댁뒪
-- ?곗씠???좊ː??
-媛?factor??0~25 ?먮뒗 0~20 踰붿쐞濡??뺢퇋??媛??
-珥앺빀? 100 湲곗? ?좎? 沅뚯옣.
+권장 factor set:
+- 추세 구조
+- 거래대금
+- 수급 변화
+- 이벤트 밀도
+
+각 factor는 0~25 또는 0~20 범위에서 구성하고 총합은 100 기준 권장.
 
 ### Invalidation calculation
-沅뚯옣 ?꾨뱶:
+권장 입력 값:
 - `invalidationPrice`
 - `currentPrice`
 - `invalidationDistance`
 - `invalidationReasonCode`
 
-?꾨줎?몃뒗 ?꾩옱 `invalidation` 臾몄옣怨?`invalidationDistance`留??꾩닔 ?ъ슜?섏?留?
-諛깆뿏?쒕뒗 異뷀썑 怨꾩궛/媛먯궗 異붿쟻???꾪빐 ?レ옄 ?꾨뱶瑜?媛숈씠 ??ν븯??寃껋씠 醫뗫떎.
+백엔드는 추후 계산/감사 추적을 위해 서술형 필드와 숫자 필드를 함께 저장하는 편이 좋습니다.
 
 ### Validation calculation
-理쒖냼 蹂댁쑀 ?꾨뱶:
+권장 입력 값:
 - `sampleSize`
 - `hitRate`
 - `avgReturn`
@@ -264,8 +267,6 @@ SWING-RADAR??醫낅ぉ 異붿쿇 ?쒕퉬?ㅺ? ?꾨땲?? 愿李??좏샇??洹쇨
 - `lookaheadWindowDays`
 - `backtestVersion`
 
-?꾩옱 ?꾨줎?몃뒗 ?쇰?留??ъ슜?섏?留? ?섎㉧吏 ?꾨뱶??諛깆뿏?쒖뿉???좎? 沅뚯옣.
-
 ---
 
 ## Recommended future endpoint split
@@ -273,12 +274,12 @@ SWING-RADAR??醫낅ぉ 異붿쿇 ?쒕퉬?ㅺ? ?꾨땲?? 愿李??좏샇??洹쇨
 ### Option A: current bundle-oriented
 - `GET /api/tracking`
 
-?μ젏:
-- ?꾨줎??援ы쁽 ?⑥닚
-- 泥?踰꾩쟾 鍮좊쫫
+장점:
+- 초기 화면 로딩이 단순함
+- 클라이언트 fetch orchestration 부담이 적음
 
-?⑥젏:
-- history 而ㅼ?硫?payload 鍮꾨?
+단점:
+- history가 많아지면 payload가 커짐
 
 ### Option B: normalized
 - `GET /api/tracking`
@@ -286,14 +287,14 @@ SWING-RADAR??醫낅ぉ 異붿쿇 ?쒕퉬?ㅺ? ?꾨땲?? 愿李??좏샇??洹쇨
 - `GET /api/tracking/:historyId/score-log`
 - `GET /api/tracking/:historyId/news`
 
-?μ젏:
-- ?뺤옣???곗닔
-- pagination ?⑹씠
+장점:
+- 페이지네이션과 부분 로딩에 유리
+- 후속 확장에 유연함
 
-?⑥젏:
-- ?꾨줎??fetch orchestration ?꾩슂
+단점:
+- 클라이언트 fetch orchestration이 늘어남
 
-?꾩옱 ?쒗뭹 ?④퀎?먯꽌??A濡??쒖옉?섍퀬, ?댁쁺 ?곗씠?곌? ?볦씠硫?B濡??꾪솚?섎뒗 寃껋씠 ?⑸━?곸씠??
+현재 제품 단계에서는 A로 시작하고, 운영 데이터가 쌓이면 B로 전환하는 것이 현실적입니다.
 
 ---
 
@@ -301,44 +302,34 @@ SWING-RADAR??醫낅ぉ 異붿쿇 ?쒕퉬?ㅺ? ?꾨땲?? 愿李??좏샇??洹쇨
 - `SWING_RADAR_API_ORIGIN=https://api.swing-radar.com`
 - `NEXT_PUBLIC_APP_URL=https://app.swing-radar.com`
 
-?쒕쾭 而댄룷?뚰듃 fetch??`SWING_RADAR_API_ORIGIN` ?곗꽑 ?ъ슜 沅뚯옣.
+서버 컴포넌트 fetch는 `SWING_RADAR_API_ORIGIN`을 우선 사용합니다.
 
 ---
 
 ## Backend implementation checklist
-- ?묐떟 臾몄옄??UTF-8 蹂댁옣
-- ?쒓뎅???띿뒪???꾨뱶 湲몄씠 ?쒗븳 ?뺤쓽
-- score ?곗떇 踰꾩쟾 愿由?- validation ?곗떇 踰꾩쟾 愿由?- requestId 濡쒓퉭
-- stale data timestamp ?쒓났
-- ?쒖옣 ?댁옣???μ쨷 ?낅뜲?댄듃 洹쒖튃 ?뺤쓽
-- error code ?쒖??
+- 모든 한글 문자열은 UTF-8 유지
+- 종목/뉴스/검증 스키마의 Zod validation 유지
+- requestId 전달
+- stale data timestamp 노출
+- 운영 로그 및 에러 코드 정리
+
 ---
 
 ## Data Provider Modes
 
 ### `SWING_RADAR_DATA_PROVIDER=mock`
 - 개발 초기 단계용
-- 코드에 포함된 mock response를 사용
-- 빠른 프론트 검증에 적합
+- 코드에 포함된 mock response 사용
 
 ### `SWING_RADAR_DATA_PROVIDER=file`
-- 운영 직전 또는 내부 스테이징용
-- `SWING_RADAR_DATA_DIR` 아래 JSON 파일을 읽음
-- 파일명:
+- 운영 직전 또는 백업 모드
+- `SWING_RADAR_DATA_DIR` 아래 JSON 파일 사용
+- 파일명
   - `recommendations.json`
   - `analysis.json`
   - `tracking.json`
 
-이 구조는 이후 DB provider, warehouse provider, internal API provider로 쉽게 확장할 수 있도록 설계한다.
-
-### 향후 권장 provider 추가
-- `postgres`
-- `supabase`
-- `internal-api`
-- `warehouse`
-
-각 provider는 아래 인터페이스를 만족하면 된다.
-- `getRecommendations()`
-- `getAnalysis()`
-- `getTracking()`
-- `getProviderMeta()`
+### `SWING_RADAR_DATA_PROVIDER=postgres`
+- 운영 기본 모드
+- 최신 snapshot을 PostgreSQL에서 조회
+- 실패 시 fallback provider로 전환 가능

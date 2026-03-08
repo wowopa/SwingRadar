@@ -181,7 +181,11 @@ function createDefaultDraft(bundle: Pick<SnapshotBundle, "recommendations" | "an
 }
 
 function sanitizePublishHistory(entries: PublishHistoryEntry[]): PublishHistorySummary[] {
-  return entries.map(({ bundle, ...entry }) => entry);
+  return entries.map((entry) => {
+    const { bundle, ...summary } = entry;
+    void bundle;
+    return summary;
+  });
 }
 
 function buildDraftDiff(bundle: Pick<SnapshotBundle, "recommendations" | "analysis">, draft: EditorialDraftDocument): EditorialDraftDiffItem[] {

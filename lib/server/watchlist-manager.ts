@@ -1,4 +1,4 @@
-﻿import { execFile } from "node:child_process";
+import { execFile } from "node:child_process";
 import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { promisify } from "node:util";
@@ -89,7 +89,11 @@ function stringifyValue(value: unknown) {
     return "";
   }
 
-  return String(value);
+  if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
+    return String(value);
+  }
+
+  return JSON.stringify(value);
 }
 
 function buildWatchlistDiff(previous: WatchlistEntry, next: WatchlistEntry): WatchlistEntryDiff[] {

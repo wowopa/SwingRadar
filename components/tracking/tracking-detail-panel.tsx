@@ -13,9 +13,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { getSymbolByTicker } from "@/lib/symbols/master";
 import { useFavoriteTickers } from "@/lib/use-favorite-tickers";
 import { formatPercent } from "@/lib/utils";
-import { getSymbolByTicker } from "@/lib/symbols/master";
 import type { SignalHistoryEntry, TrackingDetail } from "@/types/tracking";
 
 interface TrackingDetailPanelProps {
@@ -24,7 +24,7 @@ interface TrackingDetailPanelProps {
 }
 
 type ResultFilter = "all" | SignalHistoryEntry["result"];
-type SectorFilter = "all" | string;
+type SectorFilter = string;
 type FavoriteFilter = "all" | "favorites";
 
 export function TrackingDetailPanel({ history, details }: TrackingDetailPanelProps) {
@@ -79,7 +79,7 @@ export function TrackingDetailPanel({ history, details }: TrackingDetailPanelPro
   if (!activeEntry || !activeDetail) {
     return (
       <Card>
-        <CardContent className="p-6 text-sm text-muted-foreground">표시할 추적 이력이 없습니다.</CardContent>
+        <CardContent className="p-6 text-sm text-muted-foreground">조건에 맞는 추적 데이터가 없습니다.</CardContent>
       </Card>
     );
   }
@@ -91,13 +91,13 @@ export function TrackingDetailPanel({ history, details }: TrackingDetailPanelPro
         <Card>
           <CardHeader className="flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div>
-              <CardTitle>신호 이력 탐색</CardTitle>
+              <CardTitle>트래킹 필터와 탐색</CardTitle>
               <p className="mt-2 text-sm text-muted-foreground">
-                티커, 종목명, 섹터, 결과 상태 기준으로 드릴다운 대상을 빠르게 좁힐 수 있습니다.
+                종목, 결과 판정, 섹터, 즐겨찾기 여부를 기준으로 사후 추적 기록을 빠르게 좁힐 수 있습니다.
               </p>
             </div>
             <div className="grid w-full gap-3 lg:max-w-5xl lg:grid-cols-[1fr_180px_180px_180px]">
-              <Input placeholder="티커 또는 종목명 검색" value={query} onChange={(event) => setQuery(event.target.value)} />
+              <Input placeholder="종목명, 티커, 섹터 검색" value={query} onChange={(event) => setQuery(event.target.value)} />
               <select
                 value={resultFilter}
                 onChange={(event) => setResultFilter(event.target.value as ResultFilter)}
@@ -133,7 +133,7 @@ export function TrackingDetailPanel({ history, details }: TrackingDetailPanelPro
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="text-sm text-muted-foreground">
-              필터 결과 <span className="font-semibold text-white">{filteredHistory.length}</span>건
+              필터링 결과 <span className="font-semibold text-white">{filteredHistory.length}</span>건
             </div>
             <HistoryTable
               items={filteredHistory}
@@ -149,7 +149,7 @@ export function TrackingDetailPanel({ history, details }: TrackingDetailPanelPro
             <CardHeader>
               <div className="flex items-center gap-2">
                 <CardTitle>
-                  {activeEntry.company} {activeEntry.ticker} 드릴다운
+                  {activeEntry.company} {activeEntry.ticker} 상세 분석
                 </CardTitle>
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -157,15 +157,15 @@ export function TrackingDetailPanel({ history, details }: TrackingDetailPanelPro
                       <Info className="h-4 w-4" />
                     </button>
                   </TooltipTrigger>
-                  <TooltipContent>결과, 복기 사유, 차트, 이벤트, 점수 로그를 탭으로 구분해 봅니다.</TooltipContent>
+                  <TooltipContent>사후 복기 관점에서 결과, 위험, 뉴스, 점수 변화 로그를 함께 확인합니다.</TooltipContent>
                 </Tooltip>
               </div>
               <p className="text-sm text-muted-foreground">
-                {activeSector} · {activeEntry.signalDate} 신호 · {favorites.includes(activeEntry.ticker) ? "즐겨찾기 종목" : "일반 추적 종목"}
+                {activeSector} · {activeEntry.signalDate} 신호 · {favorites.includes(activeEntry.ticker) ? "즐겨찾기 종목" : "일반 관찰 종목"}
               </p>
             </CardHeader>
             <CardContent className="grid gap-4 md:grid-cols-4">
-              <SummaryMetric label="결과" value={activeEntry.result} />
+              <SummaryMetric label="결과 판정" value={activeEntry.result} />
               <SummaryMetric label="MFE" value={formatPercent(activeEntry.mfe)} emphasis="text-positive" />
               <SummaryMetric label="MAE" value={formatPercent(activeEntry.mae)} emphasis="text-caution" />
               <SummaryMetric label="보유 기간" value={`${activeEntry.holdingDays}일`} />
@@ -184,7 +184,7 @@ export function TrackingDetailPanel({ history, details }: TrackingDetailPanelPro
             <TabsList>
               <TabsTrigger value="review">복기</TabsTrigger>
               <TabsTrigger value="chart">차트</TabsTrigger>
-              <TabsTrigger value="news">이벤트</TabsTrigger>
+              <TabsTrigger value="news">뉴스</TabsTrigger>
               <TabsTrigger value="log">로그</TabsTrigger>
             </TabsList>
             <TabsContent value="review">

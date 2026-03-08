@@ -6,7 +6,7 @@ import type {
   RecommendationsResponseDto,
   TrackingResponseDto
 } from "@/lib/api-contracts/swing-radar";
-import type { ProviderExecutionMeta, ProviderMeta, SwingRadarDataProvider } from "@/lib/providers/types";
+import type { ProviderExecutionMeta, SwingRadarDataProvider } from "@/lib/providers/types";
 import {
   applyNewsCurationToAnalysis,
   applyNewsCurationToRecommendations,

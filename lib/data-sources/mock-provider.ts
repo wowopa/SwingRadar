@@ -4,14 +4,14 @@ import { trackingResponse } from "@/lib/api-mock/tracking";
 import type { SwingRadarDataProvider } from "@/lib/providers/types";
 
 export const mockDataProvider: SwingRadarDataProvider = {
-  async getRecommendations() {
-    return recommendationsResponse;
+  getRecommendations() {
+    return Promise.resolve(recommendationsResponse);
   },
-  async getAnalysis() {
-    return analysisResponse;
+  getAnalysis() {
+    return Promise.resolve(analysisResponse);
   },
-  async getTracking() {
-    return trackingResponse;
+  getTracking() {
+    return Promise.resolve(trackingResponse);
   },
   getProviderMeta() {
     return {

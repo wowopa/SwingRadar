@@ -1,10 +1,5 @@
 import { z } from "zod";
 
-import {
-  analysisQuerySchema,
-  recommendationsQuerySchema,
-  trackingQuerySchema
-} from "@/lib/server/query-schemas";
 import type {
   AnalysisResponseDto,
   RecommendationsResponseDto,
@@ -90,8 +85,12 @@ const trackingResponseSchema = z.object({
 
 export const ingestPayloadSchema = z.object({
   applySchema: z.boolean().optional().default(false),
-  recommendations: z.custom<RecommendationsResponseDto>((value) => z.object({ generatedAt: z.string(), items: z.array(recommendationItemSchema) }).safeParse(value).success),
-  analysis: z.custom<AnalysisResponseDto>((value) => z.object({ generatedAt: z.string(), items: z.array(analysisItemSchema) }).safeParse(value).success),
+  recommendations: z.custom<RecommendationsResponseDto>((value) =>
+    z.object({ generatedAt: z.string(), items: z.array(recommendationItemSchema) }).safeParse(value).success
+  ),
+  analysis: z.custom<AnalysisResponseDto>((value) =>
+    z.object({ generatedAt: z.string(), items: z.array(analysisItemSchema) }).safeParse(value).success
+  ),
   tracking: z.custom<TrackingResponseDto>((value) => trackingResponseSchema.safeParse(value).success)
 });
 

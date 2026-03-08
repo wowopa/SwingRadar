@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { ArrowLeft, ArrowRight, History } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -56,7 +56,7 @@ export function AnalysisNavigation({
             href={previous ? `/analysis/${previous.ticker}` : undefined}
             title="이전 종목"
             label={previous ? `${previous.company} · ${previous.ticker}` : "이전 분석 종목이 없습니다."}
-            note={previous?.sector ?? "현재 감시 종목의 첫 번째 분석입니다."}
+            note={previous?.sector ?? "현재 감시 종목 중 첫 번째 분석입니다."}
             icon={<ArrowLeft className="h-4 w-4" />}
             disabled={!previous}
           />
@@ -64,7 +64,7 @@ export function AnalysisNavigation({
             href={next ? `/analysis/${next.ticker}` : undefined}
             title="다음 종목"
             label={next ? `${next.company} · ${next.ticker}` : "다음 분석 종목이 없습니다."}
-            note={next?.sector ?? "현재 감시 종목의 마지막 분석입니다."}
+            note={next?.sector ?? "현재 감시 종목 중 마지막 분석입니다."}
             icon={<ArrowRight className="h-4 w-4" />}
             align="right"
             disabled={!next}
@@ -119,7 +119,7 @@ function NavigationLink({
   title: string;
   label: string;
   note: string;
-  icon: React.ReactNode;
+  icon: ReactNode;
   align?: "left" | "right";
   disabled?: boolean;
 }) {
@@ -157,7 +157,7 @@ function readRecentTickers() {
       return [];
     }
 
-    const parsed = JSON.parse(raw);
+    const parsed: unknown = JSON.parse(raw);
     return Array.isArray(parsed) ? parsed.filter((item): item is string => typeof item === "string") : [];
   } catch {
     return [];

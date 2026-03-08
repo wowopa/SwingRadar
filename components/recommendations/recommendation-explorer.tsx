@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useMemo, useState } from "react";
 
@@ -13,7 +13,7 @@ import type { Recommendation } from "@/types/recommendation";
 
 type SortKey = "score_desc" | "score_asc" | "name";
 type ToneFilter = "all" | Recommendation["signalTone"];
-type SectorFilter = "all" | string;
+type SectorFilter = string;
 type FavoriteFilter = "all" | "favorites";
 
 export function RecommendationExplorer({
