@@ -1,0 +1,45 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: swing-radar-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: swing_radar
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "15432:5432"
+    volumes:
+      - swing-radar-postgres:/var/lib/postgresql/data
+      - ./db/postgres-schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d swing_radar"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: swing-radar-app
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      NEXT_PUBLIC_APP_URL: http://localhost:3000
+      SWING_RADAR_API_ORIGIN: http://localhost:3000
+      SWING_RADAR_DATA_PROVIDER: postgres
+      SWING_RADAR_DATABASE_URL: postgres://postgres:postgres@postgres:5432/swing_radar
+      SWING_RADAR_DATABASE_SSL: "false"
+      SWING_RADAR_DB_POOL_MAX: 10
+      SWING_RADAR_ADMIN_TOKEN: replace-with-long-random-secret
+      SWING_RADAR_STALE_WARNING_MINUTES: 180
+      SWING_RADAR_STALE_CRITICAL_MINUTES: 360
+    ports:
+      - "3000:3000"
+
+volumes:
+  swing-radar-postgres:

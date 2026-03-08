@@ -1,0 +1,282 @@
+[
+  {
+    "ticker": "005930",
+    "company": "삼성전자",
+    "aliases": ["Samsung Electronics", "삼전"],
+    "sector": "반도체",
+    "market": "KOSPI",
+    "status": "ready",
+    "newsQuery": "삼성전자",
+    "newsQueries": ["Samsung Electronics", "Samsung Electronics Korea"],
+    "newsQueriesKr": ["\"삼성전자\" 주식", "\"삼성전자\" 반도체", "\"삼성전자\" 실적"],
+    "requiredKeywords": ["삼성전자", "samsung electronics", "005930"],
+    "contextKeywords": ["반도체", "HBM", "DRAM", "낸드", "파운드리", "실적", "주가", "메모리"],
+    "blockedKeywords": ["삼성물산", "삼성바이오로직스", "갤럭시", "스마트폰", "부고"],
+    "preferredDomains": ["hankyung.com", "mk.co.kr", "edaily.co.kr", "yna.co.kr", "asiae.co.kr", "sedaily.com"],
+    "blockedDomains": ["androidauthority.com", "phonearena.com", "gsmarena.com"],
+    "minArticleScore": 14,
+    "dartCorpCode": "00126380"
+  },
+  {
+    "ticker": "000660",
+    "company": "SK하이닉스",
+    "aliases": ["SK hynix", "하이닉스"],
+    "sector": "반도체",
+    "market": "KOSPI",
+    "status": "pending",
+    "newsQuery": "SK하이닉스",
+    "newsQueries": ["SK hynix", "SK hynix Korea"],
+    "newsQueriesKr": ["\"SK하이닉스\" 주식", "\"SK하이닉스\" 반도체", "\"SK하이닉스\" 실적"],
+    "requiredKeywords": ["sk하이닉스", "sk hynix", "000660"],
+    "contextKeywords": ["반도체", "HBM", "메모리", "DRAM", "낸드", "실적"],
+    "blockedKeywords": ["미국주식", "채용"],
+    "preferredDomains": ["hankyung.com", "mk.co.kr", "edaily.co.kr", "yna.co.kr"],
+    "blockedDomains": [],
+    "minArticleScore": 14,
+    "dartCorpCode": "00164779"
+  },
+  {
+    "ticker": "035420",
+    "company": "NAVER",
+    "aliases": ["네이버"],
+    "sector": "인터넷",
+    "market": "KOSPI",
+    "status": "ready",
+    "newsQuery": "NAVER",
+    "newsQueries": ["NAVER Korea"],
+    "newsQueriesKr": ["\"네이버\" 주식", "\"네이버\" 플랫폼", "\"네이버\" 실적", "\"네이버\" AI"],
+    "requiredKeywords": ["naver", "네이버", "035420"],
+    "contextKeywords": ["플랫폼", "검색", "광고", "커머스", "AI", "실적", "주가", "클라우드"],
+    "blockedKeywords": ["naver blog", "gmail", "대학", "입시", "지도 서비스"],
+    "preferredDomains": ["hankyung.com", "mk.co.kr", "edaily.co.kr", "asiae.co.kr", "chosunbiz.com", "zdnet.co.kr"],
+    "blockedDomains": ["theverge.com", "nytimes.com", "devdiscourse.com"],
+    "minArticleScore": 15,
+    "dartCorpCode": "00266961"
+  },
+  {
+    "ticker": "068270",
+    "company": "셀트리온",
+    "aliases": ["Celltrion"],
+    "sector": "제약/바이오",
+    "market": "KOSPI",
+    "status": "ready",
+    "newsQuery": "셀트리온",
+    "newsQueries": ["Celltrion"],
+    "newsQueriesKr": ["\"셀트리온\" 주식", "\"셀트리온\" 바이오", "\"셀트리온\" 실적", "\"셀트리온\" FDA"],
+    "requiredKeywords": ["셀트리온", "celltrion", "068270"],
+    "contextKeywords": ["바이오", "제약", "실적", "주가", "항체", "FDA", "임상", "허가"],
+    "blockedKeywords": ["드라마", "예능", "방송"],
+    "preferredDomains": ["hankyung.com", "mk.co.kr", "edaily.co.kr", "yakup.com", "biospectator.com", "hitnews.co.kr"],
+    "blockedDomains": ["sportschosun.com", "osen.co.kr", "dispatch.co.kr"],
+    "minArticleScore": 14,
+    "dartCorpCode": "00413046"
+  },
+  {
+    "ticker": "005380",
+    "company": "현대차",
+    "aliases": ["현대자동차", "Hyundai Motor"],
+    "sector": "자동차",
+    "market": "KOSPI",
+    "status": "pending"
+  },
+  {
+    "ticker": "000270",
+    "company": "기아",
+    "aliases": ["Kia"],
+    "sector": "자동차",
+    "market": "KOSPI",
+    "status": "pending"
+  },
+  {
+    "ticker": "105560",
+    "company": "KB금융",
+    "aliases": ["KB Financial Group"],
+    "sector": "금융",
+    "market": "KOSPI",
+    "status": "pending"
+  },
+  {
+    "ticker": "055550",
+    "company": "신한지주",
+    "aliases": ["Shinhan Financial Group"],
+    "sector": "금융",
+    "market": "KOSPI",
+    "status": "pending"
+  },
+  {
+    "ticker": "051910",
+    "company": "LG화학",
+    "aliases": ["LG Chem"],
+    "sector": "2차전지",
+    "market": "KOSPI",
+    "status": "pending"
+  },
+  {
+    "ticker": "006400",
+    "company": "삼성SDI",
+    "aliases": ["Samsung SDI"],
+    "sector": "2차전지",
+    "market": "KOSPI",
+    "status": "pending"
+  },
+  {
+    "ticker": "373220",
+    "company": "LG에너지솔루션",
+    "aliases": ["LG Energy Solution", "LG엔솔"],
+    "sector": "2차전지",
+    "market": "KOSPI",
+    "status": "pending"
+  },
+  {
+    "ticker": "035720",
+    "company": "카카오",
+    "aliases": ["Kakao"],
+    "sector": "인터넷",
+    "market": "KOSPI",
+    "status": "pending"
+  },
+  {
+    "ticker": "259960",
+    "company": "크래프톤",
+    "aliases": ["Krafton"],
+    "sector": "게임",
+    "market": "KOSPI",
+    "status": "pending"
+  },
+  {
+    "ticker": "352820",
+    "company": "하이브",
+    "aliases": ["HYBE"],
+    "sector": "엔터테인먼트",
+    "market": "KOSPI",
+    "status": "pending"
+  },
+  {
+    "ticker": "247540",
+    "company": "에코프로비엠",
+    "aliases": ["Ecopro BM"],
+    "sector": "2차전지",
+    "market": "KOSDAQ",
+    "status": "pending"
+  },
+  {
+    "ticker": "086520",
+    "company": "에코프로",
+    "aliases": ["Ecopro"],
+    "sector": "2차전지",
+    "market": "KOSDAQ",
+    "status": "pending"
+  },
+  {
+    "ticker": "091990",
+    "company": "셀트리온헬스케어",
+    "aliases": ["Celltrion Healthcare"],
+    "sector": "제약/바이오",
+    "market": "KOSDAQ",
+    "status": "pending"
+  },
+  {
+    "ticker": "263750",
+    "company": "펄어비스",
+    "aliases": ["Pearl Abyss"],
+    "sector": "게임",
+    "market": "KOSDAQ",
+    "status": "pending"
+  },
+  {
+    "ticker": "196170",
+    "company": "알테오젠",
+    "aliases": ["Alteogen"],
+    "sector": "제약/바이오",
+    "market": "KOSDAQ",
+    "status": "pending"
+  },
+  {
+    "ticker": "028300",
+    "company": "HLB",
+    "aliases": ["에이치엘비"],
+    "sector": "제약/바이오",
+    "market": "KOSDAQ",
+    "status": "pending"
+  },
+  {
+    "ticker": "214150",
+    "company": "클래시스",
+    "aliases": ["Classys"],
+    "sector": "미용의료기기",
+    "market": "KOSDAQ",
+    "status": "pending"
+  },
+  {
+    "ticker": "214450",
+    "company": "파마리서치",
+    "aliases": ["Pharmaresearch"],
+    "sector": "제약/바이오",
+    "market": "KOSDAQ",
+    "status": "pending"
+  },
+  {
+    "ticker": "112040",
+    "company": "위메이드",
+    "aliases": ["Wemade"],
+    "sector": "게임",
+    "market": "KOSDAQ",
+    "status": "pending"
+  },
+  {
+    "ticker": "278470",
+    "company": "에이피알",
+    "aliases": ["APR Co"],
+    "sector": "뷰티",
+    "market": "KOSDAQ",
+    "status": "pending"
+  },
+  {
+    "ticker": "095660",
+    "company": "네오위즈",
+    "aliases": ["Neowiz"],
+    "sector": "게임",
+    "market": "KOSDAQ",
+    "status": "pending"
+  },
+  {
+    "ticker": "145020",
+    "company": "휴젤",
+    "aliases": ["Hugel"],
+    "sector": "제약/바이오",
+    "market": "KOSDAQ",
+    "status": "pending"
+  },
+  {
+    "ticker": "122870",
+    "company": "와이지엔터테인먼트",
+    "aliases": ["YG Entertainment", "YG엔터"],
+    "sector": "엔터테인먼트",
+    "market": "KOSDAQ",
+    "status": "pending"
+  },
+  {
+    "ticker": "041510",
+    "company": "에스엠",
+    "aliases": ["SM Entertainment", "SM엔터"],
+    "sector": "엔터테인먼트",
+    "market": "KOSDAQ",
+    "status": "pending"
+  },
+  {
+    "ticker": "078340",
+    "company": "컴투스",
+    "aliases": ["Com2uS"],
+    "sector": "게임",
+    "market": "KOSDAQ",
+    "status": "pending"
+  },
+  {
+    "ticker": "039030",
+    "company": "이오테크닉스",
+    "aliases": ["EO Technics"],
+    "sector": "반도체장비",
+    "market": "KOSDAQ",
+    "status": "pending"
+  }
+]

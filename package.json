@@ -1,0 +1,52 @@
+{
+  "name": "swing-radar",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "db:ingest": "node scripts/ingest-postgres.mjs",
+    "db:ingest:schema": "node scripts/ingest-postgres.mjs --apply-schema",
+    "admin:ingest": "node scripts/admin-ingest.mjs",
+    "admin:ingest:schema": "node scripts/admin-ingest.mjs --apply-schema",
+    "etl:generate": "node scripts/generate-snapshots.mjs",
+    "etl:fetch:market": "node scripts/fetch-market-source.mjs",
+    "etl:fetch:news": "node scripts/fetch-news-source.mjs",
+    "etl:fetch:disclosures": "node scripts/fetch-disclosures-source.mjs",
+    "etl:sync:external": "node scripts/sync-external-raw.mjs",
+    "etl:refresh:external": "node scripts/refresh-external-pipeline.mjs",
+    "symbols:import": "node scripts/import-symbol-master.mjs",
+    "universe:watchlist": "node scripts/build-universe-watchlist.mjs",
+    "universe:scan": "node scripts/scan-universe-batches.mjs",
+    "universe:daily": "node scripts/run-daily-universe-cycle.mjs"
+  },
+  "dependencies": {
+    "@radix-ui/react-dialog": "^1.1.15",
+    "@radix-ui/react-scroll-area": "^1.2.3",
+    "@radix-ui/react-separator": "^1.1.1",
+    "@radix-ui/react-slot": "^1.2.0",
+    "@radix-ui/react-tabs": "^1.1.13",
+    "@radix-ui/react-tooltip": "^1.2.8",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "lucide-react": "^0.511.0",
+    "next": "^15.2.4",
+    "pg": "^8.20.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "tailwind-merge": "^3.3.0",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.10",
+    "@types/pg": "^8.18.0",
+    "@types/react": "^19.0.12",
+    "@types/react-dom": "^19.0.4",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.5.3",
+    "tailwindcss": "^3.4.17",
+    "typescript": "^5.8.2"
+  }
+}

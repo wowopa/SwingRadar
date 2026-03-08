@@ -1,0 +1,98 @@
+import { z } from "zod";
+
+import {
+  analysisQuerySchema,
+  recommendationsQuerySchema,
+  trackingQuerySchema
+} from "@/lib/server/query-schemas";
+import type {
+  AnalysisResponseDto,
+  RecommendationsResponseDto,
+  TrackingResponseDto
+} from "@/lib/api-contracts/swing-radar";
+
+const signalTone = z.enum(["긍정", "중립", "주의"]);
+const resultStatus = z.enum(["진행중", "성공", "실패", "무효화"]);
+const riskStatus = z.enum(["양호", "확인 필요", "주의"]);
+const scenarioLabel = z.enum(["기본", "강세", "약세"]);
+
+const recommendationItemSchema = z.object({
+  ticker: z.string(),
+  company: z.string(),
+  sector: z.string(),
+  signalTone,
+  score: z.number(),
+  signalLabel: z.string(),
+  rationale: z.string(),
+  invalidation: z.string(),
+  invalidationDistance: z.number(),
+  riskRewardRatio: z.string(),
+  validationSummary: z.string(),
+  checkpoints: z.array(z.string()),
+  validation: z.object({
+    hitRate: z.number(),
+    avgReturn: z.number(),
+    sampleSize: z.number(),
+    maxDrawdown: z.number()
+  }),
+  observationWindow: z.string(),
+  updatedAt: z.string()
+});
+
+const analysisItemSchema = z.object({
+  ticker: z.string(),
+  company: z.string(),
+  signalTone,
+  score: z.number(),
+  headline: z.string(),
+  invalidation: z.string(),
+  analysisSummary: z.array(z.object({ label: z.string(), value: z.string(), note: z.string() })),
+  keyLevels: z.array(z.object({ label: z.string(), price: z.string(), meaning: z.string() })),
+  decisionNotes: z.array(z.string()),
+  scoreBreakdown: z.array(z.object({ label: z.string(), score: z.number(), description: z.string() })),
+  scenarios: z.array(z.object({ label: scenarioLabel, probability: z.number(), expectation: z.string(), trigger: z.string() })),
+  riskChecklist: z.array(z.object({ label: z.string(), status: riskStatus, note: z.string() })),
+  newsImpact: z.array(z.object({ headline: z.string(), impact: signalTone, summary: z.string() })),
+  dataQuality: z.array(z.object({ label: z.string(), value: z.string(), note: z.string() }))
+});
+
+const trackingResponseSchema = z.object({
+  generatedAt: z.string(),
+  history: z.array(
+    z.object({
+      id: z.string(),
+      ticker: z.string(),
+      company: z.string(),
+      signalDate: z.string(),
+      signalTone,
+      entryScore: z.number(),
+      result: resultStatus,
+      mfe: z.number(),
+      mae: z.number(),
+      holdingDays: z.number()
+    })
+  ),
+  details: z.record(
+    z.string(),
+    z.object({
+      historyId: z.string(),
+      summary: z.string(),
+      invalidationReview: z.string(),
+      afterActionReview: z.string(),
+      reviewChecklist: z.array(z.string()),
+      metrics: z.array(z.object({ label: z.string(), value: z.string(), note: z.string() })),
+      chartSnapshot: z.array(z.object({ label: z.string(), price: z.number() })),
+      historicalNews: z.array(z.object({ id: z.string(), date: z.string(), headline: z.string(), impact: signalTone, note: z.string() })),
+      scoreLog: z.array(z.object({ timestamp: z.string(), factor: z.string(), delta: z.number(), reason: z.string() }))
+    })
+  )
+});
+
+export const ingestPayloadSchema = z.object({
+  applySchema: z.boolean().optional().default(false),
+  recommendations: z.custom<RecommendationsResponseDto>((value) => z.object({ generatedAt: z.string(), items: z.array(recommendationItemSchema) }).safeParse(value).success),
+  analysis: z.custom<AnalysisResponseDto>((value) => z.object({ generatedAt: z.string(), items: z.array(analysisItemSchema) }).safeParse(value).success),
+  tracking: z.custom<TrackingResponseDto>((value) => trackingResponseSchema.safeParse(value).success)
+});
+
+export type IngestPayload = z.infer<typeof ingestPayloadSchema>;

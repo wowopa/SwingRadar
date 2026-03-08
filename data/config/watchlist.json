@@ -1,0 +1,197 @@
+{
+  "tickers": [
+    {
+      "ticker": "005930",
+      "company": "삼성전자",
+      "sector": "반도체",
+      "marketSymbol": "005930.KS",
+      "newsQuery": "삼성전자",
+      "newsQueries": [
+        "Samsung Electronics"
+      ],
+      "newsQueriesKr": [
+        "\"삼성전자\" 주식",
+        "\"삼성전자\" 반도체",
+        "\"삼성전자\" 실적"
+      ],
+      "requiredKeywords": [
+        "삼성전자",
+        "samsung electronics",
+        "005930"
+      ],
+      "contextKeywords": [
+        "반도체",
+        "hbm",
+        "d램",
+        "dram",
+        "낸드",
+        "nand",
+        "파운드리",
+        "실적",
+        "주가",
+        "메모리",
+        "ai"
+      ],
+      "blockedKeywords": [
+        "삼성물산",
+        "삼성바이오로직스",
+        "가전",
+        "스마트폰",
+        "갤럭시",
+        "phone",
+        "smartphone",
+        "\\uBCC4\\uC138",
+        "obituary"
+      ],
+      "blockedDomains": [
+        "androidauthority.com",
+        "phonearena.com",
+        "gsmarena.com"
+      ],
+      "preferredDomains": [
+        "hankyung.com",
+        "mk.co.kr",
+        "edaily.co.kr",
+        "yna.co.kr",
+        "asiae.co.kr",
+        "sedaily.com"
+      ],
+      "minArticleScore": 14,
+      "market": "KOSPI",
+      "dartCorpCode": "00126380"
+    },
+    {
+      "ticker": "035420",
+      "company": "NAVER",
+      "sector": "인터넷",
+      "marketSymbol": "035420.KS",
+      "newsQuery": "NAVER",
+      "newsQueries": [
+        "NAVER Korea"
+      ],
+      "newsQueriesKr": [
+        "\"네이버\" 주식",
+        "\"네이버\" 플랫폼",
+        "\"네이버\" 실적",
+        "\"네이버\" AI",
+        "\"네이버\" 지도"
+      ],
+      "requiredKeywords": [
+        "naver",
+        "네이버",
+        "035420"
+      ],
+      "contextKeywords": [
+        "플랫폼",
+        "검색",
+        "광고",
+        "커머스",
+        "ai",
+        "실적",
+        "주가",
+        "클라우드",
+        "웹툰",
+        "핀테크",
+        "지도"
+      ],
+      "blockedKeywords": [
+        "naver bridge",
+        "bettyhill",
+        "sutherland",
+        "nc500",
+        "naver .com",
+        "@ naver",
+        "@naver",
+        "학교",
+        "입시",
+        "솔라",
+        "k-baseball",
+        "야구",
+        "교수",
+        "지원서",
+        "gmail",
+        "google maps"
+      ],
+      "blockedDomains": [
+        "devdiscourse.com",
+        "theverge.com",
+        "morningstar.com",
+        "nytimes.com"
+      ],
+      "preferredDomains": [
+        "hankyung.com",
+        "mk.co.kr",
+        "edaily.co.kr",
+        "asiae.co.kr",
+        "chosunbiz.com",
+        "zdnet.co.kr",
+        "ddaily.co.kr",
+        "bloter.net"
+      ],
+      "minArticleScore": 15,
+      "market": "KOSPI",
+      "dartCorpCode": "00266961"
+    },
+    {
+      "ticker": "068270",
+      "company": "셀트리온",
+      "sector": "제약/바이오",
+      "marketSymbol": "068270.KS",
+      "newsQuery": "셀트리온",
+      "newsQueries": [
+        "Celltrion"
+      ],
+      "newsQueriesKr": [
+        "\"셀트리온\" 주식",
+        "\"셀트리온\" 바이오",
+        "\"셀트리온\" 실적",
+        "\"셀트리온\" FDA"
+      ],
+      "requiredKeywords": [
+        "셀트리온",
+        "celltrion",
+        "068270"
+      ],
+      "contextKeywords": [
+        "바이오",
+        "제약",
+        "실적",
+        "주가",
+        "짐펜트라",
+        "항체",
+        "시밀러",
+        "fda",
+        "자사주",
+        "서정진"
+      ],
+      "blockedKeywords": [
+        "드라마",
+        "방송",
+        "연예",
+        "celltrion usa",
+        "celltrion healthcare usa",
+        "tvn",
+        "박신",
+        "예능"
+      ],
+      "blockedDomains": [
+        "sportschosun.com",
+        "osen.co.kr",
+        "dispatch.co.kr"
+      ],
+      "preferredDomains": [
+        "hankyung.com",
+        "mk.co.kr",
+        "edaily.co.kr",
+        "yakup.com",
+        "health.chosun.com",
+        "biospectator.com",
+        "hitnews.co.kr",
+        "docdocdoc.co.kr"
+      ],
+      "minArticleScore": 14,
+      "market": "KOSPI",
+      "dartCorpCode": "00413046"
+    }
+  ]
+}

@@ -1,0 +1,73 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 215 56% 8%;
+    --foreground: 210 45% 94%;
+    --card: 215 49% 11%;
+    --card-foreground: 210 45% 94%;
+    --popover: 215 41% 12%;
+    --popover-foreground: 210 45% 94%;
+    --primary: 193 100% 60%;
+    --primary-foreground: 205 65% 10%;
+    --secondary: 216 41% 16%;
+    --secondary-foreground: 210 40% 90%;
+    --muted: 216 39% 15%;
+    --muted-foreground: 214 25% 66%;
+    --accent: 211 43% 22%;
+    --accent-foreground: 210 45% 94%;
+    --destructive: 0 82% 65%;
+    --destructive-foreground: 210 45% 96%;
+    --border: 214 43% 22%;
+    --input: 214 38% 22%;
+    --ring: 193 100% 60%;
+    --positive: 149 68% 49%;
+    --neutral: 41 100% 64%;
+    --caution: 0 100% 74%;
+    --radius: 1rem;
+    color-scheme: dark;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    min-height: 100vh;
+    background:
+      radial-gradient(circle at top, hsl(var(--primary) / 0.10), transparent 28%),
+      linear-gradient(180deg, hsl(215 56% 8%) 0%, hsl(216 54% 10%) 45%, hsl(215 51% 6%) 100%);
+    font-family: Pretendard, system-ui, sans-serif;
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  ::selection {
+    background: hsl(var(--primary) / 0.26);
+  }
+}
+
+@layer components {
+  .surface-panel {
+    @apply border border-border/80 bg-card/75 backdrop-blur-xl shadow-panel;
+    background-image: var(--tw-gradient-stops), theme(backgroundImage.panel-sheen);
+  }
+
+  .data-chip {
+    @apply rounded-full border border-border/70 bg-secondary/45 px-3 py-1.5 text-xs text-foreground/90;
+  }
+
+  .eyebrow-label {
+    @apply text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground;
+  }
+}
