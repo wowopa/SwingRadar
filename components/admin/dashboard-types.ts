@@ -12,6 +12,46 @@ export type HealthPayload = {
   warnings: string[];
 };
 
+export type UniverseCandidateItem = {
+  batch: number;
+  ticker: string;
+  company: string;
+  sector: string;
+  signalTone: "긍정" | "중립" | "주의";
+  score: number;
+  candidateScore: number;
+  invalidation: string;
+  validationSummary: string;
+  observationWindow: string;
+  rationale: string;
+  eventCoverage: string;
+};
+
+export type UniverseFailedBatch = {
+  ok: false;
+  batch: number;
+  count: number;
+  errors: string[];
+};
+
+export type UniverseDailyCandidates = {
+  generatedAt: string;
+  batchSize: number;
+  totalTickers: number;
+  totalBatches: number;
+  succeededBatches: number;
+  failedBatches: UniverseFailedBatch[];
+  topCandidates: UniverseCandidateItem[];
+  batchSummaries: Array<{
+    batch: number;
+    count: number;
+    generatedAt: string;
+    topTicker: string | null;
+    trackingRows: number;
+    warnings?: string[];
+  }>;
+};
+
 export type AuditItem = {
   id: number;
   eventType: string;

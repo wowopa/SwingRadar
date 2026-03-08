@@ -102,7 +102,7 @@ export function formatAuditEventType(eventType: string) {
     admin_publish: "발행",
     watchlist_add: "감시리스트 추가",
     watchlist_update: "감시리스트 수정",
-    provider_fallback: "데이터 폴백"
+    provider_fallback: "데이터 대체"
   };
 
   return labels[eventType] ?? eventType;
@@ -251,7 +251,7 @@ export function HistoryDialog({ item }: { item: PublishHistoryItem }) {
               </div>
             ))
           ) : (
-            <p className="text-sm text-muted-foreground">저장된 변경 항목이 없습니다.</p>
+            <p className="text-sm text-muted-foreground">기록된 변경 항목이 없습니다.</p>
           )}
         </div>
       </DialogContent>

@@ -13,6 +13,7 @@ const mocks = vi.hoisted(() => ({
   rollbackPublishedSnapshot: vi.fn(),
   loadNewsCuration: vi.fn(),
   saveNewsCuration: vi.fn(),
+  getDailyCandidates: vi.fn(),
   listWatchlistEntries: vi.fn(),
   addSymbolToWatchlist: vi.fn(),
   updateWatchlistEntry: vi.fn(),
@@ -49,6 +50,10 @@ vi.mock("@/lib/server/news-curation", () => ({
   saveNewsCuration: mocks.saveNewsCuration
 }));
 
+vi.mock("@/lib/repositories/daily-candidates", () => ({
+  getDailyCandidates: mocks.getDailyCandidates
+}));
+
 vi.mock("@/lib/server/watchlist-manager", () => ({
   listWatchlistEntries: mocks.listWatchlistEntries,
   addSymbolToWatchlist: mocks.addSymbolToWatchlist,
@@ -67,6 +72,7 @@ import { GET as getNewsCurationRoute, POST as postNewsCurationRoute } from "@/ap
 import { POST as postPublishRoute } from "@/app/api/admin/publish/route";
 import { POST as postRollbackRoute } from "@/app/api/admin/rollback/route";
 import { GET as getStatusRoute } from "@/app/api/admin/status/route";
+import { GET as getUniverseRoute } from "@/app/api/admin/universe/route";
 import { GET as getWatchlistRoute, POST as postWatchlistRoute, PUT as putWatchlistRoute } from "@/app/api/admin/watchlist/route";
 
 function createRequest(url: string, init?: RequestInit) {
@@ -120,6 +126,7 @@ describe("admin routes", () => {
       updatedBy: "system",
       items: []
     });
+    mocks.getDailyCandidates.mockResolvedValue(null);
     mocks.saveNewsCuration.mockResolvedValue({
       updatedAt: "2026-03-08T00:00:00.000Z",
       updatedBy: "admin-editor",
@@ -259,6 +266,52 @@ describe("admin routes", () => {
         ok: true,
         requestId: "req-test",
         items: [{ eventType: "admin_publish", summary: "Editorial draft published" }]
+      });
+    });
+
+    it("returns the latest universe daily candidates on universe GET", async () => {
+      mocks.getDailyCandidates.mockResolvedValue({
+        generatedAt: "2026-03-08T12:00:00.000Z",
+        batchSize: 20,
+        totalTickers: 100,
+        totalBatches: 5,
+        succeededBatches: 4,
+        failedBatches: [{ ok: false, batch: 5, count: 20, errors: ["fetch-market-source.mjs: spawn EPERM"] }],
+        topCandidates: [
+          {
+            batch: 2,
+            ticker: "005930",
+            company: "삼성전자",
+            sector: "반도체",
+            signalTone: "중립",
+            score: 78,
+            candidateScore: 88,
+            invalidation: "60일선 이탈 시 재검토",
+            validationSummary: "보통",
+            observationWindow: "5d",
+            rationale: "거래량 회복 여부 확인",
+            eventCoverage: "제한적"
+          }
+        ],
+        batchSummaries: [{ batch: 2, count: 20, generatedAt: "2026-03-08T12:00:00.000Z", topTicker: "005930", trackingRows: 12 }]
+      });
+
+      const response = await getUniverseRoute(createRequest("http://localhost/api/admin/universe"));
+      const payload = await parseJson<{
+        ok: boolean;
+        requestId: string;
+        dailyCandidates: { totalTickers: number; failedBatches: Array<{ batch: number }>; topCandidates: Array<{ ticker: string }> };
+      }>(response);
+
+      expect(response.status).toBe(200);
+      expect(payload).toMatchObject({
+        ok: true,
+        requestId: "req-test",
+        dailyCandidates: {
+          totalTickers: 100,
+          failedBatches: [{ batch: 5 }],
+          topCandidates: [{ ticker: "005930" }]
+        }
       });
     });
   });

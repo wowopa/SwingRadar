@@ -22,6 +22,7 @@ import type {
   NewsCurationDocument,
   PublishHistoryItem,
   SymbolSearchItem,
+  UniverseDailyCandidates,
   WatchlistEntry
 } from "@/components/admin/dashboard-types";
 import { Button } from "@/components/ui/button";
@@ -39,6 +40,7 @@ export function AdminDashboard() {
   const [error, setError] = useState<string | null>(null);
   const [health, setHealth] = useState<HealthPayload | null>(null);
   const [audits, setAudits] = useState<AuditItem[]>([]);
+  const [dailyCandidates, setDailyCandidates] = useState<UniverseDailyCandidates | null>(null);
   const [draft, setDraft] = useState<EditorialDraftDocument | null>(null);
   const [catalog, setCatalog] = useState<EditorialCatalogItem[]>([]);
   const [diff, setDiff] = useState<EditorialDiffItem[]>([]);
@@ -119,7 +121,7 @@ export function AdminDashboard() {
         return;
       }
 
-      const [auditJson, draftJson, newsJson, watchlistJson] = await Promise.all([
+      const [auditJson, draftJson, newsJson, watchlistJson, universeJson] = await Promise.all([
         fetchJson<{ items: AuditItem[] }>("/api/admin/audit", { headers: authHeaders }),
         fetchJson<{
           draft: EditorialDraftDocument;
@@ -131,10 +133,12 @@ export function AdminDashboard() {
         fetchJson<{ items: SymbolSearchItem[]; watchlist: WatchlistEntry[] }>(
           `/api/admin/watchlist${symbolQuery.trim() ? `?q=${encodeURIComponent(symbolQuery.trim())}` : ""}`,
           { headers: authHeaders }
-        )
+        ),
+        fetchJson<{ dailyCandidates: UniverseDailyCandidates | null }>("/api/admin/universe", { headers: authHeaders })
       ]);
 
       setAudits(auditJson.items ?? []);
+      setDailyCandidates(universeJson.dailyCandidates ?? null);
       setDraft(draftJson.draft);
       setCatalog(draftJson.catalog ?? []);
       setDiff(draftJson.diff ?? []);
@@ -461,7 +465,7 @@ export function AdminDashboard() {
         </TabsContent>
 
         <TabsContent value="status">
-          <StatusTab health={health} audits={audits} />
+          <StatusTab health={health} audits={audits} dailyCandidates={dailyCandidates} />
         </TabsContent>
       </Tabs>
     </div>
