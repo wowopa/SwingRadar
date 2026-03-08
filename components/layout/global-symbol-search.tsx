@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import Link from "next/link";
 import { useDeferredValue, useEffect, useState } from "react";
@@ -68,7 +68,7 @@ export function GlobalSymbolSearch() {
   const showDropdown = focused && (query.trim().length > 0 || items.length > 0);
 
   return (
-    <div className="relative w-full max-w-md">
+    <div className="relative z-50 w-full max-w-md">
       <div className="relative">
         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <Input
@@ -81,7 +81,7 @@ export function GlobalSymbolSearch() {
         />
       </div>
       {showDropdown ? (
-        <div className="absolute left-0 right-0 top-[calc(100%+0.5rem)] z-30 rounded-2xl border border-border/80 bg-card/95 p-2 shadow-glow backdrop-blur">
+        <div className="absolute left-0 right-0 top-[calc(100%+0.5rem)] z-50 rounded-2xl border border-border/80 bg-card/95 p-2 shadow-glow backdrop-blur">
           {items.length ? (
             items.map((item) =>
               item.status === "ready" ? (

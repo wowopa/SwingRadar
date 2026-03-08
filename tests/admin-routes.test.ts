@@ -6,7 +6,9 @@ const mocks = vi.hoisted(() => ({
   assertAdminRequest: vi.fn(),
   loadSnapshotBundleFromDisk: vi.fn(),
   ingestSnapshotBundle: vi.fn(),
+  listAuditLogs: vi.fn(),
   recordAuditLog: vi.fn(),
+  getHealthReport: vi.fn(),
   publishEditorialDraft: vi.fn(),
   rollbackPublishedSnapshot: vi.fn(),
   loadNewsCuration: vi.fn(),
@@ -29,7 +31,12 @@ vi.mock("@/lib/server/postgres-ingest", () => ({
 }));
 
 vi.mock("@/lib/server/audit-log", () => ({
+  listAuditLogs: mocks.listAuditLogs,
   recordAuditLog: mocks.recordAuditLog
+}));
+
+vi.mock("@/lib/services/health-service", () => ({
+  getHealthReport: mocks.getHealthReport
 }));
 
 vi.mock("@/lib/server/editorial-draft", () => ({
@@ -55,9 +62,11 @@ vi.mock("@/lib/symbols/master", () => ({
 }));
 
 import { GET as getIngestRoute, POST as postIngestRoute } from "@/app/api/admin/ingest/route";
+import { GET as getAuditRoute } from "@/app/api/admin/audit/route";
 import { GET as getNewsCurationRoute, POST as postNewsCurationRoute } from "@/app/api/admin/news-curation/route";
 import { POST as postPublishRoute } from "@/app/api/admin/publish/route";
 import { POST as postRollbackRoute } from "@/app/api/admin/rollback/route";
+import { GET as getStatusRoute } from "@/app/api/admin/status/route";
 import { GET as getWatchlistRoute, POST as postWatchlistRoute, PUT as putWatchlistRoute } from "@/app/api/admin/watchlist/route";
 
 function createRequest(url: string, init?: RequestInit) {
@@ -83,7 +92,22 @@ describe("admin routes", () => {
     infoSpy = vi.spyOn(console, "info").mockImplementation(() => {});
 
     mocks.assertAdminRequest.mockReturnValue(undefined);
+    mocks.listAuditLogs.mockResolvedValue([]);
     mocks.recordAuditLog.mockResolvedValue(undefined);
+    mocks.getHealthReport.mockResolvedValue({
+      status: "ok",
+      service: "swing-radar",
+      timestamp: "2026-03-08T00:00:00.000Z",
+      dataProvider: {
+        configured: { provider: "postgresDataProvider", mode: "external" },
+        fallback: { provider: "fileDataProvider", mode: "file" },
+        lastUsed: { provider: "postgresDataProvider", mode: "external" },
+        fallbackTriggered: false
+      },
+      freshness: [],
+      warnings: [],
+      recentAuditCount: 0
+    });
     mocks.loadSnapshotBundleFromDisk.mockResolvedValue({
       recommendations: { generatedAt: "2026-03-08T00:00:00.000Z", items: [], dailyScan: null },
       analysis: { generatedAt: "2026-03-08T00:00:00.000Z", items: [] },
@@ -156,6 +180,77 @@ describe("admin routes", () => {
       expect(payload).toMatchObject({
         code: "ADMIN_FORBIDDEN",
         requestId: "req-test"
+      });
+    });
+  });
+
+  describe("admin status and audit routes", () => {
+    it("returns the current health report on status GET", async () => {
+      process.env.SWING_RADAR_DATA_PROVIDER = "postgres";
+      mocks.getHealthReport.mockResolvedValue({
+        status: "warning",
+        service: "swing-radar",
+        timestamp: "2026-03-08T00:00:00.000Z",
+        dataProvider: {
+          configured: { provider: "postgresDataProvider", mode: "external" },
+          fallback: { provider: "fileDataProvider", mode: "file" },
+          lastUsed: { provider: "fileDataProvider", mode: "file" },
+          fallbackTriggered: true
+        },
+        freshness: [{ label: "analysis", stale: true, ageMinutes: 42, severity: "warning" }],
+        warnings: ["analysis snapshot is 42 minutes old (warning)"],
+        recentAuditCount: 3
+      });
+
+      const response = await getStatusRoute(createRequest("http://localhost/api/admin/status"));
+      const payload = await parseJson<{
+        ok: boolean;
+        requestId: string;
+        operationalMode: string;
+        health: { status: string; recentAuditCount: number; warnings: string[] };
+      }>(response);
+
+      expect(response.status).toBe(200);
+      expect(mocks.getHealthReport).toHaveBeenCalledWith("req-test");
+      expect(payload).toMatchObject({
+        ok: true,
+        requestId: "req-test",
+        operationalMode: "postgres",
+        health: {
+          status: "warning",
+          recentAuditCount: 3,
+          warnings: ["analysis snapshot is 42 minutes old (warning)"]
+        }
+      });
+    });
+
+    it("returns recent audit events on audit GET", async () => {
+      mocks.listAuditLogs.mockResolvedValue([
+        {
+          id: 5,
+          eventType: "admin_publish",
+          actor: "admin-editor",
+          status: "success",
+          requestId: "req-publish",
+          summary: "Editorial draft published",
+          metadata: { diffCount: 1 },
+          createdAt: "2026-03-08T00:00:00.000Z"
+        }
+      ]);
+
+      const response = await getAuditRoute(createRequest("http://localhost/api/admin/audit"));
+      const payload = await parseJson<{
+        ok: boolean;
+        requestId: string;
+        items: Array<{ eventType: string; summary: string }>;
+      }>(response);
+
+      expect(response.status).toBe(200);
+      expect(mocks.listAuditLogs).toHaveBeenCalledWith(30);
+      expect(payload).toMatchObject({
+        ok: true,
+        requestId: "req-test",
+        items: [{ eventType: "admin_publish", summary: "Editorial draft published" }]
       });
     });
   });

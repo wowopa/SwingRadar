@@ -15,7 +15,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-radar-grid bg-radar-grid">
       <div className="mx-auto flex min-h-screen w-full max-w-7xl flex-col px-4 pb-10 pt-6 sm:px-6 lg:px-8">
-        <header className="mb-8 flex flex-col gap-6 rounded-3xl border border-border/80 bg-card/70 px-6 py-5 shadow-glow backdrop-blur">
+        <header className="relative z-40 mb-8 flex flex-col gap-6 rounded-3xl border border-border/80 bg-card/70 px-6 py-5 shadow-glow backdrop-blur">
           <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
             <div className="space-y-2">
               <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-primary">
