@@ -1,5 +1,8 @@
 "use client";
 
+import { ArrowRight, CheckCircle2 } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 import { MetricCard, formatAuditEventType, formatDateTime } from "@/components/admin/dashboard-shared";
@@ -8,11 +11,17 @@ import type { AuditItem, HealthPayload, UniverseDailyCandidates } from "@/compon
 export function StatusTab({
   health,
   audits,
-  dailyCandidates
+  dailyCandidates,
+  watchlistTickers,
+  onPromoteCandidate,
+  loading
 }: {
   health: HealthPayload | null;
   audits: AuditItem[];
   dailyCandidates: UniverseDailyCandidates | null;
+  watchlistTickers: string[];
+  onPromoteCandidate: (ticker: string) => void;
+  loading: boolean;
 }) {
   return (
     <div className="grid gap-6">
@@ -72,6 +81,18 @@ export function StatusTab({
               note={dailyCandidates?.failedBatches[0]?.errors[0] ?? "실패 없음"}
             />
           </CardContent>
+          {dailyCandidates?.failedBatches.length ? (
+            <CardContent className="space-y-3 pt-0">
+              {dailyCandidates.failedBatches.slice(0, 3).map((batch) => (
+                <div key={batch.batch} className="rounded-2xl border border-destructive/30 bg-destructive/5 p-4">
+                  <p className="text-sm font-semibold text-white">
+                    배치 {batch.batch} 실패, 종목 {batch.count}개
+                  </p>
+                  <p className="mt-1 text-xs text-muted-foreground">{batch.errors.join(" | ")}</p>
+                </div>
+              ))}
+            </CardContent>
+          ) : null}
         </Card>
 
         <Card>
@@ -86,12 +107,31 @@ export function StatusTab({
                     <p className="text-sm font-semibold text-white">
                       {item.company} {item.ticker}
                     </p>
-                    <p className="text-xs text-primary">candidate {item.candidateScore}</p>
+                    <div className="flex items-center gap-2">
+                      {watchlistTickers.includes(item.ticker) ? (
+                        <span className="inline-flex items-center gap-1 rounded-full border border-positive/40 bg-positive/10 px-2.5 py-1 text-[11px] text-positive">
+                          <CheckCircle2 className="h-3.5 w-3.5" />
+                          watchlist
+                        </span>
+                      ) : null}
+                      <p className="text-xs text-primary">candidate {item.candidateScore}</p>
+                    </div>
                   </div>
                   <p className="mt-1 text-xs text-muted-foreground">
                     batch {item.batch} | {item.signalTone} | {item.eventCoverage}
                   </p>
                   <p className="mt-2 text-sm text-muted-foreground">{item.rationale}</p>
+                  <div className="mt-3 flex justify-end">
+                    <Button
+                      size="sm"
+                      variant={watchlistTickers.includes(item.ticker) ? "outline" : "default"}
+                      disabled={loading || watchlistTickers.includes(item.ticker)}
+                      onClick={() => onPromoteCandidate(item.ticker)}
+                    >
+                      <ArrowRight className="h-4 w-4" />
+                      {watchlistTickers.includes(item.ticker) ? "편입 완료" : "watchlist 편입"}
+                    </Button>
+                  </div>
                 </div>
               ))
             ) : (

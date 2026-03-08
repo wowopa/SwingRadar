@@ -80,6 +80,7 @@ export function AdminDashboard() {
 
     return buildWatchlistChanges(baselineWatchlist, activeWatchlist);
   }, [activeWatchlist, baselineWatchlist]);
+  const watchlistTickers = useMemo(() => watchlist.map((item) => item.ticker), [watchlist]);
 
   useEffect(() => {
     const nextTab = searchParams.get("tab");
@@ -287,6 +288,12 @@ export function AdminDashboard() {
     }
   }
 
+  async function promoteUniverseCandidate(ticker: string) {
+    setTab("watchlist");
+    setActiveWatchlistTicker(ticker);
+    await addWatchlistSymbol(ticker);
+  }
+
   async function saveWatchlistMetadata() {
     if (!authHeaders || !activeWatchlist) {
       return;
@@ -465,7 +472,14 @@ export function AdminDashboard() {
         </TabsContent>
 
         <TabsContent value="status">
-          <StatusTab health={health} audits={audits} dailyCandidates={dailyCandidates} />
+          <StatusTab
+            health={health}
+            audits={audits}
+            dailyCandidates={dailyCandidates}
+            watchlistTickers={watchlistTickers}
+            onPromoteCandidate={(ticker) => void promoteUniverseCandidate(ticker)}
+            loading={loading}
+          />
         </TabsContent>
       </Tabs>
     </div>
