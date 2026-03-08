@@ -56,7 +56,7 @@ KRX 다운로드 폴더에서 최신 CSV를 집어오는 방식:
 $env:SWING_RADAR_SYMBOL_SYNC_ENABLED="true"
 $env:SWING_RADAR_SYMBOL_SYNC_KRX="true"
 $env:SWING_RADAR_KRX_DOWNLOADS_DIR="C:\Users\eugen\Downloads"
-$env:SWING_RADAR_KRX_DOWNLOAD_PATTERN="전종목"
+$env:SWING_RADAR_KRX_DOWNLOAD_PATTERN="KRX"
 $env:SWING_RADAR_SYMBOL_SYNC_MERGE="false"
 ```
 
@@ -68,7 +68,7 @@ $env:SWING_RADAR_KRX_SOURCE_URL="https://example.com/krx-download.csv"
 $env:SWING_RADAR_SYMBOL_SYNC_MERGE="false"
 ```
 
-이미 importer 형식으로 정리된 로컬 CSV 기준:
+이미 importer 형식으로 정리한 로컬 CSV 기준:
 ```powershell
 $env:SWING_RADAR_SYMBOL_SYNC_ENABLED="true"
 $env:SWING_RADAR_SYMBOL_SYNC_INPUT="C:\path\to\krx-symbol-master.csv"
@@ -86,7 +86,7 @@ KRX 기준 일일 실행:
 $env:SWING_RADAR_SYMBOL_SYNC_ENABLED="true"
 $env:SWING_RADAR_SYMBOL_SYNC_KRX="true"
 $env:SWING_RADAR_KRX_DOWNLOADS_DIR="C:\Users\eugen\Downloads"
-$env:SWING_RADAR_KRX_DOWNLOAD_PATTERN="전종목"
+$env:SWING_RADAR_KRX_DOWNLOAD_PATTERN="KRX"
 & "C:\Program Files\nodejs\npm.cmd" run universe:daily -- --sync-symbols --markets KOSPI,KOSDAQ --batch-size 20
 ```
 
@@ -100,7 +100,17 @@ powershell -ExecutionPolicy Bypass -File C:\Users\eugen\Documents\SwingRadar\scr
 powershell -ExecutionPolicy Bypass -File C:\Users\eugen\Documents\SwingRadar\scripts\register-daily-krx-task.ps1 -StartTime 18:10 -DownloadsDir C:\Users\eugen\Downloads -DownloadPattern KRX
 ```
 
-이 흐름은 다음 순서로 실행합니다.
+작업 상태 확인:
+```powershell
+powershell -ExecutionPolicy Bypass -File C:\Users\eugen\Documents\SwingRadar\scripts\get-daily-krx-task-status.ps1
+```
+
+작업 해제:
+```powershell
+powershell -ExecutionPolicy Bypass -File C:\Users\eugen\Documents\SwingRadar\scripts\unregister-daily-krx-task.ps1
+```
+
+전체 흐름은 다음 순서로 실행됩니다.
 1. symbol master sync
 2. universe watchlist build
 3. universe batch scan
