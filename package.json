@@ -22,6 +22,7 @@
     "ops:check": "node scripts/ops-health-check.mjs",
     "ops:heal": "node scripts/ops-health-check.mjs --auto-recover",
     "symbols:import": "node scripts/import-symbol-master.mjs",
+    "symbols:sync": "node scripts/sync-symbol-master.mjs",
     "universe:watchlist": "node scripts/build-universe-watchlist.mjs",
     "universe:scan": "node scripts/scan-universe-batches.mjs",
     "universe:daily": "node scripts/run-daily-universe-cycle.mjs"

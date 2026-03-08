@@ -1,4 +1,4 @@
-﻿import { execFile } from "node:child_process";
+import { execFile } from "node:child_process";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
@@ -19,7 +19,7 @@ function printHelp() {
 SWING-RADAR daily universe refresh
 
 Usage:
-  node scripts/run-daily-universe-cycle.mjs [--markets <KOSPI,KOSDAQ>] [--limit <number>] [--batch-size <number>] [--skip-ingest]
+  node scripts/run-daily-universe-cycle.mjs [--markets <KOSPI,KOSDAQ>] [--limit <number>] [--batch-size <number>] [--skip-ingest] [--sync-symbols]
 `);
 }
 
@@ -29,6 +29,7 @@ function parseArgs(argv) {
     limit: process.env.SWING_RADAR_UNIVERSE_LIMIT ?? "0",
     batchSize: process.env.SWING_RADAR_UNIVERSE_BATCH_SIZE ?? "20",
     skipIngest: false,
+    syncSymbols: process.env.SWING_RADAR_SYMBOL_SYNC_ENABLED === "true",
     help: false
   };
 
@@ -57,6 +58,10 @@ function parseArgs(argv) {
       options.skipIngest = true;
       continue;
     }
+    if (arg === "--sync-symbols") {
+      options.syncSymbols = true;
+      continue;
+    }
     throw new Error(`Unknown argument: ${arg}`);
   }
 
@@ -82,6 +87,11 @@ async function main() {
   if (options.help) {
     printHelp();
     return;
+  }
+
+  if (options.syncSymbols) {
+    console.log("[daily-cycle] symbol master sync 시작");
+    await runScript("sync-symbol-master.mjs", []);
   }
 
   const watchlistArgs = [];
