@@ -1,5 +1,4 @@
-﻿const DEFAULT_WARNING_MINUTES = 180;
-const DEFAULT_CRITICAL_MINUTES = 360;
+import { getOperationalPolicy } from "@/lib/server/operations-policy";
 
 export interface StaleDataIndicator {
   label: string;
@@ -9,17 +8,10 @@ export interface StaleDataIndicator {
   severity: "ok" | "warning" | "critical";
 }
 
-function getThresholds() {
-  return {
-    warningMinutes: Number(process.env.SWING_RADAR_STALE_WARNING_MINUTES ?? DEFAULT_WARNING_MINUTES),
-    criticalMinutes: Number(process.env.SWING_RADAR_STALE_CRITICAL_MINUTES ?? DEFAULT_CRITICAL_MINUTES)
-  };
-}
-
 export function buildStaleDataIndicator(label: string, generatedAt: string): StaleDataIndicator {
   const generatedTime = new Date(generatedAt).getTime();
   const ageMinutes = Math.max(0, Math.round((Date.now() - generatedTime) / 60000));
-  const thresholds = getThresholds();
+  const thresholds = getOperationalPolicy().stale;
 
   let severity: StaleDataIndicator["severity"] = "ok";
   if (ageMinutes >= thresholds.criticalMinutes) {

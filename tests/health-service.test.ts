@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   getRecommendations: vi.fn(),
@@ -31,8 +31,11 @@ vi.mock("@/lib/server/stale-data", () => ({
 import { getHealthReport } from "@/lib/services/health-service";
 
 describe("getHealthReport", () => {
+  const originalHealthAuditLimit = process.env.SWING_RADAR_HEALTH_AUDIT_LIMIT;
+
   beforeEach(() => {
     vi.clearAllMocks();
+    process.env.SWING_RADAR_HEALTH_AUDIT_LIMIT = "7";
 
     mocks.getRecommendations.mockResolvedValue({ generatedAt: "2026-03-08T00:00:00.000Z" });
     mocks.getAnalysis.mockResolvedValue({ generatedAt: "2026-03-08T00:00:00.000Z" });
@@ -51,9 +54,18 @@ describe("getHealthReport", () => {
       .mockReturnValueOnce({ label: "tracking", stale: false, ageMinutes: 5, severity: "ok" });
   });
 
+  afterEach(() => {
+    if (originalHealthAuditLimit === undefined) {
+      delete process.env.SWING_RADAR_HEALTH_AUDIT_LIMIT;
+    } else {
+      process.env.SWING_RADAR_HEALTH_AUDIT_LIMIT = originalHealthAuditLimit;
+    }
+  });
+
   it("returns warning status and records an audit when stale or fallback is detected", async () => {
     const result = await getHealthReport("req-health");
 
+    expect(mocks.listAuditLogs).toHaveBeenCalledWith(7);
     expect(result.status).toBe("warning");
     expect(result.warnings).toEqual([
       "analysis snapshot is 42 minutes old (warning)",

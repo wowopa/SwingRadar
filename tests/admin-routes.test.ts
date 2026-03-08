@@ -86,10 +86,12 @@ async function parseJson<T>(response: Response): Promise<T> {
 
 describe("admin routes", () => {
   let infoSpy: ReturnType<typeof vi.spyOn>;
+  const originalAdminAuditLimit = process.env.SWING_RADAR_ADMIN_AUDIT_LIMIT;
 
   beforeEach(() => {
     vi.clearAllMocks();
     infoSpy = vi.spyOn(console, "info").mockImplementation(() => {});
+    process.env.SWING_RADAR_ADMIN_AUDIT_LIMIT = "12";
 
     mocks.assertAdminRequest.mockReturnValue(undefined);
     mocks.listAuditLogs.mockResolvedValue([]);
@@ -127,6 +129,12 @@ describe("admin routes", () => {
 
   afterEach(() => {
     infoSpy.mockRestore();
+
+    if (originalAdminAuditLimit === undefined) {
+      delete process.env.SWING_RADAR_ADMIN_AUDIT_LIMIT;
+    } else {
+      process.env.SWING_RADAR_ADMIN_AUDIT_LIMIT = originalAdminAuditLimit;
+    }
   });
 
   describe("admin ingest route", () => {
@@ -246,7 +254,7 @@ describe("admin routes", () => {
       }>(response);
 
       expect(response.status).toBe(200);
-      expect(mocks.listAuditLogs).toHaveBeenCalledWith(30);
+      expect(mocks.listAuditLogs).toHaveBeenCalledWith(12);
       expect(payload).toMatchObject({
         ok: true,
         requestId: "req-test",

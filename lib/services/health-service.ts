@@ -1,6 +1,7 @@
 import { getDataProvider } from "@/lib/providers";
 import type { ProviderExecutionMeta } from "@/lib/providers/types";
 import { listAuditLogs, recordAuditLog } from "@/lib/server/audit-log";
+import { getOperationalPolicy } from "@/lib/server/operations-policy";
 import { buildStaleDataIndicator } from "@/lib/server/stale-data";
 
 export interface HealthReport {
@@ -15,11 +16,12 @@ export interface HealthReport {
 
 export async function getHealthReport(requestId: string): Promise<HealthReport> {
   const provider = getDataProvider();
+  const policy = getOperationalPolicy();
   const [recommendations, analysis, tracking, audits] = await Promise.all([
     provider.getRecommendations(),
     provider.getAnalysis(),
     provider.getTracking(),
-    listAuditLogs(5)
+    listAuditLogs(policy.audit.healthLookbackLimit)
   ]);
 
   const providerMeta = provider.getProviderMeta();
