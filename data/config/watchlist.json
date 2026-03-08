@@ -22,10 +22,8 @@
       "contextKeywords": [
         "반도체",
         "hbm",
-        "d램",
         "dram",
         "낸드",
-        "nand",
         "파운드리",
         "실적",
         "주가",
@@ -35,12 +33,11 @@
       "blockedKeywords": [
         "삼성물산",
         "삼성바이오로직스",
-        "가전",
-        "스마트폰",
         "갤럭시",
+        "스마트폰",
         "phone",
         "smartphone",
-        "\\uBCC4\\uC138",
+        "별세",
         "obituary"
       ],
       "blockedDomains": [
@@ -89,7 +86,7 @@
         "ai",
         "실적",
         "주가",
-        "클라우드",
+        "하이퍼클로바",
         "웹툰",
         "핀테크",
         "지도"
@@ -104,11 +101,11 @@
         "@naver",
         "학교",
         "입시",
-        "솔라",
+        "드라마",
         "k-baseball",
         "야구",
         "교수",
-        "지원서",
+        "지자체",
         "gmail",
         "google maps"
       ],
@@ -159,10 +156,10 @@
         "주가",
         "짐펜트라",
         "항체",
-        "시밀러",
+        "신약",
         "fda",
         "자사주",
-        "서정진"
+        "허가"
       ],
       "blockedKeywords": [
         "드라마",
@@ -171,7 +168,7 @@
         "celltrion usa",
         "celltrion healthcare usa",
         "tvn",
-        "박신",
+        "백신",
         "예능"
       ],
       "blockedDomains": [
