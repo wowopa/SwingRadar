@@ -12,6 +12,58 @@ export type HealthPayload = {
   warnings: string[];
 };
 
+export type OpsHealthReportPayload = {
+  checkedAt: string;
+  mode: "check-only" | "auto-recover";
+  initialHealth: {
+    status: "ok" | "warning";
+    warnings: string[];
+  };
+  recovery: {
+    attempted: boolean;
+    timings: {
+      refreshExternalMs: number;
+      ingestPostgresMs: number | null;
+    };
+  } | null;
+  finalHealth: {
+    status: "ok" | "warning";
+    warnings: string[];
+  };
+};
+
+export type DailyCycleReportPayload = {
+  startedAt: string;
+  completedAt: string | null;
+  status: "ok" | "warning" | "failed" | "running";
+  steps: Array<{
+    name: string;
+    status: "running" | "completed" | "failed";
+    startedAt: string;
+    completedAt?: string;
+    durationMs: number | null;
+    error: string | null;
+  }>;
+  summary: {
+    generatedAt: string | null;
+    topCandidateCount: number;
+    totalBatches: number;
+    succeededBatches: number;
+    failedBatchCount: number;
+    batchSize: number | null;
+  } | null;
+  error: string | null;
+};
+
+export type AdminStatusPayload = {
+  ok: boolean;
+  requestId: string;
+  operationalMode: string;
+  health: HealthPayload;
+  opsHealthReport: OpsHealthReportPayload | null;
+  dailyCycleReport: DailyCycleReportPayload | null;
+};
+
 export type UniverseReviewStatus = "new" | "reviewing" | "hold" | "promoted" | "rejected";
 
 export type UniverseCandidateReview = {

@@ -5,11 +5,6 @@ import { RefreshCw } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { DiffTab } from "@/components/admin/diff-tab";
-import { EditorialTab } from "@/components/admin/editorial-tab";
-import { HistoryTab } from "@/components/admin/history-tab";
-import { NewsTab } from "@/components/admin/news-tab";
-import { StatusTab } from "@/components/admin/status-tab";
-import { WatchlistTab } from "@/components/admin/watchlist-tab";
 import {
   APPROVAL_STAGE_OPTIONS,
   Banner,
@@ -18,14 +13,17 @@ import {
   createClientId
 } from "@/components/admin/dashboard-shared";
 import type {
+  AdminStatusPayload,
   AuditItem,
   CuratedNewsItem,
+  DailyCycleReportPayload,
   EditorialCatalogItem,
   EditorialDiffItem,
   EditorialDraftDocument,
   EditorialDraftItem,
   HealthPayload,
   NewsCurationDocument,
+  OpsHealthReportPayload,
   PublishHistoryItem,
   SymbolSearchItem,
   UniverseCandidateReview,
@@ -33,6 +31,11 @@ import type {
   UniverseReviewStatus,
   WatchlistEntry
 } from "@/components/admin/dashboard-types";
+import { EditorialTab } from "@/components/admin/editorial-tab";
+import { HistoryTab } from "@/components/admin/history-tab";
+import { NewsTab } from "@/components/admin/news-tab";
+import { StatusTab } from "@/components/admin/status-tab";
+import { WatchlistTab } from "@/components/admin/watchlist-tab";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -47,6 +50,8 @@ export function AdminDashboard() {
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [health, setHealth] = useState<HealthPayload | null>(null);
+  const [opsHealthReport, setOpsHealthReport] = useState<OpsHealthReportPayload | null>(null);
+  const [dailyCycleReport, setDailyCycleReport] = useState<DailyCycleReportPayload | null>(null);
   const [audits, setAudits] = useState<AuditItem[]>([]);
   const [dailyCandidates, setDailyCandidates] = useState<UniverseDailyCandidates | null>(null);
   const [draft, setDraft] = useState<EditorialDraftDocument | null>(null);
@@ -108,7 +113,7 @@ export function AdminDashboard() {
     const json = (await response.json().catch(() => ({}))) as T & { error?: { message?: string } };
 
     if (!response.ok) {
-      throw new Error(json?.error?.message ?? `요청이 실패했습니다. (${response.status})`);
+      throw new Error(json?.error?.message ?? `Request failed. (${response.status})`);
     }
 
     return json;
@@ -120,14 +125,16 @@ export function AdminDashboard() {
     setMessage(null);
 
     try {
-      setHealth(await fetchJson<HealthPayload>("/api/health"));
-
       if (!authHeaders) {
+        setHealth(await fetchJson<HealthPayload>("/api/health"));
+        setOpsHealthReport(null);
+        setDailyCycleReport(null);
         setMessage("관리자 토큰을 입력하면 운영 데이터를 불러옵니다.");
         return;
       }
 
-      const [auditJson, draftJson, newsJson, watchlistJson, universeJson] = await Promise.all([
+      const [statusJson, auditJson, draftJson, newsJson, watchlistJson, universeJson] = await Promise.all([
+        fetchJson<AdminStatusPayload>("/api/admin/status", { headers: authHeaders }),
         fetchJson<{ items: AuditItem[] }>("/api/admin/audit", { headers: authHeaders }),
         fetchJson<{
           draft: EditorialDraftDocument;
@@ -146,6 +153,9 @@ export function AdminDashboard() {
         }>("/api/admin/universe", { headers: authHeaders })
       ]);
 
+      setHealth(statusJson.health);
+      setOpsHealthReport(statusJson.opsHealthReport ?? null);
+      setDailyCycleReport(statusJson.dailyCycleReport ?? null);
       setAudits(auditJson.items ?? []);
       setDailyCandidates(universeJson.dailyCandidates ?? null);
       setDraft(draftJson.draft);
@@ -181,7 +191,7 @@ export function AdminDashboard() {
         headers: { "Content-Type": "application/json", ...authHeaders },
         body: JSON.stringify(draft)
       });
-      setMessage("초안 저장이 완료되었습니다.");
+      setMessage("초안을 저장했습니다.");
       await loadDashboard();
     } catch (saveError) {
       setError(saveError instanceof Error ? saveError.message : "초안 저장에 실패했습니다.");
@@ -205,7 +215,7 @@ export function AdminDashboard() {
         headers: { "Content-Type": "application/json", ...authHeaders },
         body: JSON.stringify({ approvalStage, ingestToPostgres: true })
       });
-      setMessage(`발행이 완료되었습니다. 변경 종목 ${result.publish.diffCount}건`);
+      setMessage(`발행을 완료했습니다. 변경 종목 ${result.publish.diffCount}건`);
       await loadDashboard();
     } catch (publishError) {
       setError(publishError instanceof Error ? publishError.message : "발행에 실패했습니다.");
@@ -229,7 +239,7 @@ export function AdminDashboard() {
         headers: { "Content-Type": "application/json", ...authHeaders },
         body: JSON.stringify(news)
       });
-      setMessage("뉴스 큐레이션이 저장되었습니다.");
+      setMessage("뉴스 큐레이션을 저장했습니다.");
       await loadDashboard();
     } catch (saveError) {
       setError(saveError instanceof Error ? saveError.message : "뉴스 큐레이션 저장에 실패했습니다.");
@@ -281,7 +291,7 @@ export function AdminDashboard() {
       setMessage(
         json.result?.added
           ? `종목 추가 완료. ${json.result?.estimate ?? ""}`.trim()
-          : "이미 감시리스트에 포함된 종목입니다."
+          : "이미 watchlist에 포함된 종목입니다."
       );
 
       await loadDashboard();
@@ -290,7 +300,7 @@ export function AdminDashboard() {
         router.push(returnTo);
       }
     } catch (addError) {
-      setError(addError instanceof Error ? addError.message : "감시리스트 종목 추가에 실패했습니다.");
+      setError(addError instanceof Error ? addError.message : "watchlist 종목 추가에 실패했습니다.");
     } finally {
       setLoading(false);
     }
@@ -353,10 +363,10 @@ export function AdminDashboard() {
         headers: { "Content-Type": "application/json", ...authHeaders },
         body: JSON.stringify({ ...activeWatchlist, rerunPipeline: true })
       });
-      setMessage("감시리스트 메타데이터 저장이 완료되었습니다.");
+      setMessage("watchlist 메타데이터 저장을 완료했습니다.");
       await loadDashboard();
     } catch (saveError) {
-      setError(saveError instanceof Error ? saveError.message : "감시리스트 저장에 실패했습니다.");
+      setError(saveError instanceof Error ? saveError.message : "watchlist 저장에 실패했습니다.");
     } finally {
       setLoading(false);
     }
@@ -424,7 +434,7 @@ export function AdminDashboard() {
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>운영자 자격 증명</CardTitle>
+          <CardTitle>운영 접근 인증</CardTitle>
         </CardHeader>
         <CardContent className="grid gap-4 lg:grid-cols-[1.5fr_auto_auto] lg:items-end">
           <div>
@@ -459,7 +469,7 @@ export function AdminDashboard() {
         <TabsList>
           <TabsTrigger value="editorial">초안</TabsTrigger>
           <TabsTrigger value="news">뉴스</TabsTrigger>
-          <TabsTrigger value="watchlist">감시리스트</TabsTrigger>
+          <TabsTrigger value="watchlist">Watchlist</TabsTrigger>
           <TabsTrigger value="diff">변경점</TabsTrigger>
           <TabsTrigger value="history">이력</TabsTrigger>
           <TabsTrigger value="status">상태</TabsTrigger>
@@ -525,6 +535,8 @@ export function AdminDashboard() {
           <StatusTab
             health={health}
             audits={audits}
+            opsHealthReport={opsHealthReport}
+            dailyCycleReport={dailyCycleReport}
             dailyCandidates={dailyCandidates}
             watchlistTickers={watchlistTickers}
             onPromoteCandidate={(ticker) => void promoteUniverseCandidate(ticker)}

@@ -9,6 +9,8 @@ const mocks = vi.hoisted(() => ({
   listAuditLogs: vi.fn(),
   recordAuditLog: vi.fn(),
   getHealthReport: vi.fn(),
+  loadOpsHealthCheckReport: vi.fn(),
+  loadDailyCycleReport: vi.fn(),
   publishEditorialDraft: vi.fn(),
   rollbackPublishedSnapshot: vi.fn(),
   loadNewsCuration: vi.fn(),
@@ -40,6 +42,11 @@ vi.mock("@/lib/server/audit-log", () => ({
 
 vi.mock("@/lib/services/health-service", () => ({
   getHealthReport: mocks.getHealthReport
+}));
+
+vi.mock("@/lib/server/ops-reports", () => ({
+  loadOpsHealthCheckReport: mocks.loadOpsHealthCheckReport,
+  loadDailyCycleReport: mocks.loadDailyCycleReport
 }));
 
 vi.mock("@/lib/server/editorial-draft", () => ({
@@ -123,6 +130,8 @@ describe("admin routes", () => {
       warnings: [],
       recentAuditCount: 0
     });
+    mocks.loadOpsHealthCheckReport.mockResolvedValue(null);
+    mocks.loadDailyCycleReport.mockResolvedValue(null);
     mocks.loadSnapshotBundleFromDisk.mockResolvedValue({
       recommendations: { generatedAt: "2026-03-08T00:00:00.000Z", items: [], dailyScan: null },
       analysis: { generatedAt: "2026-03-08T00:00:00.000Z", items: [] },
@@ -238,10 +247,14 @@ describe("admin routes", () => {
         requestId: string;
         operationalMode: string;
         health: { status: string; recentAuditCount: number; warnings: string[] };
+        opsHealthReport: { finalHealth: { status: string } } | null;
+        dailyCycleReport: { status: string; summary: { failedBatchCount: number } | null } | null;
       }>(response);
 
       expect(response.status).toBe(200);
       expect(mocks.getHealthReport).toHaveBeenCalledWith("req-test");
+      expect(mocks.loadOpsHealthCheckReport).toHaveBeenCalledTimes(1);
+      expect(mocks.loadDailyCycleReport).toHaveBeenCalledTimes(1);
       expect(payload).toMatchObject({
         ok: true,
         requestId: "req-test",
@@ -250,6 +263,62 @@ describe("admin routes", () => {
           status: "warning",
           recentAuditCount: 3,
           warnings: ["analysis snapshot is 42 minutes old (warning)"]
+        },
+        opsHealthReport: null,
+        dailyCycleReport: null
+      });
+    });
+
+    it("returns recent automation reports on status GET", async () => {
+      mocks.loadOpsHealthCheckReport.mockResolvedValue({
+        checkedAt: "2026-03-08T13:00:00.000Z",
+        mode: "auto-recover",
+        initialHealth: { status: "warning", warnings: ["analysis stale"] },
+        recovery: {
+          attempted: true,
+          timings: { refreshExternalMs: 3200, ingestPostgresMs: 1200 }
+        },
+        finalHealth: { status: "ok", warnings: [] }
+      });
+      mocks.loadDailyCycleReport.mockResolvedValue({
+        startedAt: "2026-03-08T18:10:00.000Z",
+        completedAt: "2026-03-08T18:12:00.000Z",
+        status: "warning",
+        steps: [
+          {
+            name: "symbol-sync",
+            status: "completed",
+            startedAt: "2026-03-08T18:10:00.000Z",
+            completedAt: "2026-03-08T18:10:30.000Z",
+            durationMs: 30000,
+            error: null
+          }
+        ],
+        summary: {
+          generatedAt: "2026-03-08T18:12:00.000Z",
+          topCandidateCount: 5,
+          totalBatches: 10,
+          succeededBatches: 9,
+          failedBatchCount: 1,
+          batchSize: 20
+        },
+        error: null
+      });
+
+      const response = await getStatusRoute(createRequest("http://localhost/api/admin/status"));
+      const payload = await parseJson<{
+        opsHealthReport: { finalHealth: { status: string } } | null;
+        dailyCycleReport: { status: string; summary: { failedBatchCount: number } | null } | null;
+      }>(response);
+
+      expect(response.status).toBe(200);
+      expect(payload).toMatchObject({
+        opsHealthReport: {
+          finalHealth: { status: "ok" }
+        },
+        dailyCycleReport: {
+          status: "warning",
+          summary: { failedBatchCount: 1 }
         }
       });
     });

@@ -3,10 +3,6 @@
 import { useEffect, useState } from "react";
 import { ArrowRight, CheckCircle2 } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Textarea } from "@/components/ui/textarea";
-
 import {
   MetricCard,
   UNIVERSE_REVIEW_STATUS_OPTIONS,
@@ -14,13 +10,37 @@ import {
   formatDateTime,
   formatUniverseReviewStatus
 } from "@/components/admin/dashboard-shared";
-import type { AuditItem, HealthPayload, UniverseDailyCandidates, UniverseReviewStatus } from "@/components/admin/dashboard-types";
+import type {
+  AuditItem,
+  DailyCycleReportPayload,
+  HealthPayload,
+  OpsHealthReportPayload,
+  UniverseDailyCandidates,
+  UniverseReviewStatus
+} from "@/components/admin/dashboard-types";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
 
 type ReviewDraftState = Record<string, { status: UniverseReviewStatus; note: string }>;
+
+function formatDuration(durationMs: number | null) {
+  if (durationMs === null) {
+    return "-";
+  }
+
+  if (durationMs < 1000) {
+    return `${durationMs}ms`;
+  }
+
+  return `${(durationMs / 1000).toFixed(1)}s`;
+}
 
 export function StatusTab({
   health,
   audits,
+  opsHealthReport,
+  dailyCycleReport,
   dailyCandidates,
   watchlistTickers,
   onPromoteCandidate,
@@ -29,6 +49,8 @@ export function StatusTab({
 }: {
   health: HealthPayload | null;
   audits: AuditItem[];
+  opsHealthReport: OpsHealthReportPayload | null;
+  dailyCycleReport: DailyCycleReportPayload | null;
   dailyCandidates: UniverseDailyCandidates | null;
   watchlistTickers: string[];
   onPromoteCandidate: (ticker: string) => void;
@@ -59,16 +81,25 @@ export function StatusTab({
             <CardTitle>서비스 상태</CardTitle>
           </CardHeader>
           <CardContent className="grid gap-4 md:grid-cols-4">
-            <MetricCard label="서비스" value={health?.status ?? "not_loaded"} note={health?.service ?? "미로드"} />
+            <MetricCard label="service" value={health?.status ?? "not_loaded"} note={health?.service ?? "not loaded"} />
             <MetricCard
-              label="현재 provider"
+              label="provider"
               value={health?.dataProvider.lastUsed?.provider ?? health?.dataProvider.configured.provider ?? "unknown"}
               note={health?.dataProvider.lastUsed?.mode ?? health?.dataProvider.configured.mode ?? "unknown"}
             />
-            <MetricCard label="대체 상태" value={health?.dataProvider.fallbackTriggered ? "사용 중" : "기본"} note="" />
-            <MetricCard label="최근 감사 로그" value={String(health?.recentAuditCount ?? 0)} note="health 기준 recent count" />
+            <MetricCard
+              label="fallback"
+              value={health?.dataProvider.fallbackTriggered ? "triggered" : "idle"}
+              note={health?.warnings[0] ?? "primary provider serving normally"}
+            />
+            <MetricCard
+              label="recent audit"
+              value={String(health?.recentAuditCount ?? 0)}
+              note="recent audit rows from health view"
+            />
           </CardContent>
         </Card>
+
         <Card>
           <CardHeader>
             <CardTitle>최근 감사 로그</CardTitle>
@@ -84,7 +115,94 @@ export function StatusTab({
                 </div>
               ))
             ) : (
-              <p className="text-sm text-muted-foreground">감사 로그가 없습니다.</p>
+              <p className="text-sm text-muted-foreground">감사 로그가 아직 없습니다.</p>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid gap-6 xl:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle>자동 복구 상태</CardTitle>
+          </CardHeader>
+          <CardContent className="grid gap-4 md:grid-cols-4">
+            <MetricCard
+              label="last check"
+              value={opsHealthReport ? formatDateTime(opsHealthReport.checkedAt) : "none"}
+              note={opsHealthReport?.mode ?? "ops:check not run yet"}
+            />
+            <MetricCard
+              label="initial"
+              value={opsHealthReport?.initialHealth.status ?? "unknown"}
+              note={opsHealthReport?.initialHealth.warnings[0] ?? "no warnings"}
+            />
+            <MetricCard
+              label="final"
+              value={opsHealthReport?.finalHealth.status ?? "unknown"}
+              note={opsHealthReport?.finalHealth.warnings[0] ?? "no warnings"}
+            />
+            <MetricCard
+              label="recovery"
+              value={opsHealthReport?.recovery?.attempted ? "attempted" : "not_run"}
+              note={
+                opsHealthReport?.recovery
+                  ? `refresh ${formatDuration(opsHealthReport.recovery.timings.refreshExternalMs)}`
+                  : "auto recovery not attempted"
+              }
+            />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Daily cycle 상태</CardTitle>
+          </CardHeader>
+          <CardContent className="grid gap-4 md:grid-cols-4">
+            <MetricCard
+              label="run status"
+              value={dailyCycleReport?.status ?? "none"}
+              note={dailyCycleReport?.error ?? "latest-daily-cycle.json"}
+            />
+            <MetricCard
+              label="completed"
+              value={dailyCycleReport?.completedAt ? formatDateTime(dailyCycleReport.completedAt) : "running"}
+              note={dailyCycleReport?.startedAt ? `started ${formatDateTime(dailyCycleReport.startedAt)}` : "not run yet"}
+            />
+            <MetricCard
+              label="batches"
+              value={
+                dailyCycleReport?.summary
+                  ? `${dailyCycleReport.summary.succeededBatches}/${dailyCycleReport.summary.totalBatches}`
+                  : "0/0"
+              }
+              note={
+                dailyCycleReport?.summary
+                  ? `failed ${dailyCycleReport.summary.failedBatchCount}, batch size ${dailyCycleReport.summary.batchSize ?? 0}`
+                  : "no cycle summary"
+              }
+            />
+            <MetricCard
+              label="candidates"
+              value={String(dailyCycleReport?.summary?.topCandidateCount ?? 0)}
+              note={dailyCycleReport?.summary?.generatedAt ? formatDateTime(dailyCycleReport.summary.generatedAt) : "no candidate file"}
+            />
+          </CardContent>
+          <CardContent className="space-y-3 pt-0">
+            {dailyCycleReport?.steps?.length ? (
+              dailyCycleReport.steps.map((step) => (
+                <div key={`${step.name}-${step.startedAt}`} className="rounded-2xl border border-border/70 bg-secondary/35 p-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-sm font-semibold text-white">{step.name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {step.status} | {formatDuration(step.durationMs)}
+                    </p>
+                  </div>
+                  {step.error ? <p className="mt-2 text-xs text-destructive">{step.error}</p> : null}
+                </div>
+              ))
+            ) : (
+              <p className="text-sm text-muted-foreground">아직 기록된 daily cycle step이 없습니다.</p>
             )}
           </CardContent>
         </Card>
@@ -97,24 +215,24 @@ export function StatusTab({
           </CardHeader>
           <CardContent className="grid gap-4 md:grid-cols-4">
             <MetricCard
-              label="후보 생성 시각"
-              value={dailyCandidates ? formatDateTime(dailyCandidates.generatedAt) : "없음"}
-              note="daily-candidates 기준"
+              label="generated"
+              value={dailyCandidates ? formatDateTime(dailyCandidates.generatedAt) : "none"}
+              note="daily-candidates.json"
             />
             <MetricCard
-              label="대상 종목"
+              label="tickers"
               value={String(dailyCandidates?.totalTickers ?? 0)}
-              note={`배치 크기 ${dailyCandidates?.batchSize ?? 0}`}
+              note={`batch size ${dailyCandidates?.batchSize ?? 0}`}
             />
             <MetricCard
-              label="성공 배치"
+              label="success"
               value={`${dailyCandidates?.succeededBatches ?? 0}/${dailyCandidates?.totalBatches ?? 0}`}
-              note="일일 스캔 성공 현황"
+              note="latest batch scan result"
             />
             <MetricCard
-              label="실패 배치"
+              label="failed"
               value={String(dailyCandidates?.failedBatches.length ?? 0)}
-              note={dailyCandidates?.failedBatches[0]?.errors[0] ?? "실패 없음"}
+              note={dailyCandidates?.failedBatches[0]?.errors[0] ?? "no failed batches"}
             />
           </CardContent>
           {dailyCandidates?.failedBatches.length ? (
@@ -122,7 +240,7 @@ export function StatusTab({
               {dailyCandidates.failedBatches.slice(0, 3).map((batch) => (
                 <div key={batch.batch} className="rounded-2xl border border-destructive/30 bg-destructive/5 p-4">
                   <p className="text-sm font-semibold text-white">
-                    배치 {batch.batch} 실패, 종목 {batch.count}개
+                    Batch {batch.batch} failed, {batch.count} tickers
                   </p>
                   <p className="mt-1 text-xs text-muted-foreground">{batch.errors.join(" | ")}</p>
                 </div>
@@ -183,7 +301,7 @@ export function StatusTab({
                         </select>
                         {item.review ? (
                           <p className="text-[11px] text-muted-foreground">
-                            현재 저장값: {formatUniverseReviewStatus(item.review.status)} | {item.review.updatedBy} |{" "}
+                            현재 상태: {formatUniverseReviewStatus(item.review.status)} | {item.review.updatedBy} |{" "}
                             {formatDateTime(item.review.updatedAt)}
                           </p>
                         ) : null}
@@ -244,14 +362,12 @@ export function StatusTab({
               <div key={`${batch.batch}-${batch.generatedAt}`} className="rounded-2xl border border-border/70 bg-secondary/35 p-4">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <p className="text-sm font-semibold text-white">
-                    배치 {batch.batch} | 종목 {batch.count}개 | tracking {batch.trackingRows}행
+                    Batch {batch.batch} | tickers {batch.count} | tracking {batch.trackingRows}
                   </p>
                   <p className="text-xs text-muted-foreground">{formatDateTime(batch.generatedAt)}</p>
                 </div>
-                <p className="mt-1 text-xs text-muted-foreground">대표 종목 {batch.topTicker ?? "없음"}</p>
-                {batch.warnings?.length ? (
-                  <p className="mt-2 text-xs text-destructive">{batch.warnings.join(" | ")}</p>
-                ) : null}
+                <p className="mt-1 text-xs text-muted-foreground">Top ticker {batch.topTicker ?? "none"}</p>
+                {batch.warnings?.length ? <p className="mt-2 text-xs text-destructive">{batch.warnings.join(" | ")}</p> : null}
               </div>
             ))
           ) : (
