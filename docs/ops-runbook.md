@@ -49,9 +49,9 @@ Expected provider fields:
 - `dataProvider.fallbackTriggered`: whether fallback was used during the request
 
 ## 5. Daily symbol sync
-자동 심볼 동기화를 daily cycle에 포함하려면 아래 환경값을 사용합니다.
+Enable symbol sync in the daily cycle with the environment values below.
 
-KRX 다운로드 폴더에서 최신 CSV를 집어오는 방식:
+Use the newest matching CSV from the KRX downloads folder:
 ```powershell
 $env:SWING_RADAR_SYMBOL_SYNC_ENABLED="true"
 $env:SWING_RADAR_SYMBOL_SYNC_KRX="true"
@@ -60,7 +60,7 @@ $env:SWING_RADAR_KRX_DOWNLOAD_PATTERN="KRX"
 $env:SWING_RADAR_SYMBOL_SYNC_MERGE="false"
 ```
 
-KRX 원격 CSV URL 기준:
+Use a remote KRX CSV URL:
 ```powershell
 $env:SWING_RADAR_SYMBOL_SYNC_ENABLED="true"
 $env:SWING_RADAR_SYMBOL_SYNC_KRX="true"
@@ -68,20 +68,20 @@ $env:SWING_RADAR_KRX_SOURCE_URL="https://example.com/krx-download.csv"
 $env:SWING_RADAR_SYMBOL_SYNC_MERGE="false"
 ```
 
-이미 importer 형식으로 정리한 로컬 CSV 기준:
+Use a local CSV that is already normalized for the importer:
 ```powershell
 $env:SWING_RADAR_SYMBOL_SYNC_ENABLED="true"
 $env:SWING_RADAR_SYMBOL_SYNC_INPUT="C:\path\to\krx-symbol-master.csv"
 $env:SWING_RADAR_SYMBOL_SYNC_MERGE="false"
 ```
 
-단독 실행:
+Run symbol sync only:
 ```powershell
 & "C:\Program Files\nodejs\npm.cmd" run symbols:sync
 ```
 
 ## 6. Daily universe cycle
-KRX 기준 일일 실행:
+Run the KRX daily cycle:
 ```powershell
 $env:SWING_RADAR_SYMBOL_SYNC_ENABLED="true"
 $env:SWING_RADAR_SYMBOL_SYNC_KRX="true"
@@ -90,38 +90,42 @@ $env:SWING_RADAR_KRX_DOWNLOAD_PATTERN="KRX"
 & "C:\Program Files\nodejs\npm.cmd" run universe:daily -- --sync-symbols --markets KOSPI,KOSDAQ --batch-size 20
 ```
 
-작업 스케줄러용 PowerShell 래퍼:
+PowerShell wrapper for Windows Task Scheduler:
 ```powershell
 powershell -ExecutionPolicy Bypass -File C:\Users\eugen\Documents\SwingRadar\scripts\run-daily-krx-cycle.ps1
 ```
 
-작업 스케줄러 등록:
+Register the scheduled task:
 ```powershell
 powershell -ExecutionPolicy Bypass -File C:\Users\eugen\Documents\SwingRadar\scripts\register-daily-krx-task.ps1 -StartTime 18:10 -DownloadsDir C:\Users\eugen\Downloads -DownloadPattern KRX
 ```
 
-작업 상태 확인:
+Check task status:
 ```powershell
 powershell -ExecutionPolicy Bypass -File C:\Users\eugen\Documents\SwingRadar\scripts\get-daily-krx-task-status.ps1
 ```
 
-작업 해제:
+Remove the task:
 ```powershell
 powershell -ExecutionPolicy Bypass -File C:\Users\eugen\Documents\SwingRadar\scripts\unregister-daily-krx-task.ps1
 ```
 
-전체 흐름은 다음 순서로 실행됩니다.
+The full cycle runs in this order.
 1. symbol master sync
 2. universe watchlist build
 3. universe batch scan
 4. optional ingest
 5. daily candidate refresh
 
+Daily cycle report:
+- Default report path: `data/ops/latest-daily-cycle.json`
+- Override with `SWING_RADAR_DAILY_CYCLE_REPORT_PATH`
+
 ## 7. Admin backoffice
 - Open `/admin`.
 - Enter `SWING_RADAR_ADMIN_TOKEN`.
-- Use 상태 탭 to inspect freshness, audit logs, and universe scan summaries.
-- Use 초안 저장 and 발행 실행 for editorial updates.
+- Use the status tab to inspect freshness, audit logs, and universe scan summaries.
+- Use draft save and publish actions for editorial updates.
 - Use watchlist tools to add symbols and rerun the pipeline when needed.
 
 ## 8. Observability checks

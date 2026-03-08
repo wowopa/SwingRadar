@@ -1,5 +1,5 @@
 import { execFile } from "node:child_process";
-import { readFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
 import { promisify } from "node:util";
@@ -20,6 +20,13 @@ SWING-RADAR daily universe refresh
 
 Usage:
   node scripts/run-daily-universe-cycle.mjs [--markets <KOSPI,KOSDAQ>] [--limit <number>] [--batch-size <number>] [--skip-ingest] [--sync-symbols]
+
+Environment:
+  SWING_RADAR_UNIVERSE_MARKETS
+  SWING_RADAR_UNIVERSE_LIMIT
+  SWING_RADAR_UNIVERSE_BATCH_SIZE
+  SWING_RADAR_SYMBOL_SYNC_ENABLED=true
+  SWING_RADAR_DAILY_CYCLE_REPORT_PATH
 `);
 }
 
@@ -68,11 +75,32 @@ function parseArgs(argv) {
   return options;
 }
 
+function getDailyCandidatesPath() {
+  return path.join(projectRoot, "data", "universe", "daily-candidates.json");
+}
+
+function getReportPath() {
+  return process.env.SWING_RADAR_DAILY_CYCLE_REPORT_PATH
+    ? path.resolve(process.env.SWING_RADAR_DAILY_CYCLE_REPORT_PATH)
+    : path.join(projectRoot, "data", "ops", "latest-daily-cycle.json");
+}
+
+async function writeReport(report) {
+  const reportPath = getReportPath();
+  await mkdir(path.dirname(reportPath), { recursive: true });
+  await writeFile(reportPath, `${JSON.stringify(report, null, 2)}\n`, "utf8");
+}
+
 async function runScript(scriptName, args) {
-  const { stdout, stderr } = await execFileAsync(process.execPath, [path.join(projectRoot, "scripts", scriptName), ...args], {
-    cwd: projectRoot,
-    env: process.env
-  });
+  const startedAt = Date.now();
+  const { stdout, stderr } = await execFileAsync(
+    process.execPath,
+    [path.join(projectRoot, "scripts", scriptName), ...args],
+    {
+      cwd: projectRoot,
+      env: process.env
+    }
+  );
 
   if (stdout.trim()) {
     process.stdout.write(stdout);
@@ -80,6 +108,52 @@ async function runScript(scriptName, args) {
   if (stderr.trim()) {
     process.stderr.write(stderr);
   }
+
+  return Date.now() - startedAt;
+}
+
+function startStep(name) {
+  return {
+    name,
+    status: "running",
+    startedAt: new Date().toISOString(),
+    durationMs: null,
+    error: null
+  };
+}
+
+function finishStep(step, status, startedAt, error = null) {
+  step.status = status;
+  step.durationMs = Date.now() - startedAt;
+  step.completedAt = new Date().toISOString();
+  step.error = error;
+}
+
+async function runStep(report, name, action) {
+  const step = startStep(name);
+  report.steps.push(step);
+  const startedAt = Date.now();
+
+  try {
+    const result = await action();
+    finishStep(step, "completed", startedAt);
+    return result;
+  } catch (error) {
+    finishStep(step, "failed", startedAt, error instanceof Error ? error.message : String(error));
+    throw error;
+  }
+}
+
+async function readDailyCandidatesSummary() {
+  const document = JSON.parse((await readFile(getDailyCandidatesPath(), "utf8")).replace(/^\uFEFF/, ""));
+  return {
+    generatedAt: document.generatedAt ?? null,
+    topCandidateCount: Array.isArray(document.topCandidates) ? document.topCandidates.length : 0,
+    totalBatches: document.totalBatches ?? 0,
+    succeededBatches: document.succeededBatches ?? 0,
+    failedBatchCount: Array.isArray(document.failedBatches) ? document.failedBatches.length : 0,
+    batchSize: document.batchSize ?? null
+  };
 }
 
 async function main() {
@@ -89,38 +163,64 @@ async function main() {
     return;
   }
 
-  if (options.syncSymbols) {
-    console.log("[daily-cycle] symbol master sync 시작");
-    await runScript("sync-symbol-master.mjs", []);
+  const report = {
+    startedAt: new Date().toISOString(),
+    completedAt: null,
+    status: "running",
+    options,
+    steps: [],
+    summary: null,
+    error: null
+  };
+
+  try {
+    if (options.syncSymbols) {
+      console.log("[daily-cycle] start: symbol master sync");
+      await runStep(report, "symbol-sync", () => runScript("sync-symbol-master.mjs", []));
+    }
+
+    const watchlistArgs = [];
+    if (options.markets) {
+      watchlistArgs.push("--markets", options.markets);
+    }
+    if (options.limit && options.limit !== "0") {
+      watchlistArgs.push("--limit", options.limit);
+    }
+
+    const scanArgs = ["--batch-size", options.batchSize];
+    if (options.skipIngest) {
+      scanArgs.push("--skip-ingest");
+    }
+
+    console.log("[daily-cycle] start: universe watchlist build");
+    await runStep(report, "watchlist-build", () => runScript("build-universe-watchlist.mjs", watchlistArgs));
+
+    console.log("[daily-cycle] start: universe batch scan");
+    await runStep(report, "universe-scan", () => runScript("scan-universe-batches.mjs", scanArgs));
+
+    report.summary = await readDailyCandidatesSummary();
+    report.status = report.summary.failedBatchCount > 0 ? "warning" : "ok";
+    report.completedAt = new Date().toISOString();
+
+    await writeReport(report);
+
+    console.log(
+      `[daily-cycle] completed: candidates ${report.summary.topCandidateCount}, succeeded batches ${report.summary.succeededBatches}/${report.summary.totalBatches}, failed batches ${report.summary.failedBatchCount}`
+    );
+    console.log(`[daily-cycle] report: ${getReportPath()}`);
+
+    if (report.summary.failedBatchCount > 0) {
+      process.exitCode = 1;
+    }
+  } catch (error) {
+    report.status = "failed";
+    report.error = error instanceof Error ? error.message : String(error);
+    report.completedAt = new Date().toISOString();
+    await writeReport(report);
+    console.error("[daily-cycle] failed", report.error);
+    console.error(`[daily-cycle] report: ${getReportPath()}`);
+    process.exitCode = 1;
   }
-
-  const watchlistArgs = [];
-  if (options.markets) {
-    watchlistArgs.push("--markets", options.markets);
-  }
-  if (options.limit && options.limit !== "0") {
-    watchlistArgs.push("--limit", options.limit);
-  }
-
-  const scanArgs = ["--batch-size", options.batchSize];
-  if (options.skipIngest) {
-    scanArgs.push("--skip-ingest");
-  }
-
-  console.log("[daily-cycle] universe watchlist 생성 시작");
-  await runScript("build-universe-watchlist.mjs", watchlistArgs);
-
-  console.log("[daily-cycle] universe batch scan 시작");
-  await runScript("scan-universe-batches.mjs", scanArgs);
-
-  const resultPath = path.join(projectRoot, "data", "universe", "daily-candidates.json");
-  const document = JSON.parse((await readFile(resultPath, "utf8")).replace(/^\uFEFF/, ""));
-  console.log(
-    `[daily-cycle] 완료: 후보 ${document.topCandidates.length}건, 성공 배치 ${document.succeededBatches}/${document.totalBatches}, 실패 배치 ${document.failedBatches.length}건`
-  );
 }
 
-main().catch((error) => {
-  console.error("[daily-cycle] 실패", error instanceof Error ? error.message : error);
-  process.exitCode = 1;
-});
+main();
