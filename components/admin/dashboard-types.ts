@@ -64,6 +64,23 @@ export type DailyCycleReportPayload = {
   error: string | null;
 };
 
+export type AutoHealReportPayload = {
+  startedAt: string;
+  completedAt: string | null;
+  status: "ok" | "warning" | "failed" | "running";
+  triggers: string[];
+  actions: Array<{
+    name: string;
+    status: "skipped" | "completed" | "failed";
+    startedAt: string;
+    completedAt?: string;
+    durationMs: number | null;
+    detail: string;
+    error: string | null;
+  }>;
+  error: string | null;
+};
+
 export type AdminStatusPayload = {
   ok: boolean;
   requestId: string;
@@ -72,6 +89,7 @@ export type AdminStatusPayload = {
   health: HealthPayload;
   opsHealthReport: OpsHealthReportPayload | null;
   dailyCycleReport: DailyCycleReportPayload | null;
+  autoHealReport: AutoHealReportPayload | null;
   incidents: OperationalIncident[];
 };
 

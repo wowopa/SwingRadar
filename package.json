@@ -21,6 +21,7 @@
     "etl:refresh:external": "node scripts/refresh-external-pipeline.mjs",
     "ops:check": "node scripts/ops-health-check.mjs",
     "ops:heal": "node scripts/ops-health-check.mjs --auto-recover",
+    "ops:auto-heal": "node scripts/auto-heal-operations.mjs",
     "symbols:fetch:krx": "node scripts/fetch-krx-symbols.mjs",
     "symbols:import": "node scripts/import-symbol-master.mjs",
     "symbols:prepare:krx": "node scripts/prepare-krx-symbols.mjs",

@@ -12,6 +12,7 @@ import {
 } from "@/components/admin/dashboard-shared";
 import type {
   AuditItem,
+  AutoHealReportPayload,
   DailyCycleReportPayload,
   HealthPayload,
   OperationalIncident,
@@ -43,6 +44,7 @@ export function StatusTab({
   audits,
   opsHealthReport,
   dailyCycleReport,
+  autoHealReport,
   dailyCandidates,
   watchlistTickers,
   onPromoteCandidate,
@@ -54,6 +56,7 @@ export function StatusTab({
   audits: AuditItem[];
   opsHealthReport: OpsHealthReportPayload | null;
   dailyCycleReport: DailyCycleReportPayload | null;
+  autoHealReport: AutoHealReportPayload | null;
   dailyCandidates: UniverseDailyCandidates | null;
   watchlistTickers: string[];
   onPromoteCandidate: (ticker: string) => void;
@@ -239,6 +242,52 @@ export function StatusTab({
           </CardContent>
         </Card>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>자동 복구 실행</CardTitle>
+        </CardHeader>
+        <CardContent className="grid gap-4 md:grid-cols-4">
+          <MetricCard
+            label="최근 실행"
+            value={autoHealReport?.completedAt ? formatDateTime(autoHealReport.completedAt) : "none"}
+            note={autoHealReport?.status ?? "ops:auto-heal not run yet"}
+          />
+          <MetricCard
+            label="트리거"
+            value={String(autoHealReport?.triggers.length ?? 0)}
+            note={autoHealReport?.triggers[0] ?? "no triggers"}
+          />
+          <MetricCard
+            label="액션"
+            value={String(autoHealReport?.actions.length ?? 0)}
+            note={autoHealReport?.actions[0]?.name ?? "no actions"}
+          />
+          <MetricCard
+            label="결과"
+            value={autoHealReport?.status ?? "unknown"}
+            note={autoHealReport?.error ?? "latest-auto-heal.json"}
+          />
+        </CardContent>
+        <CardContent className="space-y-3 pt-0">
+          {autoHealReport?.actions.length ? (
+            autoHealReport.actions.map((action) => (
+              <div key={`${action.name}-${action.startedAt}`} className="rounded-[24px] border border-border/70 bg-secondary/45 p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-sm font-semibold text-foreground">{action.name}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {action.status} | {formatDuration(action.durationMs)}
+                  </p>
+                </div>
+                <p className="mt-2 text-sm leading-6 text-foreground/78">{action.detail}</p>
+                {action.error ? <p className="mt-2 text-xs text-destructive">{action.error}</p> : null}
+              </div>
+            ))
+          ) : (
+            <p className="text-sm text-muted-foreground">아직 자동 복구 실행 이력이 없습니다.</p>
+          )}
+        </CardContent>
+      </Card>
 
       <div className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
         <Card>

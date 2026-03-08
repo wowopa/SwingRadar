@@ -39,6 +39,11 @@ Auto-recovery check:
 & "C:\Program Files\nodejs\npm.cmd" run ops:heal
 ```
 
+Incident-based auto heal:
+```powershell
+& "C:\Program Files\nodejs\npm.cmd" run ops:auto-heal
+```
+
 Default report path:
 - `data/ops/latest-health-check.json`
 
@@ -121,6 +126,10 @@ Daily cycle report:
 - Default report path: `data/ops/latest-daily-cycle.json`
 - Override with `SWING_RADAR_DAILY_CYCLE_REPORT_PATH`
 
+Auto-heal report:
+- Default report path: `data/ops/latest-auto-heal.json`
+- Override with `SWING_RADAR_AUTO_HEAL_REPORT_PATH`
+
 ## 7. Admin backoffice
 - Open `/admin`.
 - Enter `SWING_RADAR_ADMIN_TOKEN`.
@@ -133,14 +142,16 @@ Daily cycle report:
 - Health route reports snapshot freshness and actual provider usage.
 - `ops:check` reports snapshot freshness from file outputs even when the app server is not running.
 - `ops:heal` reruns the external refresh pipeline and optional Postgres ingest when stale snapshots are detected.
+- `ops:auto-heal` watches the latest health and daily cycle reports, then reruns recovery actions when stale snapshots or universe cycle failures are detected.
 - If PostgreSQL fails and fallback is used, `provider_fallback` is written to `audit_logs`.
 - Successful or failed admin actions are stored in `audit_logs` when PostgreSQL is configured.
 
 ## 9. Suggested scheduler flow
 1. Run `npm run ops:check` on a short interval for passive monitoring.
 2. Run `npm run universe:daily -- --sync-symbols --markets KOSPI,KOSDAQ --batch-size 20` after market close.
-3. Review `/api/admin/status` and `/api/admin/audit` after any recovery attempt.
-4. Escalate when repeated critical freshness warnings continue after recovery.
+3. Run `npm run ops:auto-heal` after `ops:check` and after the daily cycle to retry safe recovery actions automatically.
+4. Review `/api/admin/status` and `/api/admin/audit` after any recovery attempt.
+5. Escalate when repeated critical freshness warnings continue after recovery.
 
 ## 10. Production minimum checklist
 - `SWING_RADAR_ADMIN_TOKEN` must be a long random secret.

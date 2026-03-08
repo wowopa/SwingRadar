@@ -15,6 +15,7 @@ import {
 import type {
   AdminStatusPayload,
   AuditItem,
+  AutoHealReportPayload,
   CuratedNewsItem,
   DailyCycleReportPayload,
   EditorialCatalogItem,
@@ -54,6 +55,7 @@ export function AdminDashboard() {
   const [incidents, setIncidents] = useState<OperationalIncident[]>([]);
   const [opsHealthReport, setOpsHealthReport] = useState<OpsHealthReportPayload | null>(null);
   const [dailyCycleReport, setDailyCycleReport] = useState<DailyCycleReportPayload | null>(null);
+  const [autoHealReport, setAutoHealReport] = useState<AutoHealReportPayload | null>(null);
   const [audits, setAudits] = useState<AuditItem[]>([]);
   const [dailyCandidates, setDailyCandidates] = useState<UniverseDailyCandidates | null>(null);
   const [draft, setDraft] = useState<EditorialDraftDocument | null>(null);
@@ -159,6 +161,7 @@ export function AdminDashboard() {
       setIncidents(statusJson.incidents ?? []);
       setOpsHealthReport(statusJson.opsHealthReport ?? null);
       setDailyCycleReport(statusJson.dailyCycleReport ?? null);
+      setAutoHealReport(statusJson.autoHealReport ?? null);
       setAudits(auditJson.items ?? []);
       setDailyCandidates(universeJson.dailyCandidates ?? null);
       setDraft(draftJson.draft);
@@ -537,6 +540,7 @@ export function AdminDashboard() {
             audits={audits}
             opsHealthReport={opsHealthReport}
             dailyCycleReport={dailyCycleReport}
+            autoHealReport={autoHealReport}
             dailyCandidates={dailyCandidates}
             watchlistTickers={watchlistTickers}
             onPromoteCandidate={(ticker) => void promoteUniverseCandidate(ticker)}

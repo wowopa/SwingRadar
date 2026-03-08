@@ -17,6 +17,12 @@ function getDailyCycleReportPath() {
     : path.join(resolveProjectRoot(), "data", "ops", "latest-daily-cycle.json");
 }
 
+function getAutoHealReportPath() {
+  return process.env.SWING_RADAR_AUTO_HEAL_REPORT_PATH
+    ? path.resolve(process.env.SWING_RADAR_AUTO_HEAL_REPORT_PATH)
+    : path.join(resolveProjectRoot(), "data", "ops", "latest-auto-heal.json");
+}
+
 async function readJsonFile<T>(filePath: string): Promise<T | null> {
   try {
     const content = await readFile(filePath, "utf8");
@@ -72,10 +78,31 @@ export type DailyCycleReport = {
   error: string | null;
 };
 
+export type AutoHealReport = {
+  startedAt: string;
+  completedAt: string | null;
+  status: "ok" | "warning" | "failed" | "running";
+  triggers: string[];
+  actions: Array<{
+    name: string;
+    status: "skipped" | "completed" | "failed";
+    startedAt: string;
+    completedAt?: string;
+    durationMs: number | null;
+    detail: string;
+    error: string | null;
+  }>;
+  error: string | null;
+};
+
 export async function loadOpsHealthCheckReport() {
   return readJsonFile<OpsHealthCheckReport>(getOpsHealthReportPath());
 }
 
 export async function loadDailyCycleReport() {
   return readJsonFile<DailyCycleReport>(getDailyCycleReportPath());
+}
+
+export async function loadAutoHealReport() {
+  return readJsonFile<AutoHealReport>(getAutoHealReportPath());
 }

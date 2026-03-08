@@ -11,6 +11,7 @@ const mocks = vi.hoisted(() => ({
   getHealthReport: vi.fn(),
   loadOpsHealthCheckReport: vi.fn(),
   loadDailyCycleReport: vi.fn(),
+  loadAutoHealReport: vi.fn(),
   publishEditorialDraft: vi.fn(),
   rollbackPublishedSnapshot: vi.fn(),
   loadNewsCuration: vi.fn(),
@@ -46,7 +47,8 @@ vi.mock("@/lib/services/health-service", () => ({
 
 vi.mock("@/lib/server/ops-reports", () => ({
   loadOpsHealthCheckReport: mocks.loadOpsHealthCheckReport,
-  loadDailyCycleReport: mocks.loadDailyCycleReport
+  loadDailyCycleReport: mocks.loadDailyCycleReport,
+  loadAutoHealReport: mocks.loadAutoHealReport
 }));
 
 vi.mock("@/lib/server/editorial-draft", () => ({
@@ -132,6 +134,7 @@ describe("admin routes", () => {
     });
     mocks.loadOpsHealthCheckReport.mockResolvedValue(null);
     mocks.loadDailyCycleReport.mockResolvedValue(null);
+    mocks.loadAutoHealReport.mockResolvedValue(null);
     mocks.loadSnapshotBundleFromDisk.mockResolvedValue({
       recommendations: { generatedAt: "2026-03-08T00:00:00.000Z", items: [], dailyScan: null },
       analysis: { generatedAt: "2026-03-08T00:00:00.000Z", items: [] },
@@ -250,6 +253,7 @@ describe("admin routes", () => {
         health: { status: string; recentAuditCount: number; warnings: string[] };
         opsHealthReport: { finalHealth: { status: string } } | null;
         dailyCycleReport: { status: string; summary: { failedBatchCount: number } | null } | null;
+        autoHealReport: { status: string; actions: Array<{ name: string }> } | null;
         incidents: Array<{ id: string; severity: string }>;
       }>(response);
 
@@ -257,6 +261,7 @@ describe("admin routes", () => {
       expect(mocks.getHealthReport).toHaveBeenCalledWith("req-test");
       expect(mocks.loadOpsHealthCheckReport).toHaveBeenCalledTimes(1);
       expect(mocks.loadDailyCycleReport).toHaveBeenCalledTimes(1);
+      expect(mocks.loadAutoHealReport).toHaveBeenCalledTimes(1);
       expect(payload).toMatchObject({
         ok: true,
         requestId: "req-test",
@@ -269,6 +274,7 @@ describe("admin routes", () => {
         },
         opsHealthReport: null,
         dailyCycleReport: null,
+        autoHealReport: null,
         incidents: [
           {
             id: "health-analysis",
@@ -317,6 +323,24 @@ describe("admin routes", () => {
         },
         error: null
       });
+      mocks.loadAutoHealReport.mockResolvedValue({
+        startedAt: "2026-03-08T18:15:00.000Z",
+        completedAt: "2026-03-08T18:16:00.000Z",
+        status: "ok",
+        triggers: ["daily-cycle-warning"],
+        actions: [
+          {
+            name: "daily-cycle-rerun",
+            status: "completed",
+            startedAt: "2026-03-08T18:15:00.000Z",
+            completedAt: "2026-03-08T18:16:00.000Z",
+            durationMs: 60000,
+            detail: "daily universe cycle warning or failure",
+            error: null
+          }
+        ],
+        error: null
+      });
       mocks.listAuditLogs.mockResolvedValue([
         {
           id: 4,
@@ -335,6 +359,7 @@ describe("admin routes", () => {
         overallStatus: string;
         opsHealthReport: { finalHealth: { status: string } } | null;
         dailyCycleReport: { status: string; summary: { failedBatchCount: number } | null } | null;
+        autoHealReport: { status: string; actions: Array<{ name: string }> } | null;
         incidents: Array<{ id: string; severity: string }>;
       }>(response);
 
@@ -347,6 +372,10 @@ describe("admin routes", () => {
         dailyCycleReport: {
           status: "warning",
           summary: { failedBatchCount: 1 }
+        },
+        autoHealReport: {
+          status: "ok",
+          actions: [{ name: "daily-cycle-rerun" }]
         },
         incidents: [{ id: "daily-cycle-warning", severity: "warning" }]
       });
