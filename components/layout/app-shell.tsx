@@ -6,8 +6,8 @@ import { GlobalSymbolSearch } from "@/components/layout/global-symbol-search";
 import { cn } from "@/lib/utils";
 
 const navItems = [
-  { href: "/recommendations", label: "관찰 신호", icon: Sparkles },
-  { href: "/tracking", label: "사후 추적", icon: ChartNoAxesCombined },
+  { href: "/recommendations", label: "관찰 종목", icon: Sparkles },
+  { href: "/tracking", label: "지난 흐름", icon: ChartNoAxesCombined },
   { href: "/analysis/005930", label: "분석 예시", icon: ArrowUpRight }
 ] as const;
 
@@ -26,10 +26,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 </div>
                 <div className="space-y-3">
                   <h1 className="max-w-2xl text-3xl font-semibold tracking-[-0.04em] text-foreground sm:text-4xl lg:text-[3.1rem] lg:leading-[1.04]">
-                    신호와 추적을 한곳에서
+                    종목 흐름을 쉽게 보는 공간
                   </h1>
                   <p className="max-w-2xl text-sm leading-6 text-muted-foreground sm:text-base">
-                    근거, 무효화, 검증, 운영 상태를 간결하게 이어보는 스윙 대시보드입니다.
+                    왜 보는 종목인지, 어디서 다시 판단해야 하는지, 이후 어떻게 움직였는지를 한곳에서 살펴볼 수 있습니다.
                   </p>
                 </div>
               </div>
@@ -68,7 +68,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 </div>
                 <div className="rounded-2xl border border-border/70 bg-white/68 px-4 py-3">
                   <p className="text-[11px] uppercase tracking-[0.24em] text-muted-foreground">Ops</p>
-                  <p className="mt-1 text-sm font-semibold text-foreground">자동 운영 추적</p>
+                  <p className="mt-1 text-sm font-semibold text-foreground">자동 점검 중</p>
                 </div>
               </div>
             </div>

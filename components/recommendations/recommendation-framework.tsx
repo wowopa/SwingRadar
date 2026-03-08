@@ -2,16 +2,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 const frameworkItems = [
   {
-    title: "관찰 톤",
-    body: "긍정·중립·주의는 진입 지시가 아니라, 패턴 유지 가능성과 리스크 밀도를 한눈에 구분하기 위한 신호 톤입니다."
+    title: "추천보다 관찰",
+    body: "이 화면은 당장 사야 할 종목을 고르기보다, 지금 천천히 볼 만한 종목을 정리하는 공간입니다."
   },
   {
-    title: "무효화 우선",
-    body: "근거보다 먼저 확인해야 하는 것은 시나리오 폐기 조건입니다. 무효화가 짧으면 신호가 좋아 보여도 보수적으로 해석합니다."
+    title: "가격 기준 먼저",
+    body: "좋아 보여도 먼저 확인할 것은 다시 봐야 하는 가격입니다. 그 가격이 너무 가깝다면 더 조심해서 보는 편이 좋습니다."
   },
   {
-    title: "사후 검증 연결",
-    body: "각 신호는 tracking 화면의 결과, MFE/MAE, 뉴스, 점수 로그로 이어져서 이후 재평가에 사용됩니다."
+    title: "과거 흐름 참고",
+    body: "각 종목에는 비슷한 흐름에서 어떤 결과가 나왔는지 함께 붙어 있어, 처음 보는 분도 감을 잡기 쉽게 했습니다."
   }
 ];
 
@@ -20,7 +20,7 @@ export function RecommendationFramework() {
     <section className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
       <Card>
         <CardHeader>
-          <CardTitle>신호 해석 프레임</CardTitle>
+          <CardTitle>이 화면 보는 법</CardTitle>
         </CardHeader>
         <CardContent className="grid gap-4 md:grid-cols-3">
           {frameworkItems.map((item) => (
@@ -33,13 +33,13 @@ export function RecommendationFramework() {
       </Card>
       <Card>
         <CardHeader>
-          <CardTitle>운영 메모</CardTitle>
+          <CardTitle>쉽게 이해하면</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3 text-sm leading-6 text-muted-foreground">
-          <p>이 화면은 종목 선택을 강하게 유도하는 UI가 아니라, 관찰 우선순위와 무효화 거리, 검증 통계를 함께 놓고 비교하기 위한 보드입니다.</p>
-          <p>점수가 높아도 무효화 거리가 짧거나 이벤트 민감도가 높으면 보수적으로 봐야 합니다.</p>
+          <p>점수가 높으면 흐름이 상대적으로 괜찮다는 뜻이지만, 그 자체로 매수 신호를 뜻하지는 않습니다.</p>
+          <p>가장 먼저 볼 것은 "다시 봐야 하는 가격"입니다. 그 가격이 현재가와 너무 가까우면 좋은 점수라도 조심해서 봐야 합니다.</p>
           <p className="rounded-2xl border border-primary/20 bg-primary/10 px-4 py-3 text-primary">
-            핵심 원칙: 근거가 좋아 보여도 무효화가 더 중요합니다.
+            핵심만 보면: 좋아 보이는 이유보다 먼저, 어디서 다시 판단할지를 확인하면 됩니다.
           </p>
         </CardContent>
       </Card>

@@ -90,12 +90,12 @@ function resolveObservationWindow(sampleSize, hitRate) {
 function buildValidationSummary(item) {
   const tone =
     item.hitRate >= 58 && item.avgReturn > 0
-      ? "유사 구조에서 추세 지속 확률이 상대적으로 높게 확인됩니다."
+      ? "비슷한 흐름에서 비교적 좋은 결과가 자주 나왔습니다."
       : item.hitRate >= 48 && item.avgReturn >= 0
-        ? "확인형 진입에서 성과가 우세했지만 무효화 관리가 중요합니다."
-        : "사후 성과 분산이 커서 보수적 추적 해석이 필요합니다.";
+        ? "무리하게 들어가기보다 가격 확인 후 보는 편이 더 안전합니다."
+        : "결과 차이가 큰 편이라 서두르지 말고 천천히 보는 편이 좋습니다.";
 
-  return `검증 표본 ${item.sampleSize}건 기준 hitRate ${item.hitRate}%, 평균 수익 ${formatPercent(item.avgReturn)}, 최대 역행 ${formatPercent(item.maxDrawdown)}입니다. ${tone}`;
+  return `비슷한 흐름 ${item.sampleSize}건 기준 성공률 ${item.hitRate}%, 평균 움직임 ${formatPercent(item.avgReturn)}, 가장 크게 밀린 폭 ${formatPercent(item.maxDrawdown)}입니다. ${tone}`;
 }
 
 function summarizeEventCoverage(newsItems) {
@@ -161,29 +161,29 @@ function resolveSignalTone(score, invalidationDistance, hitRate) {
 }
 
 function resolveSignalLabel(score) {
-  if (score >= 75) return "개입 신호 구조 강함";
-  if (score >= 55) return "확인 후 추적 가능";
-  return "관찰 신호 유지";
+  if (score >= 75) return "흐름이 강한 편";
+  if (score >= 55) return "조금 더 확인해볼 만함";
+  return "가볍게 지켜보기";
 }
 
 function buildCheckpoints(item) {
   return [
-    `${item.invalidationPrice.toLocaleString()}원 하단 방어 확인`,
-    `${item.confirmationPrice.toLocaleString()}원 돌파 유무 확인`,
-    `${item.expansionPrice.toLocaleString()}원 확장 구간 대응`
+    `${item.invalidationPrice.toLocaleString()}원 근처를 지키는지 보기`,
+    `${item.confirmationPrice.toLocaleString()}원을 넘는지 보기`,
+    `${item.expansionPrice.toLocaleString()}원까지 힘이 이어지는지 보기`
   ];
 }
 
 function buildRationale(item, topNews, coverage) {
   const newsText = topNews
-    ? `상위 이벤트 '${topNews.headline}'가 반영됩니다.`
-    : "외부 기사 커버리지는 제한적입니다.";
-  const coverageText = `이벤트 커버리지는 ${coverage.confidence}으로 평가됩니다.`;
-  return `${item.company} 관찰 신호는 추세 ${item.trendScore}점, 수급 ${item.flowScore}점, 변동성 ${item.volatilityScore}점을 기반으로 구성됩니다. ${newsText} ${coverageText}`;
+    ? `최근에는 '${topNews.headline}' 같은 이슈가 함께 반영되고 있습니다.`
+    : "최근 참고할 만한 기사나 공시는 많지 않습니다.";
+  const coverageText = `뉴스 신뢰도는 ${coverage.confidence} 수준입니다.`;
+  return `${item.company}는 가격 흐름 ${item.trendScore}점, 거래 흐름 ${item.flowScore}점, 흔들림 관리 ${item.volatilityScore}점을 기준으로 살펴보고 있습니다. ${newsText} ${coverageText}`;
 }
 
 function buildInvalidation(item) {
-  return `${item.invalidationPrice.toLocaleString()}원 하회 시 관찰 가설을 재평가합니다.`;
+  return `${item.invalidationPrice.toLocaleString()}원 아래로 내려가면 이번 흐름은 다시 봐야 합니다.`;
 }
 
 function buildAnalysisSummary(item, qualityLabel) {
@@ -197,18 +197,18 @@ function buildAnalysisSummary(item, qualityLabel) {
 
 function buildKeyLevels(item) {
   return [
-    { label: "무효화", price: `${item.invalidationPrice.toLocaleString()}원`, meaning: "관찰 가설 재점검 구간" },
-    { label: "확인", price: `${item.confirmationPrice.toLocaleString()}원`, meaning: "추가 돌파 확인 구간" },
-    { label: "확장", price: `${item.expansionPrice.toLocaleString()}원`, meaning: "상단 확장 구간" }
+    { label: "다시 볼 가격", price: `${item.invalidationPrice.toLocaleString()}원`, meaning: "이 가격 아래면 흐름을 다시 점검" },
+    { label: "확인 가격", price: `${item.confirmationPrice.toLocaleString()}원`, meaning: "힘이 붙는지 확인하는 구간" },
+    { label: "다음 목표", price: `${item.expansionPrice.toLocaleString()}원`, meaning: "상승이 이어질 때 보는 구간" }
   ];
 }
 
 function buildDecisionNotes(item, validationItem, topNews, coverage) {
   return [
-    `검증 hitRate ${validationItem.hitRate}% / avgReturn ${formatPercent(validationItem.avgReturn)} 기준으로 해석합니다.`,
-    `무효화 거리는 ${item.invalidationPrice.toLocaleString()}원 기준으로 관리합니다.`,
-    topNews ? `상위 이벤트: ${topNews.headline}` : "이벤트 커버리지가 적어 가격과 무효화 기준 비중을 높여 해석합니다.",
-    `커버리지 평가: ${coverage.confidence} | 공시 ${coverage.disclosure}건 / 큐레이션 ${coverage.curated}건 / 외부기사 ${coverage.externalNews}건`
+    `비슷한 흐름의 성공률은 ${validationItem.hitRate}%이고 평균 움직임은 ${formatPercent(validationItem.avgReturn)}였습니다.`,
+    `${item.invalidationPrice.toLocaleString()}원 아래로 가면 흐름이 약해졌다고 보는 기준입니다.`,
+    topNews ? `가장 먼저 볼 이슈: ${topNews.headline}` : "참고할 이슈가 많지 않아 가격 흐름을 더 중요하게 봅니다.",
+    `참고 자료: 공시 ${coverage.disclosure}건, 운영 메모 ${coverage.curated}건, 기사 ${coverage.externalNews}건`
   ];
 }
 
@@ -217,20 +217,20 @@ function buildScenarios(item) {
     {
       label: KO.basic,
       probability: clamp(45 + Math.round(item.trendScore / 2), 35, 65),
-      expectation: "현 구조 유지 가정",
-      trigger: `${item.confirmationPrice.toLocaleString()}원 안착 여부`
+      expectation: "지금 흐름이 이어지는 경우",
+      trigger: `${item.confirmationPrice.toLocaleString()}원 위에서 버티는지 확인`
     },
     {
       label: KO.bull,
       probability: clamp(15 + Math.round(item.flowScore / 2), 15, 30),
-      expectation: "확장 구간 시도",
-      trigger: `${item.expansionPrice.toLocaleString()}원 돌파`
+      expectation: "생각보다 더 강하게 오르는 경우",
+      trigger: `${item.expansionPrice.toLocaleString()}원까지 빠르게 올라가는지 확인`
     },
     {
       label: KO.bear,
       probability: clamp(100 - (45 + Math.round(item.trendScore / 2)) - (15 + Math.round(item.flowScore / 2)), 15, 40),
-      expectation: "무효화 구간 접근",
-      trigger: `${item.invalidationPrice.toLocaleString()}원 하회`
+      expectation: "흐름이 약해지는 경우",
+      trigger: `${item.invalidationPrice.toLocaleString()}원 아래로 내려가는지 확인`
     }
   ];
 }
@@ -275,39 +275,39 @@ function resolveTrackingResult(item) {
 function buildTrackingSummary(item, recommendation, validationItem) {
   const company = recommendation?.company ?? item.ticker;
   const hitRate = validationItem?.hitRate ?? 0;
-  return `${company} 관찰 신호는 진입 점수 ${item.entryScore}점에서 시작했고, 현재 MFE ${formatPercent(item.mfe)}, MAE ${formatPercent(item.mae)}를 기록했습니다. 검증 hitRate ${hitRate}% 기준으로는 ${item.result === "성공" ? "기본 시나리오 이상" : item.result === "진행중" ? "관찰 시나리오 진행" : "보수적 재평가"} 구간으로 해석합니다.`;
+  return `${company}는 시작 점수 ${item.entryScore}점에서 출발했고, 이후 가장 많이 오른 폭은 ${formatPercent(item.mfe)}, 가장 많이 밀린 폭은 ${formatPercent(item.mae)}였습니다. 비슷한 흐름의 성공률 ${hitRate}%와 비교하면 지금 결과는 ${item.result === "성공" ? "기대보다 좋은 편" : item.result === "진행중" ? "아직 진행 중" : "다시 점검이 필요한 편"}입니다.`;
 }
 
 function buildInvalidationReview(item, recommendation) {
-  const invalidation = recommendation?.invalidation ?? "무효화 기준";
+  const invalidation = recommendation?.invalidation ?? "다시 봐야 하는 가격 기준";
   if (item.result === "무효화") {
-    return `${invalidation} 기준이 훼손되어 관찰 가설을 종료했습니다. 이후 동일 구조 재진입 여부는 별도 확인이 필요합니다.`;
+    return `${invalidation} 기준이 깨져서 이번 흐름은 종료로 봤습니다. 다시 들어갈지는 새 흐름을 보고 판단하는 편이 좋습니다.`;
   }
   if (item.mae <= -3.5) {
-    return "무효화 가격 인근까지 되돌림이 있었으나 아직 기준은 유지 중입니다. 재진입보다는 방어력 확인이 우선입니다.";
+    return "가격이 다시 봐야 하는 구간 가까이 내려왔지만 아직 기준은 지키고 있습니다. 서두르기보다 버티는 힘을 먼저 보는 편이 좋습니다.";
   }
-  return "무효화 기준은 아직 유지되고 있습니다. 다만 단기 과열 여부와 거래대금 둔화는 계속 점검해야 합니다.";
+  return "아직은 다시 봐야 하는 가격 아래로 내려가지 않았습니다. 다만 단기 과열이나 거래 약화는 계속 확인해야 합니다.";
 }
 
 function buildAfterActionReview(item, validationItem) {
   const avgReturn = validationItem?.avgReturn ?? 0;
   if (item.result === "성공") {
-    return `사후 성과는 평균 검증치 ${formatPercent(avgReturn)}를 상회했습니다. 추세 지속형 패턴이 유효했던 케이스로 분류할 수 있습니다.`;
+    return `이번 결과는 과거 평균 움직임 ${formatPercent(avgReturn)}보다 좋았습니다. 비슷한 흐름이 비교적 잘 이어진 사례로 볼 수 있습니다.`;
   }
   if (item.result === "진행중") {
-    return "아직 결론을 내리기보다 경로를 관찰해야 하는 상태입니다. MFE/MAE 비율은 양호하지만 확장 구간 확인이 더 필요합니다.";
+    return "아직 결론을 내리기보다는 조금 더 지켜봐야 합니다. 현재까지는 괜찮지만 더 강한 상승 확인이 필요합니다.";
   }
   if (item.result === "무효화") {
-    return "관찰 신호 자체보다 무효화 거리와 이벤트 민감도가 더 크게 작용했습니다. 이후에는 초기 손익비 검증을 더 엄격하게 볼 필요가 있습니다.";
+    return "이번에는 기대보다 가격 흔들림과 이슈 영향이 더 크게 작용했습니다. 다음에는 처음부터 버틸 수 있는 가격 구간을 더 좁게 보는 편이 좋습니다.";
   }
-  return "사후 성과가 검증 평균을 밑돌았습니다. 진입 전 확인 단계와 거래대금 동반 여부를 더 엄격히 요구하는 편이 안전합니다.";
+  return "이번 결과는 과거 평균보다 약했습니다. 다음에는 거래량과 가격 확인이 함께 나오는지 더 꼼꼼히 보는 편이 안전합니다.";
 }
 
 function buildReviewChecklist(item) {
   return [
-    `초기 ${Math.abs(item.mae).toFixed(1)}% 역행 구간에서 무효화 방어가 유지됐는지 확인`,
-    `${item.holdingDays}거래일 동안 거래대금과 추세가 신호 방향과 동행했는지 확인`,
-    `MFE ${formatPercent(item.mfe)} 대비 MAE ${formatPercent(item.mae)}가 허용 범위인지 복기`
+    `처음 ${Math.abs(item.mae).toFixed(1)}% 밀릴 때도 다시 봐야 하는 가격을 지켰는지 확인`,
+    `${item.holdingDays}거래일 동안 가격과 거래량이 함께 움직였는지 확인`,
+    `가장 많이 오른 폭 ${formatPercent(item.mfe)}과 가장 많이 밀린 폭 ${formatPercent(item.mae)}의 차이가 괜찮았는지 확인`
   ];
 }
 
@@ -336,9 +336,9 @@ function buildTrackingMetrics(item, coverage) {
         : "취약";
 
   return [
-    { label: "사후 판정", value: outcome, note: `결과 ${item.result}` },
-    { label: "경로 효율", value: efficiency, note: `MFE ${formatPercent(item.mfe)} / MAE ${formatPercent(item.mae)}` },
-    { label: "이벤트 커버리지", value: eventFlow, note: `공시 ${coverage.disclosure}건 / 큐레이션 ${coverage.curated}건 / 기사 ${coverage.externalNews}건` }
+    { label: "결과 요약", value: outcome, note: `현재 상태 ${item.result}` },
+    { label: "흐름 안정감", value: efficiency, note: `오른 폭 ${formatPercent(item.mfe)} / 밀린 폭 ${formatPercent(item.mae)}` },
+    { label: "이슈 참고도", value: eventFlow, note: `공시 ${coverage.disclosure}건 / 운영 메모 ${coverage.curated}건 / 기사 ${coverage.externalNews}건` }
   ];
 }
 

@@ -42,27 +42,27 @@ export function RecommendationCard({
         </div>
         <div className="grid grid-cols-2 gap-3 rounded-2xl border border-border/80 bg-background/40 p-4 sm:grid-cols-4">
           <Metric label="점수" value={formatScore(item.score)} icon={Sparkles} />
-          <Metric label="적중률" value={`${item.validation.hitRate}%`} icon={Target} />
-          <Metric label="평균 수익" value={formatPercent(item.validation.avgReturn)} icon={ArrowRight} />
-          <Metric label="MDD" value={formatPercent(item.validation.maxDrawdown)} icon={ShieldAlert} />
+          <Metric label="비슷한 흐름 성공률" value={`${item.validation.hitRate}%`} icon={Target} />
+          <Metric label="평균 움직임" value={formatPercent(item.validation.avgReturn)} icon={ArrowRight} />
+          <Metric label="가장 크게 밀린 폭" value={formatPercent(item.validation.maxDrawdown)} icon={ShieldAlert} />
         </div>
       </CardHeader>
       <CardContent className="space-y-5">
         <section className="space-y-2">
-          <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">관찰 근거</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">왜 보는 종목인가요</p>
           <p className="text-sm leading-6 text-foreground/80">{item.rationale}</p>
         </section>
         <section className="space-y-2">
-          <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">무효화 조건</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">다시 봐야 하는 가격</p>
           <p className="text-sm leading-6 text-foreground/72">{item.invalidation}</p>
         </section>
         <section className="grid gap-3 sm:grid-cols-3">
-          <DetailStat label="무효화 거리" value={formatPercent(item.invalidationDistance)} />
-          <DetailStat label="손익비" value={item.riskRewardRatio} />
+          <DetailStat label="여유 구간" value={formatPercent(item.invalidationDistance)} />
+          <DetailStat label="기대 대비 위험" value={item.riskRewardRatio} />
           <DetailStat label="업데이트" value={item.updatedAt} />
         </section>
         <section className="space-y-2">
-          <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">관찰 체크포인트</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">이렇게 보시면 됩니다</p>
           <div className="flex flex-wrap gap-2">
             {item.checkpoints.map((checkpoint) => (
               <span key={checkpoint} className="rounded-full border border-border/70 bg-secondary/45 px-3 py-1.5 text-xs text-foreground/80">
@@ -74,7 +74,7 @@ export function RecommendationCard({
         <section className="rounded-2xl border border-border/70 bg-background/35 p-4">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">기본 검증 메모</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">과거 비슷한 흐름 메모</p>
               <p className="mt-2 text-sm leading-6 text-foreground/80">{item.validationSummary}</p>
             </div>
             {item.candidateScore ? (
@@ -84,10 +84,10 @@ export function RecommendationCard({
               </div>
             ) : null}
           </div>
-          {item.eventCoverage ? <p className="mt-3 text-xs text-muted-foreground">이벤트 커버리지: {item.eventCoverage}</p> : null}
+          {item.eventCoverage ? <p className="mt-3 text-xs text-muted-foreground">뉴스 참고도: {item.eventCoverage}</p> : null}
         </section>
         <div className="flex items-center justify-between rounded-2xl border border-border/70 bg-secondary/45 px-4 py-3 text-sm text-muted-foreground">
-          <span>관찰 기간 {item.observationWindow}</span>
+          <span>보는 기간 {item.observationWindow}</span>
           <Link className="font-medium text-primary transition hover:text-primary/80" href={`/analysis/${item.ticker}`}>
             상세 분석 보기
           </Link>
