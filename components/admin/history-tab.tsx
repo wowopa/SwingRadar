@@ -26,10 +26,10 @@ export function HistoryTab({
       <CardContent className="space-y-3">
         {history.length ? (
           history.map((item) => (
-            <div key={item.id} className="rounded-2xl border border-border/70 bg-secondary/35 p-4">
+            <div key={item.id} className="rounded-[24px] border border-border/70 bg-secondary/45 p-4">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <p className="text-sm font-semibold text-white">{formatDateTime(item.publishedAt)}</p>
+                  <p className="text-sm font-semibold text-foreground">{formatDateTime(item.publishedAt)}</p>
                   <p className="mt-1 text-xs text-muted-foreground">
                     작성자 {item.publishedBy} | 단계 {formatApprovalStage(item.approvalStage)} | 종목 {item.tickers}개 | 변경{" "}
                     {item.diffCount}건

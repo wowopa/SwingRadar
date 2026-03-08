@@ -33,7 +33,7 @@ export function NewsTab({
         <div>
           <CardTitle>뉴스 큐레이션</CardTitle>
           <p className="mt-2 text-sm text-muted-foreground">
-            기사 부족 구간은 운영자 큐레이션으로 보강하고, 영향도와 운영 메모를 함께 관리합니다.
+            기사 공백 구간은 운영 큐레이션으로 보강하고, 영향도와 운영 메모를 함께 관리합니다.
           </p>
         </div>
         <div className="flex gap-2">
@@ -49,7 +49,7 @@ export function NewsTab({
       <CardContent className="space-y-4">
         {activeNews.length ? (
           activeNews.map((item) => (
-            <div key={item.id} className="rounded-2xl border border-border/70 bg-secondary/35 p-4">
+            <div key={item.id} className="rounded-[24px] border border-border/70 bg-secondary/45 p-4">
               <div className="grid gap-4 lg:grid-cols-2">
                 <Field label="헤드라인">
                   <Input
@@ -86,7 +86,7 @@ export function NewsTab({
               <div className="mt-4 grid gap-4 lg:grid-cols-[160px_160px_1fr]">
                 <Field label="영향도">
                   <select
-                    className="h-10 rounded-xl border border-border/70 bg-background px-3 text-sm text-white"
+                    className="h-10 rounded-xl border border-border/70 bg-background px-3 text-sm text-foreground"
                     value={item.impact}
                     onChange={(event) =>
                       updateNewsItem(item.id, (current) => ({
@@ -141,9 +141,7 @@ export function NewsTab({
             </div>
           ))
         ) : (
-          <p className="text-sm text-muted-foreground">
-            선택한 종목의 큐레이션 뉴스가 없습니다. `뉴스 추가`로 직접 보강할 수 있습니다.
-          </p>
+          <p className="text-sm text-muted-foreground">선택한 종목의 큐레이션 뉴스가 없습니다. `뉴스 추가`로 직접 보강할 수 있습니다.</p>
         )}
       </CardContent>
     </Card>

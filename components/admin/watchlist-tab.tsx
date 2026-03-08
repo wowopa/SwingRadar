@@ -47,14 +47,14 @@ export function WatchlistTab({
           <div>
             <CardTitle>종목 추가</CardTitle>
             <p className="mt-2 text-sm text-muted-foreground">
-              준비 중인 종목을 감시리스트에 올리면 분석 파이프라인이 다시 실행됩니다.
+              준비 중인 종목을 watchlist에 올리면 분석 파이프라인이 다시 실행됩니다.
             </p>
           </div>
           <div className="flex gap-2">
             <Input
               value={symbolQuery}
               onChange={(event) => setSymbolQuery(event.target.value)}
-              placeholder="티커, 종목명, 섹터 검색"
+              placeholder="티커, 종목명 또는 섹터 검색"
             />
             <Button onClick={onSearch} variant="secondary">
               <Search className="h-4 w-4" />
@@ -65,16 +65,16 @@ export function WatchlistTab({
         <CardContent className="space-y-3">
           {symbolResults.length ? (
             symbolResults.map((item) => (
-              <div key={item.ticker} className="flex items-center justify-between rounded-2xl border border-border/70 bg-secondary/35 p-4">
+              <div key={item.ticker} className="flex items-center justify-between rounded-[24px] border border-border/70 bg-secondary/45 p-4">
                 <div>
-                  <p className="text-sm font-semibold text-white">{item.company}</p>
+                  <p className="text-sm font-semibold text-foreground">{item.company}</p>
                   <p className="mt-1 text-xs text-muted-foreground">
                     {item.ticker} | {item.market} | {item.sector}
                   </p>
                 </div>
                 <Button onClick={() => addWatchlistSymbol(item.ticker)} disabled={loading || item.status === "ready"}>
                   <PlusCircle className="h-4 w-4" />
-                  {item.status === "ready" ? "편입 완료" : "감시 추가"}
+                  {item.status === "ready" ? "편입 완료" : "watchlist 추가"}
                 </Button>
               </div>
             ))
@@ -89,7 +89,7 @@ export function WatchlistTab({
           <div>
             <CardTitle>메타데이터 보정</CardTitle>
             <p className="mt-2 text-sm text-muted-foreground">
-              뉴스 쿼리, 키워드, 도메인 규칙을 조정하고 저장 전 diff로 검토할 수 있습니다.
+              뉴스 쿼리, 키워드, 도메인 규칙을 조정하고 저장 전에 diff로 검토할 수 있습니다.
             </p>
           </div>
           <WatchlistPreviewDialog changes={watchlistChanges} disabled={!activeWatchlist || loading} onConfirm={onSaveMetadata} />
@@ -101,11 +101,11 @@ export function WatchlistTab({
                 key={item.ticker}
                 type="button"
                 onClick={() => setActiveWatchlistTicker(item.ticker)}
-                className={`w-full rounded-2xl border p-4 text-left ${
-                  activeWatchlistTicker === item.ticker ? "border-primary/50 bg-primary/10" : "border-border/70 bg-secondary/35"
+                className={`w-full rounded-[24px] border p-4 text-left transition-colors ${
+                  activeWatchlistTicker === item.ticker ? "border-primary/35 bg-primary/10" : "border-border/70 bg-secondary/45"
                 }`}
               >
-                <p className="text-sm font-semibold text-white">{item.company}</p>
+                <p className="text-sm font-semibold text-foreground">{item.company}</p>
                 <p className="mt-1 text-xs text-muted-foreground">{item.ticker}</p>
               </button>
             ))}
@@ -163,7 +163,7 @@ export function WatchlistTab({
                     }
                   />
                 </Field>
-                <Field label="컨텍스트 키워드 (줄바꿈 구분)">
+                <Field label="문맥 키워드 (줄바꿈 구분)">
                   <Textarea
                     value={activeWatchlist.contextKeywords.join("\n")}
                     onChange={(event) =>
@@ -238,7 +238,7 @@ export function WatchlistTab({
                 </Field>
               </>
             ) : (
-              <p className="text-sm text-muted-foreground">왼쪽에서 감시리스트 종목을 선택하면 메타데이터를 수정할 수 있습니다.</p>
+              <p className="text-sm text-muted-foreground">왼쪽에서 watchlist 종목을 선택하면 메타데이터를 수정할 수 있습니다.</p>
             )}
           </div>
         </CardContent>

@@ -6,9 +6,9 @@ import { GlobalSymbolSearch } from "@/components/layout/global-symbol-search";
 import { cn } from "@/lib/utils";
 
 const navItems = [
-  { href: "/recommendations", label: "Recommendations", icon: Sparkles },
-  { href: "/tracking", label: "Tracking", icon: ChartNoAxesCombined },
-  { href: "/analysis/005930", label: "Sample Analysis", icon: ArrowUpRight }
+  { href: "/recommendations", label: "관찰 신호", icon: Sparkles },
+  { href: "/tracking", label: "사후 추적", icon: ChartNoAxesCombined },
+  { href: "/analysis/005930", label: "분석 예시", icon: ArrowUpRight }
 ] as const;
 
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -26,11 +26,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 </div>
                 <div className="space-y-3">
                   <h1 className="max-w-2xl text-3xl font-semibold tracking-[-0.04em] text-foreground sm:text-4xl lg:text-[3.4rem] lg:leading-[1.02]">
-                    Calm, structured swing workflows for signal review and follow-through.
+                    관찰 신호부터 사후 추적까지 한 화면에서 정리하는 스윙 워크스페이스
                   </h1>
                   <p className="max-w-2xl text-sm leading-6 text-muted-foreground sm:text-base">
-                    Track recommendations, invalidation logic, validation notes, and post-trade follow-up in one refined
-                    operations surface.
+                    추천 근거, 무효화 조건, 검증 메모, 운영 상태를 차분하고 구조적인 대시보드 흐름으로 이어갑니다.
                   </p>
                 </div>
               </div>
@@ -61,7 +60,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <div className="grid gap-3 sm:grid-cols-3">
                 <div className="rounded-2xl border border-border/70 bg-white/68 px-4 py-3">
                   <p className="text-[11px] uppercase tracking-[0.24em] text-muted-foreground">Mode</p>
-                  <p className="mt-1 text-sm font-semibold text-foreground">Snapshot-first</p>
+                  <p className="mt-1 text-sm font-semibold text-foreground">Snapshot First</p>
                 </div>
                 <div className="rounded-2xl border border-border/70 bg-white/68 px-4 py-3">
                   <p className="text-[11px] uppercase tracking-[0.24em] text-muted-foreground">Universe</p>
@@ -69,7 +68,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 </div>
                 <div className="rounded-2xl border border-border/70 bg-white/68 px-4 py-3">
                   <p className="text-[11px] uppercase tracking-[0.24em] text-muted-foreground">Ops</p>
-                  <p className="mt-1 text-sm font-semibold text-foreground">Admin Observability</p>
+                  <p className="mt-1 text-sm font-semibold text-foreground">자동 운영 추적</p>
                 </div>
               </div>
             </div>

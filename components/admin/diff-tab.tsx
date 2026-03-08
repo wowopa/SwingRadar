@@ -14,10 +14,10 @@ export function DiffTab({ diff }: { diff: EditorialDiffItem[] }) {
       <CardContent className="space-y-3">
         {diff.length ? (
           diff.map((item) => (
-            <div key={item.ticker} className="rounded-2xl border border-border/70 bg-secondary/35 p-4">
+            <div key={item.ticker} className="rounded-[24px] border border-border/70 bg-secondary/45 p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-semibold text-white">
+                  <p className="text-sm font-semibold text-foreground">
                     {item.company} {item.ticker}
                   </p>
                   <p className="mt-1 text-xs text-muted-foreground">
@@ -29,7 +29,7 @@ export function DiffTab({ diff }: { diff: EditorialDiffItem[] }) {
             </div>
           ))
         ) : (
-          <p className="text-sm text-muted-foreground">현재 라이브 스냅샷 대비 변경점이 없습니다.</p>
+          <p className="text-sm text-muted-foreground">현재 라이브 스냅샷과 대비한 변경점이 없습니다.</p>
         )}
       </CardContent>
     </Card>

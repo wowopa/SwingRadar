@@ -31,7 +31,7 @@ export function EditorialTab({
         <div>
           <CardTitle>초안 편집</CardTitle>
           <p className="mt-2 text-sm text-muted-foreground">
-            종목별 신호 라벨, 근거, 무효화 조건, 분석 메모를 직접 교정합니다.
+            종목별 신호 이름, 근거, 무효화 조건, 분석 메모를 직접 조정합니다.
           </p>
         </div>
         <Button onClick={onSave} disabled={disabled}>
@@ -45,11 +45,11 @@ export function EditorialTab({
               key={item.ticker}
               type="button"
               onClick={() => setActiveTicker(item.ticker)}
-              className={`w-full rounded-2xl border p-4 text-left ${
-                activeTicker === item.ticker ? "border-primary/50 bg-primary/10" : "border-border/70 bg-secondary/35"
+              className={`w-full rounded-[24px] border p-4 text-left transition-colors ${
+                activeTicker === item.ticker ? "border-primary/35 bg-primary/10" : "border-border/70 bg-secondary/45"
               }`}
             >
-              <p className="text-sm font-semibold text-white">{item.company}</p>
+              <p className="text-sm font-semibold text-foreground">{item.company}</p>
               <p className="mt-1 text-xs text-muted-foreground">
                 {item.ticker} | {item.signalTone} | 점수 {item.score}
               </p>
@@ -59,7 +59,7 @@ export function EditorialTab({
         <div className="space-y-4">
           {activeDraftItem ? (
             <>
-              <Field label="신호 라벨">
+              <Field label="신호 이름">
                 <Input
                   value={activeDraftItem.recommendation.signalLabel}
                   onChange={(event) =>
@@ -98,10 +98,7 @@ export function EditorialTab({
                   onChange={(event) =>
                     updateDraftItem(activeDraftItem.ticker, (item) => ({
                       ...item,
-                      recommendation: {
-                        ...item.recommendation,
-                        checkpoints: splitLines(event.target.value)
-                      }
+                      recommendation: { ...item.recommendation, checkpoints: splitLines(event.target.value) }
                     }))
                   }
                 />

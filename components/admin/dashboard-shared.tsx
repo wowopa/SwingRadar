@@ -33,8 +33,8 @@ export const APPROVAL_STAGE_OPTIONS = [
 ] as const;
 
 export const UNIVERSE_REVIEW_STATUS_OPTIONS: Array<{ value: UniverseReviewStatus; label: string }> = [
-  { value: "new", label: "미분류" },
-  { value: "reviewing", label: "검토중" },
+  { value: "new", label: "미검토" },
+  { value: "reviewing", label: "검토 중" },
   { value: "hold", label: "보류" },
   { value: "promoted", label: "편입 완료" },
   { value: "rejected", label: "제외" }
@@ -43,7 +43,7 @@ export const UNIVERSE_REVIEW_STATUS_OPTIONS: Array<{ value: UniverseReviewStatus
 export function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div className="space-y-2">
-      <p className="text-sm font-medium text-white">{label}</p>
+      <p className="text-sm font-medium text-foreground">{label}</p>
       {children}
     </div>
   );
@@ -51,9 +51,9 @@ export function Field({ label, children }: { label: string; children: ReactNode 
 
 export function MetricCard({ label, value, note }: { label: string; value: string; note: string }) {
   return (
-    <div className="rounded-2xl border border-border/70 bg-secondary/35 p-4">
+    <div className="rounded-[24px] border border-border/70 bg-secondary/55 p-4">
       <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">{label}</p>
-      <p className="mt-2 text-lg font-semibold text-white">{value}</p>
+      <p className="mt-2 text-lg font-semibold text-foreground">{value}</p>
       <p className="mt-2 text-sm text-muted-foreground">{note}</p>
     </div>
   );
@@ -63,11 +63,11 @@ export function Banner({ tone, message }: { tone: "success" | "error"; message: 
   const Icon = tone === "success" ? CheckCircle2 : AlertTriangle;
   const className =
     tone === "success"
-      ? "border-positive/40 bg-positive/10 text-positive"
-      : "border-destructive/40 bg-destructive/10 text-destructive";
+      ? "border-positive/30 bg-positive/10 text-foreground"
+      : "border-destructive/30 bg-destructive/10 text-foreground";
 
   return (
-    <div className={`flex items-center gap-3 rounded-2xl border p-4 text-sm ${className}`}>
+    <div className={`flex items-center gap-3 rounded-[24px] border p-4 text-sm ${className}`}>
       <Icon className="h-4 w-4" />
       <span>{message}</span>
     </div>
@@ -104,7 +104,7 @@ export function formatWatchlistField(field: string) {
     sector: "섹터",
     newsQuery: "기본 뉴스 쿼리",
     requiredKeywords: "필수 키워드",
-    contextKeywords: "컨텍스트 키워드",
+    contextKeywords: "문맥 키워드",
     blockedKeywords: "차단 키워드",
     blockedDomains: "차단 도메인",
     preferredDomains: "선호 도메인",
@@ -123,10 +123,10 @@ export function formatAuditEventType(eventType: string) {
     admin_draft_saved: "초안 저장",
     admin_news_curation_saved: "뉴스 큐레이션 저장",
     admin_publish: "발행",
-    watchlist_add: "감시리스트 추가",
-    watchlist_update: "감시리스트 수정",
+    watchlist_add: "watchlist 추가",
+    watchlist_update: "watchlist 수정",
     universe_review_update: "유니버스 후보 검토",
-    provider_fallback: "데이터 대체"
+    provider_fallback: "데이터 provider fallback"
   };
 
   return labels[eventType] ?? eventType;
@@ -196,7 +196,7 @@ export function PublishDialog({
         </DialogHeader>
         <Field label="승인 단계">
           <select
-            className="h-10 rounded-xl border border-border/70 bg-background px-3 text-sm text-white"
+            className="h-10 rounded-xl border border-border/70 bg-background px-3 text-sm text-foreground"
             value={approvalStage}
             onChange={(event) =>
               onApprovalStageChange(event.target.value as (typeof APPROVAL_STAGE_OPTIONS)[number]["value"])
@@ -240,10 +240,10 @@ export function DiffDialog({ item }: { item: EditorialDiffItem }) {
         </DialogHeader>
         <div className="space-y-3">
           {item.details.map((detail) => (
-            <div key={detail.field} className="rounded-2xl border border-border/70 bg-secondary/35 p-4">
-              <p className="text-sm font-semibold text-white">{detail.label}</p>
-              <p className="mt-2 text-xs text-muted-foreground">이전값 {detail.before || "(empty)"}</p>
-              <p className="mt-1 text-xs text-primary">현재값 {detail.after || "(empty)"}</p>
+            <div key={detail.field} className="rounded-[22px] border border-border/70 bg-secondary/45 p-4">
+              <p className="text-sm font-semibold text-foreground">{detail.label}</p>
+              <p className="mt-2 text-xs text-muted-foreground">이전값: {detail.before || "(empty)"}</p>
+              <p className="mt-1 text-xs text-primary">현재값: {detail.after || "(empty)"}</p>
             </div>
           ))}
         </div>
@@ -271,8 +271,8 @@ export function HistoryDialog({ item }: { item: PublishHistoryItem }) {
         <div className="space-y-3">
           {item.changes.length ? (
             item.changes.map((change) => (
-              <div key={change.ticker} className="rounded-2xl border border-border/70 bg-secondary/35 p-4">
-                <p className="text-sm font-semibold text-white">
+              <div key={change.ticker} className="rounded-[22px] border border-border/70 bg-secondary/45 p-4">
+                <p className="text-sm font-semibold text-foreground">
                   {change.company} {change.ticker}
                 </p>
                 <p className="mt-1 text-xs text-muted-foreground">{change.changes.join(", ")}</p>
@@ -350,16 +350,16 @@ export function WatchlistPreviewDialog({
       </DialogTrigger>
       <DialogContent className="max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>감시리스트 변경 검토</DialogTitle>
+          <DialogTitle>watchlist 변경 검토</DialogTitle>
           <DialogDescription>현재 입력 내용과 마지막 저장 상태를 비교합니다.</DialogDescription>
         </DialogHeader>
         <div className="space-y-3">
           {changes.length ? (
             changes.map((change) => (
-              <div key={change.field} className="rounded-2xl border border-border/70 bg-secondary/35 p-4">
-                <p className="text-sm font-semibold text-white">{formatWatchlistField(change.field)}</p>
-                <p className="mt-2 text-xs text-muted-foreground">이전값 {change.before || "(empty)"}</p>
-                <p className="mt-1 text-xs text-primary">현재값 {change.after || "(empty)"}</p>
+              <div key={change.field} className="rounded-[22px] border border-border/70 bg-secondary/45 p-4">
+                <p className="text-sm font-semibold text-foreground">{formatWatchlistField(change.field)}</p>
+                <p className="mt-2 text-xs text-muted-foreground">이전값: {change.before || "(empty)"}</p>
+                <p className="mt-1 text-xs text-primary">현재값: {change.after || "(empty)"}</p>
               </div>
             ))
           ) : (

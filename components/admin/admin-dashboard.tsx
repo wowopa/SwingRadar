@@ -113,7 +113,7 @@ export function AdminDashboard() {
     const json = (await response.json().catch(() => ({}))) as T & { error?: { message?: string } };
 
     if (!response.ok) {
-      throw new Error(json?.error?.message ?? `Request failed. (${response.status})`);
+      throw new Error(json?.error?.message ?? `요청이 실패했습니다. (${response.status})`);
     }
 
     return json;
@@ -168,7 +168,7 @@ export function AdminDashboard() {
       setWatchlistBaseline(watchlistJson.watchlist ?? []);
       setActiveTicker((current) => current || draftJson.catalog?.[0]?.ticker || "");
       setActiveWatchlistTicker((current) => current || watchlistJson.watchlist?.[0]?.ticker || "");
-      setMessage("운영 데이터가 로드되었습니다.");
+      setMessage("운영 데이터를 불러왔습니다.");
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : "운영 데이터를 불러오지 못했습니다.");
     } finally {
@@ -289,9 +289,7 @@ export function AdminDashboard() {
       });
 
       setMessage(
-        json.result?.added
-          ? `종목 추가 완료. ${json.result?.estimate ?? ""}`.trim()
-          : "이미 watchlist에 포함된 종목입니다."
+        json.result?.added ? `종목 추가 완료. ${json.result?.estimate ?? ""}`.trim() : "이미 watchlist에 포함된 종목입니다."
       );
 
       await loadDashboard();
@@ -363,7 +361,7 @@ export function AdminDashboard() {
         headers: { "Content-Type": "application/json", ...authHeaders },
         body: JSON.stringify({ ...activeWatchlist, rerunPipeline: true })
       });
-      setMessage("watchlist 메타데이터 저장을 완료했습니다.");
+      setMessage("watchlist 메타데이터를 저장했습니다.");
       await loadDashboard();
     } catch (saveError) {
       setError(saveError instanceof Error ? saveError.message : "watchlist 저장에 실패했습니다.");
@@ -438,9 +436,7 @@ export function AdminDashboard() {
         </CardHeader>
         <CardContent className="grid gap-4 lg:grid-cols-[1.5fr_auto_auto] lg:items-end">
           <div>
-            <p className="mb-2 text-sm text-muted-foreground">
-              `SWING_RADAR_ADMIN_TOKEN`을 입력하면 운영 기능을 사용할 수 있습니다.
-            </p>
+            <p className="mb-2 text-sm text-muted-foreground">`SWING_RADAR_ADMIN_TOKEN`을 입력하면 운영 기능을 사용할 수 있습니다.</p>
             <Input type="password" placeholder="관리자 토큰" value={token} onChange={(event) => setToken(event.target.value)} />
           </div>
           <Button
@@ -469,7 +465,7 @@ export function AdminDashboard() {
         <TabsList>
           <TabsTrigger value="editorial">초안</TabsTrigger>
           <TabsTrigger value="news">뉴스</TabsTrigger>
-          <TabsTrigger value="watchlist">Watchlist</TabsTrigger>
+          <TabsTrigger value="watchlist">워치리스트</TabsTrigger>
           <TabsTrigger value="diff">변경점</TabsTrigger>
           <TabsTrigger value="history">이력</TabsTrigger>
           <TabsTrigger value="status">상태</TabsTrigger>

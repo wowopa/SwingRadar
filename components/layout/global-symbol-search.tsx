@@ -23,14 +23,14 @@ function StatusBadge({ status }: { status: SearchItem["status"] }) {
   if (status === "ready") {
     return (
       <span className="rounded-full border border-primary/15 bg-primary/10 px-2.5 py-1 text-[11px] font-medium text-primary">
-        Live
+        분석 가능
       </span>
     );
   }
 
   return (
     <span className="rounded-full border border-border/80 bg-secondary/70 px-2.5 py-1 text-[11px] font-medium text-muted-foreground">
-      Pending
+      준비 중
     </span>
   );
 }
@@ -75,18 +75,18 @@ export function GlobalSymbolSearch() {
             <Search className="h-4 w-4" />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">Global Symbol Search</p>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">종목 검색</p>
             <Input
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               onFocus={() => setFocused(true)}
               onBlur={() => setTimeout(() => setFocused(false), 120)}
-              placeholder="Search by ticker, company, alias, or sector"
+              placeholder="티커, 종목명, 별칭, 섹터로 검색"
               className="h-auto border-0 bg-transparent px-0 pb-0 pt-1 text-base shadow-none focus-visible:ring-0"
             />
           </div>
           <div className="hidden rounded-full border border-border/70 bg-white/80 px-3 py-1.5 text-xs text-muted-foreground sm:block">
-            KRX first
+            KRX 우선
           </div>
         </div>
       </div>
@@ -96,9 +96,9 @@ export function GlobalSymbolSearch() {
           <div className="flex items-center justify-between px-3 py-2">
             <div className="flex items-center gap-2 text-xs uppercase tracking-[0.24em] text-muted-foreground">
               <Sparkles className="h-3.5 w-3.5" />
-              Search Results
+              검색 결과
             </div>
-            <p className="text-xs text-muted-foreground">{items.length} items</p>
+            <p className="text-xs text-muted-foreground">{items.length}개</p>
           </div>
 
           {items.length ? (
@@ -120,7 +120,7 @@ export function GlobalSymbolSearch() {
                     <div className="flex shrink-0 items-center gap-2">
                       <StatusBadge status={item.status} />
                       <span className="inline-flex items-center gap-1 text-xs font-medium text-primary">
-                        Open
+                        분석 보기
                         <ArrowUpRight className="h-3.5 w-3.5" />
                       </span>
                     </div>
@@ -142,14 +142,14 @@ export function GlobalSymbolSearch() {
                     </div>
                     <div className="flex shrink-0 items-center gap-2">
                       <StatusBadge status={item.status} />
-                      <span className="text-xs font-medium text-primary">Send to Admin</span>
+                      <span className="text-xs font-medium text-primary">운영에 추가</span>
                     </div>
                   </div>
                 </Link>
               )
             )
           ) : (
-            <div className="px-4 py-6 text-sm text-muted-foreground">No matching symbols yet.</div>
+            <div className="px-4 py-6 text-sm text-muted-foreground">일치하는 종목이 없습니다.</div>
           )}
         </div>
       ) : null}
