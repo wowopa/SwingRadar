@@ -171,7 +171,7 @@ function parseRetryDelayMs(error, attempt) {
   return Math.min(1500 * 2 ** attempt, 12000);
 }
 
-async function fetchJsonWithRetry(url, options) {
+async function fetchJsonWithRetry(url, options, telemetry = {}) {
   const retryLimit = Math.max(0, Number.parseInt(process.env.SWING_RADAR_NEWS_RETRY_LIMIT ?? "2", 10));
 
   for (let attempt = 0; attempt <= retryLimit; attempt += 1) {
@@ -185,14 +185,21 @@ async function fetchJsonWithRetry(url, options) {
         throw error;
       }
 
-      await wait(parseRetryDelayMs(error, attempt));
+      const delayMs = parseRetryDelayMs(error, attempt);
+      telemetry.onRetry?.({
+        status,
+        delayMs,
+        attempt: attempt + 1,
+        url
+      });
+      await wait(delayMs);
     }
   }
 
   throw new Error(`Request failed after retries: ${url}`);
 }
 
-export async function fetchNaverNews(entry, maxItems) {
+export async function fetchNaverNews(entry, maxItems, telemetry) {
   const clientId = process.env.SWING_RADAR_NAVER_CLIENT_ID;
   const clientSecret = process.env.SWING_RADAR_NAVER_CLIENT_SECRET;
   if (!clientId || !clientSecret) {
@@ -215,7 +222,7 @@ export async function fetchNaverNews(entry, maxItems) {
         "X-Naver-Client-Secret": clientSecret,
         "User-Agent": "SWING-RADAR/0.1"
       }
-    });
+    }, telemetry);
 
     for (const article of payload.items ?? []) {
       const candidate = {
@@ -240,7 +247,7 @@ export async function fetchNaverNews(entry, maxItems) {
   return rankArticles(items, entry, maxItems);
 }
 
-export async function fetchGNews(entry, maxItems) {
+export async function fetchGNews(entry, maxItems, telemetry) {
   const apiKey = process.env.SWING_RADAR_NEWS_API_KEY;
   if (!apiKey) {
     throw new Error("SWING_RADAR_NEWS_API_KEY is required for GNews provider");
@@ -260,7 +267,7 @@ export async function fetchGNews(entry, maxItems) {
 
     const payload = await fetchJsonWithRetry(url.toString(), {
       headers: { "User-Agent": "SWING-RADAR/0.1" }
-    });
+    }, telemetry);
 
     for (const article of payload.articles ?? []) {
       const candidate = {

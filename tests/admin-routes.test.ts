@@ -12,6 +12,8 @@ const mocks = vi.hoisted(() => ({
   loadOpsHealthCheckReport: vi.fn(),
   loadDailyCycleReport: vi.fn(),
   loadAutoHealReport: vi.fn(),
+  loadNewsFetchReport: vi.fn(),
+  loadSnapshotGenerationReport: vi.fn(),
   publishEditorialDraft: vi.fn(),
   rollbackPublishedSnapshot: vi.fn(),
   loadNewsCuration: vi.fn(),
@@ -50,7 +52,9 @@ vi.mock("@/lib/services/health-service", () => ({
 vi.mock("@/lib/server/ops-reports", () => ({
   loadOpsHealthCheckReport: mocks.loadOpsHealthCheckReport,
   loadDailyCycleReport: mocks.loadDailyCycleReport,
-  loadAutoHealReport: mocks.loadAutoHealReport
+  loadAutoHealReport: mocks.loadAutoHealReport,
+  loadNewsFetchReport: mocks.loadNewsFetchReport,
+  loadSnapshotGenerationReport: mocks.loadSnapshotGenerationReport
 }));
 
 vi.mock("@/lib/server/editorial-draft", () => ({
@@ -145,6 +149,8 @@ describe("admin routes", () => {
     mocks.loadOpsHealthCheckReport.mockResolvedValue(null);
     mocks.loadDailyCycleReport.mockResolvedValue(null);
     mocks.loadAutoHealReport.mockResolvedValue(null);
+    mocks.loadNewsFetchReport.mockResolvedValue(null);
+    mocks.loadSnapshotGenerationReport.mockResolvedValue(null);
     mocks.loadSnapshotBundleFromDisk.mockResolvedValue({
       recommendations: { generatedAt: "2026-03-08T00:00:00.000Z", items: [], dailyScan: null },
       analysis: { generatedAt: "2026-03-08T00:00:00.000Z", items: [] },
@@ -280,6 +286,8 @@ describe("admin routes", () => {
         opsHealthReport: { finalHealth: { status: string } } | null;
         dailyCycleReport: { status: string; summary: { failedBatchCount: number } | null } | null;
         autoHealReport: { status: string; actions: Array<{ name: string }> } | null;
+        newsFetchReport: { retryCount: number } | null;
+        snapshotGenerationReport: { validationFallbackCount: number } | null;
         incidents: Array<{ id: string; severity: string }>;
       }>(response);
 
@@ -288,6 +296,8 @@ describe("admin routes", () => {
       expect(mocks.loadOpsHealthCheckReport).toHaveBeenCalledTimes(1);
       expect(mocks.loadDailyCycleReport).toHaveBeenCalledTimes(1);
       expect(mocks.loadAutoHealReport).toHaveBeenCalledTimes(1);
+      expect(mocks.loadNewsFetchReport).toHaveBeenCalledTimes(1);
+      expect(mocks.loadSnapshotGenerationReport).toHaveBeenCalledTimes(1);
       expect(payload).toMatchObject({
         ok: true,
         requestId: "req-test",
@@ -301,6 +311,8 @@ describe("admin routes", () => {
         opsHealthReport: null,
         dailyCycleReport: null,
         autoHealReport: null,
+        newsFetchReport: null,
+        snapshotGenerationReport: null,
         incidents: [
           {
             id: "health-analysis",
@@ -367,6 +379,30 @@ describe("admin routes", () => {
         ],
         error: null
       });
+      mocks.loadNewsFetchReport.mockResolvedValue({
+        startedAt: "2026-03-08T17:40:00.000Z",
+        completedAt: "2026-03-08T17:42:00.000Z",
+        providerOrder: ["naver", "gnews"],
+        requestedProvider: "naver",
+        totalTickers: 20,
+        liveFetchTickers: 18,
+        cacheFallbackTickers: 1,
+        fileFallbackTickers: 1,
+        retryCount: 3,
+        providerFailures: [],
+        totalItems: 62
+      });
+      mocks.loadSnapshotGenerationReport.mockResolvedValue({
+        startedAt: "2026-03-08T17:42:10.000Z",
+        completedAt: "2026-03-08T17:42:40.000Z",
+        generatedAt: "2026-03-08T17:42:40.000Z",
+        totalTickers: 20,
+        recommendationCount: 20,
+        analysisCount: 20,
+        trackingHistoryCount: 9,
+        validationFallbackCount: 1,
+        validationFallbackTickers: ["000660"]
+      });
       mocks.listAuditLogs.mockResolvedValue([
         {
           id: 4,
@@ -386,6 +422,8 @@ describe("admin routes", () => {
         opsHealthReport: { finalHealth: { status: string } } | null;
         dailyCycleReport: { status: string; summary: { failedBatchCount: number } | null } | null;
         autoHealReport: { status: string; actions: Array<{ name: string }> } | null;
+        newsFetchReport: { retryCount: number; liveFetchTickers: number } | null;
+        snapshotGenerationReport: { validationFallbackCount: number } | null;
         incidents: Array<{ id: string; severity: string }>;
       }>(response);
 
@@ -402,6 +440,13 @@ describe("admin routes", () => {
         autoHealReport: {
           status: "ok",
           actions: [{ name: "daily-cycle-rerun" }]
+        },
+        newsFetchReport: {
+          retryCount: 3,
+          liveFetchTickers: 18
+        },
+        snapshotGenerationReport: {
+          validationFallbackCount: 1
         },
         incidents: [{ id: "daily-cycle-warning", severity: "warning" }]
       });

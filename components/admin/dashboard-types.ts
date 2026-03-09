@@ -81,6 +81,41 @@ export type AutoHealReportPayload = {
   error: string | null;
 };
 
+export type NewsFetchReportPayload = {
+  startedAt: string;
+  completedAt: string | null;
+  providerOrder: string[];
+  requestedProvider: string;
+  totalTickers: number;
+  liveFetchTickers: number;
+  cacheFallbackTickers: number;
+  fileFallbackTickers: number;
+  retryCount: number;
+  providerFailures: Array<{
+    ticker: string;
+    provider: string;
+    status: number | null;
+    attempt: number | null;
+    delayMs: number | null;
+    url: string | null;
+    phase: string;
+    message?: string;
+  }>;
+  totalItems: number;
+};
+
+export type SnapshotGenerationReportPayload = {
+  startedAt: string;
+  completedAt: string;
+  generatedAt: string;
+  totalTickers: number;
+  recommendationCount: number;
+  analysisCount: number;
+  trackingHistoryCount: number;
+  validationFallbackCount: number;
+  validationFallbackTickers: string[];
+};
+
 export type AdminStatusPayload = {
   ok: boolean;
   requestId: string;
@@ -90,6 +125,8 @@ export type AdminStatusPayload = {
   opsHealthReport: OpsHealthReportPayload | null;
   dailyCycleReport: DailyCycleReportPayload | null;
   autoHealReport: AutoHealReportPayload | null;
+  newsFetchReport: NewsFetchReportPayload | null;
+  snapshotGenerationReport: SnapshotGenerationReportPayload | null;
   incidents: OperationalIncident[];
 };
 

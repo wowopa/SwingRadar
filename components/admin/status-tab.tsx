@@ -15,8 +15,10 @@ import type {
   AutoHealReportPayload,
   DailyCycleReportPayload,
   HealthPayload,
+  NewsFetchReportPayload,
   OperationalIncident,
   OpsHealthReportPayload,
+  SnapshotGenerationReportPayload,
   UniverseDailyCandidates,
   UniverseReviewStatus
 } from "@/components/admin/dashboard-types";
@@ -45,6 +47,8 @@ export function StatusTab({
   opsHealthReport,
   dailyCycleReport,
   autoHealReport,
+  newsFetchReport,
+  snapshotGenerationReport,
   dailyCandidates,
   watchlistTickers,
   onPromoteCandidate,
@@ -57,6 +61,8 @@ export function StatusTab({
   opsHealthReport: OpsHealthReportPayload | null;
   dailyCycleReport: DailyCycleReportPayload | null;
   autoHealReport: AutoHealReportPayload | null;
+  newsFetchReport: NewsFetchReportPayload | null;
+  snapshotGenerationReport: SnapshotGenerationReportPayload | null;
   dailyCandidates: UniverseDailyCandidates | null;
   watchlistTickers: string[];
   onPromoteCandidate: (ticker: string) => void;
@@ -288,6 +294,68 @@ export function StatusTab({
           )}
         </CardContent>
       </Card>
+
+      <div className="grid gap-6 xl:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle>뉴스 수집 품질</CardTitle>
+          </CardHeader>
+          <CardContent className="grid gap-4 md:grid-cols-4">
+            <MetricCard
+              label="마지막 수집"
+              value={newsFetchReport?.completedAt ? formatDateTime(newsFetchReport.completedAt) : "none"}
+              note={newsFetchReport ? `provider ${newsFetchReport.requestedProvider}` : "no report"}
+            />
+            <MetricCard
+              label="실시간 성공"
+              value={newsFetchReport ? `${newsFetchReport.liveFetchTickers}/${newsFetchReport.totalTickers}` : "0/0"}
+              note={newsFetchReport ? `items ${newsFetchReport.totalItems}` : "no data"}
+            />
+            <MetricCard
+              label="fallback"
+              value={newsFetchReport ? String(newsFetchReport.cacheFallbackTickers + newsFetchReport.fileFallbackTickers) : "0"}
+              note={
+                newsFetchReport
+                  ? `cache ${newsFetchReport.cacheFallbackTickers} / file ${newsFetchReport.fileFallbackTickers}`
+                  : "no fallback"
+              }
+            />
+            <MetricCard
+              label="retry"
+              value={String(newsFetchReport?.retryCount ?? 0)}
+              note={newsFetchReport?.providerFailures[0]?.message ?? "no retry"}
+            />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>스냅샷 생성 품질</CardTitle>
+          </CardHeader>
+          <CardContent className="grid gap-4 md:grid-cols-4">
+            <MetricCard
+              label="생성 시각"
+              value={snapshotGenerationReport ? formatDateTime(snapshotGenerationReport.generatedAt) : "none"}
+              note={snapshotGenerationReport?.completedAt ? formatDateTime(snapshotGenerationReport.completedAt) : "no report"}
+            />
+            <MetricCard
+              label="종목 수"
+              value={String(snapshotGenerationReport?.totalTickers ?? 0)}
+              note={`추천 ${snapshotGenerationReport?.recommendationCount ?? 0}`}
+            />
+            <MetricCard
+              label="검증 fallback"
+              value={String(snapshotGenerationReport?.validationFallbackCount ?? 0)}
+              note={snapshotGenerationReport?.validationFallbackTickers[0] ?? "none"}
+            />
+            <MetricCard
+              label="추적 행"
+              value={String(snapshotGenerationReport?.trackingHistoryCount ?? 0)}
+              note={`분석 ${snapshotGenerationReport?.analysisCount ?? 0}`}
+            />
+          </CardContent>
+        </Card>
+      </div>
 
       <div className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
         <Card>

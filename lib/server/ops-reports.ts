@@ -23,6 +23,18 @@ function getAutoHealReportPath() {
     : path.join(resolveProjectRoot(), "data", "ops", "latest-auto-heal.json");
 }
 
+function getNewsFetchReportPath() {
+  return process.env.SWING_RADAR_NEWS_FETCH_REPORT_PATH
+    ? path.resolve(process.env.SWING_RADAR_NEWS_FETCH_REPORT_PATH)
+    : path.join(resolveProjectRoot(), "data", "ops", "latest-news-fetch.json");
+}
+
+function getSnapshotGenerationReportPath() {
+  return process.env.SWING_RADAR_SNAPSHOT_GENERATION_REPORT_PATH
+    ? path.resolve(process.env.SWING_RADAR_SNAPSHOT_GENERATION_REPORT_PATH)
+    : path.join(resolveProjectRoot(), "data", "ops", "latest-snapshot-generation.json");
+}
+
 async function readJsonFile<T>(filePath: string): Promise<T | null> {
   try {
     const content = await readFile(filePath, "utf8");
@@ -95,6 +107,41 @@ export type AutoHealReport = {
   error: string | null;
 };
 
+export type NewsFetchReport = {
+  startedAt: string;
+  completedAt: string | null;
+  providerOrder: string[];
+  requestedProvider: string;
+  totalTickers: number;
+  liveFetchTickers: number;
+  cacheFallbackTickers: number;
+  fileFallbackTickers: number;
+  retryCount: number;
+  providerFailures: Array<{
+    ticker: string;
+    provider: string;
+    status: number | null;
+    attempt: number | null;
+    delayMs: number | null;
+    url: string | null;
+    phase: string;
+    message?: string;
+  }>;
+  totalItems: number;
+};
+
+export type SnapshotGenerationReport = {
+  startedAt: string;
+  completedAt: string;
+  generatedAt: string;
+  totalTickers: number;
+  recommendationCount: number;
+  analysisCount: number;
+  trackingHistoryCount: number;
+  validationFallbackCount: number;
+  validationFallbackTickers: string[];
+};
+
 export async function loadOpsHealthCheckReport() {
   return readJsonFile<OpsHealthCheckReport>(getOpsHealthReportPath());
 }
@@ -105,4 +152,12 @@ export async function loadDailyCycleReport() {
 
 export async function loadAutoHealReport() {
   return readJsonFile<AutoHealReport>(getAutoHealReportPath());
+}
+
+export async function loadNewsFetchReport() {
+  return readJsonFile<NewsFetchReport>(getNewsFetchReportPath());
+}
+
+export async function loadSnapshotGenerationReport() {
+  return readJsonFile<SnapshotGenerationReport>(getSnapshotGenerationReportPath());
 }

@@ -79,12 +79,18 @@ function resolveProviderOrder() {
   return ["naver", "gnews"];
 }
 
-async function fetchFromProvider(provider, entry, maxItems) {
+function getNewsFetchReportPath() {
+  return process.env.SWING_RADAR_NEWS_FETCH_REPORT_PATH
+    ? path.resolve(process.env.SWING_RADAR_NEWS_FETCH_REPORT_PATH)
+    : path.join(projectRoot, "data", "ops", "latest-news-fetch.json");
+}
+
+async function fetchFromProvider(provider, entry, maxItems, telemetry) {
   if (provider === "naver") {
-    return fetchNaverNews(entry, maxItems);
+    return fetchNaverNews(entry, maxItems, telemetry);
   }
   if (provider === "gnews") {
-    return fetchGNews(entry, maxItems);
+    return fetchGNews(entry, maxItems, telemetry);
   }
   return [];
 }
@@ -108,29 +114,73 @@ async function main() {
   const items = [];
   let providerUsed = "file";
   let anyLiveFetch = false;
+  const report = {
+    startedAt: new Date().toISOString(),
+    completedAt: null,
+    providerOrder,
+    requestedProvider: process.env.SWING_RADAR_NEWS_PROVIDER ?? "auto",
+    totalTickers: watchlist.length,
+    liveFetchTickers: 0,
+    cacheFallbackTickers: 0,
+    fileFallbackTickers: 0,
+    retryCount: 0,
+    providerFailures: [],
+    totalItems: 0
+  };
 
   for (const entry of watchlist) {
     let fetched = [];
 
     for (const provider of providerOrder) {
       try {
-        fetched = await fetchFromProvider(provider, entry, maxItems);
+        fetched = await fetchFromProvider(provider, entry, maxItems, {
+          onRetry: ({ status, delayMs, attempt, url }) => {
+            report.retryCount += 1;
+            report.providerFailures.push({
+              ticker: entry.ticker,
+              provider,
+              status,
+              attempt,
+              delayMs,
+              url,
+              phase: "retry"
+            });
+          }
+        });
+
         if (fetched.length) {
           providerUsed = provider;
           anyLiveFetch = true;
+          report.liveFetchTickers += 1;
           break;
         }
       } catch (error) {
+        report.providerFailures.push({
+          ticker: entry.ticker,
+          provider,
+          status: error && typeof error === "object" && "status" in error ? error.status : null,
+          attempt: null,
+          delayMs: null,
+          url: error && typeof error === "object" && "url" in error ? error.url : null,
+          phase: "failed",
+          message: error instanceof Error ? error.message : String(error)
+        });
         console.warn(`News fetch failed for ${entry.ticker} via ${provider}: ${error instanceof Error ? error.message : error}`);
       }
     }
 
     if (!fetched.length) {
       fetched = loadCacheNews(cache, entry, maxItems);
+      if (fetched.length) {
+        report.cacheFallbackTickers += 1;
+      }
     }
 
     if (!fetched.length) {
       fetched = await loadFileNews(paths, entry, maxItems);
+      if (fetched.length) {
+        report.fileFallbackTickers += 1;
+      }
       providerUsed = providerUsed === "file" ? "file" : providerUsed;
     }
 
@@ -138,6 +188,8 @@ async function main() {
   }
 
   const normalizedItems = dedupeArticles(items);
+  report.totalItems = normalizedItems.length;
+  report.completedAt = new Date().toISOString();
 
   if (anyLiveFetch) {
     await writeJson(path.resolve(args.cacheFile), {
@@ -152,11 +204,13 @@ async function main() {
     provider: anyLiveFetch ? providerUsed : "file",
     items: normalizedItems
   });
+  await writeJson(getNewsFetchReportPath(), report);
 
   console.log("External news fetch completed.");
   console.log(`- provider: ${anyLiveFetch ? providerUsed : "file"}`);
   console.log(`- items: ${normalizedItems.length}`);
   console.log(`- outFile: ${path.resolve(args.outFile)}`);
+  console.log(`- report: ${getNewsFetchReportPath()}`);
 }
 
 main().catch((error) => {

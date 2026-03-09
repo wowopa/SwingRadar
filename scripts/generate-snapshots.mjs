@@ -31,6 +31,12 @@ Usage:
 `);
 }
 
+function getSnapshotGenerationReportPath() {
+  return process.env.SWING_RADAR_SNAPSHOT_GENERATION_REPORT_PATH
+    ? path.resolve(process.env.SWING_RADAR_SNAPSHOT_GENERATION_REPORT_PATH)
+    : path.join(projectRoot, "data", "ops", "latest-snapshot-generation.json");
+}
+
 function resolveProjectPath(configuredPath, fallbackPath) {
   if (!configuredPath) {
     return path.resolve(fallbackPath);
@@ -414,6 +420,7 @@ async function main() {
     printHelp();
     return;
   }
+  const startedAt = new Date().toISOString();
 
   const [market, news, validation, trackingEvents] = await Promise.all([
     readJson(options.rawDir, "market-snapshot.json"),
@@ -443,10 +450,12 @@ async function main() {
   const marketByTicker = new Map(market.items.map((item) => [item.ticker, item]));
   const recommendations = [];
   const analysisItems = [];
+  const validationFallbackTickers = [];
 
   for (const item of market.items) {
     const validationItem = validationByTicker.get(item.ticker) ?? buildFallbackValidationItem(item);
     if (!validationByTicker.has(item.ticker)) {
+      validationFallbackTickers.push(item.ticker);
       console.warn(`Validation data missing for ${item.ticker}; using conservative fallback.`);
     }
 
@@ -576,11 +585,32 @@ async function main() {
     writeFile(path.join(options.outDir, "analysis.json"), `${JSON.stringify({ generatedAt, items: analysisItems }, null, 2)}\n`, "utf8"),
     writeFile(path.join(options.outDir, "tracking.json"), `${JSON.stringify({ generatedAt, history: trackingHistory, details: trackingDetails }, null, 2)}\n`, "utf8")
   ]);
+  await mkdir(path.dirname(getSnapshotGenerationReportPath()), { recursive: true });
+  await writeFile(
+    getSnapshotGenerationReportPath(),
+    `${JSON.stringify(
+      {
+        startedAt,
+        completedAt: new Date().toISOString(),
+        generatedAt,
+        totalTickers: market.items.length,
+        recommendationCount: recommendations.length,
+        analysisCount: analysisItems.length,
+        trackingHistoryCount: trackingHistory.length,
+        validationFallbackCount: validationFallbackTickers.length,
+        validationFallbackTickers
+      },
+      null,
+      2
+    )}\n`,
+    "utf8"
+  );
 
   console.log("Snapshot generation completed.");
   console.log(`- recommendations: ${recommendations.length}`);
   console.log(`- analysis: ${analysisItems.length}`);
   console.log(`- tracking history: ${trackingHistory.length}`);
+  console.log(`- report: ${getSnapshotGenerationReportPath()}`);
 }
 
 main().catch((error) => {

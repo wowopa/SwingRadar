@@ -24,9 +24,11 @@ import type {
   EditorialDraftItem,
   HealthPayload,
   NewsCurationDocument,
+  NewsFetchReportPayload,
   OperationalIncident,
   OpsHealthReportPayload,
   PublishHistoryItem,
+  SnapshotGenerationReportPayload,
   SymbolSearchItem,
   UniverseCandidateReview,
   UniverseDailyCandidates,
@@ -57,6 +59,8 @@ export function AdminDashboard() {
   const [opsHealthReport, setOpsHealthReport] = useState<OpsHealthReportPayload | null>(null);
   const [dailyCycleReport, setDailyCycleReport] = useState<DailyCycleReportPayload | null>(null);
   const [autoHealReport, setAutoHealReport] = useState<AutoHealReportPayload | null>(null);
+  const [newsFetchReport, setNewsFetchReport] = useState<NewsFetchReportPayload | null>(null);
+  const [snapshotGenerationReport, setSnapshotGenerationReport] = useState<SnapshotGenerationReportPayload | null>(null);
   const [audits, setAudits] = useState<AuditItem[]>([]);
   const [dailyCandidates, setDailyCandidates] = useState<UniverseDailyCandidates | null>(null);
   const [draft, setDraft] = useState<EditorialDraftDocument | null>(null);
@@ -164,6 +168,8 @@ export function AdminDashboard() {
       setOpsHealthReport(statusJson.opsHealthReport ?? null);
       setDailyCycleReport(statusJson.dailyCycleReport ?? null);
       setAutoHealReport(statusJson.autoHealReport ?? null);
+      setNewsFetchReport(statusJson.newsFetchReport ?? null);
+      setSnapshotGenerationReport(statusJson.snapshotGenerationReport ?? null);
       setAudits(auditJson.items ?? []);
       setDailyCandidates(universeJson.dailyCandidates ?? null);
       setDraft(draftJson.draft);
@@ -582,6 +588,8 @@ export function AdminDashboard() {
             opsHealthReport={opsHealthReport}
             dailyCycleReport={dailyCycleReport}
             autoHealReport={autoHealReport}
+            newsFetchReport={newsFetchReport}
+            snapshotGenerationReport={snapshotGenerationReport}
             dailyCandidates={dailyCandidates}
             watchlistTickers={watchlistTickers}
             onPromoteCandidate={(ticker) => void promoteUniverseCandidate(ticker)}
