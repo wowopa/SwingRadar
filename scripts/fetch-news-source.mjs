@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 
 import { loadLocalEnv } from "./load-env.mjs";
 import { getProjectPaths, loadWatchlist, parseArgs, readJson, writeJson } from "./lib/external-source-utils.mjs";
-import { dedupeArticles, fetchGNews, fetchNaverNews, matchesFilters } from "./lib/news-providers.mjs";
+import { dedupeArticles, fetchGNews, fetchGoogleNewsRss, fetchNaverNews, matchesFilters } from "./lib/news-providers.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -20,7 +20,7 @@ Usage:
   node scripts/fetch-news-source.mjs [--out-file <path>] [--cache-file <path>]
 
 Environment:
-  SWING_RADAR_NEWS_PROVIDER=naver | gnews | file
+  SWING_RADAR_NEWS_PROVIDER=naver | google-news-rss | gnews | file
   SWING_RADAR_NAVER_CLIENT_ID=<id>
   SWING_RADAR_NAVER_CLIENT_SECRET=<secret>
   SWING_RADAR_NEWS_API_KEY=<gnews-key>
@@ -29,6 +29,8 @@ Environment:
   SWING_RADAR_NEWS_LIVE_FETCH_TICKER_LIMIT=200
   SWING_RADAR_NEWS_PRIORITY_WINDOW=100
   SWING_RADAR_NEWS_RETRY_LIMIT=2
+  SWING_RADAR_NEWS_NAVER_ENABLED=false
+  SWING_RADAR_NEWS_GNEWS_ENABLED=false
 `);
 }
 
@@ -69,17 +71,26 @@ function loadCacheNews(cache, entry, maxItems) {
 
 function resolveProviderOrder() {
   const requested = process.env.SWING_RADAR_NEWS_PROVIDER;
+  const rssEnabled = process.env.SWING_RADAR_NEWS_RSS_ENABLED !== "false";
+  const naverEnabled = process.env.SWING_RADAR_NEWS_NAVER_ENABLED === "true";
+  const gnewsEnabled = process.env.SWING_RADAR_NEWS_GNEWS_ENABLED === "true";
+  const rssProvider = rssEnabled ? ["google-news-rss"] : [];
+  const naverProvider = naverEnabled ? ["naver"] : [];
+  const gnewsProvider = gnewsEnabled ? ["gnews"] : [];
   if (requested === "file") {
     return ["file"];
   }
+  if (requested === "google-news-rss") {
+    return ["google-news-rss", ...naverProvider, ...gnewsProvider];
+  }
   if (requested === "gnews") {
-    return ["gnews", "naver"];
+    return ["gnews", ...rssProvider, ...naverProvider];
   }
   if (requested === "naver") {
-    return ["naver", "gnews"];
+    return ["naver", ...rssProvider, ...gnewsProvider];
   }
 
-  return ["naver", "gnews"];
+  return [...rssProvider, ...naverProvider, ...gnewsProvider];
 }
 
 async function readDailyCandidates(paths) {
@@ -144,6 +155,9 @@ function getNewsFetchReportPath() {
 async function fetchFromProvider(provider, entry, maxItems, telemetry, options = {}) {
   if (provider === "naver") {
     return fetchNaverNews(entry, maxItems, telemetry, options);
+  }
+  if (provider === "google-news-rss") {
+    return fetchGoogleNewsRss(entry, maxItems, telemetry, options);
   }
   if (provider === "gnews") {
     return fetchGNews(entry, maxItems, telemetry, options);

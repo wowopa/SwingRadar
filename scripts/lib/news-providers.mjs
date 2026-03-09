@@ -1,4 +1,4 @@
-import { fetchJson, wait } from "./external-source-utils.mjs";
+import { fetchJson, fetchText, wait } from "./external-source-utils.mjs";
 
 const KO = {
   positive: "\uAE0D\uC815",
@@ -199,6 +199,36 @@ export function dedupeArticles(items) {
   });
 }
 
+function decodeXmlEntities(value) {
+  return (value ?? "")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&amp;/g, "&")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'");
+}
+
+function extractTagValue(block, tagName) {
+  const match = block.match(new RegExp(`<${tagName}>([\\s\\S]*?)<\\/${tagName}>`, "i"));
+  return match ? decodeXmlEntities(match[1].trim()) : "";
+}
+
+function parseGoogleNewsRss(xml) {
+  const items = [];
+  const matches = xml.match(/<item>[\s\S]*?<\/item>/gi) ?? [];
+
+  for (const itemBlock of matches) {
+    items.push({
+      title: stripHtml(extractTagValue(itemBlock, "title")),
+      link: extractTagValue(itemBlock, "link"),
+      pubDate: extractTagValue(itemBlock, "pubDate"),
+      description: stripHtml(extractTagValue(itemBlock, "description"))
+    });
+  }
+
+  return items;
+}
+
 function rankArticles(items, entry, maxItems, options = {}) {
   const minScore = entry.minArticleScore ?? 10;
   return dedupeArticles(items)
@@ -332,6 +362,48 @@ export async function fetchGNews(entry, maxItems, telemetry, options = {}) {
         source: article.source?.name ?? "gnews",
         url: article.url,
         date: article.publishedAt?.slice(0, 10) ?? new Date().toISOString().slice(0, 10)
+      };
+
+      if (!matchesFilters(candidate, entry)) continue;
+
+      items.push({
+        ...candidate,
+        impact: mapImpact(candidate.headline, candidate.summary)
+      });
+    }
+  }
+
+  return rankArticles(items, entry, effectiveMaxItems, options).slice(0, effectiveMaxItems);
+}
+
+export async function fetchGoogleNewsRss(entry, maxItems, telemetry, options = {}) {
+  const queries = buildNewsQueries(entry, "google-news-rss", options);
+  const priorityBand = getPriorityBand(options.priorityRank ?? null);
+  const effectiveMaxItems = priorityBand === "top20" ? Math.max(maxItems, 10) : priorityBand === "top100" ? Math.max(maxItems, 8) : maxItems;
+  const items = [];
+
+  for (const query of queries) {
+    const url = new URL("https://news.google.com/rss/search");
+    url.searchParams.set("q", query);
+    url.searchParams.set("hl", "ko");
+    url.searchParams.set("gl", "KR");
+    url.searchParams.set("ceid", "KR:ko");
+
+    const xml = await fetchText(url.toString(), {
+      headers: {
+        "User-Agent": "SWING-RADAR/0.1"
+      }
+    }, telemetry);
+
+    for (const article of parseGoogleNewsRss(xml)) {
+      const candidate = {
+        ticker: entry.ticker,
+        company: entry.company,
+        headline: article.title,
+        summary: article.description,
+        source: "google-news-rss",
+        url: article.link,
+        date: article.pubDate ? new Date(article.pubDate).toISOString().slice(0, 10) : new Date().toISOString().slice(0, 10)
       };
 
       if (!matchesFilters(candidate, entry)) continue;

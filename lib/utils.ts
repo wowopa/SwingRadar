@@ -23,11 +23,17 @@ export function formatDateTimeShort(value: string) {
     return value;
   }
 
-  return new Intl.DateTimeFormat("ko-KR", {
+  const formatter = new Intl.DateTimeFormat("ko-KR", {
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
     hour: "2-digit",
-    minute: "2-digit"
-  }).format(date);
+    minute: "2-digit",
+    hour12: false,
+    timeZone: "Asia/Seoul"
+  });
+  const parts = formatter.formatToParts(date);
+  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+
+  return `${values.year}. ${values.month}. ${values.day}. ${values.hour}:${values.minute}`;
 }
