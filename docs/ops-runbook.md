@@ -220,7 +220,23 @@ Refresh one watchlist symbol manually:
 5. Run `scripts\setup-ops-scheduler.ps1` once to register both tasks with the resolved settings.
 6. Confirm the tasks with `scripts\get-ops-scheduler-status.ps1`.
 
-## 12. Production minimum checklist
+## 12. Backup and restore
+Create a PostgreSQL backup:
+```powershell
+powershell -ExecutionPolicy Bypass -File C:\Users\eugen\Documents\SwingRadar\scripts\backup-postgres.ps1
+```
+
+Restore a backup:
+```powershell
+powershell -ExecutionPolicy Bypass -File C:\Users\eugen\Documents\SwingRadar\scripts\restore-postgres.ps1 -BackupFile C:\Users\eugen\Documents\SwingRadar\backups\postgres\swing-radar-20260309-181000.dump
+```
+
+Check the full production stack:
+```powershell
+powershell -ExecutionPolicy Bypass -File C:\Users\eugen\Documents\SwingRadar\scripts\check-production-stack.ps1
+```
+
+## 13. Production minimum checklist
 - `SWING_RADAR_ADMIN_TOKEN` must be a long random secret.
 - `SWING_RADAR_DATA_PROVIDER=postgres` in production.
 - `SWING_RADAR_FALLBACK_PROVIDER=file` only if you intentionally want degraded read mode.
