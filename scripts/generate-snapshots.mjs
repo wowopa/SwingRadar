@@ -98,6 +98,138 @@ function formatPercent(value) {
   return `${value > 0 ? "+" : ""}${value.toFixed(1)}%`;
 }
 
+function roundNumber(value, digits = 1) {
+  if (!Number.isFinite(value)) {
+    return null;
+  }
+
+  return Number(value.toFixed(digits));
+}
+
+function average(values) {
+  return values.reduce((sum, value) => sum + value, 0) / Math.max(values.length, 1);
+}
+
+function calculateEMA(values, period) {
+  if (values.length < period) {
+    return null;
+  }
+
+  const multiplier = 2 / (period + 1);
+  let ema = average(values.slice(0, period));
+  for (let index = period; index < values.length; index += 1) {
+    ema = values[index] * multiplier + ema * (1 - multiplier);
+  }
+
+  return ema;
+}
+
+function calculateRSI(values, period = 14) {
+  if (values.length <= period) {
+    return null;
+  }
+
+  let gains = 0;
+  let losses = 0;
+
+  for (let index = 1; index <= period; index += 1) {
+    const delta = values[index] - values[index - 1];
+    if (delta >= 0) gains += delta;
+    else losses += Math.abs(delta);
+  }
+
+  let averageGain = gains / period;
+  let averageLoss = losses / period;
+
+  for (let index = period + 1; index < values.length; index += 1) {
+    const delta = values[index] - values[index - 1];
+    const gain = delta > 0 ? delta : 0;
+    const loss = delta < 0 ? Math.abs(delta) : 0;
+    averageGain = (averageGain * (period - 1) + gain) / period;
+    averageLoss = (averageLoss * (period - 1) + loss) / period;
+  }
+
+  if (averageLoss === 0) {
+    return 100;
+  }
+
+  const rs = averageGain / averageLoss;
+  return 100 - 100 / (1 + rs);
+}
+
+function calculateStdDev(values) {
+  if (!values.length) {
+    return null;
+  }
+
+  const mean = average(values);
+  const variance = average(values.map((value) => (value - mean) ** 2));
+  return Math.sqrt(variance);
+}
+
+function calculateTechnicalIndicators(item) {
+  const closes = item.closes ?? [];
+  const volumes = item.volumes ?? [];
+
+  if (!closes.length) {
+    return {
+      sma20: null,
+      sma60: null,
+      ema20: null,
+      rsi14: null,
+      macd: null,
+      macdSignal: null,
+      macdHistogram: null,
+      bollingerUpper: null,
+      bollingerMiddle: null,
+      bollingerLower: null,
+      volumeRatio20: null
+    };
+  }
+
+  const sma20 = closes.length >= 20 ? average(closes.slice(-20)) : null;
+  const sma60 = closes.length >= 60 ? average(closes.slice(-60)) : null;
+  const ema20 = calculateEMA(closes, 20);
+  const ema12Series = [];
+  const ema26Series = [];
+
+  for (let index = 0; index < closes.length; index += 1) {
+    const subset = closes.slice(0, index + 1);
+    ema12Series.push(calculateEMA(subset, 12));
+    ema26Series.push(calculateEMA(subset, 26));
+  }
+
+  const macdSeries = ema12Series
+    .map((value, index) => (value !== null && ema26Series[index] !== null ? value - ema26Series[index] : null))
+    .filter((value) => value !== null);
+
+  const macd = macdSeries.length ? macdSeries.at(-1) : null;
+  const macdSignal = macdSeries.length >= 9 ? calculateEMA(macdSeries, 9) : null;
+  const macdHistogram = macd !== null && macdSignal !== null ? macd - macdSignal : null;
+  const rsi14 = calculateRSI(closes, 14);
+  const bollingerMiddle = sma20;
+  const bollingerStdDev = closes.length >= 20 ? calculateStdDev(closes.slice(-20)) : null;
+  const bollingerUpper = bollingerMiddle !== null && bollingerStdDev !== null ? bollingerMiddle + bollingerStdDev * 2 : null;
+  const bollingerLower = bollingerMiddle !== null && bollingerStdDev !== null ? bollingerMiddle - bollingerStdDev * 2 : null;
+  const avg20Volume = volumes.length >= 20 ? average(volumes.slice(-20)) : null;
+  const latestVolume = volumes.length ? volumes.at(-1) : null;
+  const volumeRatio20 = avg20Volume && latestVolume ? latestVolume / avg20Volume : null;
+
+  return {
+    sma20: roundNumber(sma20, 0),
+    sma60: roundNumber(sma60, 0),
+    ema20: roundNumber(ema20, 0),
+    rsi14: roundNumber(rsi14, 1),
+    macd: roundNumber(macd, 1),
+    macdSignal: roundNumber(macdSignal, 1),
+    macdHistogram: roundNumber(macdHistogram, 1),
+    bollingerUpper: roundNumber(bollingerUpper, 0),
+    bollingerMiddle: roundNumber(bollingerMiddle, 0),
+    bollingerLower: roundNumber(bollingerLower, 0),
+    volumeRatio20: roundNumber(volumeRatio20, 2)
+  };
+}
+
 function resolveObservationWindow(sampleSize, hitRate) {
   if (sampleSize >= 35) return "5~15거래일";
   if (sampleSize >= 24 || hitRate >= 55) return "3~10거래일";
@@ -245,6 +377,57 @@ function buildDecisionNotes(item, validationItem, topNews, coverage) {
     topNews ? `가장 먼저 볼 이슈: ${topNews.headline}` : "참고할 이슈가 많지 않아 가격 흐름을 더 중요하게 봅니다.",
     `참고 자료: 공시 ${coverage.disclosure}건, 운영 메모 ${coverage.curated}건, 기사 ${coverage.externalNews}건`
   ];
+}
+
+function buildTechnicalNotes(indicators) {
+  const notes = [];
+
+  if (indicators.rsi14 !== null) {
+    if (indicators.rsi14 >= 70) notes.push("RSI는 단기 과열 구간에 가깝습니다.");
+    else if (indicators.rsi14 <= 35) notes.push("RSI는 반등 여지를 함께 볼 수 있는 구간입니다.");
+    else notes.push("RSI는 중립 범위에서 움직이고 있습니다.");
+  }
+
+  if (indicators.macd !== null && indicators.macdSignal !== null) {
+    if (indicators.macd > indicators.macdSignal) notes.push("MACD는 시그널선 위에서 움직이고 있습니다.");
+    else notes.push("MACD는 시그널선 아래에 있어 추가 확인이 필요합니다.");
+  }
+
+  if (indicators.volumeRatio20 !== null) {
+    if (indicators.volumeRatio20 >= 1.3) notes.push("거래량은 최근 20일 평균보다 강합니다.");
+    else if (indicators.volumeRatio20 <= 0.8) notes.push("거래량은 최근 평균보다 가볍습니다.");
+    else notes.push("거래량은 최근 평균 수준입니다.");
+  }
+
+  return notes;
+}
+
+function buildChartSeries(item) {
+  const closes = item.closes ?? [];
+  const volumes = item.volumes ?? [];
+  if (!closes.length) {
+    return [];
+  }
+
+  return closes.slice(-60).map((close, index, series) => {
+    const history = series.slice(0, index + 1);
+    const sma20 = history.length >= 20 ? average(history.slice(-20)) : null;
+    const sma60 = history.length >= 60 ? average(history.slice(-60)) : null;
+    const stdDev = history.length >= 20 ? calculateStdDev(history.slice(-20)) : null;
+    const bollingerMiddle = sma20;
+    const bollingerUpper = bollingerMiddle !== null && stdDev !== null ? bollingerMiddle + stdDev * 2 : null;
+    const bollingerLower = bollingerMiddle !== null && stdDev !== null ? bollingerMiddle - stdDev * 2 : null;
+
+    return {
+      label: `-${series.length - index - 1}일`,
+      close: Math.round(close),
+      volume: volumes.length >= closes.length ? Math.round(volumes.slice(-60)[index] ?? 0) : null,
+      sma20: roundNumber(sma20, 0),
+      sma60: roundNumber(sma60, 0),
+      bollingerUpper: roundNumber(bollingerUpper, 0),
+      bollingerLower: roundNumber(bollingerLower, 0)
+    };
+  });
 }
 
 function buildScenarios(item) {
@@ -464,8 +647,9 @@ async function main() {
   const validationFallbackTickers = [];
 
   for (const item of market.items) {
+    const usesEstimatedValidation = !validationByTicker.has(item.ticker);
     const validationItem = validationByTicker.get(item.ticker) ?? buildFallbackValidationItem(item);
-    if (!validationByTicker.has(item.ticker)) {
+    if (usesEstimatedValidation) {
       validationFallbackTickers.push(item.ticker);
       console.warn(`Validation data missing for ${item.ticker}; using conservative fallback.`);
     }
@@ -478,6 +662,7 @@ async function main() {
     const signalTone = resolveSignalTone(score, invalidationDistance, validationItem.hitRate);
     const label = resolveSignalLabel(score);
     const quality = qualityLabel(item);
+    const technicalIndicators = calculateTechnicalIndicators(item);
 
     recommendations.push({
       ticker: item.ticker,
@@ -511,6 +696,8 @@ async function main() {
       invalidation: buildInvalidation(item),
       analysisSummary: buildAnalysisSummary(item, quality),
       keyLevels: buildKeyLevels(item),
+      technicalIndicators,
+      chartSeries: buildChartSeries(item),
       decisionNotes: buildDecisionNotes(item, validationItem, topNews, coverage),
       scoreBreakdown: [
         { label: "추세", score: item.trendScore, description: "중기 추세 구조 점검" },
@@ -538,7 +725,19 @@ async function main() {
         { label: "시세", value: "실시간 스냅샷", note: "Yahoo chart API 기준" },
         { label: "이벤트", value: `${tickerNews.length}건`, note: topNews ? topNews.headline : "해당 없음" },
         { label: "커버리지", value: coverage.confidence, note: coverage.note },
-        { label: "품질", value: quality, note: `score ${item.qualityScore}` }
+        {
+          label: "검증",
+          value: usesEstimatedValidation ? "참고 계산" : "실측 기반",
+          note: usesEstimatedValidation
+            ? "비슷한 흐름 표본이 아직 충분하지 않아 보수적으로 계산한 참고값입니다."
+            : `비슷한 흐름 ${validationItem.sampleSize}건 기준으로 정리한 값입니다.`
+        },
+        { label: "품질", value: quality, note: `score ${item.qualityScore}` },
+        {
+          label: "보조지표",
+          value: technicalIndicators.rsi14 !== null ? `RSI ${technicalIndicators.rsi14}` : "계산 중",
+          note: buildTechnicalNotes(technicalIndicators).join(" ") || "가격 이력 기반 계산"
+        }
       ]
     });
   }

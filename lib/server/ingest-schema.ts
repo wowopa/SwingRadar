@@ -43,6 +43,30 @@ const analysisItemSchema = z.object({
   invalidation: z.string(),
   analysisSummary: z.array(z.object({ label: z.string(), value: z.string(), note: z.string() })),
   keyLevels: z.array(z.object({ label: z.string(), price: z.string(), meaning: z.string() })),
+  technicalIndicators: z.object({
+    sma20: z.number().nullable(),
+    sma60: z.number().nullable(),
+    ema20: z.number().nullable(),
+    rsi14: z.number().nullable(),
+    macd: z.number().nullable(),
+    macdSignal: z.number().nullable(),
+    macdHistogram: z.number().nullable(),
+    bollingerUpper: z.number().nullable(),
+    bollingerMiddle: z.number().nullable(),
+    bollingerLower: z.number().nullable(),
+    volumeRatio20: z.number().nullable()
+  }),
+  chartSeries: z.array(
+    z.object({
+      label: z.string(),
+      close: z.number(),
+      volume: z.number().nullable(),
+      sma20: z.number().nullable(),
+      sma60: z.number().nullable(),
+      bollingerUpper: z.number().nullable(),
+      bollingerLower: z.number().nullable()
+    })
+  ),
   decisionNotes: z.array(z.string()),
   scoreBreakdown: z.array(z.object({ label: z.string(), score: z.number(), description: z.string() })),
   scenarios: z.array(z.object({ label: scenarioLabel, probability: z.number(), expectation: z.string(), trigger: z.string() })),

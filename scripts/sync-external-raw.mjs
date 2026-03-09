@@ -214,9 +214,14 @@ async function main() {
         volatilityScore: item.volatilityScore,
         eventScore: event.score,
         qualityScore: item.qualityScore,
+        averageVolume20: item.averageVolume20,
+        latestVolume: item.latestVolume,
+        momentumPercent: item.momentumPercent,
         riskStatus: item.riskStatus,
         eventRiskStatus: event.eventRiskStatus,
-        heatStatus: item.heatStatus
+        heatStatus: item.heatStatus,
+        closes: item.closes ?? [],
+        volumes: item.volumes ?? []
       };
     })
   };

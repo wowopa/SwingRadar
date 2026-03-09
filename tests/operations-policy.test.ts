@@ -71,8 +71,8 @@ describe("operations policy", () => {
 
     expect(getOperationalPolicy()).toEqual({
       stale: {
-        warningMinutes: 180,
-        criticalMinutes: 360
+        warningMinutes: 1560,
+        criticalMinutes: 3000
       },
       audit: {
         healthLookbackLimit: 5,

@@ -47,6 +47,30 @@ export interface KeyLevel {
   meaning: string;
 }
 
+export interface TechnicalIndicators {
+  sma20: number | null;
+  sma60: number | null;
+  ema20: number | null;
+  rsi14: number | null;
+  macd: number | null;
+  macdSignal: number | null;
+  macdHistogram: number | null;
+  bollingerUpper: number | null;
+  bollingerMiddle: number | null;
+  bollingerLower: number | null;
+  volumeRatio20: number | null;
+}
+
+export interface AnalysisChartPoint {
+  label: string;
+  close: number;
+  volume: number | null;
+  sma20: number | null;
+  sma60: number | null;
+  bollingerUpper: number | null;
+  bollingerLower: number | null;
+}
+
 export interface TickerAnalysis {
   ticker: string;
   company: string;
@@ -56,6 +80,8 @@ export interface TickerAnalysis {
   invalidation: string;
   analysisSummary: AnalysisSummaryMetric[];
   keyLevels: KeyLevel[];
+  technicalIndicators: TechnicalIndicators;
+  chartSeries: AnalysisChartPoint[];
   decisionNotes: string[];
   scoreBreakdown: ScoreBreakdownItem[];
   scenarios: Scenario[];

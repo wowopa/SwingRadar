@@ -9,14 +9,32 @@ import { NewsImpactList } from "@/components/analysis/news-impact-list";
 import { RiskChecklist } from "@/components/analysis/risk-checklist";
 import { ScenarioPanel } from "@/components/analysis/scenario-panel";
 import { ScoreBreakdown } from "@/components/analysis/score-breakdown";
+import { TechnicalIndicatorsPanel } from "@/components/analysis/technical-indicators-panel";
+import { TradingViewChartCard } from "@/components/analysis/tradingview-chart-card";
 import { PageHeader } from "@/components/shared/page-header";
 import { PublicDataStatusBar } from "@/components/shared/public-data-status-bar";
 import { SignalToneBadge } from "@/components/shared/signal-tone-badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getAnalysisByTicker } from "@/lib/repositories/analysis";
 import { buildPublicDataStatusSummary } from "@/lib/server/public-data-status";
-import { getAdjacentReadySymbols } from "@/lib/symbols/master";
+import { buildTradingViewSymbol, getAdjacentReadySymbols, getSymbolByTicker } from "@/lib/symbols/master";
 import { formatScore } from "@/lib/utils";
+
+const EMPTY_TECHNICAL_INDICATORS = {
+  sma20: null,
+  sma60: null,
+  ema20: null,
+  rsi14: null,
+  macd: null,
+  macdSignal: null,
+  macdHistogram: null,
+  bollingerUpper: null,
+  bollingerMiddle: null,
+  bollingerLower: null,
+  volumeRatio20: null
+} as const;
+
+const EMPTY_CHART_SERIES = [] as const;
 
 export default async function AnalysisPage({ params }: { params: Promise<{ ticker: string }> }) {
   const { ticker } = await params;
@@ -29,6 +47,8 @@ export default async function AnalysisPage({ params }: { params: Promise<{ ticke
   const analysis = analysisPayload.item;
   const statusSummary = buildPublicDataStatusSummary("analysis", analysisPayload.generatedAt);
   const { previous, next, readyItems } = getAdjacentReadySymbols(ticker);
+  const symbol = getSymbolByTicker(ticker);
+  const tradingViewSymbol = symbol ? buildTradingViewSymbol(symbol.ticker, symbol.market) : null;
 
   return (
     <main>
@@ -74,6 +94,10 @@ export default async function AnalysisPage({ params }: { params: Promise<{ ticke
       </section>
       <section className="mb-6">
         <AnalysisDecisionPanel levels={analysis.keyLevels} notes={analysis.decisionNotes} />
+      </section>
+      <section className="mb-6 grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+        <TechnicalIndicatorsPanel indicators={analysis.technicalIndicators ?? EMPTY_TECHNICAL_INDICATORS} />
+        <TradingViewChartCard company={analysis.company} symbol={tradingViewSymbol} points={analysis.chartSeries ?? EMPTY_CHART_SERIES} />
       </section>
       <section className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
         <ScoreBreakdown items={analysis.scoreBreakdown} />

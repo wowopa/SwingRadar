@@ -38,7 +38,7 @@ export function PublicDataStatusBar({ summary }: { summary: PublicDataStatusSumm
           <p className="text-sm leading-6 text-foreground/72">{summary.detail}</p>
         </div>
         <div className="min-w-[220px] rounded-[22px] border border-border/60 bg-white/80 px-4 py-3">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Data</p>
+          <p className="text-[11px] font-semibold tracking-[0.12em] text-muted-foreground">데이터 기준</p>
           <p className="mt-2 text-sm font-semibold text-foreground">{summary.sourceLabel}</p>
           <p className="mt-1 text-xs text-muted-foreground">업데이트 {formatDateTimeShort(summary.generatedAt)}</p>
         </div>

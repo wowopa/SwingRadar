@@ -20,10 +20,25 @@ function getSourceLabel() {
   }
 
   if (provider === "file") {
-    return "저장된 데이터";
+    return "저장된 스냅샷 데이터";
   }
 
   return "예시 데이터";
+}
+
+function formatAge(ageMinutes: number) {
+  if (ageMinutes < 60) {
+    return `${ageMinutes}분 전`;
+  }
+
+  const hours = Math.floor(ageMinutes / 60);
+  const minutes = ageMinutes % 60;
+
+  if (minutes === 0) {
+    return `${hours}시간 전`;
+  }
+
+  return `${hours}시간 ${minutes}분 전`;
 }
 
 export function buildPublicDataStatusSummary(label: string, generatedAt: string): PublicDataStatusSummary {
@@ -36,10 +51,10 @@ export function buildPublicDataStatusSummary(label: string, generatedAt: string)
       generatedAt,
       ageMinutes: indicator.ageMinutes,
       freshness: indicator.severity,
-      badge: "업데이트 지연",
+      badge: "배치 지연",
       sourceLabel: getSourceLabel(),
-      summary: "업데이트가 많이 늦어졌습니다.",
-      detail: `마지막 갱신 후 ${indicator.ageMinutes}분이 지났습니다. 참고용으로만 보고 최신 가격을 함께 확인해 주세요.`
+      summary: "예정된 일일 업데이트가 늦어지고 있습니다.",
+      detail: `마지막 갱신은 ${formatAge(indicator.ageMinutes)}입니다. 하루 기준으로 보는 참고 데이터이며, 오늘 배치가 아직 반영되지 않았을 수 있습니다.`
     };
   }
 
@@ -51,8 +66,8 @@ export function buildPublicDataStatusSummary(label: string, generatedAt: string)
       freshness: indicator.severity,
       badge: "점검 필요",
       sourceLabel: getSourceLabel(),
-      summary: "업데이트가 다소 늦어졌습니다.",
-      detail: `현재 기준은 ${policy.stale.warningMinutes}분 이내 갱신입니다. 가격과 뉴스는 한 번 더 확인해 주세요.`
+      summary: "최근 배치 시각을 한 번 확인해보면 좋습니다.",
+      detail: `현재 기준 주의 구간은 ${policy.stale.warningMinutes}분 이후부터입니다. 마지막 갱신은 ${formatAge(indicator.ageMinutes)}입니다.`
     };
   }
 
@@ -61,9 +76,9 @@ export function buildPublicDataStatusSummary(label: string, generatedAt: string)
     generatedAt,
     ageMinutes: indicator.ageMinutes,
     freshness: indicator.severity,
-    badge: "최신",
+    badge: "오늘 기준",
     sourceLabel: getSourceLabel(),
-    summary: "최근 데이터로 업데이트되어 있습니다.",
-    detail: `자동 갱신 기준 안에서 반영된 상태입니다. 마지막 갱신 후 ${indicator.ageMinutes}분이 지났습니다.`
+    summary: "최근 일일 배치가 정상 반영된 상태입니다.",
+    detail: `마지막 갱신은 ${formatAge(indicator.ageMinutes)}이며, 오늘 기준으로 확인하기에 무리가 없는 상태입니다.`
   };
 }

@@ -80,6 +80,30 @@ export interface KeyLevelDto {
   meaning: string;
 }
 
+export interface TechnicalIndicatorsDto {
+  sma20: number | null;
+  sma60: number | null;
+  ema20: number | null;
+  rsi14: number | null;
+  macd: number | null;
+  macdSignal: number | null;
+  macdHistogram: number | null;
+  bollingerUpper: number | null;
+  bollingerMiddle: number | null;
+  bollingerLower: number | null;
+  volumeRatio20: number | null;
+}
+
+export interface AnalysisChartPointDto {
+  label: string;
+  close: number;
+  volume: number | null;
+  sma20: number | null;
+  sma60: number | null;
+  bollingerUpper: number | null;
+  bollingerLower: number | null;
+}
+
 export interface AnalysisEventDto {
   headline: string;
   impact: SignalToneDto;
@@ -99,6 +123,8 @@ export interface TickerAnalysisDto {
   invalidation: string;
   analysisSummary: AnalysisSummaryMetricDto[];
   keyLevels: KeyLevelDto[];
+  technicalIndicators: TechnicalIndicatorsDto;
+  chartSeries: AnalysisChartPointDto[];
   decisionNotes: string[];
   scoreBreakdown: Array<{ label: string; score: number; description: string }>;
   scenarios: Array<{ label: ScenarioLabelDto; probability: number; expectation: string; trigger: string }>;

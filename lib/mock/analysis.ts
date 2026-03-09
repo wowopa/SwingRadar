@@ -19,6 +19,20 @@ export const analysisByTicker: Record<string, TickerAnalysis> = {
       { label: "확인", price: "74,200원", meaning: "돌파 지속 여부 확인" },
       { label: "확장", price: "76,500원", meaning: "강세 시나리오 전환 확인" }
     ],
+    technicalIndicators: {
+      sma20: null,
+      sma60: null,
+      ema20: null,
+      rsi14: null,
+      macd: null,
+      macdSignal: null,
+      macdHistogram: null,
+      bollingerUpper: null,
+      bollingerMiddle: null,
+      bollingerLower: null,
+      volumeRatio20: null
+    },
+    chartSeries: [],
     decisionNotes: [
       "과열 추격보다 눌림 이후 거래대금 회복 여부를 먼저 봅니다.",
       "업황 이벤트가 동반되는지 같이 확인합니다.",
@@ -85,6 +99,20 @@ export const analysisByTicker: Record<string, TickerAnalysis> = {
       { label: "확인", price: "203,500원", meaning: "상단 안착 여부 확인" },
       { label: "확장", price: "208,000원", meaning: "강세 시나리오 전환 확인" }
     ],
+    technicalIndicators: {
+      sma20: null,
+      sma60: null,
+      ema20: null,
+      rsi14: null,
+      macd: null,
+      macdSignal: null,
+      macdHistogram: null,
+      bollingerUpper: null,
+      bollingerMiddle: null,
+      bollingerLower: null,
+      volumeRatio20: null
+    },
+    chartSeries: [],
     decisionNotes: [
       "상단 돌파보다 거래량 유지 여부를 먼저 봅니다.",
       "AI/플랫폼 모멘텀은 우호적이지만 규제 변수는 남아 있습니다.",
@@ -142,6 +170,20 @@ export const analysisByTicker: Record<string, TickerAnalysis> = {
       { label: "확인", price: "171,500원", meaning: "반등 유지 여부 확인" },
       { label: "확장", price: "176,000원", meaning: "강세 시나리오 전환 확인" }
     ],
+    technicalIndicators: {
+      sma20: null,
+      sma60: null,
+      ema20: null,
+      rsi14: null,
+      macd: null,
+      macdSignal: null,
+      macdHistogram: null,
+      bollingerUpper: null,
+      bollingerMiddle: null,
+      bollingerLower: null,
+      volumeRatio20: null
+    },
+    chartSeries: [],
     decisionNotes: [
       "현재 구간은 하방 방어 확인이 우선입니다.",
       "공시 이벤트는 잦지만 가격 반응의 지속성은 더 확인이 필요합니다.",

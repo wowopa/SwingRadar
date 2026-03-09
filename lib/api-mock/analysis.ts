@@ -1,6 +1,6 @@
 import type { AnalysisResponseDto } from "@/lib/api-contracts/swing-radar";
 
-export const analysisResponse: AnalysisResponseDto = {
+export const analysisResponse = {
   generatedAt: "2026-03-07T01:00:00+09:00",
   items: [
     {
@@ -193,4 +193,4 @@ export const analysisResponse: AnalysisResponseDto = {
       ]
     }
   ]
-};
+} as AnalysisResponseDto;

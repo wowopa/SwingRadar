@@ -17,6 +17,8 @@ export function RecommendationCard({
   isFavorite: boolean;
   onToggleFavorite: (ticker: string) => void;
 }) {
+  const usesEstimatedValidation = item.validation.sampleSize < 25 || item.validationSummary.includes("참고") || item.validationSummary.includes("보수");
+
   return (
     <Card className="h-full">
       <CardHeader className="gap-5">
@@ -74,7 +76,18 @@ export function RecommendationCard({
         <section className="rounded-2xl border border-border/70 bg-background/35 p-4">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <p className="text-sm font-semibold text-muted-foreground">검증 메모</p>
+              <div className="flex flex-wrap items-center gap-2">
+                <p className="text-sm font-semibold text-muted-foreground">검증 메모</p>
+                <span
+                  className={`rounded-full border px-2.5 py-1 text-[11px] font-medium ${
+                    usesEstimatedValidation
+                      ? "border-amber-200 bg-amber-50 text-amber-700"
+                      : "border-emerald-200 bg-emerald-50 text-emerald-700"
+                  }`}
+                >
+                  {usesEstimatedValidation ? "참고 계산" : "실측 기반"}
+                </span>
+              </div>
               <p className="mt-2 text-sm leading-7 text-foreground/80">{item.validationSummary}</p>
             </div>
             {item.candidateScore ? (

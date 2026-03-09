@@ -116,6 +116,18 @@ export function buildMarketSymbol(ticker: string, market: SymbolMarket) {
   return `${ticker}.${suffixByMarket[market]}`;
 }
 
+export function buildTradingViewSymbol(ticker: string, market: SymbolMarket) {
+  const exchangeByMarket: Record<SymbolMarket, string> = {
+    KOSPI: "KRX",
+    KOSDAQ: "KRX",
+    NYSE: "NYSE",
+    NASDAQ: "NASDAQ",
+    AMEX: "AMEX"
+  };
+
+  return `${exchangeByMarket[market]}:${ticker}`;
+}
+
 function normalize(value: string) {
   return value
     .trim()
@@ -197,12 +209,20 @@ export function buildSymbolSuggestion(symbol: SymbolMasterItem): SymbolMasterSug
 }
 
 export function searchSymbols(query: string, limit = 8) {
+  return searchSymbolItems(symbolMaster, query, limit);
+}
+
+export function getFeaturedSymbols(limit = 8) {
+  return getFeaturedSymbolItems(symbolMaster, limit);
+}
+
+export function searchSymbolItems(items: SymbolMasterItem[], query: string, limit = 8) {
   const normalized = normalize(query);
   if (!normalized) {
-    return symbolMaster.slice(0, limit);
+    return getFeaturedSymbolItems(items, limit);
   }
 
-  return symbolMaster
+  return items
     .map((item) => ({ item, score: getMatchScore(item, normalized) }))
     .filter((entry) => entry.score >= 0)
     .sort((left, right) => {
@@ -220,8 +240,8 @@ export function searchSymbols(query: string, limit = 8) {
     .map((entry) => entry.item);
 }
 
-export function getFeaturedSymbols(limit = 8) {
-  return [...symbolMaster]
+export function getFeaturedSymbolItems(items: SymbolMasterItem[], limit = 8) {
+  return [...items]
     .sort((left, right) => {
       if (left.status !== right.status) {
         return left.status === "ready" ? -1 : 1;
