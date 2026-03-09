@@ -69,12 +69,16 @@ Tasks:
 - After KRX is stable, add the same structure for US symbols.
 
 ## Priority 6: Release safety
-Status: Not started
+Status: In progress
 
 Tasks:
 - Add more regression coverage for script-heavy failure paths.
 - Create a short pre-release checklist for data freshness, audit health, and fallback activity.
 - Add smoke checks after each deployment.
+
+Done in this pass:
+- Added a post-launch service check script.
+- Added a 72-hour post-launch watch checklist.
 
 ## Recommended next execution order
 1. Stabilize external news and validation data further with real run logs.

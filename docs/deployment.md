@@ -95,3 +95,9 @@ GitHub Actions runs `npm ci` and `npm run build` on push and pull request throug
 
 ## 10. Cutover checklist
 Use the short execution checklist in [production-cutover-checklist.md](/C:/Users/eugen/Documents/SwingRadar/docs/production-cutover-checklist.md) when moving the real service online.
+
+## 11. Post-launch watch
+For the first 72 hours, use [post-launch-watch.md](/C:/Users/eugen/Documents/SwingRadar/docs/post-launch-watch.md) and run:
+```powershell
+powershell -ExecutionPolicy Bypass -File C:\Users\eugen\Documents\SwingRadar\scripts\run-post-launch-check.ps1
+```
