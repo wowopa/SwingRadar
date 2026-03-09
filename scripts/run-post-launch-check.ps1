@@ -45,7 +45,7 @@ $headers = @{
 function Get-TaskPresence {
   param([string]$TaskName)
 
-  schtasks /Query /TN $TaskName 2>$null | Out-Null
+  cmd /c "schtasks /Query /TN `"$TaskName`" >nul 2>nul" | Out-Null
   return $LASTEXITCODE -eq 0
 }
 
