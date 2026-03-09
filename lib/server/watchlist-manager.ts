@@ -3,6 +3,7 @@ import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { promisify } from "node:util";
 
+import { saveWatchlistSyncStatus } from "@/lib/server/watchlist-sync-status";
 import { buildMarketSymbol, buildSymbolSuggestion, type SymbolMasterItem } from "@/lib/symbols/master";
 
 const execFileAsync = promisify(execFile);
@@ -135,7 +136,7 @@ export async function addSymbolToWatchlist(symbol: SymbolMasterItem) {
     return {
       added: false,
       entry: existing,
-      estimate: "이미 관심 종목에 들어 있어 바로 확인하실 수 있습니다.",
+      estimate: "\uC774\uBBF8 \uAD00\uC2EC \uC885\uBAA9\uC5D0 \uB4E4\uC5B4 \uC788\uC5B4 \uBC14\uB85C \uD655\uC778\uD558\uC2E4 \uC218 \uC788\uC2B5\uB2C8\uB2E4.",
       timings: null
     };
   }
@@ -144,12 +145,47 @@ export async function addSymbolToWatchlist(symbol: SymbolMasterItem) {
   document.tickers.push(entry);
   await saveWatchlistDocument(document);
 
-  const pipelineMs = await runNodeScript("refresh-watchlist-entry.mjs", ["--ticker", symbol.ticker]);
+  const startedAt = new Date().toISOString();
+  await saveWatchlistSyncStatus({
+    ticker: symbol.ticker,
+    state: "syncing",
+    message: "\uD3B8\uC785\uD55C \uC885\uBAA9\uC744 \uBD84\uC11D \uD654\uBA74\uC5D0 \uBC18\uC601\uD558\uB294 \uC911\uC785\uB2C8\uB2E4.",
+    lastStartedAt: startedAt,
+    lastCompletedAt: null,
+    lastDurationMs: null
+  });
+
+  let pipelineMs: number;
+  try {
+    pipelineMs = await runNodeScript("refresh-watchlist-entry.mjs", ["--ticker", symbol.ticker]);
+  } catch (error) {
+    const completedAt = new Date().toISOString();
+    await saveWatchlistSyncStatus({
+      ticker: symbol.ticker,
+      state: "failed",
+      message: error instanceof Error ? error.message : String(error),
+      lastStartedAt: startedAt,
+      lastCompletedAt: completedAt,
+      lastDurationMs: null
+    });
+    throw error;
+  }
+
+  const completedAt = new Date().toISOString();
+  const syncStatus = await saveWatchlistSyncStatus({
+    ticker: symbol.ticker,
+    state: "ready",
+    message: "\uBD84\uC11D \uBC18\uC601\uC774 \uB05D\uB0AC\uC2B5\uB2C8\uB2E4.",
+    lastStartedAt: startedAt,
+    lastCompletedAt: completedAt,
+    lastDurationMs: pipelineMs
+  });
 
   return {
     added: true,
     entry,
-    estimate: "보통 15초~60초 안에 새 종목 분석이 화면에 반영됩니다.",
+    estimate: "\uBCF4\uD1B5 15\uCD08~60\uCD08 \uC548\uC5D0 \uC0C8 \uC885\uBAA9 \uBD84\uC11D\uC774 \uD654\uBA74\uC5D0 \uBC18\uC601\uB429\uB2C8\uB2E4.",
+    syncStatus,
     timings: {
       pipelineMs,
       ingestMs: null,
@@ -186,17 +222,60 @@ export async function updateWatchlistEntry(
       entry: nextEntry,
       previousEntry,
       changes,
+      syncStatus: await saveWatchlistSyncStatus({
+        ticker,
+        state: "idle",
+        message: "\uC885\uBAA9 \uC124\uC815\uB9CC \uC218\uC815\uD588\uC2B5\uB2C8\uB2E4.",
+        lastStartedAt: null,
+        lastCompletedAt: new Date().toISOString(),
+        lastDurationMs: null
+      }),
       timings: null
     };
   }
 
-  const pipelineMs = await runNodeScript("refresh-watchlist-entry.mjs", ["--ticker", ticker]);
+  const startedAt = new Date().toISOString();
+  await saveWatchlistSyncStatus({
+    ticker,
+    state: "syncing",
+    message: "\uC218\uC815\uD55C \uC124\uC815\uC744 \uB2E4\uC2DC \uBC18\uC601\uD558\uB294 \uC911\uC785\uB2C8\uB2E4.",
+    lastStartedAt: startedAt,
+    lastCompletedAt: null,
+    lastDurationMs: null
+  });
+
+  let pipelineMs: number;
+  try {
+    pipelineMs = await runNodeScript("refresh-watchlist-entry.mjs", ["--ticker", ticker]);
+  } catch (error) {
+    const completedAt = new Date().toISOString();
+    await saveWatchlistSyncStatus({
+      ticker,
+      state: "failed",
+      message: error instanceof Error ? error.message : String(error),
+      lastStartedAt: startedAt,
+      lastCompletedAt: completedAt,
+      lastDurationMs: null
+    });
+    throw error;
+  }
+
+  const completedAt = new Date().toISOString();
+  const syncStatus = await saveWatchlistSyncStatus({
+    ticker,
+    state: "ready",
+    message: "\uCD5C\uC2E0 \uC124\uC815\uC73C\uB85C \uB2E4\uC2DC \uBC18\uC601\uD588\uC2B5\uB2C8\uB2E4.",
+    lastStartedAt: startedAt,
+    lastCompletedAt: completedAt,
+    lastDurationMs: pipelineMs
+  });
 
   return {
     updated: true,
     entry: nextEntry,
     previousEntry,
     changes,
+    syncStatus,
     timings: {
       pipelineMs,
       ingestMs: null,

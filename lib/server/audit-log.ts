@@ -11,7 +11,8 @@ export type AuditEventType =
   | "watchlist_add"
   | "watchlist_update"
   | "universe_review_update"
-  | "provider_fallback";
+  | "provider_fallback"
+  | "auto_heal_run";
 
 export interface AuditLogRecord {
   id: number;

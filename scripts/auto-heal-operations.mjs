@@ -5,8 +5,11 @@ import process from "node:process";
 import { promisify } from "node:util";
 import { fileURLToPath } from "node:url";
 
+import pg from "pg";
+
 import { loadLocalEnv } from "./load-env.mjs";
 
+const { Client } = pg;
 const execFileAsync = promisify(execFile);
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -171,6 +174,68 @@ function buildTriggers(opsHealthReport, dailyCycleReport) {
   return triggers;
 }
 
+function createRequestId() {
+  return `auto-heal-${Date.now()}`;
+}
+
+async function recordAuditLog(report, requestId) {
+  const payload = {
+    eventType: "auto_heal_run",
+    actor: "auto-heal-script",
+    status:
+      report.status === "failed"
+        ? "failure"
+        : report.status === "warning"
+          ? "warning"
+          : "success",
+    requestId,
+    summary:
+      report.status === "failed"
+        ? "Automated recovery run failed"
+        : report.actions.length
+          ? "Automated recovery run completed"
+          : "Automated recovery run skipped",
+    metadata: {
+      startedAt: report.startedAt,
+      completedAt: report.completedAt,
+      triggers: report.triggers,
+      actions: report.actions.map((item) => ({
+        name: item.name,
+        status: item.status,
+        durationMs: item.durationMs,
+        detail: item.detail,
+        error: item.error
+      })),
+      error: report.error,
+      reportPath: getAutoHealReportPath()
+    }
+  };
+
+  if (!process.env.SWING_RADAR_DATABASE_URL) {
+    console.info(JSON.stringify({ scope: "audit", ...payload, createdAt: new Date().toISOString() }));
+    return;
+  }
+
+  const client = new Client({
+    connectionString: process.env.SWING_RADAR_DATABASE_URL,
+    ssl: process.env.SWING_RADAR_DATABASE_SSL === "true" ? { rejectUnauthorized: false } : undefined
+  });
+
+  await client.connect();
+
+  try {
+    await client.query(
+      `
+      insert into audit_logs (event_type, actor, status, request_id, summary, metadata)
+      values ($1, $2, $3, $4, $5, $6::jsonb)
+      `,
+      [payload.eventType, payload.actor, payload.status, payload.requestId, payload.summary, JSON.stringify(payload.metadata)]
+    );
+  } finally {
+    await client.end();
+  }
+}
+
 async function main() {
   const options = parseArgs(process.argv.slice(2));
   if (options.help) {
@@ -178,6 +243,7 @@ async function main() {
     return;
   }
 
+  const requestId = createRequestId();
   const [opsHealthReport, dailyCycleReport] = await Promise.all([
     readJsonFile(getOpsHealthReportPath()),
     readJsonFile(getDailyCycleReportPath())
@@ -198,6 +264,7 @@ async function main() {
       report.status = "ok";
       report.completedAt = new Date().toISOString();
       await writeReport(report);
+      await recordAuditLog(report, requestId);
       console.log("Auto heal skipped. No trigger detected.");
       console.log(`- report: ${getAutoHealReportPath()}`);
       return;
@@ -240,6 +307,7 @@ async function main() {
         : "warning";
     report.completedAt = new Date().toISOString();
     await writeReport(report);
+    await recordAuditLog(report, requestId);
 
     console.log("Auto heal completed.");
     console.log(`- triggers: ${report.triggers.join(", ") || "none"}`);
@@ -250,6 +318,7 @@ async function main() {
     report.error = error instanceof Error ? error.message : String(error);
     report.completedAt = new Date().toISOString();
     await writeReport(report);
+    await recordAuditLog(report, requestId);
     console.error("Auto heal failed.");
     console.error(report.error);
     console.error(`- report: ${getAutoHealReportPath()}`);

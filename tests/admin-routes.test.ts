@@ -21,6 +21,7 @@ const mocks = vi.hoisted(() => ({
   saveUniverseCandidateReview: vi.fn(),
   promoteUniverseCandidate: vi.fn(),
   listWatchlistEntries: vi.fn(),
+  listWatchlistSyncStatuses: vi.fn(),
   addSymbolToWatchlist: vi.fn(),
   updateWatchlistEntry: vi.fn(),
   getFeaturedSymbols: vi.fn(),
@@ -79,6 +80,10 @@ vi.mock("@/lib/server/watchlist-manager", () => ({
   listWatchlistEntries: mocks.listWatchlistEntries,
   addSymbolToWatchlist: mocks.addSymbolToWatchlist,
   updateWatchlistEntry: mocks.updateWatchlistEntry
+}));
+
+vi.mock("@/lib/server/watchlist-sync-status", () => ({
+  listWatchlistSyncStatuses: mocks.listWatchlistSyncStatuses
 }));
 
 vi.mock("@/lib/symbols/master", () => ({
@@ -179,6 +184,7 @@ describe("admin routes", () => {
       updatedBy: "admin-editor",
       items: []
     });
+    mocks.listWatchlistSyncStatuses.mockResolvedValue({});
   });
 
   afterEach(() => {
@@ -846,6 +852,7 @@ describe("admin routes", () => {
       const payload = await parseJson<{
         items: Array<{ ticker: string; company: string }>;
         watchlist: Array<{ ticker: string; company: string }>;
+        syncStatuses: Record<string, { state: string }>;
         suggestions: Record<string, { ticker: string; newsQuery: string }>;
       }>(response);
 
@@ -854,7 +861,8 @@ describe("admin routes", () => {
       expect(mocks.searchSymbols).not.toHaveBeenCalled();
       expect(payload).toMatchObject({
         items: [{ ticker: "005930", company: "Samsung" }],
-        watchlist: [{ ticker: "005930", company: "Samsung" }]
+        watchlist: [{ ticker: "005930", company: "Samsung" }],
+        syncStatuses: {}
       });
       expect(payload.suggestions["005930"]).toMatchObject({
         ticker: "005930",

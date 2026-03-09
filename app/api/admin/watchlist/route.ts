@@ -4,6 +4,7 @@ import { jsonOk } from "@/lib/server/api-response";
 import { assertAdminRequest } from "@/lib/server/admin-auth";
 import { recordAuditLog } from "@/lib/server/audit-log";
 import { addSymbolToWatchlist, listWatchlistEntries, updateWatchlistEntry } from "@/lib/server/watchlist-manager";
+import { listWatchlistSyncStatuses } from "@/lib/server/watchlist-sync-status";
 import { getFeaturedSymbols, getSymbolSuggestionByTicker, searchSymbols } from "@/lib/symbols/master";
 import { buildResponseMeta, withRouteTelemetry } from "@/lib/server/telemetry";
 
@@ -36,6 +37,7 @@ export async function GET(request: Request) {
       {
         items,
         watchlist: await listWatchlistEntries(),
+        syncStatuses: await listWatchlistSyncStatuses(),
         suggestions: Object.fromEntries(items.map((item) => [item.ticker, getSymbolSuggestionByTicker(item.ticker)]))
       },
       buildResponseMeta(context, 30)

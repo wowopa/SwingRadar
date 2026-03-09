@@ -31,7 +31,8 @@ import type {
   UniverseCandidateReview,
   UniverseDailyCandidates,
   UniverseReviewStatus,
-  WatchlistEntry
+  WatchlistEntry,
+  WatchlistSyncStatus
 } from "@/components/admin/dashboard-types";
 import { EditorialTab } from "@/components/admin/editorial-tab";
 import { HistoryTab } from "@/components/admin/history-tab";
@@ -68,6 +69,7 @@ export function AdminDashboard() {
   const [symbolResults, setSymbolResults] = useState<SymbolSearchItem[]>([]);
   const [watchlist, setWatchlist] = useState<WatchlistEntry[]>([]);
   const [watchlistBaseline, setWatchlistBaseline] = useState<WatchlistEntry[]>([]);
+  const [watchlistSyncStatuses, setWatchlistSyncStatuses] = useState<Record<string, WatchlistSyncStatus>>({});
   const [activeWatchlistTicker, setActiveWatchlistTicker] = useState("");
   const [returnTo, setReturnTo] = useState("");
   const [approvalStage, setApprovalStage] = useState<(typeof APPROVAL_STAGE_OPTIONS)[number]["value"]>("final_publish");
@@ -147,7 +149,7 @@ export function AdminDashboard() {
           publishHistory: PublishHistoryItem[];
         }>("/api/admin/editorial-draft", { headers: authHeaders }),
         fetchJson<{ document: NewsCurationDocument }>("/api/admin/news-curation", { headers: authHeaders }),
-        fetchJson<{ items: SymbolSearchItem[]; watchlist: WatchlistEntry[] }>(
+        fetchJson<{ items: SymbolSearchItem[]; watchlist: WatchlistEntry[]; syncStatuses: Record<string, WatchlistSyncStatus> }>(
           `/api/admin/watchlist${symbolQuery.trim() ? `?q=${encodeURIComponent(symbolQuery.trim())}` : ""}`,
           { headers: authHeaders }
         ),
@@ -172,6 +174,7 @@ export function AdminDashboard() {
       setSymbolResults(watchlistJson.items ?? []);
       setWatchlist(watchlistJson.watchlist ?? []);
       setWatchlistBaseline(watchlistJson.watchlist ?? []);
+      setWatchlistSyncStatuses(watchlistJson.syncStatuses ?? {});
       setActiveTicker((current) => current || draftJson.catalog?.[0]?.ticker || "");
       setActiveWatchlistTicker((current) => current || watchlistJson.watchlist?.[0]?.ticker || "");
       setMessage("운영 데이터를 불러왔습니다.");
@@ -551,6 +554,7 @@ export function AdminDashboard() {
             setActiveWatchlistTicker={setActiveWatchlistTicker}
             activeWatchlist={activeWatchlist}
             setWatchlist={setWatchlist}
+            watchlistSyncStatuses={watchlistSyncStatuses}
             watchlistChanges={watchlistChanges}
             onSaveMetadata={() => void saveWatchlistMetadata()}
           />

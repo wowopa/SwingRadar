@@ -7,7 +7,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({
   execFile: vi.fn(),
   buildSymbolSuggestion: vi.fn(),
-  buildMarketSymbol: vi.fn()
+  buildMarketSymbol: vi.fn(),
+  saveWatchlistSyncStatus: vi.fn()
 }));
 
 vi.mock("node:child_process", () => ({
@@ -17,6 +18,10 @@ vi.mock("node:child_process", () => ({
 vi.mock("@/lib/symbols/master", () => ({
   buildSymbolSuggestion: mocks.buildSymbolSuggestion,
   buildMarketSymbol: mocks.buildMarketSymbol
+}));
+
+vi.mock("@/lib/server/watchlist-sync-status", () => ({
+  saveWatchlistSyncStatus: mocks.saveWatchlistSyncStatus
 }));
 
 import { addSymbolToWatchlist, listWatchlistEntries, updateWatchlistEntry } from "@/lib/server/watchlist-manager";
@@ -106,6 +111,7 @@ describe("watchlist manager", () => {
       minArticleScore: 15,
       dartCorpCode: "00266961"
     });
+    mocks.saveWatchlistSyncStatus.mockImplementation((input: unknown) => Promise.resolve(input));
   });
 
   afterEach(async () => {
@@ -187,8 +193,27 @@ describe("watchlist manager", () => {
     expect(result.estimate).toBe(
       "\uBCF4\uD1B5 15\uCD08~60\uCD08 \uC548\uC5D0 \uC0C8 \uC885\uBAA9 \uBD84\uC11D\uC774 \uD654\uBA74\uC5D0 \uBC18\uC601\uB429\uB2C8\uB2E4."
     );
+    expect(result.syncStatus).toMatchObject({
+      ticker: "035420",
+      state: "ready"
+    });
     expect(document.tickers.map((item) => item.ticker)).toEqual(["005930", "035420"]);
     expect(mocks.execFile).toHaveBeenCalledTimes(1);
+    expect(mocks.saveWatchlistSyncStatus).toHaveBeenCalledTimes(2);
+    expect(mocks.saveWatchlistSyncStatus).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        ticker: "035420",
+        state: "syncing"
+      })
+    );
+    expect(mocks.saveWatchlistSyncStatus).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        ticker: "035420",
+        state: "ready"
+      })
+    );
     expect(mocks.execFile.mock.calls[0]?.[1]).toEqual(
       expect.arrayContaining([expect.stringContaining("refresh-watchlist-entry.mjs"), "--ticker", "035420"])
     );
@@ -255,7 +280,11 @@ describe("watchlist manager", () => {
 
     expect(result).toMatchObject({
       updated: true,
-      timings: null
+      timings: null,
+      syncStatus: {
+        ticker: "005930",
+        state: "idle"
+      }
     });
     expect(result.changes.map((change) => change.field)).toEqual(["newsQuery", "blockedKeywords", "minArticleScore"]);
     expect(document.tickers[0]).toMatchObject({
@@ -265,6 +294,12 @@ describe("watchlist manager", () => {
       minArticleScore: 18
     });
     expect(mocks.execFile).not.toHaveBeenCalled();
+    expect(mocks.saveWatchlistSyncStatus).toHaveBeenCalledWith(
+      expect.objectContaining({
+        ticker: "005930",
+        state: "idle"
+      })
+    );
   });
 
   it("reruns the lighter single-entry refresh when metadata needs a refresh", async () => {
@@ -278,11 +313,16 @@ describe("watchlist manager", () => {
 
     expect(result).toMatchObject({
       updated: true,
+      syncStatus: {
+        ticker: "005930",
+        state: "ready"
+      },
       timings: {
         ingestMs: null
       }
     });
     expect(mocks.execFile).toHaveBeenCalledTimes(1);
+    expect(mocks.saveWatchlistSyncStatus).toHaveBeenCalledTimes(2);
     expect(mocks.execFile.mock.calls[0]?.[1]).toEqual(
       expect.arrayContaining([expect.stringContaining("refresh-watchlist-entry.mjs"), "--ticker", "005930"])
     );

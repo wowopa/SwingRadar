@@ -260,3 +260,12 @@ export type WatchlistChange = {
   before: string;
   after: string;
 };
+
+export type WatchlistSyncStatus = {
+  ticker: string;
+  state: "idle" | "syncing" | "ready" | "failed";
+  message: string;
+  lastStartedAt: string | null;
+  lastCompletedAt: string | null;
+  lastDurationMs: number | null;
+};
