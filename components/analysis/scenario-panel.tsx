@@ -6,7 +6,7 @@ export function ScenarioPanel({ scenarios }: { scenarios: Scenario[] }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>가능한 흐름</CardTitle>
+        <CardTitle>시나리오</CardTitle>
       </CardHeader>
       <CardContent className="grid gap-4 lg:grid-cols-3">
         {scenarios.map((scenario) => (
@@ -17,7 +17,7 @@ export function ScenarioPanel({ scenarios }: { scenarios: Scenario[] }) {
             </div>
             <Progress className="mt-3" value={scenario.probability} />
             <p className="mt-4 text-sm leading-7 text-foreground/82">{scenario.expectation}</p>
-            <p className="mt-4 text-xs uppercase tracking-[0.2em] text-muted-foreground">이럴 때</p>
+            <p className="mt-4 text-xs uppercase tracking-[0.2em] text-muted-foreground">트리거</p>
             <p className="mt-1 text-sm leading-6 text-foreground/72">{scenario.trigger}</p>
           </div>
         ))}

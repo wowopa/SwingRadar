@@ -10,10 +10,10 @@ export function TrackingOverview({ items }: { items: SignalHistoryEntry[] }) {
 
   return (
     <section className="grid gap-4 lg:grid-cols-4">
-      <OverviewCard label="살펴본 기록" value={`${items.length}건`} detail="지금까지 확인한 전체 흐름 수" />
-      <OverviewCard label="좋았던 사례" value={`${successCount}건`} detail={`다시 봐야 했던 사례 ${reviewAgainCount}건`} />
-      <OverviewCard label="평균 본 기간" value={`${avgHolding}일`} detail="얼마나 오래 지켜봤는지 평균" />
-      <OverviewCard label="평균 최고 상승폭" value={formatPercent(avgMfe)} detail="이후 가장 많이 오른 폭의 평균" />
+      <OverviewCard label="추적 이력" value={`${items.length}건`} detail="누적 추적 기록 수" />
+      <OverviewCard label="성공 사례" value={`${successCount}건`} detail={`기준 이탈 ${reviewAgainCount}건`} />
+      <OverviewCard label="평균 보유" value={`${avgHolding}일`} detail="평균 추적 기간" />
+      <OverviewCard label="평균 최대 상승폭" value={formatPercent(avgMfe)} detail="추적 중 최고 상승 구간 평균" />
     </section>
   );
 }

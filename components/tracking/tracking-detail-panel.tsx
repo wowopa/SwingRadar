@@ -91,9 +91,9 @@ export function TrackingDetailPanel({ history, details }: TrackingDetailPanelPro
         <Card>
           <CardHeader className="flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div>
-              <CardTitle>지난 기록 찾기</CardTitle>
+              <CardTitle>추적 기록 탐색</CardTitle>
               <p className="mt-2 text-sm text-muted-foreground">
-                종목, 결과, 업종, 즐겨찾기 기준으로 지난 흐름을 빠르게 골라볼 수 있습니다.
+                종목, 결과, 업종, 즐겨찾기 기준으로 추적 기록을 빠르게 좁혀볼 수 있습니다.
               </p>
             </div>
             <div className="grid w-full gap-3 lg:max-w-5xl lg:grid-cols-[1fr_180px_180px_180px]">
@@ -107,7 +107,7 @@ export function TrackingDetailPanel({ history, details }: TrackingDetailPanelPro
                 <option value="진행중">진행중</option>
                 <option value="성공">성공</option>
                 <option value="실패">실패</option>
-                <option value="무효화">다시 보기 필요</option>
+                <option value="무효화">기준 이탈</option>
               </select>
               <select
                 value={sectorFilter}
@@ -133,7 +133,7 @@ export function TrackingDetailPanel({ history, details }: TrackingDetailPanelPro
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="text-sm text-muted-foreground">
-              찾은 기록 <span className="font-semibold text-foreground">{filteredHistory.length}</span>건
+              필터 결과 <span className="font-semibold text-foreground">{filteredHistory.length}</span>건
             </div>
             <HistoryTable
               items={filteredHistory}
@@ -149,7 +149,7 @@ export function TrackingDetailPanel({ history, details }: TrackingDetailPanelPro
             <CardHeader>
               <div className="flex items-center gap-2">
                 <CardTitle>
-                  {activeEntry.company} {activeEntry.ticker} 자세히 보기
+                  {activeEntry.company} {activeEntry.ticker} 추적 상세
                 </CardTitle>
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -157,7 +157,7 @@ export function TrackingDetailPanel({ history, details }: TrackingDetailPanelPro
                       <Info className="h-4 w-4" />
                     </button>
                   </TooltipTrigger>
-                  <TooltipContent>이후 결과, 가격 흐름, 뉴스, 점수 변화를 함께 볼 수 있습니다.</TooltipContent>
+                  <TooltipContent>결과, 가격 흐름, 이벤트, 점수 변화를 함께 확인합니다.</TooltipContent>
                 </Tooltip>
               </div>
               <p className="text-sm text-muted-foreground">
@@ -165,10 +165,10 @@ export function TrackingDetailPanel({ history, details }: TrackingDetailPanelPro
               </p>
             </CardHeader>
             <CardContent className="grid gap-4 md:grid-cols-4">
-              <SummaryMetric label="현재 결과" value={activeEntry.result === "무효화" ? "다시 보기 필요" : activeEntry.result} />
-              <SummaryMetric label="가장 많이 오른 폭" value={formatPercent(activeEntry.mfe)} emphasis="text-positive" />
-              <SummaryMetric label="가장 많이 밀린 폭" value={formatPercent(activeEntry.mae)} emphasis="text-caution" />
-              <SummaryMetric label="본 기간" value={`${activeEntry.holdingDays}일`} />
+              <SummaryMetric label="결과 판정" value={activeEntry.result === "무효화" ? "기준 이탈" : activeEntry.result} />
+              <SummaryMetric label="최대 상승폭" value={formatPercent(activeEntry.mfe)} emphasis="text-positive" />
+              <SummaryMetric label="최대 하락폭" value={formatPercent(activeEntry.mae)} emphasis="text-caution" />
+              <SummaryMetric label="보유 기간" value={`${activeEntry.holdingDays}일`} />
             </CardContent>
             <CardContent className="grid gap-4 pt-0 md:grid-cols-3">
               {activeDetail.metrics.map((metric) => (
@@ -182,10 +182,10 @@ export function TrackingDetailPanel({ history, details }: TrackingDetailPanelPro
           </Card>
           <Tabs defaultValue="review" className="w-full">
             <TabsList>
-              <TabsTrigger value="review">요약</TabsTrigger>
+              <TabsTrigger value="review">복기</TabsTrigger>
               <TabsTrigger value="chart">가격 흐름</TabsTrigger>
-              <TabsTrigger value="news">관련 뉴스</TabsTrigger>
-              <TabsTrigger value="log">점수 변화</TabsTrigger>
+              <TabsTrigger value="news">이벤트</TabsTrigger>
+              <TabsTrigger value="log">점수 로그</TabsTrigger>
             </TabsList>
             <TabsContent value="review">
               <TrackingReviewPanel detail={activeDetail} />

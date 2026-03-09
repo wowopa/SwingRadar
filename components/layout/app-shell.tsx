@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 
 const navItems = [
   { href: "/recommendations", label: "관찰 종목", icon: Sparkles },
-  { href: "/tracking", label: "지난 흐름", icon: ChartNoAxesCombined },
+  { href: "/tracking", label: "추적", icon: ChartNoAxesCombined },
   { href: "/analysis/005930", label: "분석 예시", icon: ArrowUpRight }
 ] as const;
 
@@ -26,10 +26,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 </div>
                 <div className="space-y-3">
                   <h1 className="max-w-2xl text-3xl font-semibold tracking-[-0.04em] text-foreground sm:text-4xl lg:text-[3.1rem] lg:leading-[1.04]">
-                    종목 흐름을 쉽게 보는 공간
+                    신호와 추적을 한곳에서
                   </h1>
                   <p className="max-w-2xl text-sm leading-6 text-muted-foreground sm:text-base">
-                    왜 보는 종목인지, 어디서 다시 판단해야 하는지, 이후 어떻게 움직였는지를 한곳에서 살펴볼 수 있습니다.
+                    관찰 근거, 기준 이탈, 검증 흐름을 한 화면에서 살펴보는 스윙 대시보드입니다.
                   </p>
                 </div>
               </div>

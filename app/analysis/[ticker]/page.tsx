@@ -31,7 +31,7 @@ export default async function AnalysisPage({ params }: { params: Promise<{ ticke
       <PageHeader
         eyebrow="Analysis"
         title={`${analysis.company} ${analysis.ticker} 심화 분석`}
-        description="이 종목을 왜 보는지, 어디서 다시 판단해야 하는지, 앞으로 어떤 흐름이 나올 수 있는지 쉽게 정리한 화면입니다."
+        description="관찰 근거, 기준 이탈, 가능한 시나리오를 한 화면에서 점검하는 분석 화면입니다."
       />
       <AnalysisNavigation
         currentTicker={analysis.ticker}
@@ -51,7 +51,7 @@ export default async function AnalysisPage({ params }: { params: Promise<{ ticke
           <CardHeader className="gap-4 pb-3">
             <div className="flex items-center justify-between gap-4">
               <div>
-                <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">현재 흐름 점수</p>
+                <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">현재 신호</p>
                 <CardTitle className="mt-2 text-3xl text-foreground sm:text-[2.2rem]">{formatScore(analysis.score)}</CardTitle>
               </div>
               <SignalToneBadge tone={analysis.signalTone} />
@@ -60,7 +60,7 @@ export default async function AnalysisPage({ params }: { params: Promise<{ ticke
           <CardContent className="space-y-6">
             <p className="max-w-3xl text-base leading-8 text-foreground/82">{analysis.headline}</p>
             <div className="rounded-[28px] border border-caution/20 bg-caution/8 p-5">
-              <p className="text-xs uppercase tracking-[0.22em] text-caution">다시 봐야 하는 가격</p>
+              <p className="text-xs uppercase tracking-[0.22em] text-caution">기준 이탈</p>
               <p className="mt-3 text-sm leading-7 text-foreground/78">{analysis.invalidation}</p>
             </div>
           </CardContent>

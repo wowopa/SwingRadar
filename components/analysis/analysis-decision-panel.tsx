@@ -6,7 +6,7 @@ export function AnalysisDecisionPanel({ levels, notes }: { levels: KeyLevel[]; n
     <section className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
       <Card>
         <CardHeader>
-          <CardTitle>핵심 가격대</CardTitle>
+        <CardTitle>핵심 가격 레벨</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           {levels.map((level) => (
@@ -22,7 +22,7 @@ export function AnalysisDecisionPanel({ levels, notes }: { levels: KeyLevel[]; n
       </Card>
       <Card>
         <CardHeader>
-          <CardTitle>쉽게 보는 메모</CardTitle>
+        <CardTitle>판단 메모</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           {notes.map((note) => (

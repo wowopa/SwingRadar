@@ -9,8 +9,8 @@ export default async function TrackingPage() {
     <main>
       <PageHeader
         eyebrow="Tracking"
-        title="지난 흐름 다시 보기"
-        description="관찰했던 종목이 이후 어떻게 움직였는지, 가장 많이 오른 폭과 밀린 폭까지 쉽게 살펴보는 화면입니다."
+        title="추적 워크스페이스"
+        description="신호 이후 흐름, 최대 상승폭과 하락폭, 관련 이벤트를 함께 점검하는 화면입니다."
       />
       <TrackingDetailPanel history={tracking.history} details={tracking.details} />
     </main>

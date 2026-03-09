@@ -11,7 +11,7 @@ export function RiskChecklist({ items }: { items: RiskChecklistItem[] }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>조심할 점</CardTitle>
+        <CardTitle>리스크 체크리스트</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         {items.map((item) => (

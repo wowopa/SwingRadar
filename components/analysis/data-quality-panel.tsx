@@ -5,7 +5,7 @@ export function DataQualityPanel({ items }: { items: DataQualityItem[] }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>참고 자료 상태</CardTitle>
+        <CardTitle>데이터 품질</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         {items.map((item) => (

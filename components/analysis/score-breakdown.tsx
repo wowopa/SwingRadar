@@ -6,7 +6,7 @@ export function ScoreBreakdown({ items }: { items: ScoreBreakdownItem[] }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>점수는 이렇게 봅니다</CardTitle>
+        <CardTitle>점수 분해</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         {items.map((item) => (
