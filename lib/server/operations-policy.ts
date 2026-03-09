@@ -3,6 +3,10 @@ const DEFAULT_STALE_CRITICAL_MINUTES = 360;
 const DEFAULT_HEALTH_AUDIT_LOOKBACK = 5;
 const DEFAULT_ADMIN_AUDIT_LIMIT = 30;
 const DEFAULT_PROVIDER_FALLBACK_ESCALATION_COUNT = 3;
+const DEFAULT_NEWS_LIVE_FETCH_WARNING_PERCENT = 70;
+const DEFAULT_NEWS_LIVE_FETCH_CRITICAL_PERCENT = 40;
+const DEFAULT_VALIDATION_FALLBACK_WARNING_COUNT = 1;
+const DEFAULT_VALIDATION_FALLBACK_CRITICAL_COUNT = 3;
 
 export interface OperationalPolicy {
   stale: {
@@ -15,6 +19,10 @@ export interface OperationalPolicy {
   };
   escalation: {
     providerFallbackAuditCount: number;
+    newsLiveFetchWarningPercent: number;
+    newsLiveFetchCriticalPercent: number;
+    validationFallbackWarningCount: number;
+    validationFallbackCriticalCount: number;
   };
 }
 
@@ -48,6 +56,22 @@ export function getOperationalPolicy(): OperationalPolicy {
       providerFallbackAuditCount: parsePositiveInt(
         process.env.SWING_RADAR_PROVIDER_FALLBACK_ESCALATION_COUNT,
         DEFAULT_PROVIDER_FALLBACK_ESCALATION_COUNT
+      ),
+      newsLiveFetchWarningPercent: parsePositiveInt(
+        process.env.SWING_RADAR_NEWS_LIVE_FETCH_WARNING_PERCENT,
+        DEFAULT_NEWS_LIVE_FETCH_WARNING_PERCENT
+      ),
+      newsLiveFetchCriticalPercent: parsePositiveInt(
+        process.env.SWING_RADAR_NEWS_LIVE_FETCH_CRITICAL_PERCENT,
+        DEFAULT_NEWS_LIVE_FETCH_CRITICAL_PERCENT
+      ),
+      validationFallbackWarningCount: parsePositiveInt(
+        process.env.SWING_RADAR_VALIDATION_FALLBACK_WARNING_COUNT,
+        DEFAULT_VALIDATION_FALLBACK_WARNING_COUNT
+      ),
+      validationFallbackCriticalCount: parsePositiveInt(
+        process.env.SWING_RADAR_VALIDATION_FALLBACK_CRITICAL_COUNT,
+        DEFAULT_VALIDATION_FALLBACK_CRITICAL_COUNT
       )
     }
   };

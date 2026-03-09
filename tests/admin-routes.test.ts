@@ -448,7 +448,10 @@ describe("admin routes", () => {
         snapshotGenerationReport: {
           validationFallbackCount: 1
         },
-        incidents: [{ id: "daily-cycle-warning", severity: "warning" }]
+        incidents: [
+          { id: "daily-cycle-warning", severity: "warning" },
+          { id: "validation-fallback-warning", severity: "warning" }
+        ]
       });
     });
 

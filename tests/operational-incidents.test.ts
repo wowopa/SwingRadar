@@ -45,6 +45,30 @@ describe("buildOperationalIncidents", () => {
         summary: null,
         error: "scan-universe-batches failed"
       },
+      newsFetchReport: {
+        startedAt: "2026-03-09T17:30:00.000Z",
+        completedAt: "2026-03-09T17:35:00.000Z",
+        providerOrder: ["naver", "gnews"],
+        requestedProvider: "naver",
+        totalTickers: 10,
+        liveFetchTickers: 3,
+        cacheFallbackTickers: 4,
+        fileFallbackTickers: 3,
+        retryCount: 6,
+        providerFailures: [],
+        totalItems: 25
+      },
+      snapshotGenerationReport: {
+        startedAt: "2026-03-09T17:36:00.000Z",
+        completedAt: "2026-03-09T17:37:00.000Z",
+        generatedAt: "2026-03-09T17:37:00.000Z",
+        totalTickers: 10,
+        recommendationCount: 10,
+        analysisCount: 10,
+        trackingHistoryCount: 4,
+        validationFallbackCount: 3,
+        validationFallbackTickers: ["000660", "068270", "207940"]
+      },
       audits: [
         {
           id: 1,
@@ -92,6 +116,14 @@ describe("buildOperationalIncidents", () => {
         }),
         expect.objectContaining({
           id: "ops-recovery-warning",
+          severity: "critical"
+        }),
+        expect.objectContaining({
+          id: "news-fetch-critical",
+          severity: "critical"
+        }),
+        expect.objectContaining({
+          id: "validation-fallback-critical",
           severity: "critical"
         })
       ])

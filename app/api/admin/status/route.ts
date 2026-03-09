@@ -26,7 +26,14 @@ export async function GET(request: Request) {
       loadSnapshotGenerationReport(),
       listAuditLogs(policy.audit.adminListLimit)
     ]);
-    const escalation = buildOperationalIncidents({ health, opsHealthReport, dailyCycleReport, audits });
+    const escalation = buildOperationalIncidents({
+      health,
+      opsHealthReport,
+      dailyCycleReport,
+      newsFetchReport,
+      snapshotGenerationReport,
+      audits
+    });
 
     return jsonOk(
       {
