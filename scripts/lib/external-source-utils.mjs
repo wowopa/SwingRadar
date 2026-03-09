@@ -37,10 +37,21 @@ export async function writeJson(filePath, value) {
 export async function fetchJson(url, options = {}) {
   const response = await fetch(url, options);
   if (!response.ok) {
-    throw new Error(`Request failed: ${response.status} ${response.statusText} (${url})`);
+    const error = new Error(`Request failed: ${response.status} ${response.statusText} (${url})`);
+    error.status = response.status;
+    error.statusText = response.statusText;
+    error.url = url;
+    error.retryAfter = response.headers.get("retry-after");
+    throw error;
   }
 
   return response.json();
+}
+
+export async function wait(ms) {
+  await new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
 }
 
 function resolveProjectPath(projectRoot, configuredPath, fallbackPath) {

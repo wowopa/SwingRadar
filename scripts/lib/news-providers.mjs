@@ -1,4 +1,4 @@
-import { fetchJson } from "./external-source-utils.mjs";
+import { fetchJson, wait } from "./external-source-utils.mjs";
 
 const KO = {
   positive: "\uAE0D\uC815",
@@ -162,6 +162,36 @@ function rankArticles(items, entry, maxItems) {
     .slice(0, maxItems);
 }
 
+function parseRetryDelayMs(error, attempt) {
+  const retryAfterSeconds = Number.parseInt(String(error?.retryAfter ?? ""), 10);
+  if (Number.isFinite(retryAfterSeconds) && retryAfterSeconds > 0) {
+    return retryAfterSeconds * 1000;
+  }
+
+  return Math.min(1500 * 2 ** attempt, 12000);
+}
+
+async function fetchJsonWithRetry(url, options) {
+  const retryLimit = Math.max(0, Number.parseInt(process.env.SWING_RADAR_NEWS_RETRY_LIMIT ?? "2", 10));
+
+  for (let attempt = 0; attempt <= retryLimit; attempt += 1) {
+    try {
+      return await fetchJson(url, options);
+    } catch (error) {
+      const status = error && typeof error === "object" && "status" in error ? error.status : null;
+      const shouldRetry = status === 429 || status === 408 || (typeof status === "number" && status >= 500);
+
+      if (!shouldRetry || attempt === retryLimit) {
+        throw error;
+      }
+
+      await wait(parseRetryDelayMs(error, attempt));
+    }
+  }
+
+  throw new Error(`Request failed after retries: ${url}`);
+}
+
 export async function fetchNaverNews(entry, maxItems) {
   const clientId = process.env.SWING_RADAR_NAVER_CLIENT_ID;
   const clientSecret = process.env.SWING_RADAR_NAVER_CLIENT_SECRET;
@@ -179,7 +209,7 @@ export async function fetchNaverNews(entry, maxItems) {
     url.searchParams.set("display", String(perQueryLimit));
     url.searchParams.set("sort", "date");
 
-    const payload = await fetchJson(url.toString(), {
+    const payload = await fetchJsonWithRetry(url.toString(), {
       headers: {
         "X-Naver-Client-Id": clientId,
         "X-Naver-Client-Secret": clientSecret,
@@ -228,7 +258,7 @@ export async function fetchGNews(entry, maxItems) {
     url.searchParams.set("max", String(perQueryLimit));
     url.searchParams.set("apikey", apiKey);
 
-    const payload = await fetchJson(url.toString(), {
+    const payload = await fetchJsonWithRetry(url.toString(), {
       headers: { "User-Agent": "SWING-RADAR/0.1" }
     });
 
