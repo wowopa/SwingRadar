@@ -41,6 +41,12 @@ function getPostLaunchHistoryPath() {
     : path.join(resolveProjectRoot(), "data", "ops", "post-launch-history.json");
 }
 
+function getThresholdAdvicePath() {
+  return process.env.SWING_RADAR_THRESHOLD_ADVICE_PATH
+    ? path.resolve(process.env.SWING_RADAR_THRESHOLD_ADVICE_PATH)
+    : path.join(resolveProjectRoot(), "data", "ops", "latest-threshold-advice.json");
+}
+
 async function readJsonFile<T>(filePath: string): Promise<T | null> {
   try {
     const content = await readFile(filePath, "utf8");
@@ -165,6 +171,30 @@ export type PostLaunchHistoryEntry = {
   };
 };
 
+export type ThresholdAdviceReport = {
+  generatedAt: string;
+  sampleSize: number;
+  currentPolicy: {
+    newsLiveFetchWarningPercent: number;
+    newsLiveFetchCriticalPercent: number;
+    validationFallbackWarningCount: number;
+    validationFallbackCriticalCount: number;
+  };
+  observations: {
+    averageWarningIncidents: number;
+    averageCriticalIncidents: number;
+    averageAuditFailures: number;
+    latestLiveFetchPercent: number | null;
+    latestValidationFallbackCount: number | null;
+  };
+  recommendations: Array<{
+    key: string;
+    currentValue: number;
+    suggestedValue: number;
+    reason: string;
+  }>;
+};
+
 export async function loadOpsHealthCheckReport() {
   return readJsonFile<OpsHealthCheckReport>(getOpsHealthReportPath());
 }
@@ -187,4 +217,8 @@ export async function loadSnapshotGenerationReport() {
 
 export async function loadPostLaunchHistory() {
   return readJsonFile<PostLaunchHistoryEntry[]>(getPostLaunchHistoryPath());
+}
+
+export async function loadThresholdAdviceReport() {
+  return readJsonFile<ThresholdAdviceReport>(getThresholdAdvicePath());
 }

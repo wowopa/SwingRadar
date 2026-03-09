@@ -12,6 +12,12 @@ powershell -ExecutionPolicy Bypass -File C:\Users\eugen\Documents\SwingRadar\scr
 This writes a summary to:
 - `data/ops/latest-post-launch-check.json`
 - `data/ops/post-launch-history.json`
+- `data/ops/latest-threshold-advice.json` after `npm run ops:advise`
+
+Generate threshold advice from recent runs:
+```powershell
+& "C:\Program Files\nodejs\npm.cmd" run ops:advise
+```
 
 ## Recommended schedule
 1. Right after deployment

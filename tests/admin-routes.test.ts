@@ -15,6 +15,7 @@ const mocks = vi.hoisted(() => ({
   loadNewsFetchReport: vi.fn(),
   loadSnapshotGenerationReport: vi.fn(),
   loadPostLaunchHistory: vi.fn(),
+  loadThresholdAdviceReport: vi.fn(),
   publishEditorialDraft: vi.fn(),
   rollbackPublishedSnapshot: vi.fn(),
   loadNewsCuration: vi.fn(),
@@ -57,6 +58,8 @@ vi.mock("@/lib/server/ops-reports", () => ({
   loadNewsFetchReport: mocks.loadNewsFetchReport,
   loadSnapshotGenerationReport: mocks.loadSnapshotGenerationReport,
   loadPostLaunchHistory: mocks.loadPostLaunchHistory
+  ,
+  loadThresholdAdviceReport: mocks.loadThresholdAdviceReport
 }));
 
 vi.mock("@/lib/server/editorial-draft", () => ({
@@ -154,6 +157,7 @@ describe("admin routes", () => {
     mocks.loadNewsFetchReport.mockResolvedValue(null);
     mocks.loadSnapshotGenerationReport.mockResolvedValue(null);
     mocks.loadPostLaunchHistory.mockResolvedValue([]);
+    mocks.loadThresholdAdviceReport.mockResolvedValue(null);
     mocks.loadSnapshotBundleFromDisk.mockResolvedValue({
       recommendations: { generatedAt: "2026-03-08T00:00:00.000Z", items: [], dailyScan: null },
       analysis: { generatedAt: "2026-03-08T00:00:00.000Z", items: [] },
@@ -292,6 +296,7 @@ describe("admin routes", () => {
         newsFetchReport: { retryCount: number } | null;
         snapshotGenerationReport: { validationFallbackCount: number } | null;
         postLaunchHistory: Array<{ overallStatus: string }>;
+        thresholdAdviceReport: { sampleSize: number } | null;
         incidents: Array<{ id: string; severity: string }>;
       }>(response);
 
@@ -303,6 +308,7 @@ describe("admin routes", () => {
       expect(mocks.loadNewsFetchReport).toHaveBeenCalledTimes(1);
       expect(mocks.loadSnapshotGenerationReport).toHaveBeenCalledTimes(1);
       expect(mocks.loadPostLaunchHistory).toHaveBeenCalledTimes(1);
+      expect(mocks.loadThresholdAdviceReport).toHaveBeenCalledTimes(1);
       expect(payload).toMatchObject({
         ok: true,
         requestId: "req-test",
@@ -319,6 +325,7 @@ describe("admin routes", () => {
         newsFetchReport: null,
         snapshotGenerationReport: null,
         postLaunchHistory: [],
+        thresholdAdviceReport: null,
         incidents: [
           {
             id: "health-analysis",
@@ -420,6 +427,31 @@ describe("admin routes", () => {
           audits: { total: 4, failureCount: 0, warningCount: 1 }
         }
       ]);
+      mocks.loadThresholdAdviceReport.mockResolvedValue({
+        generatedAt: "2026-03-08T19:05:00.000Z",
+        sampleSize: 3,
+        currentPolicy: {
+          newsLiveFetchWarningPercent: 70,
+          newsLiveFetchCriticalPercent: 40,
+          validationFallbackWarningCount: 1,
+          validationFallbackCriticalCount: 3
+        },
+        observations: {
+          averageWarningIncidents: 1.3,
+          averageCriticalIncidents: 0,
+          averageAuditFailures: 0,
+          latestLiveFetchPercent: 90,
+          latestValidationFallbackCount: 1
+        },
+        recommendations: [
+          {
+            key: "newsLiveFetchWarningPercent",
+            currentValue: 70,
+            suggestedValue: 75,
+            reason: "Recent live fetch quality stayed comfortably above the warning line without critical incidents."
+          }
+        ]
+      });
       mocks.listAuditLogs.mockResolvedValue([
         {
           id: 4,
@@ -442,6 +474,7 @@ describe("admin routes", () => {
         newsFetchReport: { retryCount: number; liveFetchTickers: number } | null;
         snapshotGenerationReport: { validationFallbackCount: number } | null;
         postLaunchHistory: Array<{ overallStatus: string; incidents: { criticalCount: number } }>;
+        thresholdAdviceReport: { recommendations: Array<{ key: string }> } | null;
         incidents: Array<{ id: string; severity: string }>;
       }>(response);
 
@@ -472,6 +505,9 @@ describe("admin routes", () => {
             incidents: { criticalCount: 0 }
           }
         ],
+        thresholdAdviceReport: {
+          recommendations: [{ key: "newsLiveFetchWarningPercent" }]
+        },
         incidents: [
           { id: "daily-cycle-warning", severity: "warning" },
           { id: "validation-fallback-warning", severity: "warning" }

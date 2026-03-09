@@ -10,6 +10,8 @@ import {
   loadOpsHealthCheckReport,
   loadPostLaunchHistory,
   loadSnapshotGenerationReport
+  ,
+  loadThresholdAdviceReport
 } from "@/lib/server/ops-reports";
 import { getHealthReport } from "@/lib/services/health-service";
 import { buildResponseMeta, withRouteTelemetry } from "@/lib/server/telemetry";
@@ -18,7 +20,7 @@ export async function GET(request: Request) {
   return withRouteTelemetry(request, { route: "/api/admin/status" }, async (context) => {
     assertAdminRequest(request);
     const policy = getOperationalPolicy();
-    const [health, opsHealthReport, dailyCycleReport, autoHealReport, newsFetchReport, snapshotGenerationReport, postLaunchHistory, audits] =
+    const [health, opsHealthReport, dailyCycleReport, autoHealReport, newsFetchReport, snapshotGenerationReport, postLaunchHistory, thresholdAdviceReport, audits] =
       await Promise.all([
       getHealthReport(context.requestId),
       loadOpsHealthCheckReport(),
@@ -27,6 +29,7 @@ export async function GET(request: Request) {
       loadNewsFetchReport(),
       loadSnapshotGenerationReport(),
       loadPostLaunchHistory(),
+      loadThresholdAdviceReport(),
       listAuditLogs(policy.audit.adminListLimit)
       ]);
     const escalation = buildOperationalIncidents({
@@ -49,6 +52,7 @@ export async function GET(request: Request) {
         newsFetchReport,
         snapshotGenerationReport,
         postLaunchHistory: postLaunchHistory?.slice(-3).reverse() ?? [],
+        thresholdAdviceReport,
         incidents: escalation.incidents,
         overallStatus: escalation.overallStatus,
         operationalMode: process.env.SWING_RADAR_DATA_PROVIDER ?? "mock"

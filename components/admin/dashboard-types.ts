@@ -133,6 +133,30 @@ export type PostLaunchHistoryEntryPayload = {
   };
 };
 
+export type ThresholdAdviceReportPayload = {
+  generatedAt: string;
+  sampleSize: number;
+  currentPolicy: {
+    newsLiveFetchWarningPercent: number;
+    newsLiveFetchCriticalPercent: number;
+    validationFallbackWarningCount: number;
+    validationFallbackCriticalCount: number;
+  };
+  observations: {
+    averageWarningIncidents: number;
+    averageCriticalIncidents: number;
+    averageAuditFailures: number;
+    latestLiveFetchPercent: number | null;
+    latestValidationFallbackCount: number | null;
+  };
+  recommendations: Array<{
+    key: string;
+    currentValue: number;
+    suggestedValue: number;
+    reason: string;
+  }>;
+};
+
 export type AdminStatusPayload = {
   ok: boolean;
   requestId: string;
@@ -145,6 +169,7 @@ export type AdminStatusPayload = {
   newsFetchReport: NewsFetchReportPayload | null;
   snapshotGenerationReport: SnapshotGenerationReportPayload | null;
   postLaunchHistory: PostLaunchHistoryEntryPayload[];
+  thresholdAdviceReport: ThresholdAdviceReportPayload | null;
   incidents: OperationalIncident[];
 };
 

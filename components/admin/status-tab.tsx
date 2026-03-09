@@ -20,6 +20,7 @@ import type {
   OpsHealthReportPayload,
   PostLaunchHistoryEntryPayload,
   SnapshotGenerationReportPayload,
+  ThresholdAdviceReportPayload,
   UniverseDailyCandidates,
   UniverseReviewStatus
 } from "@/components/admin/dashboard-types";
@@ -51,6 +52,7 @@ export function StatusTab({
   newsFetchReport,
   snapshotGenerationReport,
   postLaunchHistory,
+  thresholdAdviceReport,
   dailyCandidates,
   watchlistTickers,
   onPromoteCandidate,
@@ -66,6 +68,7 @@ export function StatusTab({
   newsFetchReport: NewsFetchReportPayload | null;
   snapshotGenerationReport: SnapshotGenerationReportPayload | null;
   postLaunchHistory: PostLaunchHistoryEntryPayload[];
+  thresholdAdviceReport: ThresholdAdviceReportPayload | null;
   dailyCandidates: UniverseDailyCandidates | null;
   watchlistTickers: string[];
   onPromoteCandidate: (ticker: string) => void;
@@ -299,6 +302,69 @@ export function StatusTab({
       </Card>
 
       <div className="grid gap-6 xl:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle>Threshold advice</CardTitle>
+          </CardHeader>
+          <CardContent className="grid gap-4 md:grid-cols-4">
+            <MetricCard
+              label="sample"
+              value={String(thresholdAdviceReport?.sampleSize ?? 0)}
+              note={thresholdAdviceReport?.generatedAt ? formatDateTime(thresholdAdviceReport.generatedAt) : "no advice"}
+            />
+            <MetricCard
+              label="avg warning"
+              value={
+                thresholdAdviceReport
+                  ? thresholdAdviceReport.observations.averageWarningIncidents.toFixed(1)
+                  : "0.0"
+              }
+              note={
+                thresholdAdviceReport
+                  ? `critical ${thresholdAdviceReport.observations.averageCriticalIncidents.toFixed(1)}`
+                  : "no observations"
+              }
+            />
+            <MetricCard
+              label="live fetch"
+              value={
+                thresholdAdviceReport?.observations.latestLiveFetchPercent !== null &&
+                thresholdAdviceReport?.observations.latestLiveFetchPercent !== undefined
+                  ? `${thresholdAdviceReport.observations.latestLiveFetchPercent}%`
+                  : "n/a"
+              }
+              note={
+                thresholdAdviceReport?.observations.latestValidationFallbackCount !== null &&
+                thresholdAdviceReport?.observations.latestValidationFallbackCount !== undefined
+                  ? `validation ${thresholdAdviceReport.observations.latestValidationFallbackCount}`
+                  : "no snapshot data"
+              }
+            />
+            <MetricCard
+              label="changes"
+              value={String(thresholdAdviceReport?.recommendations.length ?? 0)}
+              note={thresholdAdviceReport?.recommendations[0]?.key ?? "keep current policy"}
+            />
+          </CardContent>
+          <CardContent className="space-y-3 pt-0">
+            {thresholdAdviceReport?.recommendations.length ? (
+              thresholdAdviceReport.recommendations.map((item) => (
+                <div key={item.key} className="rounded-[24px] border border-border/70 bg-secondary/45 p-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-sm font-semibold text-foreground">{item.key}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {`${item.currentValue} -> ${item.suggestedValue}`}
+                    </p>
+                  </div>
+                  <p className="mt-2 text-sm text-foreground/78">{item.reason}</p>
+                </div>
+              ))
+            ) : (
+              <p className="text-sm text-muted-foreground">Current policy looks stable with recent runs.</p>
+            )}
+          </CardContent>
+        </Card>
+
         <Card>
           <CardHeader>
             <CardTitle>Post-launch trend</CardTitle>

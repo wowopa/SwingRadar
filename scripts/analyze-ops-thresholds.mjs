@@ -1,0 +1,162 @@
+import { mkdir, readFile, writeFile } from "node:fs/promises";
+import path from "node:path";
+import process from "node:process";
+import { fileURLToPath } from "node:url";
+
+import { loadLocalEnv } from "./load-env.mjs";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const projectRoot = path.resolve(__dirname, "..");
+
+loadLocalEnv(projectRoot);
+
+function parsePositiveInt(value, fallback) {
+  const parsed = Number.parseInt(value ?? "", 10);
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    return fallback;
+  }
+  return parsed;
+}
+
+function getPolicy() {
+  return {
+    newsLiveFetchWarningPercent: parsePositiveInt(process.env.SWING_RADAR_NEWS_LIVE_FETCH_WARNING_PERCENT, 70),
+    newsLiveFetchCriticalPercent: parsePositiveInt(process.env.SWING_RADAR_NEWS_LIVE_FETCH_CRITICAL_PERCENT, 40),
+    validationFallbackWarningCount: parsePositiveInt(process.env.SWING_RADAR_VALIDATION_FALLBACK_WARNING_COUNT, 1),
+    validationFallbackCriticalCount: parsePositiveInt(process.env.SWING_RADAR_VALIDATION_FALLBACK_CRITICAL_COUNT, 3)
+  };
+}
+
+async function readJson(filePath, fallback) {
+  try {
+    const content = await readFile(filePath, "utf8");
+    return JSON.parse(content.replace(/^\uFEFF/, ""));
+  } catch (error) {
+    if (error && typeof error === "object" && "code" in error && error.code === "ENOENT") {
+      return fallback;
+    }
+    throw error;
+  }
+}
+
+function round1(value) {
+  return Math.round(value * 10) / 10;
+}
+
+function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, value));
+}
+
+function buildRecommendations({ history, newsFetchReport, snapshotGenerationReport, policy }) {
+  const recommendations = [];
+  const sampleSize = history.length;
+  const averageWarningIncidents =
+    sampleSize > 0 ? history.reduce((sum, item) => sum + (item.incidents?.warningCount ?? 0), 0) / sampleSize : 0;
+  const averageCriticalIncidents =
+    sampleSize > 0 ? history.reduce((sum, item) => sum + (item.incidents?.criticalCount ?? 0), 0) / sampleSize : 0;
+  const averageAuditFailures =
+    sampleSize > 0 ? history.reduce((sum, item) => sum + (item.audits?.failureCount ?? 0), 0) / sampleSize : 0;
+
+  const latestLiveFetchPercent =
+    newsFetchReport && newsFetchReport.totalTickers > 0
+      ? Math.round((newsFetchReport.liveFetchTickers / newsFetchReport.totalTickers) * 100)
+      : null;
+
+  const latestValidationFallbackCount = snapshotGenerationReport?.validationFallbackCount ?? null;
+
+  if (latestLiveFetchPercent !== null && averageCriticalIncidents === 0 && latestLiveFetchPercent >= policy.newsLiveFetchWarningPercent + 15) {
+    recommendations.push({
+      key: "newsLiveFetchWarningPercent",
+      currentValue: policy.newsLiveFetchWarningPercent,
+      suggestedValue: clamp(policy.newsLiveFetchWarningPercent + 5, policy.newsLiveFetchCriticalPercent + 5, 95),
+      reason: "Recent live fetch quality stayed comfortably above the warning line without critical incidents."
+    });
+  } else if (latestLiveFetchPercent !== null && latestLiveFetchPercent <= policy.newsLiveFetchCriticalPercent + 5) {
+    recommendations.push({
+      key: "newsLiveFetchWarningPercent",
+      currentValue: policy.newsLiveFetchWarningPercent,
+      suggestedValue: clamp(policy.newsLiveFetchWarningPercent - 5, policy.newsLiveFetchCriticalPercent + 5, 95),
+      reason: "Recent live fetch quality is frequently close to the critical line, so the warning line may be too loose."
+    });
+  }
+
+  if (latestValidationFallbackCount !== null && latestValidationFallbackCount === 0 && averageWarningIncidents <= 1) {
+    recommendations.push({
+      key: "validationFallbackWarningCount",
+      currentValue: policy.validationFallbackWarningCount,
+      suggestedValue: Math.max(1, policy.validationFallbackWarningCount + 1),
+      reason: "Validation fallback stayed near zero, so the current warning count may be noisier than needed."
+    });
+  } else if (
+    latestValidationFallbackCount !== null &&
+    latestValidationFallbackCount >= policy.validationFallbackWarningCount &&
+    averageAuditFailures > 0
+  ) {
+    recommendations.push({
+      key: "validationFallbackCriticalCount",
+      currentValue: policy.validationFallbackCriticalCount,
+      suggestedValue: Math.max(policy.validationFallbackWarningCount + 1, policy.validationFallbackCriticalCount - 1),
+      reason: "Validation fallback is appearing together with audit failures, so critical escalation may need to happen sooner."
+    });
+  }
+
+  return {
+    observations: {
+      averageWarningIncidents: round1(averageWarningIncidents),
+      averageCriticalIncidents: round1(averageCriticalIncidents),
+      averageAuditFailures: round1(averageAuditFailures),
+      latestLiveFetchPercent,
+      latestValidationFallbackCount
+    },
+    recommendations
+  };
+}
+
+async function main() {
+  const opsDir = path.join(projectRoot, "data", "ops");
+  const historyPath = process.env.SWING_RADAR_POST_LAUNCH_HISTORY_PATH
+    ? path.resolve(process.env.SWING_RADAR_POST_LAUNCH_HISTORY_PATH)
+    : path.join(opsDir, "post-launch-history.json");
+  const newsFetchPath = process.env.SWING_RADAR_NEWS_FETCH_REPORT_PATH
+    ? path.resolve(process.env.SWING_RADAR_NEWS_FETCH_REPORT_PATH)
+    : path.join(opsDir, "latest-news-fetch.json");
+  const snapshotGenerationPath = process.env.SWING_RADAR_SNAPSHOT_GENERATION_REPORT_PATH
+    ? path.resolve(process.env.SWING_RADAR_SNAPSHOT_GENERATION_REPORT_PATH)
+    : path.join(opsDir, "latest-snapshot-generation.json");
+  const outputPath = process.env.SWING_RADAR_THRESHOLD_ADVICE_PATH
+    ? path.resolve(process.env.SWING_RADAR_THRESHOLD_ADVICE_PATH)
+    : path.join(opsDir, "latest-threshold-advice.json");
+
+  const [history, newsFetchReport, snapshotGenerationReport] = await Promise.all([
+    readJson(historyPath, []),
+    readJson(newsFetchPath, null),
+    readJson(snapshotGenerationPath, null)
+  ]);
+
+  const policy = getPolicy();
+  const result = buildRecommendations({
+    history: Array.isArray(history) ? history : [],
+    newsFetchReport,
+    snapshotGenerationReport,
+    policy
+  });
+
+  const report = {
+    generatedAt: new Date().toISOString(),
+    sampleSize: Array.isArray(history) ? history.length : 0,
+    currentPolicy: policy,
+    observations: result.observations,
+    recommendations: result.recommendations
+  };
+
+  await mkdir(path.dirname(outputPath), { recursive: true });
+  await writeFile(outputPath, `${JSON.stringify(report, null, 2)}\n`, "utf8");
+
+  console.log(JSON.stringify(report, null, 2));
+}
+
+main().catch((error) => {
+  console.error(error instanceof Error ? error.message : String(error));
+  process.exit(1);
+});

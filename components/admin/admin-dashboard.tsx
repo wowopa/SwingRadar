@@ -31,6 +31,7 @@ import type {
   PublishHistoryItem,
   SnapshotGenerationReportPayload,
   SymbolSearchItem,
+  ThresholdAdviceReportPayload,
   UniverseCandidateReview,
   UniverseDailyCandidates,
   UniverseReviewStatus,
@@ -63,6 +64,7 @@ export function AdminDashboard() {
   const [newsFetchReport, setNewsFetchReport] = useState<NewsFetchReportPayload | null>(null);
   const [snapshotGenerationReport, setSnapshotGenerationReport] = useState<SnapshotGenerationReportPayload | null>(null);
   const [postLaunchHistory, setPostLaunchHistory] = useState<PostLaunchHistoryEntryPayload[]>([]);
+  const [thresholdAdviceReport, setThresholdAdviceReport] = useState<ThresholdAdviceReportPayload | null>(null);
   const [audits, setAudits] = useState<AuditItem[]>([]);
   const [dailyCandidates, setDailyCandidates] = useState<UniverseDailyCandidates | null>(null);
   const [draft, setDraft] = useState<EditorialDraftDocument | null>(null);
@@ -145,6 +147,7 @@ export function AdminDashboard() {
         setNewsFetchReport(null);
         setSnapshotGenerationReport(null);
         setPostLaunchHistory([]);
+        setThresholdAdviceReport(null);
         setMessage("관리자 토큰을 입력하면 운영 데이터를 불러옵니다.");
         return;
       }
@@ -177,6 +180,7 @@ export function AdminDashboard() {
       setNewsFetchReport(statusJson.newsFetchReport ?? null);
       setSnapshotGenerationReport(statusJson.snapshotGenerationReport ?? null);
       setPostLaunchHistory(statusJson.postLaunchHistory ?? []);
+      setThresholdAdviceReport(statusJson.thresholdAdviceReport ?? null);
       setAudits(auditJson.items ?? []);
       setDailyCandidates(universeJson.dailyCandidates ?? null);
       setDraft(draftJson.draft);
@@ -598,6 +602,7 @@ export function AdminDashboard() {
             newsFetchReport={newsFetchReport}
             snapshotGenerationReport={snapshotGenerationReport}
             postLaunchHistory={postLaunchHistory}
+            thresholdAdviceReport={thresholdAdviceReport}
             dailyCandidates={dailyCandidates}
             watchlistTickers={watchlistTickers}
             onPromoteCandidate={(ticker) => void promoteUniverseCandidate(ticker)}
