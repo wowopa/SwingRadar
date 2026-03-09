@@ -29,6 +29,11 @@ App health:
 curl http://localhost:3000/api/health
 ```
 
+Ops environment check:
+```powershell
+powershell -ExecutionPolicy Bypass -File C:\Users\eugen\Documents\SwingRadar\scripts\test-ops-environment.ps1 -DownloadsDir C:\Users\eugen\Downloads -DownloadPattern KRX
+```
+
 Snapshot file health:
 ```powershell
 & "C:\Program Files\nodejs\npm.cmd" run ops:check
@@ -205,3 +210,4 @@ Refresh one watchlist symbol manually:
 - `/api/admin/*` should be restricted by network policy or reverse proxy auth.
 - Symbol sync source must be stable and versioned where possible.
 - Monitor `/api/health`, freshness severity, actual provider usage, recent audit activity, and symbol sync failures.
+- Run `scripts/test-ops-environment.ps1` before registering scheduler tasks on a new machine.
