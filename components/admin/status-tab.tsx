@@ -18,6 +18,7 @@ import type {
   NewsFetchReportPayload,
   OperationalIncident,
   OpsHealthReportPayload,
+  PostLaunchHistoryEntryPayload,
   SnapshotGenerationReportPayload,
   UniverseDailyCandidates,
   UniverseReviewStatus
@@ -49,6 +50,7 @@ export function StatusTab({
   autoHealReport,
   newsFetchReport,
   snapshotGenerationReport,
+  postLaunchHistory,
   dailyCandidates,
   watchlistTickers,
   onPromoteCandidate,
@@ -63,6 +65,7 @@ export function StatusTab({
   autoHealReport: AutoHealReportPayload | null;
   newsFetchReport: NewsFetchReportPayload | null;
   snapshotGenerationReport: SnapshotGenerationReportPayload | null;
+  postLaunchHistory: PostLaunchHistoryEntryPayload[];
   dailyCandidates: UniverseDailyCandidates | null;
   watchlistTickers: string[];
   onPromoteCandidate: (ticker: string) => void;
@@ -296,6 +299,54 @@ export function StatusTab({
       </Card>
 
       <div className="grid gap-6 xl:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle>Post-launch trend</CardTitle>
+          </CardHeader>
+          <CardContent className="grid gap-4 md:grid-cols-4">
+            <MetricCard
+              label="check count"
+              value={String(postLaunchHistory.length)}
+              note={postLaunchHistory[0]?.checkedAt ? formatDateTime(postLaunchHistory[0].checkedAt) : "no history"}
+            />
+            <MetricCard
+              label="latest overall"
+              value={postLaunchHistory[0]?.overallStatus ?? "none"}
+              note={postLaunchHistory[0]?.healthStatus ?? "no health"}
+            />
+            <MetricCard
+              label="critical"
+              value={String(postLaunchHistory[0]?.incidents.criticalCount ?? 0)}
+              note={`warning ${postLaunchHistory[0]?.incidents.warningCount ?? 0}`}
+            />
+            <MetricCard
+              label="audit failures"
+              value={String(postLaunchHistory[0]?.audits.failureCount ?? 0)}
+              note={`warnings ${postLaunchHistory[0]?.audits.warningCount ?? 0}`}
+            />
+          </CardContent>
+          <CardContent className="space-y-3 pt-0">
+            {postLaunchHistory.length ? (
+              postLaunchHistory.map((entry) => (
+                <div key={entry.checkedAt} className="rounded-[24px] border border-border/70 bg-secondary/45 p-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-sm font-semibold text-foreground">{formatDateTime(entry.checkedAt)}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {entry.overallStatus} | health {entry.healthStatus}
+                    </p>
+                  </div>
+                  <p className="mt-2 text-sm text-foreground/78">
+                    critical {entry.incidents.criticalCount} / warning {entry.incidents.warningCount} / audit failure{" "}
+                    {entry.audits.failureCount}
+                  </p>
+                </div>
+              ))
+            ) : (
+              <p className="text-sm text-muted-foreground">No post-launch history yet.</p>
+            )}
+          </CardContent>
+        </Card>
+
         <Card>
           <CardHeader>
             <CardTitle>뉴스 수집 품질</CardTitle>

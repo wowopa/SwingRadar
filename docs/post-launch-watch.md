@@ -11,6 +11,7 @@ powershell -ExecutionPolicy Bypass -File C:\Users\eugen\Documents\SwingRadar\scr
 
 This writes a summary to:
 - `data/ops/latest-post-launch-check.json`
+- `data/ops/post-launch-history.json`
 
 ## Recommended schedule
 1. Right after deployment

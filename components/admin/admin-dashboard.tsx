@@ -27,6 +27,7 @@ import type {
   NewsFetchReportPayload,
   OperationalIncident,
   OpsHealthReportPayload,
+  PostLaunchHistoryEntryPayload,
   PublishHistoryItem,
   SnapshotGenerationReportPayload,
   SymbolSearchItem,
@@ -61,6 +62,7 @@ export function AdminDashboard() {
   const [autoHealReport, setAutoHealReport] = useState<AutoHealReportPayload | null>(null);
   const [newsFetchReport, setNewsFetchReport] = useState<NewsFetchReportPayload | null>(null);
   const [snapshotGenerationReport, setSnapshotGenerationReport] = useState<SnapshotGenerationReportPayload | null>(null);
+  const [postLaunchHistory, setPostLaunchHistory] = useState<PostLaunchHistoryEntryPayload[]>([]);
   const [audits, setAudits] = useState<AuditItem[]>([]);
   const [dailyCandidates, setDailyCandidates] = useState<UniverseDailyCandidates | null>(null);
   const [draft, setDraft] = useState<EditorialDraftDocument | null>(null);
@@ -139,6 +141,10 @@ export function AdminDashboard() {
         setHealth(await fetchJson<HealthPayload>("/api/health"));
         setOpsHealthReport(null);
         setDailyCycleReport(null);
+        setAutoHealReport(null);
+        setNewsFetchReport(null);
+        setSnapshotGenerationReport(null);
+        setPostLaunchHistory([]);
         setMessage("관리자 토큰을 입력하면 운영 데이터를 불러옵니다.");
         return;
       }
@@ -170,6 +176,7 @@ export function AdminDashboard() {
       setAutoHealReport(statusJson.autoHealReport ?? null);
       setNewsFetchReport(statusJson.newsFetchReport ?? null);
       setSnapshotGenerationReport(statusJson.snapshotGenerationReport ?? null);
+      setPostLaunchHistory(statusJson.postLaunchHistory ?? []);
       setAudits(auditJson.items ?? []);
       setDailyCandidates(universeJson.dailyCandidates ?? null);
       setDraft(draftJson.draft);
@@ -590,6 +597,7 @@ export function AdminDashboard() {
             autoHealReport={autoHealReport}
             newsFetchReport={newsFetchReport}
             snapshotGenerationReport={snapshotGenerationReport}
+            postLaunchHistory={postLaunchHistory}
             dailyCandidates={dailyCandidates}
             watchlistTickers={watchlistTickers}
             onPromoteCandidate={(ticker) => void promoteUniverseCandidate(ticker)}

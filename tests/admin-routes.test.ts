@@ -14,6 +14,7 @@ const mocks = vi.hoisted(() => ({
   loadAutoHealReport: vi.fn(),
   loadNewsFetchReport: vi.fn(),
   loadSnapshotGenerationReport: vi.fn(),
+  loadPostLaunchHistory: vi.fn(),
   publishEditorialDraft: vi.fn(),
   rollbackPublishedSnapshot: vi.fn(),
   loadNewsCuration: vi.fn(),
@@ -54,7 +55,8 @@ vi.mock("@/lib/server/ops-reports", () => ({
   loadDailyCycleReport: mocks.loadDailyCycleReport,
   loadAutoHealReport: mocks.loadAutoHealReport,
   loadNewsFetchReport: mocks.loadNewsFetchReport,
-  loadSnapshotGenerationReport: mocks.loadSnapshotGenerationReport
+  loadSnapshotGenerationReport: mocks.loadSnapshotGenerationReport,
+  loadPostLaunchHistory: mocks.loadPostLaunchHistory
 }));
 
 vi.mock("@/lib/server/editorial-draft", () => ({
@@ -151,6 +153,7 @@ describe("admin routes", () => {
     mocks.loadAutoHealReport.mockResolvedValue(null);
     mocks.loadNewsFetchReport.mockResolvedValue(null);
     mocks.loadSnapshotGenerationReport.mockResolvedValue(null);
+    mocks.loadPostLaunchHistory.mockResolvedValue([]);
     mocks.loadSnapshotBundleFromDisk.mockResolvedValue({
       recommendations: { generatedAt: "2026-03-08T00:00:00.000Z", items: [], dailyScan: null },
       analysis: { generatedAt: "2026-03-08T00:00:00.000Z", items: [] },
@@ -288,6 +291,7 @@ describe("admin routes", () => {
         autoHealReport: { status: string; actions: Array<{ name: string }> } | null;
         newsFetchReport: { retryCount: number } | null;
         snapshotGenerationReport: { validationFallbackCount: number } | null;
+        postLaunchHistory: Array<{ overallStatus: string }>;
         incidents: Array<{ id: string; severity: string }>;
       }>(response);
 
@@ -298,6 +302,7 @@ describe("admin routes", () => {
       expect(mocks.loadAutoHealReport).toHaveBeenCalledTimes(1);
       expect(mocks.loadNewsFetchReport).toHaveBeenCalledTimes(1);
       expect(mocks.loadSnapshotGenerationReport).toHaveBeenCalledTimes(1);
+      expect(mocks.loadPostLaunchHistory).toHaveBeenCalledTimes(1);
       expect(payload).toMatchObject({
         ok: true,
         requestId: "req-test",
@@ -313,6 +318,7 @@ describe("admin routes", () => {
         autoHealReport: null,
         newsFetchReport: null,
         snapshotGenerationReport: null,
+        postLaunchHistory: [],
         incidents: [
           {
             id: "health-analysis",
@@ -403,6 +409,17 @@ describe("admin routes", () => {
         validationFallbackCount: 1,
         validationFallbackTickers: ["000660"]
       });
+      mocks.loadPostLaunchHistory.mockResolvedValue([
+        {
+          checkedAt: "2026-03-08T19:00:00.000Z",
+          healthStatus: "ok",
+          overallStatus: "warning",
+          dailyTaskRegistered: true,
+          autoHealTaskRegistered: true,
+          incidents: { criticalCount: 0, warningCount: 2 },
+          audits: { total: 4, failureCount: 0, warningCount: 1 }
+        }
+      ]);
       mocks.listAuditLogs.mockResolvedValue([
         {
           id: 4,
@@ -424,6 +441,7 @@ describe("admin routes", () => {
         autoHealReport: { status: string; actions: Array<{ name: string }> } | null;
         newsFetchReport: { retryCount: number; liveFetchTickers: number } | null;
         snapshotGenerationReport: { validationFallbackCount: number } | null;
+        postLaunchHistory: Array<{ overallStatus: string; incidents: { criticalCount: number } }>;
         incidents: Array<{ id: string; severity: string }>;
       }>(response);
 
@@ -448,6 +466,12 @@ describe("admin routes", () => {
         snapshotGenerationReport: {
           validationFallbackCount: 1
         },
+        postLaunchHistory: [
+          {
+            overallStatus: "warning",
+            incidents: { criticalCount: 0 }
+          }
+        ],
         incidents: [
           { id: "daily-cycle-warning", severity: "warning" },
           { id: "validation-fallback-warning", severity: "warning" }

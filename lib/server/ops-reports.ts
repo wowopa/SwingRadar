@@ -35,6 +35,12 @@ function getSnapshotGenerationReportPath() {
     : path.join(resolveProjectRoot(), "data", "ops", "latest-snapshot-generation.json");
 }
 
+function getPostLaunchHistoryPath() {
+  return process.env.SWING_RADAR_POST_LAUNCH_HISTORY_PATH
+    ? path.resolve(process.env.SWING_RADAR_POST_LAUNCH_HISTORY_PATH)
+    : path.join(resolveProjectRoot(), "data", "ops", "post-launch-history.json");
+}
+
 async function readJsonFile<T>(filePath: string): Promise<T | null> {
   try {
     const content = await readFile(filePath, "utf8");
@@ -142,6 +148,23 @@ export type SnapshotGenerationReport = {
   validationFallbackTickers: string[];
 };
 
+export type PostLaunchHistoryEntry = {
+  checkedAt: string;
+  healthStatus: string;
+  overallStatus: string;
+  dailyTaskRegistered: boolean;
+  autoHealTaskRegistered: boolean;
+  incidents: {
+    criticalCount: number;
+    warningCount: number;
+  };
+  audits: {
+    total: number;
+    failureCount: number;
+    warningCount: number;
+  };
+};
+
 export async function loadOpsHealthCheckReport() {
   return readJsonFile<OpsHealthCheckReport>(getOpsHealthReportPath());
 }
@@ -160,4 +183,8 @@ export async function loadNewsFetchReport() {
 
 export async function loadSnapshotGenerationReport() {
   return readJsonFile<SnapshotGenerationReport>(getSnapshotGenerationReportPath());
+}
+
+export async function loadPostLaunchHistory() {
+  return readJsonFile<PostLaunchHistoryEntry[]>(getPostLaunchHistoryPath());
 }

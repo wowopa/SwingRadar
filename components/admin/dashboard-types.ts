@@ -116,6 +116,23 @@ export type SnapshotGenerationReportPayload = {
   validationFallbackTickers: string[];
 };
 
+export type PostLaunchHistoryEntryPayload = {
+  checkedAt: string;
+  healthStatus: string;
+  overallStatus: string;
+  dailyTaskRegistered: boolean;
+  autoHealTaskRegistered: boolean;
+  incidents: {
+    criticalCount: number;
+    warningCount: number;
+  };
+  audits: {
+    total: number;
+    failureCount: number;
+    warningCount: number;
+  };
+};
+
 export type AdminStatusPayload = {
   ok: boolean;
   requestId: string;
@@ -127,6 +144,7 @@ export type AdminStatusPayload = {
   autoHealReport: AutoHealReportPayload | null;
   newsFetchReport: NewsFetchReportPayload | null;
   snapshotGenerationReport: SnapshotGenerationReportPayload | null;
+  postLaunchHistory: PostLaunchHistoryEntryPayload[];
   incidents: OperationalIncident[];
 };
 

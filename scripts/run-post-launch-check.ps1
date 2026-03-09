@@ -2,7 +2,8 @@ param(
   [string]$ProjectRoot = "C:\Users\eugen\Documents\SwingRadar",
   [string]$EnvFile = ".env.local",
   [string]$AppUrl = "",
-  [string]$OutputPath = ""
+  [string]$OutputPath = "",
+  [string]$HistoryPath = ""
 )
 
 $ErrorActionPreference = "Stop"
@@ -23,9 +24,18 @@ if ([string]::IsNullOrWhiteSpace($OutputPath)) {
   $OutputPath = Join-Path $ProjectRoot "data\ops\latest-post-launch-check.json"
 }
 
+if ([string]::IsNullOrWhiteSpace($HistoryPath)) {
+  $HistoryPath = Join-Path $ProjectRoot "data\ops\post-launch-history.json"
+}
+
 $outputDirectory = Split-Path -Path $OutputPath -Parent
 if (-not (Test-Path $outputDirectory)) {
   New-Item -ItemType Directory -Path $outputDirectory -Force | Out-Null
+}
+
+$historyDirectory = Split-Path -Path $HistoryPath -Parent
+if (-not (Test-Path $historyDirectory)) {
+  New-Item -ItemType Directory -Path $historyDirectory -Force | Out-Null
 }
 
 $headers = @{
@@ -83,6 +93,37 @@ $report = [pscustomobject]@{
 
 $report | ConvertTo-Json -Depth 8 | Set-Content -Path $OutputPath -Encoding utf8
 
+$historyEntry = [pscustomobject]@{
+  checkedAt = $report.checkedAt
+  healthStatus = $report.healthStatus
+  overallStatus = $report.overallStatus
+  dailyTaskRegistered = $report.dailyTaskRegistered
+  autoHealTaskRegistered = $report.autoHealTaskRegistered
+  incidents = [pscustomobject]@{
+    criticalCount = $report.incidents.criticalCount
+    warningCount = $report.incidents.warningCount
+  }
+  audits = [pscustomobject]@{
+    total = $report.audits.total
+    failureCount = $report.audits.failureCount
+    warningCount = $report.audits.warningCount
+  }
+}
+
+$history = @()
+if (Test-Path $HistoryPath) {
+  try {
+    $history = @(Get-Content -Raw -Path $HistoryPath | ConvertFrom-Json)
+  } catch {
+    $history = @()
+  }
+}
+
+$history = @($history | Where-Object { $_.checkedAt -ne $historyEntry.checkedAt })
+$history += $historyEntry
+$history = @($history | Sort-Object checkedAt | Select-Object -Last 20)
+$history | ConvertTo-Json -Depth 6 | Set-Content -Path $HistoryPath -Encoding utf8
+
 Write-Output ("Health: {0}" -f $report.healthStatus)
 Write-Output ("Overall: {0}" -f $report.overallStatus)
 Write-Output ("Critical incidents: {0}" -f $report.incidents.criticalCount)
@@ -92,3 +133,4 @@ Write-Output ("Recent audit warnings: {0}" -f $report.audits.warningCount)
 Write-Output ("Daily task registered: {0}" -f $report.dailyTaskRegistered)
 Write-Output ("Auto-heal task registered: {0}" -f $report.autoHealTaskRegistered)
 Write-Output ("Saved report: {0}" -f $OutputPath)
+Write-Output ("Updated history: {0}" -f $HistoryPath)
