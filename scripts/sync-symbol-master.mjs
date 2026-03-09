@@ -28,6 +28,7 @@ Environment:
   SWING_RADAR_SYMBOL_SYNC_STATUS
   SWING_RADAR_SYMBOL_SYNC_MERGE=true
   SWING_RADAR_SYMBOL_SYNC_KRX=true
+  SWING_RADAR_KRX_FETCH_MODE=downloads | url | api
   SWING_RADAR_KRX_SOURCE_URL
   SWING_RADAR_KRX_DOWNLOADS_DIR
   SWING_RADAR_KRX_DOWNLOAD_PATTERN
@@ -42,6 +43,7 @@ function parseArgs(argv) {
     status: process.env.SWING_RADAR_SYMBOL_SYNC_STATUS ?? "pending",
     merge: process.env.SWING_RADAR_SYMBOL_SYNC_MERGE === "true",
     krx: process.env.SWING_RADAR_SYMBOL_SYNC_KRX === "true",
+    krxFetchMode: process.env.SWING_RADAR_KRX_FETCH_MODE ?? "downloads",
     help: false
   };
 
@@ -90,14 +92,10 @@ function parseArgs(argv) {
 }
 
 async function runNodeScript(scriptName, args) {
-  const { stdout, stderr } = await execFileAsync(
-    process.execPath,
-    [path.join(projectRoot, "scripts", scriptName), ...args],
-    {
-      cwd: projectRoot,
-      env: process.env
-    }
-  );
+  const { stdout, stderr } = await execFileAsync(process.execPath, [path.join(projectRoot, "scripts", scriptName), ...args], {
+    cwd: projectRoot,
+    env: process.env
+  });
 
   if (stdout.trim()) {
     process.stdout.write(stdout);
@@ -122,16 +120,22 @@ async function main() {
     if (options.krx) {
       const rawKrxPath = path.join(tempRoot, "krx-source.csv");
       const preparedKrxPath = path.join(tempRoot, "krx-symbol-master.csv");
+      const fetchArgs = [...(options.sourceUrl ? ["--source-url", options.sourceUrl] : []), "--output", rawKrxPath];
 
-      await runNodeScript("fetch-krx-symbols.mjs", [
-        ...(options.sourceUrl ? ["--source-url", options.sourceUrl] : []),
-        "--output",
-        rawKrxPath
-      ]);
-      await runNodeScript("prepare-krx-symbols.mjs", ["--input", rawKrxPath, "--output", preparedKrxPath]);
+      if (options.krxFetchMode === "api") {
+        fetchArgs.unshift("--api");
+      }
 
-      inputPath = preparedKrxPath;
-      console.log(`[symbol-sync] prepared KRX CSV: ${inputPath}`);
+      await runNodeScript("fetch-krx-symbols.mjs", fetchArgs);
+
+      if (options.krxFetchMode === "api" && (process.env.SWING_RADAR_KRX_API_RESPONSE_TYPE ?? "csv") === "json") {
+        inputPath = rawKrxPath;
+        console.log(`[symbol-sync] using normalized KRX API CSV: ${inputPath}`);
+      } else {
+        await runNodeScript("prepare-krx-symbols.mjs", ["--input", rawKrxPath, "--output", preparedKrxPath]);
+        inputPath = preparedKrxPath;
+        console.log(`[symbol-sync] prepared KRX CSV: ${inputPath}`);
+      }
     } else if (options.sourceUrl) {
       const downloadPath = path.join(tempRoot, "symbol-master-sync.csv");
       const response = await fetch(options.sourceUrl, { headers: { "user-agent": "swing-radar-symbol-sync/1.0" } });
@@ -147,7 +151,7 @@ async function main() {
       throw new Error("Resolved input path is missing");
     }
 
-    console.log(`[symbol-sync] start: ${options.krx ? "krx" : options.sourceUrl ? "remote-url" : "local-file"}`);
+    console.log(`[symbol-sync] start: ${options.krx ? `krx-${options.krxFetchMode}` : options.sourceUrl ? "remote-url" : "local-file"}`);
     console.log(`[symbol-sync] input: ${inputPath}`);
 
     await runNodeScript("import-symbol-master.mjs", [

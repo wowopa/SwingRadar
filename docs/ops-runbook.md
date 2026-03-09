@@ -79,8 +79,26 @@ Use a remote KRX CSV URL:
 ```powershell
 $env:SWING_RADAR_SYMBOL_SYNC_ENABLED="true"
 $env:SWING_RADAR_SYMBOL_SYNC_KRX="true"
+$env:SWING_RADAR_KRX_FETCH_MODE="url"
 $env:SWING_RADAR_KRX_SOURCE_URL="https://example.com/krx-download.csv"
 $env:SWING_RADAR_SYMBOL_SYNC_MERGE="false"
+```
+
+Use the KRX Open API after your API account is ready:
+```powershell
+$env:SWING_RADAR_SYMBOL_SYNC_ENABLED="true"
+$env:SWING_RADAR_SYMBOL_SYNC_KRX="true"
+$env:SWING_RADAR_KRX_FETCH_MODE="api"
+$env:SWING_RADAR_KRX_API_URL="https://data.krx.co.kr/your-open-api-endpoint"
+$env:SWING_RADAR_KRX_API_KEY="replace-with-issued-key"
+$env:SWING_RADAR_KRX_API_AUTH_HEADER="Authorization"
+$env:SWING_RADAR_KRX_API_RESPONSE_TYPE="json"
+$env:SWING_RADAR_KRX_API_DATA_PATH="data"
+$env:SWING_RADAR_KRX_API_FIELD_TICKER="ticker"
+$env:SWING_RADAR_KRX_API_FIELD_COMPANY="company"
+$env:SWING_RADAR_KRX_API_FIELD_MARKET="market"
+$env:SWING_RADAR_KRX_API_FIELD_SECTOR="sector"
+$env:SWING_RADAR_KRX_API_FIELD_DART="dartCorpCode"
 ```
 
 Use a local CSV that is already normalized for the importer:
