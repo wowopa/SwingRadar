@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 const navItems = [
   { href: "/recommendations", label: "관찰 종목", icon: Sparkles },
   { href: "/tracking", label: "추적", icon: ChartNoAxesCombined },
+  { href: "/guide", label: "이용 가이드", icon: ShieldCheck },
   { href: "/analysis/005930", label: "분석 예시", icon: ArrowUpRight }
 ] as const;
 
@@ -29,7 +30,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     신호와 추적을 한곳에서
                   </h1>
                   <p className="max-w-2xl text-sm leading-6 text-muted-foreground sm:text-base">
-                    관찰 근거, 기준 이탈, 검증 흐름을 한 화면에서 살펴보는 스윙 대시보드입니다.
+                    관찰 근거, 기준 이탈, 검증 흐름, 운영 상태를 한 화면 흐름 안에서 차분하게 살펴볼 수 있습니다.
                   </p>
                 </div>
               </div>
