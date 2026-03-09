@@ -40,6 +40,9 @@ export interface DailyCandidateDto {
   signalTone: SignalToneDto;
   score: number;
   candidateScore: number;
+  currentPrice?: number | null;
+  averageTurnover20?: number | null;
+  liquidityRating?: string;
   invalidation: string;
   validationSummary: string;
   observationWindow: string;

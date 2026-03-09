@@ -80,13 +80,23 @@ async function fetchYahooItem(entry, range) {
     throw new Error(`Missing market payload for ${entry.ticker}`);
   }
 
-  const closes = (result.indicators?.quote?.[0]?.close ?? []).filter((value) => Number.isFinite(value));
-  const volumes = (result.indicators?.quote?.[0]?.volume ?? []).filter((value) => Number.isFinite(value));
+  const quote = result.indicators?.quote?.[0] ?? {};
+  const pairedHistory = (quote.close ?? [])
+    .map((close, index) => ({
+      close,
+      volume: quote.volume?.[index]
+    }))
+    .filter((item) => Number.isFinite(item.close) && Number.isFinite(item.volume) && item.volume > 0);
+
+  const closes = pairedHistory.map((item) => item.close);
+  const volumes = pairedHistory.map((item) => item.volume);
+  const turnovers = pairedHistory.map((item) => item.close * item.volume);
 
   const currentPrice = lastValid(closes);
   const latestVolume = lastValid(volumes);
+  const latestTurnover = lastValid(turnovers);
 
-  if (!currentPrice || !latestVolume) {
+  if (!currentPrice || !latestVolume || !latestTurnover) {
     throw new Error(`Not enough market history for ${entry.ticker}`);
   }
 
@@ -95,6 +105,7 @@ async function fetchYahooItem(entry, range) {
   const ma20 = average(last20);
   const ma60 = average(last60.length ? last60 : closes);
   const avg20Volume = average(volumes.slice(-20));
+  const avg20Turnover = average(turnovers.slice(-20));
   const low15 = Math.min(...closes.slice(-15));
   const high10 = Math.max(...closes.slice(-10));
   const invalidationPrice = Math.round(low15 * 0.995);
@@ -120,6 +131,8 @@ async function fetchYahooItem(entry, range) {
     qualityScore: clamp(Math.round(10 + closes.length / 25), 8, 15),
     averageVolume20: Math.round(avg20Volume),
     latestVolume: Math.round(latestVolume),
+    averageTurnover20: Math.round(avg20Turnover),
+    latestTurnover: Math.round(latestTurnover),
     momentumPercent: Number(momentumPercent.toFixed(1)),
     riskStatus: mapRiskStatus(((invalidationPrice - currentPrice) / currentPrice) * 100),
     heatStatus: mapHeatStatus(momentumPercent),

@@ -4,7 +4,16 @@ import { PageHeader } from "@/components/shared/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getDailyCandidates, getDailyCandidatesHistory } from "@/lib/repositories/daily-candidates";
 import { getRecommendations } from "@/lib/repositories/recommendations";
-import { formatDateTimeShort, formatPercent } from "@/lib/utils";
+import { formatDateTimeShort, formatPercent, formatPrice } from "@/lib/utils";
+
+function formatTurnover(value?: number | null) {
+  if (!value || value <= 0) {
+    return "-";
+  }
+
+  const eok = value / 100_000_000;
+  return `${eok.toFixed(eok >= 100 ? 0 : 1)}억`;
+}
 
 function buildHistorySummary(
   history: Awaited<ReturnType<typeof getDailyCandidatesHistory>>
@@ -79,14 +88,14 @@ export default async function RankingPage() {
     <main>
       <PageHeader
         eyebrow="Ranking"
-        title="오늘의 추천 랭킹"
-        description="전체 유니버스를 매일 스캔한 뒤 추천 가능성이 높은 종목을 순위로 보여줍니다. 오늘의 상위 후보와 누적 자주 등장한 종목을 함께 볼 수 있습니다."
+        title="오늘의 추천 순위"
+        description="유동성, 검증 기록, 기술 흐름을 함께 반영해 오늘 우선 확인할 종목을 추린 순위입니다."
       />
 
       <section className="mb-6 grid gap-4 lg:grid-cols-3">
         <Card>
           <CardHeader>
-            <CardTitle>오늘 스캔 대상</CardTitle>
+            <CardTitle>전체 스캔 대상</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-3xl font-semibold text-foreground">{dailyCandidates?.totalTickers ?? 0}</p>
@@ -95,11 +104,11 @@ export default async function RankingPage() {
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle>오늘 랭킹 수</CardTitle>
+            <CardTitle>오늘의 랭킹 수</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-3xl font-semibold text-foreground">{todayRanking.length}</p>
-            <p className="mt-2 text-sm text-muted-foreground">화면에 보여주는 오늘의 추천 후보 수</p>
+            <p className="mt-2 text-sm text-muted-foreground">상위 추천 후보로 남긴 종목 수</p>
           </CardContent>
         </Card>
         <Card>
@@ -110,12 +119,12 @@ export default async function RankingPage() {
             <p className="text-xl font-semibold text-foreground">
               {dailyCandidates ? formatDateTimeShort(dailyCandidates.generatedAt) : "-"}
             </p>
-            <p className="mt-2 text-sm text-muted-foreground">상위 후보 파일이 마지막으로 만들어진 시각</p>
+            <p className="mt-2 text-sm text-muted-foreground">오늘 순위 데이터가 만들어진 시각</p>
           </CardContent>
         </Card>
       </section>
 
-      <section className="mb-6 grid gap-6 xl:grid-cols-[1.5fr_1fr]">
+      <section className="mb-6 grid gap-6 xl:grid-cols-[1.6fr_1fr]">
         <Card>
           <CardHeader>
             <CardTitle>오늘의 상위 100개</CardTitle>
@@ -128,8 +137,10 @@ export default async function RankingPage() {
                   <th className="pb-3 pr-4">종목</th>
                   <th className="pb-3 pr-4">후보 점수</th>
                   <th className="pb-3 pr-4">기본 점수</th>
-                  <th className="pb-3 pr-4">톤</th>
-                  <th className="pb-3 pr-4">표본</th>
+                  <th className="pb-3 pr-4">현재가</th>
+                  <th className="pb-3 pr-4">20일 평균 거래대금</th>
+                  <th className="pb-3 pr-4">유동성</th>
+                  <th className="pb-3 pr-4">검증 표본</th>
                   <th className="pb-3 pr-4">평균 수익</th>
                   <th className="pb-3">상세</th>
                 </tr>
@@ -142,9 +153,11 @@ export default async function RankingPage() {
                       <div className="font-medium text-foreground">{item.company}</div>
                       <div className="text-xs text-muted-foreground">{item.ticker}</div>
                     </td>
-                    <td className="py-3 pr-4">{item.candidateScore}</td>
+                    <td className="py-3 pr-4 font-medium text-foreground">{item.candidateScore}</td>
                     <td className="py-3 pr-4">{item.score}</td>
-                    <td className="py-3 pr-4">{item.signalTone}</td>
+                    <td className="py-3 pr-4">{item.currentPrice ? formatPrice(item.currentPrice) : "-"}</td>
+                    <td className="py-3 pr-4">{formatTurnover(item.averageTurnover20)}</td>
+                    <td className="py-3 pr-4">{item.liquidityRating ?? "-"}</td>
                     <td className="py-3 pr-4">{item.recommendation?.validation.sampleSize ?? "-"}</td>
                     <td className="py-3 pr-4">
                       {item.recommendation ? formatPercent(item.recommendation.validation.avgReturn) : "-"}
@@ -163,7 +176,7 @@ export default async function RankingPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>누적 자주 오른 종목</CardTitle>
+            <CardTitle>자주 등장한 종목</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             {historySummary.map((item) => (
@@ -179,7 +192,7 @@ export default async function RankingPage() {
                   </div>
                 </div>
                 <p className="mt-3 text-xs text-muted-foreground">
-                  최근 랭킹 {item.latestRank}위 · 마지막 포착 {formatDateTimeShort(item.lastSeenAt)}
+                  최근 순위 {item.latestRank}위, 마지막 확인 {formatDateTimeShort(item.lastSeenAt)}
                 </p>
               </div>
             ))}

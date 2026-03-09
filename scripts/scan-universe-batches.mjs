@@ -102,6 +102,15 @@ function normalizePositiveInteger(value, fallback) {
   return Math.floor(parsed);
 }
 
+function normalizePositiveNumber(value, fallback) {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    return fallback;
+  }
+
+  return parsed;
+}
+
 function getHistoryPath() {
   return process.env.SWING_RADAR_DAILY_CANDIDATES_HISTORY_FILE
     ? path.resolve(process.env.SWING_RADAR_DAILY_CANDIDATES_HISTORY_FILE)
@@ -146,18 +155,88 @@ async function runNodeScript(scriptName, args, env) {
   });
 }
 
-function scoreCandidates(recommendations, analysis, batchIndex) {
+function getLiquidityAdjustment(averageTurnover20) {
+  if (averageTurnover20 >= 150_000_000_000) {
+    return { score: 10, rating: "매우 풍부" };
+  }
+  if (averageTurnover20 >= 70_000_000_000) {
+    return { score: 7, rating: "풍부" };
+  }
+  if (averageTurnover20 >= 30_000_000_000) {
+    return { score: 4, rating: "양호" };
+  }
+  if (averageTurnover20 >= 10_000_000_000) {
+    return { score: 1, rating: "보통" };
+  }
+  if (averageTurnover20 >= 5_000_000_000) {
+    return { score: -2, rating: "다소 약함" };
+  }
+
+  return { score: -8, rating: "부족" };
+}
+
+function getLowPricePenalty(currentPrice, averageTurnover20) {
+  const turnover = averageTurnover20 ?? 0;
+
+  if (currentPrice < 1_500) {
+    return -18;
+  }
+  if (currentPrice < 2_000) {
+    return -14;
+  }
+  if (currentPrice < 3_000) {
+    return turnover >= 20_000_000_000 ? -8 : -12;
+  }
+  if (currentPrice < 5_000) {
+    return turnover >= 20_000_000_000 ? -4 : -7;
+  }
+  if (currentPrice < 10_000) {
+    return -2;
+  }
+
+  return 0;
+}
+
+function shouldExcludeCandidate(currentPrice, averageTurnover20, thresholds) {
+  if (!Number.isFinite(currentPrice) || !Number.isFinite(averageTurnover20)) {
+    return true;
+  }
+
+  if (currentPrice < thresholds.minPrice) {
+    return true;
+  }
+
+  if (averageTurnover20 < thresholds.minAverageTurnover20) {
+    return true;
+  }
+
+  return false;
+}
+
+function scoreCandidates(recommendations, analysis, marketItemsByTicker, batchIndex, thresholds) {
   const analysisByTicker = new Map(analysis.items.map((item) => [item.ticker, item]));
-  return recommendations.items.map((item) => {
+  return recommendations.items.flatMap((item) => {
     const detail = analysisByTicker.get(item.ticker);
+    const market = marketItemsByTicker.get(item.ticker);
+    const currentPrice = market?.currentPrice ?? null;
+    const averageTurnover20 = market?.averageTurnover20 ?? null;
+
+    if (shouldExcludeCandidate(currentPrice, averageTurnover20, thresholds)) {
+      return [];
+    }
+
     const hitRateWeight = item.validation.hitRate * 0.35;
     const returnWeight = item.validation.avgReturn * 3;
     const sampleWeight = Math.min(item.validation.sampleSize, 40) * 0.15;
     const eventCoverage = detail?.dataQuality.find((entry) => entry.label === "커버리지")?.value ?? "취약";
     const coverageWeight = eventCoverage === "보강됨" ? 6 : eventCoverage === "제한적" ? 3 : 0;
-    const candidateScore = Number((item.score + hitRateWeight + returnWeight + sampleWeight + coverageWeight).toFixed(1));
+    const liquidity = getLiquidityAdjustment(averageTurnover20);
+    const lowPricePenalty = getLowPricePenalty(currentPrice, averageTurnover20);
+    const candidateScore = Number(
+      (item.score + hitRateWeight + returnWeight + sampleWeight + coverageWeight + liquidity.score + lowPricePenalty).toFixed(1)
+    );
 
-    return {
+    return [{
       batch: batchIndex + 1,
       ticker: item.ticker,
       company: item.company,
@@ -165,12 +244,15 @@ function scoreCandidates(recommendations, analysis, batchIndex) {
       signalTone: item.signalTone,
       score: item.score,
       candidateScore,
+      currentPrice,
+      averageTurnover20,
+      liquidityRating: liquidity.rating,
       invalidation: item.invalidation,
       validationSummary: item.validationSummary,
       observationWindow: item.observationWindow,
       rationale: item.rationale,
       eventCoverage
-    };
+    }];
   });
 }
 
@@ -249,6 +331,7 @@ async function runBatch(batch, index, tempRoot, options) {
   const recommendationPath = path.join(liveDir, "recommendations.json");
   const analysisPath = path.join(liveDir, "analysis.json");
   const trackingPath = path.join(liveDir, "tracking.json");
+  const marketSnapshotPath = path.join(rawDir, "market-snapshot.json");
   const hasOutputs = (await fileExists(recommendationPath)) && (await fileExists(analysisPath)) && (await fileExists(trackingPath));
 
   if (!hasOutputs) {
@@ -263,6 +346,8 @@ async function runBatch(batch, index, tempRoot, options) {
   const recommendations = JSON.parse(await readFile(recommendationPath, "utf8"));
   const analysis = JSON.parse(await readFile(analysisPath, "utf8"));
   const tracking = JSON.parse(await readFile(trackingPath, "utf8"));
+  const marketSnapshot = JSON.parse(await readFile(marketSnapshotPath, "utf8"));
+  const marketItemsByTicker = new Map((marketSnapshot.items ?? []).map((item) => [item.ticker, item]));
 
   if (!options.skipIngest) {
     try {
@@ -272,7 +357,14 @@ async function runBatch(batch, index, tempRoot, options) {
     }
   }
 
-  const candidates = scoreCandidates(recommendations, analysis, index);
+  const thresholds = {
+    minPrice: normalizePositiveNumber(process.env.SWING_RADAR_RANKING_MIN_PRICE ?? "2000", 2000),
+    minAverageTurnover20: normalizePositiveNumber(
+      process.env.SWING_RADAR_RANKING_MIN_AVG_TURNOVER20 ?? "1500000000",
+      1_500_000_000
+    )
+  };
+  const candidates = scoreCandidates(recommendations, analysis, marketItemsByTicker, index, thresholds);
 
   return {
     ok: true,

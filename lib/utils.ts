@@ -13,6 +13,10 @@ export function formatScore(value: number, max = 100) {
   return `${value.toFixed(0)} / ${max}`;
 }
 
+export function formatPrice(value: number) {
+  return `${new Intl.NumberFormat("ko-KR").format(Math.round(value))}원`;
+}
+
 export function formatDateTimeShort(value: string) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) {

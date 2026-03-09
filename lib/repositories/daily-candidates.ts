@@ -9,6 +9,9 @@ export type DailyCandidate = {
   signalTone: "긍정" | "중립" | "주의";
   score: number;
   candidateScore: number;
+  currentPrice?: number | null;
+  averageTurnover20?: number | null;
+  liquidityRating?: string;
   invalidation: string;
   validationSummary: string;
   observationWindow: string;

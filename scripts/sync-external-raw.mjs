@@ -216,6 +216,8 @@ async function main() {
         qualityScore: item.qualityScore,
         averageVolume20: item.averageVolume20,
         latestVolume: item.latestVolume,
+        averageTurnover20: item.averageTurnover20,
+        latestTurnover: item.latestTurnover,
         momentumPercent: item.momentumPercent,
         riskStatus: item.riskStatus,
         eventRiskStatus: event.eventRiskStatus,
