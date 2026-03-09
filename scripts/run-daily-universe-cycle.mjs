@@ -19,13 +19,14 @@ function printHelp() {
 SWING-RADAR daily universe refresh
 
 Usage:
-  node scripts/run-daily-universe-cycle.mjs [--markets <KOSPI,KOSDAQ>] [--limit <number>] [--batch-size <number>] [--concurrency <number>] [--skip-ingest] [--sync-symbols]
+  node scripts/run-daily-universe-cycle.mjs [--markets <KOSPI,KOSDAQ>] [--limit <number>] [--batch-size <number>] [--concurrency <number>] [--top-candidates <number>] [--skip-ingest] [--sync-symbols]
 
 Environment:
   SWING_RADAR_UNIVERSE_MARKETS
   SWING_RADAR_UNIVERSE_LIMIT
   SWING_RADAR_UNIVERSE_BATCH_SIZE
   SWING_RADAR_UNIVERSE_CONCURRENCY
+  SWING_RADAR_UNIVERSE_TOP_CANDIDATES
   SWING_RADAR_SYMBOL_SYNC_ENABLED=true
   SWING_RADAR_DAILY_CYCLE_REPORT_PATH
 `);
@@ -37,6 +38,7 @@ function parseArgs(argv) {
     limit: process.env.SWING_RADAR_UNIVERSE_LIMIT ?? "0",
     batchSize: process.env.SWING_RADAR_UNIVERSE_BATCH_SIZE ?? "20",
     concurrency: process.env.SWING_RADAR_UNIVERSE_CONCURRENCY ?? "1",
+    topCandidates: process.env.SWING_RADAR_UNIVERSE_TOP_CANDIDATES ?? "100",
     skipIngest: false,
     syncSymbols: process.env.SWING_RADAR_SYMBOL_SYNC_ENABLED === "true",
     help: false
@@ -65,6 +67,11 @@ function parseArgs(argv) {
     }
     if (arg === "--concurrency") {
       options.concurrency = argv[index + 1] ?? options.concurrency;
+      index += 1;
+      continue;
+    }
+    if (arg === "--top-candidates") {
+      options.topCandidates = argv[index + 1] ?? options.topCandidates;
       index += 1;
       continue;
     }
@@ -194,7 +201,7 @@ async function main() {
       watchlistArgs.push("--limit", options.limit);
     }
 
-    const scanArgs = ["--batch-size", options.batchSize, "--concurrency", options.concurrency];
+    const scanArgs = ["--batch-size", options.batchSize, "--concurrency", options.concurrency, "--top-candidates", options.topCandidates];
     if (options.skipIngest) {
       scanArgs.push("--skip-ingest");
     }

@@ -172,6 +172,10 @@ function pickOfficialField(row, candidates) {
   return "";
 }
 
+function uniqueAliases(values) {
+  return [...new Set(values.map((value) => value.trim()).filter(Boolean))];
+}
+
 function toNormalizedCsv(rows, options) {
   const lines = [["ticker", "company", "market", "sector", "dartCorpCode", "aliases"].join(",")];
 
@@ -282,7 +286,10 @@ async function fetchFromOfficialKrxApi(options, outputPath) {
           market,
           sector: pickOfficialField(row, ["SECT_TP_NM", "sectTpNm", "sect_tp_nm", "SECUGRP_NM"]) || "미분류",
           dartCorpCode: "",
-          aliases: ""
+          aliases: uniqueAliases([
+            pickOfficialField(row, ["ISU_ENG_NM", "isuEngNm", "isu_eng_nm"]),
+            pickOfficialField(row, ["ISU_NM", "isuNm", "isu_nm"])
+          ]).join("|")
         })).filter((row) => row.ticker && row.company);
 
         if (marketRows.length > 0) {

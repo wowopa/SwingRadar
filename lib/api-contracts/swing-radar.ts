@@ -57,6 +57,8 @@ export interface FailedUniverseBatchDto {
 export interface DailyScanSummaryDto {
   generatedAt: string;
   batchSize: number;
+  concurrency?: number;
+  topCandidatesLimit?: number;
   totalTickers: number;
   totalBatches: number;
   succeededBatches: number;

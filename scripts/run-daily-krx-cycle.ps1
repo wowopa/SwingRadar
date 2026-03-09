@@ -5,6 +5,7 @@ param(
   [string]$Markets = "KOSPI,KOSDAQ",
   [int]$BatchSize = 20,
   [int]$Concurrency = 4,
+  [int]$TopCandidates = 100,
   [int]$MaintenanceEtaMinutes = 90,
   [switch]$SkipIngest,
   [switch]$SkipExternalRefresh,
@@ -20,6 +21,7 @@ $env:SWING_RADAR_SYMBOL_SYNC_KRX = "true"
 $env:SWING_RADAR_KRX_DOWNLOADS_DIR = $DownloadsDir
 $env:SWING_RADAR_KRX_DOWNLOAD_PATTERN = $DownloadPattern
 $env:SWING_RADAR_UNIVERSE_CONCURRENCY = "$Concurrency"
+$env:SWING_RADAR_UNIVERSE_TOP_CANDIDATES = "$TopCandidates"
 
 $npmPath = "C:\Program Files\nodejs\npm.cmd"
 
@@ -35,7 +37,7 @@ try {
     }
   }
 
-  $npmArgs = @("run", "universe:daily", "--", "--sync-symbols", "--markets", $Markets, "--batch-size", "$BatchSize", "--concurrency", "$Concurrency")
+  $npmArgs = @("run", "universe:daily", "--", "--sync-symbols", "--markets", $Markets, "--batch-size", "$BatchSize", "--concurrency", "$Concurrency", "--top-candidates", "$TopCandidates")
 
   if ($SkipIngest.IsPresent) {
     $npmArgs += "--skip-ingest"

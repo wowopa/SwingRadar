@@ -61,6 +61,8 @@ export async function listRecommendations(query: RecommendationsQuery): Promise<
       ? {
           generatedAt: dailyCandidates.generatedAt,
           batchSize: dailyCandidates.batchSize,
+          concurrency: dailyCandidates.concurrency,
+          topCandidatesLimit: dailyCandidates.topCandidatesLimit,
           totalTickers: dailyCandidates.totalTickers,
           totalBatches: dailyCandidates.totalBatches,
           succeededBatches: dailyCandidates.succeededBatches,

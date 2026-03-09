@@ -78,7 +78,10 @@ export function DailyCandidatesPanel({ dailyScan }: { dailyScan: DailyScanSummar
               ))}
             </div>
             <div className="rounded-2xl border border-border/70 bg-secondary/25 p-4 text-sm text-muted-foreground">
-              총 {dailyScan.totalTickers}개 종목 중 상위 {dailyScan.topCandidates.length}개 후보를 자동 정렬했습니다.
+              총 {dailyScan.totalTickers}개 종목 중 상위 {dailyScan.topCandidates.length}개 후보를 자동 정렬했습니다.{" "}
+              <Link className="font-medium text-primary hover:text-primary/80" href="/ranking">
+                전체 랭킹 보기
+              </Link>
             </div>
           </>
         ) : (

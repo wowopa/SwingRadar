@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 
 const navItems = [
   { href: "/recommendations", label: "관찰 종목", icon: Sparkles },
+  { href: "/ranking", label: "추천 랭킹", icon: ChartNoAxesCombined },
   { href: "/tracking", label: "추적", icon: ChartNoAxesCombined },
   { href: "/guide", label: "이용 가이드", icon: ShieldCheck },
   { href: "/analysis/005930", label: "분석 예시", icon: ArrowUpRight }

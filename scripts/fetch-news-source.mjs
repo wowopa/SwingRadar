@@ -25,6 +25,9 @@ Environment:
   SWING_RADAR_NAVER_CLIENT_SECRET=<secret>
   SWING_RADAR_NEWS_API_KEY=<gnews-key>
   SWING_RADAR_NEWS_MAX_ITEMS=5
+  SWING_RADAR_NEWS_CONCURRENCY=4
+  SWING_RADAR_NEWS_LIVE_FETCH_TICKER_LIMIT=200
+  SWING_RADAR_NEWS_PRIORITY_WINDOW=100
   SWING_RADAR_NEWS_RETRY_LIMIT=2
 `);
 }
@@ -79,18 +82,71 @@ function resolveProviderOrder() {
   return ["naver", "gnews"];
 }
 
+async function readDailyCandidates(paths) {
+  try {
+    return await readJson(path.join(projectRoot, "data", "universe", "daily-candidates.json"));
+  } catch {
+    return null;
+  }
+}
+
+function prioritizeWatchlist(watchlist, dailyCandidates) {
+  const rankedTickers = new Map((dailyCandidates?.topCandidates ?? []).map((item, index) => [item.ticker, index]));
+
+  return [...watchlist].sort((left, right) => {
+    const leftRank = rankedTickers.get(left.ticker) ?? Number.MAX_SAFE_INTEGER;
+    const rightRank = rankedTickers.get(right.ticker) ?? Number.MAX_SAFE_INTEGER;
+
+    if (leftRank !== rightRank) {
+      return leftRank - rightRank;
+    }
+
+    return left.ticker.localeCompare(right.ticker);
+  });
+}
+
+function normalizePositiveInteger(value, fallback) {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed) || parsed < 1) {
+    return fallback;
+  }
+
+  return Math.floor(parsed);
+}
+
+async function runEntriesInParallel(entries, concurrency, action) {
+  const results = new Array(entries.length);
+  let nextIndex = 0;
+
+  async function worker() {
+    while (true) {
+      const currentIndex = nextIndex;
+      nextIndex += 1;
+
+      if (currentIndex >= entries.length) {
+        return;
+      }
+
+      results[currentIndex] = await action(entries[currentIndex], currentIndex);
+    }
+  }
+
+  await Promise.all(Array.from({ length: Math.min(concurrency, Math.max(entries.length, 1)) }, () => worker()));
+  return results;
+}
+
 function getNewsFetchReportPath() {
   return process.env.SWING_RADAR_NEWS_FETCH_REPORT_PATH
     ? path.resolve(process.env.SWING_RADAR_NEWS_FETCH_REPORT_PATH)
     : path.join(projectRoot, "data", "ops", "latest-news-fetch.json");
 }
 
-async function fetchFromProvider(provider, entry, maxItems, telemetry) {
+async function fetchFromProvider(provider, entry, maxItems, telemetry, options = {}) {
   if (provider === "naver") {
-    return fetchNaverNews(entry, maxItems, telemetry);
+    return fetchNaverNews(entry, maxItems, telemetry, options);
   }
   if (provider === "gnews") {
-    return fetchGNews(entry, maxItems, telemetry);
+    return fetchGNews(entry, maxItems, telemetry, options);
   }
   return [];
 }
@@ -108,18 +164,30 @@ async function main() {
   }
 
   const watchlist = await loadWatchlist(paths.configDir);
+  const dailyCandidates = await readDailyCandidates(paths);
   const maxItems = Number(process.env.SWING_RADAR_NEWS_MAX_ITEMS ?? "5");
+  const concurrency = normalizePositiveInteger(process.env.SWING_RADAR_NEWS_CONCURRENCY ?? "4", 4);
+  const liveFetchTickerLimit = normalizePositiveInteger(
+    process.env.SWING_RADAR_NEWS_LIVE_FETCH_TICKER_LIMIT ?? "200",
+    200
+  );
   const providerOrder = resolveProviderOrder();
   const cache = await readOptionalJson(path.resolve(args.cacheFile));
+  const prioritizedWatchlist = prioritizeWatchlist(watchlist, dailyCandidates);
   const items = [];
   let providerUsed = "file";
   let anyLiveFetch = false;
+  const priorityWindow = normalizePositiveInteger(process.env.SWING_RADAR_NEWS_PRIORITY_WINDOW ?? "100", 100);
   const report = {
     startedAt: new Date().toISOString(),
     completedAt: null,
     providerOrder,
     requestedProvider: process.env.SWING_RADAR_NEWS_PROVIDER ?? "auto",
     totalTickers: watchlist.length,
+    prioritizedTickers: Math.min(prioritizedWatchlist.length, liveFetchTickerLimit),
+    liveFetchTickerLimit,
+    priorityWindow,
+    concurrency,
     liveFetchTickers: 0,
     cacheFallbackTickers: 0,
     fileFallbackTickers: 0,
@@ -128,44 +196,50 @@ async function main() {
     totalItems: 0
   };
 
-  for (const entry of watchlist) {
+  await runEntriesInParallel(prioritizedWatchlist, concurrency, async (entry, index) => {
     let fetched = [];
+    const useLiveFetch = index < liveFetchTickerLimit;
+    const priorityRank = index < priorityWindow ? index + 1 : null;
 
-    for (const provider of providerOrder) {
-      try {
-        fetched = await fetchFromProvider(provider, entry, maxItems, {
-          onRetry: ({ status, delayMs, attempt, url }) => {
-            report.retryCount += 1;
-            report.providerFailures.push({
-              ticker: entry.ticker,
-              provider,
-              status,
-              attempt,
-              delayMs,
-              url,
-              phase: "retry"
-            });
+    if (useLiveFetch) {
+      for (const provider of providerOrder) {
+        try {
+          fetched = await fetchFromProvider(provider, entry, maxItems, {
+            onRetry: ({ status, delayMs, attempt, url }) => {
+              report.retryCount += 1;
+              report.providerFailures.push({
+                ticker: entry.ticker,
+                provider,
+                status,
+                attempt,
+                delayMs,
+                url,
+                phase: "retry"
+              });
+            }
+          }, {
+            priorityRank
+          });
+
+          if (fetched.length) {
+            providerUsed = provider;
+            anyLiveFetch = true;
+            report.liveFetchTickers += 1;
+            break;
           }
-        });
-
-        if (fetched.length) {
-          providerUsed = provider;
-          anyLiveFetch = true;
-          report.liveFetchTickers += 1;
-          break;
+        } catch (error) {
+          report.providerFailures.push({
+            ticker: entry.ticker,
+            provider,
+            status: error && typeof error === "object" && "status" in error ? error.status : null,
+            attempt: null,
+            delayMs: null,
+            url: error && typeof error === "object" && "url" in error ? error.url : null,
+            phase: "failed",
+            message: error instanceof Error ? error.message : String(error)
+          });
+          console.warn(`News fetch failed for ${entry.ticker} via ${provider}: ${error instanceof Error ? error.message : error}`);
         }
-      } catch (error) {
-        report.providerFailures.push({
-          ticker: entry.ticker,
-          provider,
-          status: error && typeof error === "object" && "status" in error ? error.status : null,
-          attempt: null,
-          delayMs: null,
-          url: error && typeof error === "object" && "url" in error ? error.url : null,
-          phase: "failed",
-          message: error instanceof Error ? error.message : String(error)
-        });
-        console.warn(`News fetch failed for ${entry.ticker} via ${provider}: ${error instanceof Error ? error.message : error}`);
       }
     }
 
@@ -185,7 +259,7 @@ async function main() {
     }
 
     items.push(...fetched.slice(0, maxItems));
-  }
+  });
 
   const normalizedItems = dedupeArticles(items);
   report.totalItems = normalizedItems.length;

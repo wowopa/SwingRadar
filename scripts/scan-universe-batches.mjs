@@ -20,7 +20,7 @@ function printHelp() {
 SWING-RADAR universe batch scan
 
 Usage:
-  node scripts/scan-universe-batches.mjs [--watchlist <path>] [--batch-size <number>] [--concurrency <number>] [--limit <number>] [--output <path>] [--skip-ingest] [--news-provider <naver|gnews|file>] [--disclosure-provider <dart|file>]
+  node scripts/scan-universe-batches.mjs [--watchlist <path>] [--batch-size <number>] [--concurrency <number>] [--top-candidates <number>] [--limit <number>] [--output <path>] [--skip-ingest] [--news-provider <naver|gnews|file>] [--disclosure-provider <dart|file>]
 `);
 }
 
@@ -29,6 +29,7 @@ function parseArgs(argv) {
     watchlist: path.join(projectRoot, "data", "config", "watchlist.universe.json"),
     batchSize: Number(process.env.SWING_RADAR_UNIVERSE_BATCH_SIZE ?? "20"),
     concurrency: Number(process.env.SWING_RADAR_UNIVERSE_CONCURRENCY ?? "1"),
+    topCandidatesLimit: Number(process.env.SWING_RADAR_UNIVERSE_TOP_CANDIDATES ?? "100"),
     limit: 0,
     output: path.join(projectRoot, "data", "universe", "daily-candidates.json"),
     skipIngest: false,
@@ -54,6 +55,11 @@ function parseArgs(argv) {
     }
     if (arg === "--concurrency") {
       options.concurrency = Number(argv[index + 1] ?? options.concurrency);
+      index += 1;
+      continue;
+    }
+    if (arg === "--top-candidates") {
+      options.topCandidatesLimit = Number(argv[index + 1] ?? options.topCandidatesLimit);
       index += 1;
       continue;
     }
@@ -94,6 +100,32 @@ function normalizePositiveInteger(value, fallback) {
   }
 
   return Math.floor(parsed);
+}
+
+function getHistoryPath() {
+  return process.env.SWING_RADAR_DAILY_CANDIDATES_HISTORY_FILE
+    ? path.resolve(process.env.SWING_RADAR_DAILY_CANDIDATES_HISTORY_FILE)
+    : path.join(projectRoot, "data", "universe", "daily-candidates-history.json");
+}
+
+async function readHistory() {
+  try {
+    return JSON.parse((await readFile(getHistoryPath(), "utf8")).replace(/^\uFEFF/, ""));
+  } catch {
+    return { runs: [] };
+  }
+}
+
+async function writeHistory(entry) {
+  const history = await readHistory();
+  const maxRuns = normalizePositiveInteger(process.env.SWING_RADAR_DAILY_CANDIDATES_HISTORY_LIMIT ?? "180", 180);
+  const runs = [entry, ...(history.runs ?? [])]
+    .filter((item, index, array) => array.findIndex((candidate) => candidate.generatedAt === item.generatedAt) === index)
+    .slice(0, maxRuns);
+
+  const historyPath = getHistoryPath();
+  await mkdir(path.dirname(historyPath), { recursive: true });
+  await writeFile(historyPath, `${JSON.stringify({ runs }, null, 2)}\n`, "utf8");
 }
 
 function chunk(items, size) {
@@ -315,21 +347,32 @@ async function main() {
     }
 
     const sorted = [...allCandidates].sort((left, right) => right.candidateScore - left.candidateScore);
+    const topCandidatesLimit = normalizePositiveInteger(options.topCandidatesLimit, 100);
     const document = {
       generatedAt: new Date().toISOString(),
       batchSize: options.batchSize,
       concurrency: normalizePositiveInteger(options.concurrency, 1),
+      topCandidatesLimit,
       totalTickers: entries.length,
       totalBatches: batches.length,
       succeededBatches: batchSummaries.length,
       failedBatches,
-      topCandidates: sorted.slice(0, 30),
+      topCandidates: sorted.slice(0, topCandidatesLimit),
       batchSummaries
     };
 
     const outputPath = path.resolve(options.output);
     await mkdir(path.dirname(outputPath), { recursive: true });
     await writeFile(outputPath, `${JSON.stringify(document, null, 2)}\n`, "utf8");
+    await writeHistory({
+      generatedAt: document.generatedAt,
+      totalTickers: document.totalTickers,
+      totalBatches: document.totalBatches,
+      succeededBatches: document.succeededBatches,
+      failedBatchCount: document.failedBatches.length,
+      topCandidatesLimit: document.topCandidatesLimit,
+      topCandidates: document.topCandidates
+    });
 
     console.log("Universe batch scan completed.");
     console.log(`- watchlist: ${watchlistPath}`);
@@ -337,6 +380,7 @@ async function main() {
     console.log(`- totalBatches: ${batches.length}`);
     console.log(`- succeededBatches: ${batchSummaries.length}`);
     console.log(`- failedBatches: ${failedBatches.length}`);
+    console.log(`- topCandidates: ${document.topCandidates.length}`);
     console.log(`- output: ${outputPath}`);
   } finally {
     await rm(tempRoot, { recursive: true, force: true });

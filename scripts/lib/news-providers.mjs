@@ -23,6 +23,10 @@ function includesAny(text, keywords = []) {
   return keywords.some((keyword) => text.includes(normalizeText(keyword)));
 }
 
+function unique(values) {
+  return [...new Set(values.map((value) => value.trim()).filter(Boolean))];
+}
+
 function canonicalHeadline(value) {
   return normalizeText(value).replace(/[^\p{L}\p{N}]+/gu, " ").trim();
 }
@@ -65,6 +69,48 @@ function isPreferredDomain(host, entry) {
 
 function isBlockedDomain(host, entry) {
   return (entry.blockedDomains ?? []).some((domain) => host.includes(normalizeText(domain)));
+}
+
+function getPriorityBand(priorityRank) {
+  if (!priorityRank || priorityRank < 1) {
+    return "default";
+  }
+  if (priorityRank <= 20) {
+    return "top20";
+  }
+  if (priorityRank <= 100) {
+    return "top100";
+  }
+  return "default";
+}
+
+function getEnglishAliases(entry) {
+  return (entry.aliases ?? []).filter((value) => /[a-z]/i.test(value));
+}
+
+export function buildNewsQueries(entry, provider, options = {}) {
+  const priorityBand = getPriorityBand(options.priorityRank ?? null);
+  const queries = unique([
+    entry.newsQuery,
+    ...(entry.newsQueriesKr ?? []),
+    ...(provider === "gnews" ? entry.newsQueries ?? [] : []),
+    ...(priorityBand !== "default" ? getEnglishAliases(entry) : [])
+  ]);
+
+  if (priorityBand === "top100") {
+    queries.push(`"${entry.company}" 주가`, `"${entry.company}" 실적`);
+  }
+
+  if (priorityBand === "top20") {
+    queries.push(
+      `"${entry.company}" 전망`,
+      `"${entry.company}" 수급`,
+      `"${entry.company}" 목표주가`
+    );
+  }
+
+  const maxQueryCount = priorityBand === "top20" ? 8 : priorityBand === "top100" ? 6 : 4;
+  return unique(queries).slice(0, maxQueryCount);
 }
 
 export function matchesFilters(article, entry) {
@@ -110,11 +156,12 @@ export function matchesFilters(article, entry) {
   return true;
 }
 
-function scoreArticle(article, entry) {
+function scoreArticle(article, entry, options = {}) {
   const title = normalizeText(article.headline ?? "");
   const summary = normalizeText(article.summary ?? "");
   const body = `${title} ${summary}`.trim();
   const host = hostnameOf(article.url ?? "");
+  const priorityBand = getPriorityBand(options.priorityRank ?? null);
   let score = 0;
 
   for (const keyword of entry.requiredKeywords ?? []) {
@@ -129,9 +176,12 @@ function scoreArticle(article, entry) {
     else if (body.includes(normalizedKeyword)) score += 2;
   }
 
-  if (title.includes(normalizeText(entry.company))) score += 5;
-  if (isPreferredDomain(host, entry)) score += 8;
+  if (title.includes(normalizeText(entry.company))) score += priorityBand === "default" ? 5 : 7;
+  if (isPreferredDomain(host, entry)) score += priorityBand === "default" ? 8 : 12;
   if (host.endsWith(".kr") || host.endsWith(".co.kr")) score += 3;
+  if (priorityBand !== "default" && /(hankyung\.com|mk\.co\.kr|edaily\.co\.kr|yna\.co\.kr|sedaily\.com|newsis\.com)/i.test(host)) {
+    score += 5;
+  }
   if (article.source === "naver-search") score += 2;
   if (isBlockedDomain(host, entry)) score -= 20;
   if (!(host.endsWith(".kr") || host.endsWith(".co.kr"))) score -= 6;
@@ -149,10 +199,10 @@ export function dedupeArticles(items) {
   });
 }
 
-function rankArticles(items, entry, maxItems) {
+function rankArticles(items, entry, maxItems, options = {}) {
   const minScore = entry.minArticleScore ?? 10;
   return dedupeArticles(items)
-    .map((item) => ({ item, score: scoreArticle(item, entry) }))
+    .map((item) => ({ item, score: scoreArticle(item, entry, options) }))
     .filter((entryScore) => entryScore.score >= minScore)
     .sort((left, right) => {
       if (right.score !== left.score) return right.score - left.score;
@@ -199,15 +249,17 @@ async function fetchJsonWithRetry(url, options, telemetry = {}) {
   throw new Error(`Request failed after retries: ${url}`);
 }
 
-export async function fetchNaverNews(entry, maxItems, telemetry) {
+export async function fetchNaverNews(entry, maxItems, telemetry, options = {}) {
   const clientId = process.env.SWING_RADAR_NAVER_CLIENT_ID;
   const clientSecret = process.env.SWING_RADAR_NAVER_CLIENT_SECRET;
   if (!clientId || !clientSecret) {
     throw new Error("SWING_RADAR_NAVER_CLIENT_ID and SWING_RADAR_NAVER_CLIENT_SECRET are required for Naver provider");
   }
 
-  const queries = Array.from(new Set([entry.newsQuery, ...(entry.newsQueriesKr ?? []), ...(entry.newsQueries ?? [])].filter(Boolean)));
-  const perQueryLimit = Math.max(5, Math.ceil(maxItems / Math.max(queries.length, 1)) + 5);
+  const queries = buildNewsQueries(entry, "naver", options);
+  const priorityBand = getPriorityBand(options.priorityRank ?? null);
+  const effectiveMaxItems = priorityBand === "top20" ? Math.max(maxItems, 8) : priorityBand === "top100" ? Math.max(maxItems, 6) : maxItems;
+  const perQueryLimit = Math.max(priorityBand === "default" ? 5 : 7, Math.ceil(effectiveMaxItems / Math.max(queries.length, 1)) + 5);
   const items = [];
 
   for (const query of queries) {
@@ -244,17 +296,19 @@ export async function fetchNaverNews(entry, maxItems, telemetry) {
     }
   }
 
-  return rankArticles(items, entry, maxItems);
+  return rankArticles(items, entry, effectiveMaxItems, options).slice(0, effectiveMaxItems);
 }
 
-export async function fetchGNews(entry, maxItems, telemetry) {
+export async function fetchGNews(entry, maxItems, telemetry, options = {}) {
   const apiKey = process.env.SWING_RADAR_NEWS_API_KEY;
   if (!apiKey) {
     throw new Error("SWING_RADAR_NEWS_API_KEY is required for GNews provider");
   }
 
-  const queries = Array.from(new Set([entry.newsQuery, ...(entry.newsQueries ?? [])].filter(Boolean)));
-  const perQueryLimit = Math.max(3, Math.ceil(maxItems / Math.max(queries.length, 1)) + 2);
+  const queries = buildNewsQueries(entry, "gnews", options);
+  const priorityBand = getPriorityBand(options.priorityRank ?? null);
+  const effectiveMaxItems = priorityBand === "top20" ? Math.max(maxItems, 8) : priorityBand === "top100" ? Math.max(maxItems, 6) : maxItems;
+  const perQueryLimit = Math.max(priorityBand === "default" ? 3 : 5, Math.ceil(effectiveMaxItems / Math.max(queries.length, 1)) + 2);
   const items = [];
 
   for (const query of queries) {
@@ -289,5 +343,5 @@ export async function fetchGNews(entry, maxItems, telemetry) {
     }
   }
 
-  return rankArticles(items, entry, maxItems);
+  return rankArticles(items, entry, effectiveMaxItems, options).slice(0, effectiveMaxItems);
 }

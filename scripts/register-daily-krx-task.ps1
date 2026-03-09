@@ -7,6 +7,7 @@ param(
   [string]$Markets = "",
   [int]$BatchSize = 0,
   [int]$Concurrency = 0,
+  [int]$TopCandidates = 0,
   [string]$StartTime = "",
   [int]$MaintenanceEtaMinutes = 0,
   [switch]$SkipIngest
@@ -23,6 +24,7 @@ $DownloadPattern = Resolve-SwingRadarSetting -Name "SWING_RADAR_KRX_DOWNLOAD_PAT
 $Markets = Resolve-SwingRadarSetting -Name "SWING_RADAR_UNIVERSE_MARKETS" -ExplicitValue $Markets -DefaultValue "KOSPI,KOSDAQ" -EnvConfig $envConfig
 $BatchSize = Resolve-SwingRadarIntSetting -Name "SWING_RADAR_UNIVERSE_BATCH_SIZE" -ExplicitValue $BatchSize -DefaultValue 20 -EnvConfig $envConfig
 $Concurrency = Resolve-SwingRadarIntSetting -Name "SWING_RADAR_UNIVERSE_CONCURRENCY" -ExplicitValue $Concurrency -DefaultValue 4 -EnvConfig $envConfig
+$TopCandidates = Resolve-SwingRadarIntSetting -Name "SWING_RADAR_UNIVERSE_TOP_CANDIDATES" -ExplicitValue $TopCandidates -DefaultValue 100 -EnvConfig $envConfig
 $StartTime = Resolve-SwingRadarSetting -Name "SWING_RADAR_DAILY_TASK_START_TIME" -ExplicitValue $StartTime -DefaultValue "18:10" -EnvConfig $envConfig
 $MaintenanceEtaMinutes = Resolve-SwingRadarIntSetting -Name "SWING_RADAR_MAINTENANCE_ETA_MINUTES" -ExplicitValue $MaintenanceEtaMinutes -DefaultValue 90 -EnvConfig $envConfig
 
@@ -41,6 +43,7 @@ $taskCommand = @(
   "-Markets", "`"$Markets`"",
   "-BatchSize", "$BatchSize",
   "-Concurrency", "$Concurrency",
+  "-TopCandidates", "$TopCandidates",
   "-MaintenanceEtaMinutes", "$MaintenanceEtaMinutes"
 )
 

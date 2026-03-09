@@ -108,6 +108,14 @@ function normalizeRegion(market) {
   return market === "KOSPI" || market === "KOSDAQ" ? "KR" : "US";
 }
 
+async function readOptionalJson(filePath, fallback) {
+  try {
+    return JSON.parse((await readFile(filePath, "utf8")).replace(/^\uFEFF/, ""));
+  } catch {
+    return fallback;
+  }
+}
+
 function toRecord(headers, values) {
   return Object.fromEntries(headers.map((header, index) => [header, values[index] ?? ""]));
 }
@@ -118,6 +126,22 @@ async function loadExisting(outputPath) {
   } catch {
     return [];
   }
+}
+
+async function loadLiveReadyTickers() {
+  const dataDir = process.env.SWING_RADAR_DATA_DIR
+    ? path.resolve(process.env.SWING_RADAR_DATA_DIR)
+    : path.join(projectRoot, "data", "live");
+
+  const [recommendations, analysis] = await Promise.all([
+    readOptionalJson(path.join(dataDir, "recommendations.json"), { items: [] }),
+    readOptionalJson(path.join(dataDir, "analysis.json"), { items: [] })
+  ]);
+
+  return new Set([
+    ...(recommendations.items ?? []).map((item) => item.ticker).filter(Boolean),
+    ...(analysis.items ?? []).map((item) => item.ticker).filter(Boolean)
+  ]);
 }
 
 async function main() {
@@ -131,18 +155,21 @@ async function main() {
   const lines = content.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
   const headers = parseCsvLine(lines[0]);
   const items = lines.slice(1).map((line) => toRecord(headers, parseCsvLine(line)));
+  const liveReadyTickers = await loadLiveReadyTickers();
 
   const imported = items.map((item) => {
     const market = normalizeMarket(item.market);
+    const ticker = item.ticker.trim().toUpperCase();
+    const aliases = item.aliases ? item.aliases.split("|").map((value) => value.trim()).filter(Boolean) : [];
 
     return {
-      ticker: item.ticker.trim().toUpperCase(),
+      ticker,
       company: item.company.trim(),
-      aliases: item.aliases ? item.aliases.split("|").map((value) => value.trim()).filter(Boolean) : [],
+      aliases,
       sector: item.sector || "미분류",
       market,
       region: normalizeRegion(market),
-      status: options.status,
+      status: liveReadyTickers.has(ticker) ? "ready" : options.status,
       dartCorpCode: item.dartCorpCode || undefined
     };
   });
