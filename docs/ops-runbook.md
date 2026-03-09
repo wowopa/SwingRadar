@@ -34,6 +34,11 @@ Ops environment check:
 powershell -ExecutionPolicy Bypass -File C:\Users\eugen\Documents\SwingRadar\scripts\test-ops-environment.ps1 -DownloadsDir C:\Users\eugen\Downloads -DownloadPattern KRX
 ```
 
+One-step scheduler setup:
+```powershell
+powershell -ExecutionPolicy Bypass -File C:\Users\eugen\Documents\SwingRadar\scripts\setup-ops-scheduler.ps1
+```
+
 Snapshot file health:
 ```powershell
 & "C:\Program Files\nodejs\npm.cmd" run ops:check
@@ -136,6 +141,11 @@ Register both tasks together:
 powershell -ExecutionPolicy Bypass -File C:\Users\eugen\Documents\SwingRadar\scripts\register-ops-scheduler.ps1 -DailyStartTime 18:10 -AutoHealStartTime 18:40 -DownloadsDir C:\Users\eugen\Downloads -DownloadPattern KRX
 ```
 
+Check resolved settings without registering:
+```powershell
+powershell -ExecutionPolicy Bypass -File C:\Users\eugen\Documents\SwingRadar\scripts\setup-ops-scheduler.ps1 -CheckOnly
+```
+
 Check auto-heal task status:
 ```powershell
 powershell -ExecutionPolicy Bypass -File C:\Users\eugen\Documents\SwingRadar\scripts\get-auto-heal-task-status.ps1
@@ -202,7 +212,15 @@ Refresh one watchlist symbol manually:
 4. Review `/api/admin/status` and `/api/admin/audit` after any recovery attempt.
 5. Escalate when repeated critical freshness warnings continue after recovery.
 
-## 11. Production minimum checklist
+## 11. Recommended machine setup
+1. Fill `.env.local` with the production database URL, admin token, Naver key, and DART key.
+2. Set `SWING_RADAR_DAILY_TASK_NAME`, `SWING_RADAR_AUTO_HEAL_TASK_NAME`, `SWING_RADAR_DAILY_TASK_START_TIME`, and `SWING_RADAR_AUTO_HEAL_START_TIME` if you want machine-specific names or times.
+3. Put the latest KRX CSV in `SWING_RADAR_KRX_DOWNLOADS_DIR`, or update `SWING_RADAR_KRX_DOWNLOAD_PATTERN` to match the real file name.
+4. Run `scripts\test-ops-environment.ps1` and confirm the summary is `READY`.
+5. Run `scripts\setup-ops-scheduler.ps1` once to register both tasks with the resolved settings.
+6. Confirm the tasks with `scripts\get-ops-scheduler-status.ps1`.
+
+## 12. Production minimum checklist
 - `SWING_RADAR_ADMIN_TOKEN` must be a long random secret.
 - `SWING_RADAR_DATA_PROVIDER=postgres` in production.
 - `SWING_RADAR_FALLBACK_PROVIDER=file` only if you intentionally want degraded read mode.

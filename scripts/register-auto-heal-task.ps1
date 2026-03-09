@@ -1,13 +1,20 @@
 param(
-  [string]$TaskName = "SwingRadarAutoHeal",
+  [string]$TaskName = "",
   [string]$ProjectRoot = "C:\Users\eugen\Documents\SwingRadar",
-  [string]$StartTime = "18:40",
+  [string]$EnvFile = ".env.local",
+  [string]$StartTime = "",
   [switch]$SkipIngest,
   [switch]$SkipDailyCycle,
   [switch]$Force
 )
 
 $ErrorActionPreference = "Stop"
+
+. "$PSScriptRoot\lib\ops-env.ps1"
+
+$envConfig = Get-SwingRadarEnvConfig -ProjectRoot $ProjectRoot -EnvFile $EnvFile
+$TaskName = Resolve-SwingRadarSetting -Name "SWING_RADAR_AUTO_HEAL_TASK_NAME" -ExplicitValue $TaskName -DefaultValue "SwingRadarAutoHeal" -EnvConfig $envConfig
+$StartTime = Resolve-SwingRadarSetting -Name "SWING_RADAR_AUTO_HEAL_START_TIME" -ExplicitValue $StartTime -DefaultValue "18:40" -EnvConfig $envConfig
 
 $scriptPath = Join-Path $ProjectRoot "scripts\run-ops-auto-heal.ps1"
 if (-not (Test-Path $scriptPath)) {
