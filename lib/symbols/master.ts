@@ -1,4 +1,5 @@
 import symbolMasterData from "@/data/config/symbol-master.json";
+import symbolReplacementsData from "@/data/config/symbol-replacements.json";
 
 export type SymbolSearchStatus = "ready" | "pending";
 export type SymbolMarket = "KOSPI" | "KOSDAQ" | "NYSE" | "NASDAQ" | "AMEX";
@@ -62,6 +63,12 @@ type RawSymbolMasterItem = {
   dartCorpCode?: string;
 };
 
+type RawSymbolReplacementItem = {
+  ticker: string;
+  replacementTicker: string;
+  reason?: string;
+};
+
 function unique(values: string[]) {
   return [...new Set(values.map((value) => value.trim()).filter(Boolean))];
 }
@@ -102,7 +109,34 @@ function hydrateSymbol(item: RawSymbolMasterItem): SymbolMasterItem {
   };
 }
 
-export const symbolMaster: SymbolMasterItem[] = (symbolMasterData as RawSymbolMasterItem[]).map(hydrateSymbol);
+const replacementItems = symbolReplacementsData as RawSymbolReplacementItem[];
+const replacementTickerMap = new Map(replacementItems.map((item) => [item.ticker, item.replacementTicker]));
+const replacementAliasesByTicker = replacementItems.reduce<Map<string, string[]>>((map, item) => {
+  const current = map.get(item.replacementTicker) ?? [];
+  current.push(item.ticker);
+  map.set(item.replacementTicker, current);
+  return map;
+}, new Map());
+
+export const symbolMaster: SymbolMasterItem[] = (symbolMasterData as RawSymbolMasterItem[])
+  .filter((item) => !replacementTickerMap.has(item.ticker))
+  .map((item) => {
+    const hydrated = hydrateSymbol(item);
+    const legacyTickers = replacementAliasesByTicker.get(hydrated.ticker) ?? [];
+
+    if (!legacyTickers.length) {
+      return hydrated;
+    }
+
+    const aliases = unique([...hydrated.aliases, ...legacyTickers]);
+    const requiredKeywords = unique([...hydrated.requiredKeywords, ...legacyTickers]);
+
+    return {
+      ...hydrated,
+      aliases,
+      requiredKeywords
+    };
+  });
 
 export function buildMarketSymbol(ticker: string, market: SymbolMarket) {
   const suffixByMarket: Record<SymbolMarket, string> = {
@@ -256,8 +290,13 @@ export function getReadySymbols() {
   return symbolMaster.filter((item) => item.status === "ready");
 }
 
+export function resolveTicker(ticker: string) {
+  return replacementTickerMap.get(ticker) ?? ticker;
+}
+
 export function getSymbolByTicker(ticker: string) {
-  return symbolMaster.find((item) => item.ticker === ticker);
+  const resolvedTicker = resolveTicker(ticker);
+  return symbolMaster.find((item) => item.ticker === resolvedTicker);
 }
 
 export function getSymbolSuggestionByTicker(ticker: string) {

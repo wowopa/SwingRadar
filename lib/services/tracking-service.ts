@@ -1,14 +1,21 @@
 import type { TrackingResponseDto } from "@/lib/api-contracts/swing-radar";
 import { getDataProvider } from "@/lib/providers";
 import type { TrackingQuery } from "@/lib/server/query-schemas";
+import { resolveTicker } from "@/lib/symbols/master";
 
 export async function getTrackingSnapshot(query: TrackingQuery): Promise<TrackingResponseDto> {
   const source = await getDataProvider().getTracking();
   let history = [...source.history];
 
   if (query.ticker) {
-    const ticker = query.ticker.toLowerCase();
-    history = history.filter((item) => item.ticker.toLowerCase().includes(ticker) || item.company.toLowerCase().includes(ticker));
+    const normalizedTicker = query.ticker.toLowerCase();
+    const resolvedTicker = resolveTicker(query.ticker).toLowerCase();
+    history = history.filter(
+      (item) =>
+        item.ticker.toLowerCase().includes(normalizedTicker) ||
+        item.ticker.toLowerCase().includes(resolvedTicker) ||
+        item.company.toLowerCase().includes(normalizedTicker)
+    );
   }
 
   if (query.result) {

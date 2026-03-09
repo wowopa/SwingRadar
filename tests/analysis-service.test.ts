@@ -186,4 +186,53 @@ describe("analysis resolver", () => {
     expect(result.newsImpact).toEqual([]);
     expect(result.dataQuality).toEqual([]);
   });
+
+  it("resolves legacy tickers to the current analysis symbol", async () => {
+    mocks.getAnalysis.mockResolvedValue({
+      generatedAt: "2026-03-09T08:00:00.000Z",
+      items: [
+        {
+          ticker: "068270",
+          company: "셀트리온",
+          signalTone: "중립",
+          score: 61.5,
+          headline: "resolved",
+          invalidation: "100,000원 아래",
+          analysisSummary: [],
+          keyLevels: [],
+          technicalIndicators: {
+            sma20: null,
+            sma60: null,
+            ema20: null,
+            rsi14: null,
+            macd: null,
+            macdSignal: null,
+            macdHistogram: null,
+            bollingerUpper: null,
+            bollingerMiddle: null,
+            bollingerLower: null,
+            volumeRatio20: null
+          },
+          chartSeries: [],
+          decisionNotes: [],
+          scoreBreakdown: [],
+          scenarios: [],
+          riskChecklist: [],
+          newsImpact: [],
+          dataQuality: []
+        }
+      ]
+    });
+    mocks.getRecommendations.mockResolvedValue({
+      generatedAt: "2026-03-09T08:00:00.000Z",
+      items: [],
+      dailyScan: null
+    });
+    mocks.getDailyCandidates.mockResolvedValue(null);
+
+    const result = await getTickerAnalysis("091990", {});
+
+    expect(result.ticker).toBe("068270");
+    expect(result.headline).toBe("resolved");
+  });
 });

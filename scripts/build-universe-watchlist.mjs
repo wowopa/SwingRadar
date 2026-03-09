@@ -112,7 +112,17 @@ async function main() {
   const inputPath = path.resolve(options.input);
   const outputPath = path.resolve(options.output);
   const master = JSON.parse((await readFile(inputPath, "utf8")).replace(/^\uFEFF/, ""));
-  const filtered = master.filter((item) => options.markets.includes(item.market));
+  const replacementPath = path.join(projectRoot, "data", "config", "symbol-replacements.json");
+  let replacementTickers = new Set();
+
+  try {
+    const replacements = JSON.parse((await readFile(replacementPath, "utf8")).replace(/^\uFEFF/, ""));
+    replacementTickers = new Set((replacements ?? []).map((item) => item?.ticker).filter(Boolean));
+  } catch {
+    replacementTickers = new Set();
+  }
+
+  const filtered = master.filter((item) => options.markets.includes(item.market) && !replacementTickers.has(item.ticker));
   const sliced = options.limit > 0 ? filtered.slice(0, options.limit) : filtered;
 
   const document = {

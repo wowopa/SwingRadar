@@ -39,4 +39,21 @@ describe("getTrackingSnapshot", () => {
     expect(result.history).toHaveLength(1);
     expect(Object.keys(result.details)).toEqual(["h1"]);
   });
+
+  it("matches legacy tickers by their replacement symbol", async () => {
+    getTrackingMock.mockResolvedValue({
+      generatedAt: "2026-03-08T00:00:00.000Z",
+      history: [
+        { id: "h3", ticker: "068270", company: "셀트리온", signalDate: "2026-03-02", signalTone: "중립", entryScore: 61, result: "진행중", mfe: 2, mae: -1, holdingDays: 4 }
+      ],
+      details: {
+        h3: { historyId: "h3", summary: "s3", invalidationReview: "i3", afterActionReview: "a3", reviewChecklist: [], metrics: [], chartSnapshot: [], historicalNews: [], scoreLog: [] }
+      }
+    });
+
+    const result = await getTrackingSnapshot({ ticker: "091990" });
+
+    expect(result.history.map((item) => item.ticker)).toEqual(["068270"]);
+    expect(Object.keys(result.details)).toEqual(["h3"]);
+  });
 });

@@ -23,10 +23,14 @@ Environment:
   SWING_RADAR_KRX_SOURCE_URL
   SWING_RADAR_KRX_DOWNLOADS_DIR
   SWING_RADAR_KRX_DOWNLOAD_PATTERN
+  SWING_RADAR_KRX_API_PROVIDER=official | generic
+  SWING_RADAR_KRX_API_BASE_URL=https://data-dbg.krx.co.kr/svc/apis
   SWING_RADAR_KRX_API_URL
   SWING_RADAR_KRX_API_KEY
-  SWING_RADAR_KRX_API_AUTH_HEADER
-  SWING_RADAR_KRX_API_METHOD
+  SWING_RADAR_KRX_API_AUTH_HEADER=AUTH_KEY
+  SWING_RADAR_KRX_API_METHOD=GET
+  SWING_RADAR_KRX_API_BAS_DD=YYYYMMDD
+  SWING_RADAR_KRX_API_MARKETS=KOSPI,KOSDAQ
   SWING_RADAR_KRX_API_RESPONSE_TYPE=csv | json
   SWING_RADAR_KRX_API_DATA_PATH=data
   SWING_RADAR_KRX_API_FIELD_TICKER=ticker
@@ -43,10 +47,17 @@ function parseArgs(argv) {
     sourceUrl: process.env.SWING_RADAR_KRX_SOURCE_URL,
     downloadsDir: process.env.SWING_RADAR_KRX_DOWNLOADS_DIR,
     pattern: process.env.SWING_RADAR_KRX_DOWNLOAD_PATTERN ?? "KRX",
+    apiProvider: process.env.SWING_RADAR_KRX_API_PROVIDER ?? "official",
+    apiBaseUrl: process.env.SWING_RADAR_KRX_API_BASE_URL ?? "https://data-dbg.krx.co.kr/svc/apis",
     apiUrl: process.env.SWING_RADAR_KRX_API_URL,
     apiKey: process.env.SWING_RADAR_KRX_API_KEY,
-    apiAuthHeader: process.env.SWING_RADAR_KRX_API_AUTH_HEADER ?? "Authorization",
+    apiAuthHeader: process.env.SWING_RADAR_KRX_API_AUTH_HEADER ?? "AUTH_KEY",
     apiMethod: process.env.SWING_RADAR_KRX_API_METHOD ?? "GET",
+    apiBasDd: process.env.SWING_RADAR_KRX_API_BAS_DD,
+    apiMarkets: (process.env.SWING_RADAR_KRX_API_MARKETS ?? "KOSPI,KOSDAQ")
+      .split(",")
+      .map((value) => value.trim())
+      .filter(Boolean),
     apiResponseType: process.env.SWING_RADAR_KRX_API_RESPONSE_TYPE ?? "csv",
     apiDataPath: process.env.SWING_RADAR_KRX_API_DATA_PATH ?? "data",
     apiTickerField: process.env.SWING_RADAR_KRX_API_FIELD_TICKER ?? "ticker",
@@ -92,7 +103,7 @@ function parseArgs(argv) {
   }
 
   if (!options.help && !options.fetchMode) {
-    if (options.apiUrl) {
+    if (options.apiUrl || options.apiKey) {
       options.fetchMode = "api";
     } else if (options.sourceUrl) {
       options.fetchMode = "url";
@@ -122,6 +133,45 @@ function escapeCsv(value) {
   return /[",\n]/.test(text) ? `"${text}"` : text;
 }
 
+function formatDate(date) {
+  const year = date.getFullYear();
+  const month = `${date.getMonth() + 1}`.padStart(2, "0");
+  const day = `${date.getDate()}`.padStart(2, "0");
+  return `${year}${month}${day}`;
+}
+
+function buildOfficialDateCandidates(configuredDate) {
+  if (configuredDate) {
+    return [configuredDate];
+  }
+
+  const dates = [];
+  const cursor = new Date();
+
+  for (let index = 1; index <= 10; index += 1) {
+    cursor.setDate(cursor.getDate() - 1);
+    const weekday = cursor.getDay();
+    if (weekday === 0 || weekday === 6) {
+      continue;
+    }
+
+    dates.push(formatDate(cursor));
+  }
+
+  return dates;
+}
+
+function pickOfficialField(row, candidates) {
+  for (const key of candidates) {
+    const value = row?.[key];
+    if (typeof value === "string" && value.trim()) {
+      return value.trim();
+    }
+  }
+
+  return "";
+}
+
 function toNormalizedCsv(rows, options) {
   const lines = [["ticker", "company", "market", "sector", "dartCorpCode", "aliases"].join(",")];
 
@@ -136,6 +186,20 @@ function toNormalizedCsv(rows, options) {
     ].map(escapeCsv);
 
     lines.push(record.join(","));
+  }
+
+  return `${lines.join("\n")}\n`;
+}
+
+function toNormalizedCsvFromOfficialRows(rows) {
+  const lines = [["ticker", "company", "market", "sector", "dartCorpCode", "aliases"].join(",")];
+
+  for (const row of rows) {
+    lines.push(
+      [row.ticker, row.company, row.market, row.sector, row.dartCorpCode ?? "", row.aliases ?? ""]
+        .map(escapeCsv)
+        .join(",")
+    );
   }
 
   return `${lines.join("\n")}\n`;
@@ -156,7 +220,94 @@ async function fetchFromUrl(sourceUrl, outputPath) {
   await writeFile(outputPath, content, "utf8");
 }
 
+function resolveOfficialRows(payload) {
+  const rows =
+    payload?.OutBlock_1 ??
+    payload?.output?.OutBlock_1 ??
+    payload?.response?.OutBlock_1 ??
+    payload?.data ??
+    [];
+
+  return Array.isArray(rows) ? rows : [];
+}
+
+async function fetchOfficialEndpoint(url, options) {
+  const response = await fetch(url, {
+    method: options.apiMethod,
+    headers: {
+      "user-agent": "swing-radar-krx-fetch/1.0",
+      [options.apiAuthHeader]: options.apiKey
+    }
+  });
+
+  const text = await response.text();
+  if (!response.ok) {
+    throw new Error(`Failed to fetch KRX API payload: ${response.status} ${response.statusText} (${url}) ${text.slice(0, 180)}`);
+  }
+
+  return JSON.parse(text);
+}
+
+async function fetchFromOfficialKrxApi(options, outputPath) {
+  if (!options.apiKey) {
+    throw new Error("SWING_RADAR_KRX_API_KEY is required for API mode");
+  }
+
+  const endpointByMarket = {
+    KOSPI: "sto/stk_isu_base_info",
+    KOSDAQ: "sto/ksq_isu_base_info"
+  };
+  const dates = buildOfficialDateCandidates(options.apiBasDd);
+  const rows = [];
+
+  for (const market of options.apiMarkets) {
+    const endpoint = endpointByMarket[market];
+    if (!endpoint) {
+      throw new Error(`Unsupported official KRX market: ${market}`);
+    }
+
+    let marketRows = [];
+    let lastError;
+
+    for (const basDd of dates) {
+      const url = new URL(`${options.apiBaseUrl.replace(/\/$/, "")}/${endpoint}`);
+      url.searchParams.set("basDd", basDd);
+
+      try {
+        const payload = await fetchOfficialEndpoint(url, options);
+        marketRows = resolveOfficialRows(payload).map((row) => ({
+          ticker: pickOfficialField(row, ["ISU_SRT_CD", "isuSrtCd", "isu_srt_cd"]),
+          company: pickOfficialField(row, ["ISU_ABBRV", "isuAbbrv", "isu_abbrv", "ISU_NM"]),
+          market,
+          sector: pickOfficialField(row, ["SECT_TP_NM", "sectTpNm", "sect_tp_nm", "SECUGRP_NM"]) || "미분류",
+          dartCorpCode: "",
+          aliases: ""
+        })).filter((row) => row.ticker && row.company);
+
+        if (marketRows.length > 0) {
+          break;
+        }
+      } catch (error) {
+        lastError = error;
+      }
+    }
+
+    if (!marketRows.length) {
+      throw lastError ?? new Error(`No KRX rows returned for ${market}`);
+    }
+
+    rows.push(...marketRows);
+  }
+
+  await writeFile(outputPath, toNormalizedCsvFromOfficialRows(rows), "utf8");
+}
+
 async function fetchFromApi(options, outputPath) {
+  if (options.apiProvider === "official") {
+    await fetchFromOfficialKrxApi(options, outputPath);
+    return;
+  }
+
   if (!options.apiUrl) {
     throw new Error("SWING_RADAR_KRX_API_URL is required for API mode");
   }
@@ -226,8 +377,7 @@ async function main() {
   if (options.fetchMode === "api") {
     await fetchFromApi(options, outputPath);
     console.log("KRX source fetched from API.");
-    console.log(`- apiUrl: ${options.apiUrl}`);
-    console.log(`- responseType: ${options.apiResponseType}`);
+    console.log(`- provider: ${options.apiProvider}`);
     console.log(`- output: ${outputPath}`);
     return;
   }

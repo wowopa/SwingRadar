@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { getFeaturedSymbols, searchSymbols } from "@/lib/symbols/master";
+import { getFeaturedSymbols, getSymbolByTicker, searchSymbols } from "@/lib/symbols/master";
 
 describe("symbol search", () => {
   it("matches by ticker, aliases, and keyword fields", () => {
@@ -19,5 +19,10 @@ describe("symbol search", () => {
     const featured = getFeaturedSymbols(5);
 
     expect(featured[0]?.status).toBe("ready");
+  });
+
+  it("resolves replaced legacy tickers to the current symbol", () => {
+    expect(searchSymbols("091990", 5)[0]?.ticker).toBe("068270");
+    expect(getSymbolByTicker("091990")?.ticker).toBe("068270");
   });
 });
