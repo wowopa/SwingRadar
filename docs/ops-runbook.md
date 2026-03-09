@@ -115,12 +115,49 @@ Remove the task:
 powershell -ExecutionPolicy Bypass -File C:\Users\eugen\Documents\SwingRadar\scripts\unregister-daily-krx-task.ps1
 ```
 
+## 7. Auto-heal scheduler
+Run auto-heal manually:
+```powershell
+powershell -ExecutionPolicy Bypass -File C:\Users\eugen\Documents\SwingRadar\scripts\run-ops-auto-heal.ps1
+```
+
+Register the auto-heal task:
+```powershell
+powershell -ExecutionPolicy Bypass -File C:\Users\eugen\Documents\SwingRadar\scripts\register-auto-heal-task.ps1 -StartTime 18:40
+```
+
+Register both tasks together:
+```powershell
+powershell -ExecutionPolicy Bypass -File C:\Users\eugen\Documents\SwingRadar\scripts\register-ops-scheduler.ps1 -DailyStartTime 18:10 -AutoHealStartTime 18:40 -DownloadsDir C:\Users\eugen\Downloads -DownloadPattern KRX
+```
+
+Check auto-heal task status:
+```powershell
+powershell -ExecutionPolicy Bypass -File C:\Users\eugen\Documents\SwingRadar\scripts\get-auto-heal-task-status.ps1
+```
+
+Remove the auto-heal task:
+```powershell
+powershell -ExecutionPolicy Bypass -File C:\Users\eugen\Documents\SwingRadar\scripts\unregister-auto-heal-task.ps1
+```
+
+Remove both scheduler tasks:
+```powershell
+powershell -ExecutionPolicy Bypass -File C:\Users\eugen\Documents\SwingRadar\scripts\unregister-ops-scheduler.ps1
+```
+
+Check both scheduler tasks at once:
+```powershell
+powershell -ExecutionPolicy Bypass -File C:\Users\eugen\Documents\SwingRadar\scripts\get-ops-scheduler-status.ps1
+```
+
 The full cycle runs in this order.
 1. symbol master sync
 2. universe watchlist build
 3. universe batch scan
 4. optional ingest
 5. daily candidate refresh
+6. incident-based auto heal
 
 Daily cycle report:
 - Default report path: `data/ops/latest-daily-cycle.json`
@@ -130,7 +167,7 @@ Auto-heal report:
 - Default report path: `data/ops/latest-auto-heal.json`
 - Override with `SWING_RADAR_AUTO_HEAL_REPORT_PATH`
 
-## 7. Admin backoffice
+## 8. Admin backoffice
 - Open `/admin`.
 - Enter `SWING_RADAR_ADMIN_TOKEN`.
 - Use the status tab to inspect freshness, audit logs, and universe scan summaries.
@@ -143,23 +180,24 @@ Refresh one watchlist symbol manually:
 & "C:\Program Files\nodejs\npm.cmd" run watchlist:refresh:entry -- --ticker 005930
 ```
 
-## 8. Observability checks
+## 9. Observability checks
 - Every API route emits one JSON log line to stdout with `route`, `status`, `durationMs`, and `requestId`.
 - Health route reports snapshot freshness and actual provider usage.
 - `ops:check` reports snapshot freshness from file outputs even when the app server is not running.
 - `ops:heal` reruns the external refresh pipeline and optional Postgres ingest when stale snapshots are detected.
 - `ops:auto-heal` watches the latest health and daily cycle reports, then reruns recovery actions when stale snapshots or universe cycle failures are detected.
 - If PostgreSQL fails and fallback is used, `provider_fallback` is written to `audit_logs`.
+- Every auto-heal execution writes `auto_heal_run` to `audit_logs` when PostgreSQL is configured.
 - Successful or failed admin actions are stored in `audit_logs` when PostgreSQL is configured.
 
-## 9. Suggested scheduler flow
+## 10. Suggested scheduler flow
 1. Run `npm run ops:check` on a short interval for passive monitoring.
 2. Run `npm run universe:daily -- --sync-symbols --markets KOSPI,KOSDAQ --batch-size 20` after market close.
 3. Run `npm run ops:auto-heal` after `ops:check` and after the daily cycle to retry safe recovery actions automatically.
 4. Review `/api/admin/status` and `/api/admin/audit` after any recovery attempt.
 5. Escalate when repeated critical freshness warnings continue after recovery.
 
-## 10. Production minimum checklist
+## 11. Production minimum checklist
 - `SWING_RADAR_ADMIN_TOKEN` must be a long random secret.
 - `SWING_RADAR_DATA_PROVIDER=postgres` in production.
 - `SWING_RADAR_FALLBACK_PROVIDER=file` only if you intentionally want degraded read mode.
