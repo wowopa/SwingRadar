@@ -56,6 +56,11 @@ Register both daily tasks:
 powershell -ExecutionPolicy Bypass -File C:\Users\eugen\Documents\SwingRadar\scripts\setup-ops-scheduler.ps1
 ```
 
+One-step deployment and scheduler setup:
+```powershell
+powershell -ExecutionPolicy Bypass -File C:\Users\eugen\Documents\SwingRadar\scripts\deploy-production-stack.ps1 -SetupScheduler
+```
+
 ## 6. Daily backup
 Create a PostgreSQL backup:
 ```powershell
@@ -87,3 +92,6 @@ curl http://localhost:3000/api/health
 
 ## 9. CI baseline
 GitHub Actions runs `npm ci` and `npm run build` on push and pull request through `.github/workflows/ci.yml`.
+
+## 10. Cutover checklist
+Use the short execution checklist in [production-cutover-checklist.md](/C:/Users/eugen/Documents/SwingRadar/docs/production-cutover-checklist.md) when moving the real service online.

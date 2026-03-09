@@ -35,7 +35,7 @@ Current tooling:
 - `scripts/unregister-ops-scheduler.ps1`
 
 ## Priority 3: Deployment and runtime operations
-Status: Not started
+Status: In progress
 
 Tasks:
 - Define the production host shape: app process, database, scheduler, and secrets.
@@ -43,6 +43,11 @@ Tasks:
 - Add backup and restore steps for PostgreSQL.
 - Define restart and rollback procedures.
 - Decide where structured logs and audit events are retained.
+
+Done in this pass:
+- Docker Compose now mounts persistent app data and backup paths.
+- Added deploy, backup, restore, and stack-check PowerShell scripts.
+- Added a short production cutover checklist.
 
 ## Priority 4: User-facing trust signals
 Status: In progress
