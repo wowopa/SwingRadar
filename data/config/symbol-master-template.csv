@@ -4,3 +4,4 @@ ticker,company,market,sector,dartCorpCode,aliases
 068270,셀트리온,KOSPI,제약/바이오,00413046,Celltrion
 AAPL,Apple Inc,NASDAQ,Consumer Electronics,,Apple
 MSFT,Microsoft Corp,NASDAQ,Software,,Microsoft
+NVDA,NVIDIA Corp,NASDAQ,Semiconductors,,NVIDIA

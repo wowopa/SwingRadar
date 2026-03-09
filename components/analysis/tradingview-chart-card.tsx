@@ -2,14 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
-import {
-  createChart,
-  ColorType,
-  HistogramSeries,
-  LineSeries,
-  type IChartApi,
-  type LineStyle
-} from "lightweight-charts";
+import { ColorType, HistogramSeries, LineSeries, createChart, type IChartApi, type LineStyle } from "lightweight-charts";
 import { ExternalLink } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -36,6 +29,38 @@ function toChartValue(value: number | null) {
   return value === null ? undefined : value;
 }
 
+function createBaseChart(container: HTMLDivElement, height: number, leftScale = false) {
+  return createChart(container, {
+    width: container.clientWidth,
+    height,
+    layout: {
+      background: { type: ColorType.Solid, color: "#ffffff" },
+      textColor: "#475569",
+      attributionLogo: false
+    },
+    grid: {
+      vertLines: { color: "rgba(148, 163, 184, 0.14)" },
+      horzLines: { color: "rgba(148, 163, 184, 0.14)" }
+    },
+    rightPriceScale: {
+      borderColor: "rgba(148, 163, 184, 0.22)"
+    },
+    leftPriceScale: {
+      visible: leftScale,
+      borderColor: "rgba(148, 163, 184, 0.12)"
+    },
+    timeScale: {
+      borderColor: "rgba(148, 163, 184, 0.22)",
+      timeVisible: true,
+      secondsVisible: false
+    },
+    crosshair: {
+      vertLine: { color: "rgba(33, 128, 105, 0.25)" },
+      horzLine: { color: "rgba(33, 128, 105, 0.25)" }
+    }
+  });
+}
+
 export function TradingViewChartCard({
   symbol,
   company,
@@ -45,8 +70,10 @@ export function TradingViewChartCard({
   company: string;
   points: AnalysisChartPoint[];
 }) {
-  const chartContainerRef = useRef<HTMLDivElement | null>(null);
-  const chartRef = useRef<IChartApi | null>(null);
+  const priceContainerRef = useRef<HTMLDivElement | null>(null);
+  const rsiContainerRef = useRef<HTMLDivElement | null>(null);
+  const macdContainerRef = useRef<HTMLDivElement | null>(null);
+  const chartsRef = useRef<IChartApi[]>([]);
   const [range, setRange] = useState<RangeKey>("3M");
   const tradingViewUrl = symbol ? `https://www.tradingview.com/chart/?symbol=${encodeURIComponent(symbol)}` : null;
   const availableRanges = useMemo(() => {
@@ -69,83 +96,81 @@ export function TradingViewChartCard({
   }, [availableRanges, range]);
 
   useEffect(() => {
-    if (!chartContainerRef.current || !chartPoints.length) {
+    if (!priceContainerRef.current || !rsiContainerRef.current || !macdContainerRef.current || !chartPoints.length) {
       return;
     }
 
-    chartRef.current?.remove();
+    chartsRef.current.forEach((chart) => chart.remove());
+    chartsRef.current = [];
 
-    const container = chartContainerRef.current;
-    const chart = createChart(container, {
-      width: container.clientWidth,
-      height: 420,
-      layout: {
-        background: { type: ColorType.Solid, color: "#ffffff" },
-        textColor: "#475569",
-        attributionLogo: false
-      },
-      grid: {
-        vertLines: { color: "rgba(148, 163, 184, 0.14)" },
-        horzLines: { color: "rgba(148, 163, 184, 0.14)" }
-      },
-      rightPriceScale: {
-        borderColor: "rgba(148, 163, 184, 0.22)"
-      },
-      leftPriceScale: {
-        visible: true,
-        scaleMargins: {
-          top: 0.78,
-          bottom: 0
-        },
-        borderColor: "rgba(148, 163, 184, 0.12)"
-      },
-      timeScale: {
-        borderColor: "rgba(148, 163, 184, 0.22)",
-        timeVisible: true,
-        secondsVisible: false
-      },
-      crosshair: {
-        vertLine: { color: "rgba(33, 128, 105, 0.25)" },
-        horzLine: { color: "rgba(33, 128, 105, 0.25)" }
-      }
-    });
+    const priceChart = createBaseChart(priceContainerRef.current, 320, true);
+    const rsiChart = createBaseChart(rsiContainerRef.current, 120);
+    const macdChart = createBaseChart(macdContainerRef.current, 140);
 
-    const closeSeries = chart.addSeries(LineSeries, {
+    const priceSeries = priceChart.addSeries(LineSeries, {
       color: "#218069",
       lineWidth: 3,
       priceLineVisible: true,
       lastValueVisible: true
     });
-    const sma20Series = chart.addSeries(LineSeries, {
+    const sma20Series = priceChart.addSeries(LineSeries, {
       color: "#f59e0b",
       lineWidth: 2,
       priceLineVisible: false,
       lastValueVisible: false
     });
-    const sma60Series = chart.addSeries(LineSeries, {
+    const sma60Series = priceChart.addSeries(LineSeries, {
       color: "#6366f1",
       lineWidth: 2,
       priceLineVisible: false,
       lastValueVisible: false
     });
-    const upperBandSeries = chart.addSeries(LineSeries, {
+    const ema20Series = priceChart.addSeries(LineSeries, {
+      color: "#0ea5e9",
+      lineWidth: 2,
+      priceLineVisible: false,
+      lastValueVisible: false
+    });
+    const upperBandSeries = priceChart.addSeries(LineSeries, {
       color: "rgba(251, 113, 133, 0.82)",
       lineWidth: 1,
       lineStyle: 2 as LineStyle,
       priceLineVisible: false,
       lastValueVisible: false
     });
-    const lowerBandSeries = chart.addSeries(LineSeries, {
+    const lowerBandSeries = priceChart.addSeries(LineSeries, {
       color: "rgba(251, 113, 133, 0.82)",
       lineWidth: 1,
       lineStyle: 2 as LineStyle,
       priceLineVisible: false,
       lastValueVisible: false
     });
-    const volumeSeries = chart.addSeries(HistogramSeries, {
+    const volumeSeries = priceChart.addSeries(HistogramSeries, {
       priceScaleId: "left",
       color: "rgba(33, 128, 105, 0.35)",
       priceFormat: { type: "volume" }
+    });
+
+    const rsiSeries = rsiChart.addSeries(LineSeries, {
+      color: "#8b5cf6",
+      lineWidth: 2,
+      priceLineVisible: false,
+      lastValueVisible: false
+    });
+    const macdSeries = macdChart.addSeries(LineSeries, {
+      color: "#1d4ed8",
+      lineWidth: 2,
+      priceLineVisible: false,
+      lastValueVisible: false
+    });
+    const macdSignalSeries = macdChart.addSeries(LineSeries, {
+      color: "#ef4444",
+      lineWidth: 2,
+      priceLineVisible: false,
+      lastValueVisible: false
+    });
+    const macdHistogramSeries = macdChart.addSeries(HistogramSeries, {
+      color: "rgba(33, 128, 105, 0.35)"
     });
 
     const seriesData = chartPoints.map((point, index) => ({
@@ -154,49 +179,65 @@ export function TradingViewChartCard({
       volume: point.volume ?? 0,
       sma20: toChartValue(point.sma20),
       sma60: toChartValue(point.sma60),
+      ema20: toChartValue(point.ema20),
       bollingerUpper: toChartValue(point.bollingerUpper),
-      bollingerLower: toChartValue(point.bollingerLower)
+      bollingerLower: toChartValue(point.bollingerLower),
+      rsi14: toChartValue(point.rsi14),
+      macd: toChartValue(point.macd),
+      macdSignal: toChartValue(point.macdSignal)
     }));
 
-    closeSeries.setData(seriesData.map((point) => ({ time: point.time, value: point.close })));
+    priceSeries.setData(seriesData.map((point) => ({ time: point.time, value: point.close })));
     sma20Series.setData(seriesData.filter((point) => point.sma20 !== undefined).map((point) => ({ time: point.time, value: point.sma20! })));
     sma60Series.setData(seriesData.filter((point) => point.sma60 !== undefined).map((point) => ({ time: point.time, value: point.sma60! })));
-    upperBandSeries.setData(
-      seriesData.filter((point) => point.bollingerUpper !== undefined).map((point) => ({ time: point.time, value: point.bollingerUpper! }))
+    ema20Series.setData(seriesData.filter((point) => point.ema20 !== undefined).map((point) => ({ time: point.time, value: point.ema20! })));
+    upperBandSeries.setData(seriesData.filter((point) => point.bollingerUpper !== undefined).map((point) => ({ time: point.time, value: point.bollingerUpper! })));
+    lowerBandSeries.setData(seriesData.filter((point) => point.bollingerLower !== undefined).map((point) => ({ time: point.time, value: point.bollingerLower! })));
+    volumeSeries.setData(
+      seriesData.map((point, index) => ({
+        time: point.time,
+        value: point.volume,
+        color:
+          index > 0 && point.close < (seriesData[index - 1]?.close ?? point.close)
+            ? "rgba(251, 113, 133, 0.45)"
+            : "rgba(33, 128, 105, 0.35)"
+      }))
     );
-    lowerBandSeries.setData(
-      seriesData.filter((point) => point.bollingerLower !== undefined).map((point) => ({ time: point.time, value: point.bollingerLower! }))
-    );
-    volumeSeries.setData(seriesData.map((point, index) => ({
-      time: point.time,
-      value: point.volume,
-      color:
-        index > 0 && point.close < (seriesData[index - 1]?.close ?? point.close)
-          ? "rgba(251, 113, 133, 0.45)"
-          : "rgba(33, 128, 105, 0.35)"
-    })));
 
-    chart.timeScale().fitContent();
-    chartRef.current = chart;
+    rsiSeries.setData(seriesData.filter((point) => point.rsi14 !== undefined).map((point) => ({ time: point.time, value: point.rsi14! })));
+    macdSeries.setData(seriesData.filter((point) => point.macd !== undefined).map((point) => ({ time: point.time, value: point.macd! })));
+    macdSignalSeries.setData(seriesData.filter((point) => point.macdSignal !== undefined).map((point) => ({ time: point.time, value: point.macdSignal! })));
+    macdHistogramSeries.setData(
+      seriesData
+        .filter((point) => point.macd !== undefined && point.macdSignal !== undefined)
+        .map((point) => ({
+          time: point.time,
+          value: Number(((point.macd ?? 0) - (point.macdSignal ?? 0)).toFixed(1)),
+          color: (point.macd ?? 0) >= (point.macdSignal ?? 0) ? "rgba(33, 128, 105, 0.35)" : "rgba(251, 113, 133, 0.45)"
+        }))
+    );
+
+    priceChart.timeScale().fitContent();
+    rsiChart.timeScale().fitContent();
+    macdChart.timeScale().fitContent();
+    chartsRef.current = [priceChart, rsiChart, macdChart];
 
     const resizeObserver = new ResizeObserver((entries) => {
       const entry = entries[0];
-      if (!entry) {
-        return;
-      }
-
-      chart.applyOptions({
-        width: Math.floor(entry.contentRect.width)
+      if (!entry) return;
+      const width = Math.floor(entry.contentRect.width);
+      chartsRef.current.forEach((chart) => {
+        chart.applyOptions({ width });
+        chart.timeScale().fitContent();
       });
-      chart.timeScale().fitContent();
     });
 
-    resizeObserver.observe(container);
+    resizeObserver.observe(priceContainerRef.current);
 
     return () => {
       resizeObserver.disconnect();
-      chart.remove();
-      chartRef.current = null;
+      chartsRef.current.forEach((chart) => chart.remove());
+      chartsRef.current = [];
     };
   }, [chartPoints]);
 
@@ -207,7 +248,9 @@ export function TradingViewChartCard({
       <CardHeader className="flex flex-row items-center justify-between gap-4">
         <div>
           <CardTitle>가격 차트</CardTitle>
-          <p className="mt-2 text-sm text-muted-foreground">가격, 이동평균선, 볼린저 밴드, 거래량을 한 화면에서 확인합니다.</p>
+          <p className="mt-2 text-sm text-muted-foreground">
+            가격, 이동평균선, 볼린저 밴드, 거래량과 함께 RSI와 MACD까지 같은 화면에서 확인합니다.
+          </p>
         </div>
         {tradingViewUrl ? (
           <Link
@@ -245,25 +288,34 @@ export function TradingViewChartCard({
                 <LegendDot color="#218069" label="종가" />
                 <LegendDot color="#f59e0b" label="20일선" />
                 <LegendDot color="#6366f1" label="60일선" />
+                <LegendDot color="#0ea5e9" label="20EMA" />
                 <LegendDot color="#fb7185" label="볼린저 밴드" />
-                <LegendDot color="rgba(33, 128, 105, 0.5)" label="거래량" />
+                <LegendDot color="#8b5cf6" label="RSI" />
+                <LegendDot color="#1d4ed8" label="MACD" />
               </div>
             </div>
-            <div className="overflow-hidden rounded-[28px] border border-border/70 bg-white p-3">
-              <div ref={chartContainerRef} className="h-[420px] w-full" />
+            <div className="space-y-3 overflow-hidden rounded-[28px] border border-border/70 bg-white p-3">
+              <div ref={priceContainerRef} className="h-[320px] w-full" />
+              <div className="grid gap-3 md:grid-cols-[1fr_1fr]">
+                <div className="rounded-[20px] border border-border/60 bg-background/55 p-2">
+                  <p className="px-2 py-1 text-xs font-medium text-muted-foreground">RSI(14)</p>
+                  <div ref={rsiContainerRef} className="h-[120px] w-full" />
+                </div>
+                <div className="rounded-[20px] border border-border/60 bg-background/55 p-2">
+                  <p className="px-2 py-1 text-xs font-medium text-muted-foreground">MACD</p>
+                  <div ref={macdContainerRef} className="h-[140px] w-full" />
+                </div>
+              </div>
             </div>
             <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
               <MiniMetric label="최근 종가" value={lastPoint ? formatPrice(lastPoint.close) : "계산 중"} />
               <MiniMetric label="20일선" value={lastPoint?.sma20 ? formatPrice(lastPoint.sma20) : "계산 중"} />
-              <MiniMetric label="60일선" value={lastPoint?.sma60 ? formatPrice(lastPoint.sma60) : "계산 중"} />
+              <MiniMetric label="RSI(14)" value={lastPoint?.rsi14 ? lastPoint.rsi14.toFixed(1) : "계산 중"} />
               <MiniMetric
                 label="최근 거래량"
                 value={lastPoint?.volume ? `${lastPoint.volume.toLocaleString()}주` : "계산 중"}
               />
             </div>
-            <p className="text-sm leading-7 text-muted-foreground">
-              {company} 최근 가격 흐름과 20일선, 60일선, 볼린저 밴드, 거래량을 직접 그려 보여줍니다. 이제 페이지 안에서 꼭 봐야 하는 보조지표를 한 번에 확인할 수 있습니다.
-            </p>
           </>
         ) : (
           <div className="rounded-[28px] border border-border/70 bg-secondary/35 p-6 text-sm leading-7 text-muted-foreground">

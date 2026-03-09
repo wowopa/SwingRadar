@@ -67,8 +67,12 @@ export interface AnalysisChartPoint {
   volume: number | null;
   sma20: number | null;
   sma60: number | null;
+  ema20: number | null;
   bollingerUpper: number | null;
   bollingerLower: number | null;
+  rsi14: number | null;
+  macd: number | null;
+  macdSignal: number | null;
 }
 
 export interface TickerAnalysis {

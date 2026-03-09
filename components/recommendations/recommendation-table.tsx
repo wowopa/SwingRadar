@@ -7,6 +7,18 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { formatPercent } from "@/lib/utils";
 import type { Recommendation } from "@/types/recommendation";
 
+function resolveValidationBasis(item: Recommendation) {
+  if (item.validationBasis) {
+    return item.validationBasis;
+  }
+
+  if (item.validation.sampleSize >= 25 && !item.validationSummary.includes("참고") && !item.validationSummary.includes("보수")) {
+    return "실측 기반";
+  }
+
+  return "보수 계산";
+}
+
 export function RecommendationTable({
   items,
   favorites,
@@ -33,6 +45,7 @@ export function RecommendationTable({
                 <th className="pb-3 pr-6">점수</th>
                 <th className="pb-3 pr-6">신호 메모</th>
                 <th className="pb-3 pr-6">표본 수</th>
+                <th className="pb-3 pr-6">검증 근거</th>
                 <th className="pb-3 pr-6">적중률</th>
                 <th className="pb-3 pr-6">평균 수익</th>
                 <th className="pb-3 pr-6">무효화 거리</th>
@@ -66,6 +79,7 @@ export function RecommendationTable({
                       <div className="text-xs text-muted-foreground">{item.observationWindow}</div>
                     </td>
                     <td className="py-4 pr-6">{item.validation.sampleSize}</td>
+                    <td className="py-4 pr-6">{resolveValidationBasis(item)}</td>
                     <td className="py-4 pr-6">{item.validation.hitRate}%</td>
                     <td className="py-4 pr-6">{formatPercent(item.validation.avgReturn)}</td>
                     <td className="py-4 pr-6">{formatPercent(item.invalidationDistance)}</td>

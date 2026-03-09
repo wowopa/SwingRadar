@@ -557,6 +557,42 @@ function buildTechnicalNotes(indicators) {
   return notes;
 }
 
+function calculateTechnicalAdjustment(indicators, item) {
+  let adjustment = 0;
+
+  if (indicators.sma20 !== null && indicators.sma60 !== null) {
+    adjustment += indicators.sma20 >= indicators.sma60 ? 2.4 : -2.1;
+  }
+
+  if (indicators.ema20 !== null && item.currentPrice) {
+    adjustment += item.currentPrice >= indicators.ema20 ? 1.2 : -1.2;
+  }
+
+  if (indicators.rsi14 !== null) {
+    if (indicators.rsi14 >= 48 && indicators.rsi14 <= 68) {
+      adjustment += 1.4;
+    } else if (indicators.rsi14 > 75) {
+      adjustment -= 1.8;
+    } else if (indicators.rsi14 < 32) {
+      adjustment -= 0.8;
+    }
+  }
+
+  if (indicators.macd !== null && indicators.macdSignal !== null) {
+    adjustment += indicators.macd >= indicators.macdSignal ? 1.8 : -1.8;
+  }
+
+  if (indicators.volumeRatio20 !== null) {
+    if (indicators.volumeRatio20 >= 1.2) {
+      adjustment += 1.2;
+    } else if (indicators.volumeRatio20 <= 0.75) {
+      adjustment -= 1.2;
+    }
+  }
+
+  return roundNumber(clamp(adjustment, -6, 6), 1) ?? 0;
+}
+
 function buildChartSeries(item) {
   const closes = item.closes ?? [];
   const volumes = item.volumes ?? [];
@@ -564,23 +600,39 @@ function buildChartSeries(item) {
     return [];
   }
 
-  return closes.slice(-60).map((close, index, series) => {
+  return closes.slice(-120).map((close, index, series) => {
     const history = series.slice(0, index + 1);
     const sma20 = history.length >= 20 ? average(history.slice(-20)) : null;
     const sma60 = history.length >= 60 ? average(history.slice(-60)) : null;
+    const ema20 = calculateEMA(history, 20);
     const stdDev = history.length >= 20 ? calculateStdDev(history.slice(-20)) : null;
     const bollingerMiddle = sma20;
     const bollingerUpper = bollingerMiddle !== null && stdDev !== null ? bollingerMiddle + stdDev * 2 : null;
     const bollingerLower = bollingerMiddle !== null && stdDev !== null ? bollingerMiddle - stdDev * 2 : null;
+    const rsi14 = calculateRSI(history, 14);
+    const ema12 = calculateEMA(history, 12);
+    const ema26 = calculateEMA(history, 26);
+    const macd = ema12 !== null && ema26 !== null ? ema12 - ema26 : null;
+    const macdSeries = Array.from({ length: history.length }, (_, historyIndex) => {
+      const subset = history.slice(0, historyIndex + 1);
+      const subsetEma12 = calculateEMA(subset, 12);
+      const subsetEma26 = calculateEMA(subset, 26);
+      return subsetEma12 !== null && subsetEma26 !== null ? subsetEma12 - subsetEma26 : null;
+    }).filter((value) => value !== null);
+    const macdSignal = macdSeries.length >= 9 ? calculateEMA(macdSeries, 9) : null;
 
     return {
       label: `-${series.length - index - 1}일`,
       close: Math.round(close),
-      volume: volumes.length >= closes.length ? Math.round(volumes.slice(-60)[index] ?? 0) : null,
+      volume: volumes.length >= closes.length ? Math.round(volumes.slice(-120)[index] ?? 0) : null,
       sma20: roundNumber(sma20, 0),
       sma60: roundNumber(sma60, 0),
+      ema20: roundNumber(ema20, 0),
       bollingerUpper: roundNumber(bollingerUpper, 0),
-      bollingerLower: roundNumber(bollingerLower, 0)
+      bollingerLower: roundNumber(bollingerLower, 0),
+      rsi14: roundNumber(rsi14, 1),
+      macd: roundNumber(macd, 1),
+      macdSignal: roundNumber(macdSignal, 1)
     };
   });
 }
@@ -806,12 +858,14 @@ async function main() {
     const tickerNews = newsByTicker.get(item.ticker) ?? [];
     const topNews = tickerNews[0];
     const coverage = summarizeEventCoverage(tickerNews);
-    const score = item.trendScore + item.flowScore + item.volatilityScore + item.eventScore + item.qualityScore;
+    const technicalIndicators = calculateTechnicalIndicators(item);
+    const technicalAdjustment = calculateTechnicalAdjustment(technicalIndicators, item);
+    const baseScore = item.trendScore + item.flowScore + item.volatilityScore + item.eventScore + item.qualityScore;
+    const score = clamp(roundNumber(baseScore + technicalAdjustment, 1) ?? baseScore, 0, 100);
     const invalidationDistance = Number((((item.invalidationPrice - item.currentPrice) / item.currentPrice) * 100).toFixed(1));
     const signalTone = resolveSignalTone(score, invalidationDistance, validationItem.hitRate);
     const label = resolveSignalLabel(score);
     const quality = qualityLabel(item);
-    const technicalIndicators = calculateTechnicalIndicators(item);
 
     recommendations.push({
       ticker: item.ticker,
@@ -854,7 +908,8 @@ async function main() {
         { label: "수급", score: item.flowScore, description: "거래량 / 회전 흐름" },
         { label: "변동성", score: item.volatilityScore, description: "무효화 거리 기준" },
         { label: "이벤트", score: item.eventScore, description: "기사 / 공시 / 큐레이션 반영" },
-        { label: "품질", score: item.qualityScore, description: "데이터 정합성" }
+        { label: "품질", score: item.qualityScore, description: "데이터 정합성" },
+        { label: "기술", score: technicalAdjustment, description: "이동평균 / RSI / MACD / 거래량 반영" }
       ],
       scenarios: buildScenarios(item),
       riskChecklist: [

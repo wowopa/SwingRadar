@@ -12,48 +12,48 @@ function formatNumber(value: number | null, digits = 1) {
 }
 
 function describeRsi(value: number | null) {
-  if (value === null) return "가격 이력이 더 쌓이면 계산됩니다.";
-  if (value >= 70) return "RSI가 높아 단기 과열 가능성을 먼저 봐야 합니다.";
-  if (value <= 35) return "RSI가 낮아 반등 여지도 함께 볼 수 있습니다.";
-  return "RSI는 중립 구간으로, 추세 확인이 더 중요합니다.";
+  if (value === null) return "가격 이력이 더 쌓이면 RSI를 계산합니다.";
+  if (value >= 70) return "RSI가 높아 단기 과열 가능성을 먼저 확인하는 편이 좋습니다.";
+  if (value <= 35) return "RSI가 낮아 반등 여지를 함께 볼 수 있는 구간입니다.";
+  return "RSI는 중립 범위에 있어 가격 흐름 확인이 더 중요합니다.";
 }
 
 function describeMacd(indicators: TechnicalIndicators) {
   if (indicators.macd === null || indicators.macdSignal === null || indicators.macdHistogram === null) {
-    return "MACD는 계산 중입니다.";
+    return "MACD는 아직 계산 중입니다.";
   }
 
   if (indicators.macd > indicators.macdSignal && indicators.macdHistogram > 0) {
-    return "MACD가 시그널선 위에 있어 추세 흐름은 비교적 우호적입니다.";
+    return "MACD가 시그널선 위에 있어 모멘텀이 비교적 좋은 편입니다.";
   }
 
   if (indicators.macd < indicators.macdSignal && indicators.macdHistogram < 0) {
-    return "MACD가 시그널선 아래에 있어 반등 강도 확인이 더 필요합니다.";
+    return "MACD가 시그널선 아래에 있어 반등 강도는 조금 더 확인이 필요합니다.";
   }
 
-  return "MACD가 시그널선 근처에서 방향을 고르는 구간입니다.";
+  return "MACD가 방향을 고르는 구간이라 급하게 판단하지 않는 편이 좋습니다.";
 }
 
 function describeBands(indicators: TechnicalIndicators) {
   if (indicators.bollingerUpper === null || indicators.bollingerLower === null) {
-    return "볼린저 밴드는 계산 중입니다.";
+    return "볼린저 밴드는 아직 계산 중입니다.";
   }
 
-  return `${formatPrice(indicators.bollingerLower)} ~ ${formatPrice(indicators.bollingerUpper)} 구간을 현재 변동성 범위로 봅니다.`;
+  return `${formatPrice(indicators.bollingerLower)}부터 ${formatPrice(indicators.bollingerUpper)}까지를 최근 변동 범위로 보고 있습니다.`;
 }
 
 function describeVolume(value: number | null) {
-  if (value === null) return "거래량 비교값은 계산 중입니다.";
-  if (value >= 1.3) return "거래량이 최근 20일 평균보다 강하게 들어오고 있습니다.";
-  if (value <= 0.8) return "거래량이 평균보다 가벼워 추세 확인이 더 필요합니다.";
+  if (value === null) return "거래량 비교값은 아직 계산 중입니다.";
+  if (value >= 1.3) return "거래량이 최근 20일 평균보다 강해 움직임 확인에 도움이 됩니다.";
+  if (value <= 0.8) return "거래량이 가벼워 추세 지속 여부를 조금 더 보수적으로 보는 편이 좋습니다.";
   return "거래량은 최근 평균 수준입니다.";
 }
 
 function summarizeTrend(indicators: TechnicalIndicators) {
-  if (indicators.sma20 === null || indicators.sma60 === null) return "이동평균선 계산 중";
-  if (indicators.sma20 > indicators.sma60) return "단기선이 중기선 위";
-  if (indicators.sma20 < indicators.sma60) return "단기선이 중기선 아래";
-  return "이동평균선 수렴";
+  if (indicators.sma20 === null || indicators.sma60 === null) return "계산 중";
+  if (indicators.sma20 > indicators.sma60) return "20일선이 60일선 위";
+  if (indicators.sma20 < indicators.sma60) return "20일선이 60일선 아래";
+  return "이동평균선이 맞물림";
 }
 
 export function TechnicalIndicatorsPanel({ indicators }: { indicators: TechnicalIndicators }) {
@@ -68,13 +68,13 @@ export function TechnicalIndicatorsPanel({ indicators }: { indicators: Technical
           <IndicatorPill label="RSI" value={formatNumber(indicators.rsi14)} />
           <IndicatorPill label="MACD" value={formatNumber(indicators.macd)} />
           <IndicatorPill label="볼린저 밴드" value={indicators.bollingerUpper ? "표시 중" : "계산 중"} />
-          <IndicatorPill label="거래량" value={formatNumber(indicators.volumeRatio20, 2)} />
+          <IndicatorPill label="거래량 배수" value={formatNumber(indicators.volumeRatio20, 2)} />
         </div>
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           <IndicatorMetric label="20일선" value={formatPrice(indicators.sma20)} note="단기 평균 가격" />
           <IndicatorMetric label="60일선" value={formatPrice(indicators.sma60)} note="중기 기준선" />
           <IndicatorMetric label="20EMA" value={formatPrice(indicators.ema20)} note="최근 흐름 반영" />
-          <IndicatorMetric label="RSI(14)" value={formatNumber(indicators.rsi14)} note="과열·침체 확인" />
+          <IndicatorMetric label="RSI(14)" value={formatNumber(indicators.rsi14)} note="과열 또는 침체 확인" />
           <IndicatorMetric label="MACD" value={formatNumber(indicators.macd)} note={`시그널 ${formatNumber(indicators.macdSignal)}`} />
           <IndicatorMetric label="거래량 배수" value={formatNumber(indicators.volumeRatio20, 2)} note="20일 평균 대비" />
         </div>

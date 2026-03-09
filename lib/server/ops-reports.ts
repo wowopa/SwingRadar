@@ -152,6 +152,12 @@ export type SnapshotGenerationReport = {
   trackingHistoryCount: number;
   validationFallbackCount: number;
   validationFallbackTickers: string[];
+  validationBasisCounts?: {
+    measured: number;
+    sector: number;
+    pattern: number;
+    heuristic: number;
+  };
 };
 
 export type PostLaunchHistoryEntry = {

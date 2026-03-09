@@ -65,8 +65,12 @@ const analysisItemSchema = z.object({
       volume: z.number().nullable(),
       sma20: z.number().nullable(),
       sma60: z.number().nullable(),
+      ema20: z.number().nullable(),
       bollingerUpper: z.number().nullable(),
-      bollingerLower: z.number().nullable()
+      bollingerLower: z.number().nullable(),
+      rsi14: z.number().nullable(),
+      macd: z.number().nullable(),
+      macdSignal: z.number().nullable()
     })
   ),
   decisionNotes: z.array(z.string()),
