@@ -42,7 +42,7 @@ function filterFallbackItems(items, entry, maxItems) {
 }
 
 async function loadFileNews(paths, entry, maxItems) {
-  const payload = await readJson(path.join(paths.rawDir, "news-snapshot.json"));
+  const payload = await readOptionalJson(path.join(paths.rawDir, "news-snapshot.json"));
   const items = (payload.items ?? [])
     .filter((item) => item.ticker === entry.ticker)
     .map((item) => ({

@@ -169,10 +169,15 @@ async function main() {
     return;
   }
 
-  const market = await readJson(path.resolve(args.marketFile));
-  const news = await readJson(path.resolve(args.newsFile));
+  const market = await readOptionalJson(path.resolve(args.marketFile));
+  const news = await readOptionalJson(path.resolve(args.newsFile));
   const disclosures = await readOptionalJson(path.resolve(args.disclosureFile));
   const curatedNews = await readOptionalJson(path.join(getAdminDir(), "news-curation.json"));
+
+  if (!market?.items?.length) {
+    throw new Error("No market items available for raw sync.");
+  }
+
   const mergedNewsItems = dedupeNewsItems([
     ...buildCuratedNewsItems(curatedNews),
     ...buildDisclosureNewsItems(disclosures),
@@ -217,7 +222,7 @@ async function main() {
   };
 
   const newsSnapshot = {
-    asOf: news.asOf,
+    asOf: news?.asOf ?? market.asOf,
     items: mergedNewsItems.map((item) => ({
       ticker: item.ticker,
       headline: item.headline,

@@ -127,6 +127,28 @@ function scoreCandidates(recommendations, analysis, batchIndex) {
   });
 }
 
+function summarizeBatchWarnings(errors) {
+  if (!errors.length) {
+    return [];
+  }
+
+  return errors.map((item) => {
+    if (item.startsWith("fetch-market-source.mjs:")) {
+      return "일부 종목 시세를 불러오지 못해 후보 수가 줄었습니다.";
+    }
+    if (item.startsWith("fetch-news-source.mjs:")) {
+      return "일부 뉴스 수집이 비어 있어 이벤트 품질이 낮아졌습니다.";
+    }
+    if (item.startsWith("fetch-disclosures-source.mjs:")) {
+      return "일부 공시 수집이 비어 있어 보수적으로 계산했습니다.";
+    }
+    if (item.startsWith("ingest-postgres.mjs:")) {
+      return "Postgres 적재는 실패했지만 배치 산출물은 생성했습니다.";
+    }
+    return item;
+  });
+}
+
 function buildBatchEnv(baseEnv, batchWatchlistPath, rawDir, liveDir, options) {
   return {
     ...baseEnv,
@@ -248,7 +270,7 @@ async function main() {
         generatedAt: result.generatedAt,
         topTicker: result.topTicker,
         trackingRows: result.trackingRows,
-        warnings: result.errors
+        warnings: summarizeBatchWarnings(result.errors)
       });
     }
 

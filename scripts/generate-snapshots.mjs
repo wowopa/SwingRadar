@@ -79,6 +79,17 @@ async function readJson(dir, filename) {
   return JSON.parse(await readFile(path.join(dir, filename), "utf8"));
 }
 
+async function readOptionalJson(dir, filename, fallback) {
+  try {
+    return await readJson(dir, filename);
+  } catch (error) {
+    if (error && typeof error === "object" && "code" in error && error.code === "ENOENT") {
+      return fallback;
+    }
+    throw error;
+  }
+}
+
 function clamp(value, min, max) {
   return Math.min(max, Math.max(min, value));
 }
@@ -425,8 +436,8 @@ async function main() {
   const [market, news, validation, trackingEvents] = await Promise.all([
     readJson(options.rawDir, "market-snapshot.json"),
     readJson(options.rawDir, "news-snapshot.json"),
-    readJson(options.rawDir, "validation-snapshot.json"),
-    readJson(options.rawDir, "tracking-events.json")
+    readOptionalJson(options.rawDir, "validation-snapshot.json", { items: [] }),
+    readOptionalJson(options.rawDir, "tracking-events.json", { items: [] })
   ]);
 
   const generatedAt = market.asOf;

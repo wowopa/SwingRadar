@@ -142,19 +142,31 @@ async function main() {
   const watchlist = await loadWatchlist(paths.configDir);
   const range = process.env.SWING_RADAR_MARKET_LOOKBACK_RANGE ?? "6mo";
   const items = [];
+  const skipped = [];
 
   for (const entry of watchlist) {
-    items.push(await fetchYahooItem(entry, range));
+    try {
+      items.push(await fetchYahooItem(entry, range));
+    } catch (error) {
+      skipped.push({
+        ticker: entry.ticker,
+        company: entry.company,
+        message: error instanceof Error ? error.message : String(error)
+      });
+      console.warn(`Market fetch skipped for ${entry.ticker}: ${error instanceof Error ? error.message : error}`);
+    }
   }
 
   await writeJson(path.resolve(args.outFile), {
     asOf: new Date().toISOString(),
     provider: "yahoo",
-    items
+    items,
+    skipped
   });
 
   console.log("External market fetch completed.");
   console.log(`- items: ${items.length}`);
+  console.log(`- skipped: ${skipped.length}`);
   console.log(`- outFile: ${path.resolve(args.outFile)}`);
 }
 
