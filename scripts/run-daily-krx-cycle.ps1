@@ -4,7 +4,11 @@ param(
   [string]$DownloadPattern = "KRX",
   [string]$Markets = "KOSPI,KOSDAQ",
   [int]$BatchSize = 20,
-  [switch]$SkipIngest
+  [int]$Concurrency = 4,
+  [int]$MaintenanceEtaMinutes = 90,
+  [switch]$SkipIngest,
+  [switch]$SkipExternalRefresh,
+  [switch]$SkipMaintenance
 )
 
 $ErrorActionPreference = "Stop"
@@ -15,11 +19,35 @@ $env:SWING_RADAR_SYMBOL_SYNC_ENABLED = "true"
 $env:SWING_RADAR_SYMBOL_SYNC_KRX = "true"
 $env:SWING_RADAR_KRX_DOWNLOADS_DIR = $DownloadsDir
 $env:SWING_RADAR_KRX_DOWNLOAD_PATTERN = $DownloadPattern
+$env:SWING_RADAR_UNIVERSE_CONCURRENCY = "$Concurrency"
 
-$npmArgs = @("run", "universe:daily", "--", "--sync-symbols", "--markets", $Markets, "--batch-size", "$BatchSize")
+$npmPath = "C:\Program Files\nodejs\npm.cmd"
 
-if ($SkipIngest.IsPresent) {
-  $npmArgs += "--skip-ingest"
+try {
+  if (-not $SkipMaintenance.IsPresent) {
+    & $npmPath "run" "ops:maintenance" "--" "--on" "--eta-minutes" "$MaintenanceEtaMinutes"
+  }
+
+  if (-not $SkipExternalRefresh.IsPresent) {
+    & $npmPath "run" "etl:refresh:external"
+    if ($LASTEXITCODE -ne 0) {
+      throw "External refresh failed."
+    }
+  }
+
+  $npmArgs = @("run", "universe:daily", "--", "--sync-symbols", "--markets", $Markets, "--batch-size", "$BatchSize", "--concurrency", "$Concurrency")
+
+  if ($SkipIngest.IsPresent) {
+    $npmArgs += "--skip-ingest"
+  }
+
+  & $npmPath @npmArgs
+  if ($LASTEXITCODE -ne 0) {
+    throw "Daily universe cycle failed."
+  }
 }
-
-& "C:\Program Files\nodejs\npm.cmd" @npmArgs
+finally {
+  if (-not $SkipMaintenance.IsPresent) {
+    & $npmPath "run" "ops:maintenance" "--" "--off" | Out-Null
+  }
+}

@@ -23,6 +23,7 @@
     "ops:heal": "node scripts/ops-health-check.mjs --auto-recover",
     "ops:auto-heal": "node scripts/auto-heal-operations.mjs",
     "ops:advise": "node scripts/analyze-ops-thresholds.mjs",
+    "ops:maintenance": "node scripts/set-maintenance-mode.mjs",
     "symbols:fetch:krx": "node scripts/fetch-krx-symbols.mjs",
     "symbols:test:krx": "node scripts/test-krx-open-api.mjs",
     "symbols:import": "node scripts/import-symbol-master.mjs",

@@ -8,12 +8,11 @@ import type {
 } from "@/lib/api-contracts/swing-radar";
 import type { SwingRadarDataProvider } from "@/lib/providers/types";
 import { ApiError } from "@/lib/server/api-error";
-
-const dataRoot = process.env.SWING_RADAR_DATA_DIR
-  ? path.resolve(process.env.SWING_RADAR_DATA_DIR)
-  : path.resolve(process.cwd(), "data/live");
+import { getDefaultLiveDataDir, resolveLiveDataDir } from "@/lib/server/live-snapshot-manifest";
 
 async function readJsonFile<T>(filename: string): Promise<T> {
+  const dataRoot = await resolveLiveDataDir();
+
   try {
     const file = await readFile(path.join(dataRoot, filename), "utf8");
     return JSON.parse(file) as T;
@@ -46,7 +45,8 @@ export const fileDataProvider: SwingRadarDataProvider = {
         provider: "fileDataProvider",
         mode: "file"
       },
-      fallbackTriggered: false
+      fallbackTriggered: false,
+      dataRoot: getDefaultLiveDataDir()
     };
   }
 };

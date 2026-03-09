@@ -20,7 +20,7 @@ function printHelp() {
 SWING-RADAR universe batch scan
 
 Usage:
-  node scripts/scan-universe-batches.mjs [--watchlist <path>] [--batch-size <number>] [--limit <number>] [--output <path>] [--skip-ingest] [--news-provider <naver|gnews|file>] [--disclosure-provider <dart|file>]
+  node scripts/scan-universe-batches.mjs [--watchlist <path>] [--batch-size <number>] [--concurrency <number>] [--limit <number>] [--output <path>] [--skip-ingest] [--news-provider <naver|gnews|file>] [--disclosure-provider <dart|file>]
 `);
 }
 
@@ -28,6 +28,7 @@ function parseArgs(argv) {
   const options = {
     watchlist: path.join(projectRoot, "data", "config", "watchlist.universe.json"),
     batchSize: Number(process.env.SWING_RADAR_UNIVERSE_BATCH_SIZE ?? "20"),
+    concurrency: Number(process.env.SWING_RADAR_UNIVERSE_CONCURRENCY ?? "1"),
     limit: 0,
     output: path.join(projectRoot, "data", "universe", "daily-candidates.json"),
     skipIngest: false,
@@ -48,6 +49,11 @@ function parseArgs(argv) {
     }
     if (arg === "--batch-size") {
       options.batchSize = Number(argv[index + 1] ?? options.batchSize);
+      index += 1;
+      continue;
+    }
+    if (arg === "--concurrency") {
+      options.concurrency = Number(argv[index + 1] ?? options.concurrency);
       index += 1;
       continue;
     }
@@ -79,6 +85,15 @@ function parseArgs(argv) {
   }
 
   return options;
+}
+
+function normalizePositiveInteger(value, fallback) {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed) || parsed < 1) {
+    return fallback;
+  }
+
+  return Math.floor(parsed);
 }
 
 function chunk(items, size) {
@@ -239,6 +254,30 @@ async function runBatch(batch, index, tempRoot, options) {
   };
 }
 
+async function runBatchesInParallel(batches, tempRoot, options) {
+  const total = batches.length;
+  const results = new Array(total);
+  const concurrency = Math.min(normalizePositiveInteger(options.concurrency, 1), total);
+  let nextIndex = 0;
+
+  async function worker() {
+    while (true) {
+      const currentIndex = nextIndex;
+      nextIndex += 1;
+
+      if (currentIndex >= total) {
+        return;
+      }
+
+      const batch = batches[currentIndex];
+      results[currentIndex] = await runBatch(batch, currentIndex, tempRoot, options);
+    }
+  }
+
+  await Promise.all(Array.from({ length: concurrency }, () => worker()));
+  return results;
+}
+
 async function main() {
   const options = parseArgs(process.argv.slice(2));
   if (options.help) {
@@ -256,8 +295,9 @@ async function main() {
   const tempRoot = await mkdtemp(path.join(os.tmpdir(), "swing-radar-universe-"));
 
   try {
-    for (const [index, batch] of batches.entries()) {
-      const result = await runBatch(batch, index, tempRoot, options);
+    const results = await runBatchesInParallel(batches, tempRoot, options);
+
+    for (const result of results) {
       if (!result.ok) {
         failedBatches.push(result);
         continue;
@@ -278,6 +318,7 @@ async function main() {
     const document = {
       generatedAt: new Date().toISOString(),
       batchSize: options.batchSize,
+      concurrency: normalizePositiveInteger(options.concurrency, 1),
       totalTickers: entries.length,
       totalBatches: batches.length,
       succeededBatches: batchSummaries.length,

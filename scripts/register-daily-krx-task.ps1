@@ -6,7 +6,9 @@ param(
   [string]$DownloadPattern = "",
   [string]$Markets = "",
   [int]$BatchSize = 0,
+  [int]$Concurrency = 0,
   [string]$StartTime = "",
+  [int]$MaintenanceEtaMinutes = 0,
   [switch]$SkipIngest
 )
 
@@ -20,7 +22,9 @@ $DownloadsDir = Resolve-SwingRadarSetting -Name "SWING_RADAR_KRX_DOWNLOADS_DIR" 
 $DownloadPattern = Resolve-SwingRadarSetting -Name "SWING_RADAR_KRX_DOWNLOAD_PATTERN" -ExplicitValue $DownloadPattern -DefaultValue "KRX" -EnvConfig $envConfig
 $Markets = Resolve-SwingRadarSetting -Name "SWING_RADAR_UNIVERSE_MARKETS" -ExplicitValue $Markets -DefaultValue "KOSPI,KOSDAQ" -EnvConfig $envConfig
 $BatchSize = Resolve-SwingRadarIntSetting -Name "SWING_RADAR_UNIVERSE_BATCH_SIZE" -ExplicitValue $BatchSize -DefaultValue 20 -EnvConfig $envConfig
+$Concurrency = Resolve-SwingRadarIntSetting -Name "SWING_RADAR_UNIVERSE_CONCURRENCY" -ExplicitValue $Concurrency -DefaultValue 4 -EnvConfig $envConfig
 $StartTime = Resolve-SwingRadarSetting -Name "SWING_RADAR_DAILY_TASK_START_TIME" -ExplicitValue $StartTime -DefaultValue "18:10" -EnvConfig $envConfig
+$MaintenanceEtaMinutes = Resolve-SwingRadarIntSetting -Name "SWING_RADAR_MAINTENANCE_ETA_MINUTES" -ExplicitValue $MaintenanceEtaMinutes -DefaultValue 90 -EnvConfig $envConfig
 
 $scriptPath = Join-Path $ProjectRoot "scripts\run-daily-krx-cycle.ps1"
 if (-not (Test-Path $scriptPath)) {
@@ -35,7 +39,9 @@ $taskCommand = @(
   "-DownloadsDir", "`"$DownloadsDir`"",
   "-DownloadPattern", "`"$DownloadPattern`"",
   "-Markets", "`"$Markets`"",
-  "-BatchSize", "$BatchSize"
+  "-BatchSize", "$BatchSize",
+  "-Concurrency", "$Concurrency",
+  "-MaintenanceEtaMinutes", "$MaintenanceEtaMinutes"
 )
 
 if ($SkipIngest.IsPresent) {

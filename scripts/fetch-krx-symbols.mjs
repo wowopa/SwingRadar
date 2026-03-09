@@ -241,6 +241,7 @@ async function fetchOfficialEndpoint(url, options) {
   });
 
   const text = await response.text();
+
   if (!response.ok) {
     throw new Error(`Failed to fetch KRX API payload: ${response.status} ${response.statusText} (${url}) ${text.slice(0, 180)}`);
   }
