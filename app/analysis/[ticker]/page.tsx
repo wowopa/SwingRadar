@@ -1,4 +1,4 @@
-﻿import { notFound } from "next/navigation";
+import { notFound } from "next/navigation";
 
 import { AnalysisDecisionPanel } from "@/components/analysis/analysis-decision-panel";
 import { AnalysisNavigation } from "@/components/analysis/analysis-navigation";
@@ -10,20 +10,24 @@ import { RiskChecklist } from "@/components/analysis/risk-checklist";
 import { ScenarioPanel } from "@/components/analysis/scenario-panel";
 import { ScoreBreakdown } from "@/components/analysis/score-breakdown";
 import { PageHeader } from "@/components/shared/page-header";
+import { PublicDataStatusBar } from "@/components/shared/public-data-status-bar";
 import { SignalToneBadge } from "@/components/shared/signal-tone-badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getAnalysisByTicker } from "@/lib/repositories/analysis";
+import { buildPublicDataStatusSummary } from "@/lib/server/public-data-status";
 import { getAdjacentReadySymbols } from "@/lib/symbols/master";
 import { formatScore } from "@/lib/utils";
 
 export default async function AnalysisPage({ params }: { params: Promise<{ ticker: string }> }) {
   const { ticker } = await params;
-  const analysis = await getAnalysisByTicker(ticker);
+  const analysisPayload = await getAnalysisByTicker(ticker);
 
-  if (!analysis) {
+  if (!analysisPayload) {
     notFound();
   }
 
+  const analysis = analysisPayload.item;
+  const statusSummary = buildPublicDataStatusSummary("analysis", analysisPayload.generatedAt);
   const { previous, next, readyItems } = getAdjacentReadySymbols(ticker);
 
   return (
@@ -33,6 +37,7 @@ export default async function AnalysisPage({ params }: { params: Promise<{ ticke
         title={`${analysis.company} ${analysis.ticker} 심화 분석`}
         description="관찰 근거, 기준 이탈, 가능한 시나리오를 한 화면에서 점검하는 분석 화면입니다."
       />
+      <PublicDataStatusBar summary={statusSummary} />
       <AnalysisNavigation
         currentTicker={analysis.ticker}
         previous={previous}

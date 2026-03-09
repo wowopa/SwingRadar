@@ -4,6 +4,7 @@ import { fetchJson } from "@/lib/repositories/api-client";
 import type { SignalHistoryEntry, TrackingDetail } from "@/types/tracking";
 
 export interface TrackingPayload {
+  generatedAt: string;
   history: SignalHistoryEntry[];
   details: Record<string, TrackingDetail>;
 }
@@ -14,6 +15,7 @@ export async function getTrackingPayload(): Promise<TrackingPayload> {
   });
 
   return {
+    generatedAt: response.generatedAt,
     history: response.history,
     details: response.details
   };
