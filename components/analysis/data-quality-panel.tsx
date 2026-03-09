@@ -2,11 +2,19 @@ import type { DataQualityItem } from "@/types/analysis";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 function getValueTone(item: DataQualityItem) {
-  if (item.value.includes("참고 계산") || item.value.includes("취약")) {
+  if (item.value.includes("보수 계산") || item.value.includes("취약")) {
+    return "text-rose-700";
+  }
+
+  if (item.value.includes("유사 흐름 참고") || item.value.includes("제한적")) {
     return "text-amber-700";
   }
 
-  if (item.value.includes("실측 기반") || item.value.includes("보강됨")) {
+  if (item.value.includes("유사 업종 참고")) {
+    return "text-sky-700";
+  }
+
+  if (item.value.includes("실측 기반") || item.value.includes("양호") || item.value.includes("보강됨")) {
     return "text-emerald-700";
   }
 
@@ -17,7 +25,7 @@ export function DataQualityPanel({ items }: { items: DataQualityItem[] }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>데이터 품질</CardTitle>
+        <CardTitle>데이터 신뢰도</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         {items.map((item) => (

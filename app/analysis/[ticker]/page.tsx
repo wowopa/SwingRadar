@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
 import { AnalysisDecisionPanel } from "@/components/analysis/analysis-decision-panel";
 import { AnalysisNavigation } from "@/components/analysis/analysis-navigation";
@@ -17,7 +17,7 @@ import { SignalToneBadge } from "@/components/shared/signal-tone-badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getAnalysisByTicker } from "@/lib/repositories/analysis";
 import { buildPublicDataStatusSummary } from "@/lib/server/public-data-status";
-import { buildTradingViewSymbol, getAdjacentReadySymbols, getSymbolByTicker } from "@/lib/symbols/master";
+import { buildTradingViewSymbol, getAdjacentReadySymbols, getSymbolByTicker, resolveTicker } from "@/lib/symbols/master";
 import { formatScore } from "@/lib/utils";
 
 const EMPTY_TECHNICAL_INDICATORS = {
@@ -38,7 +38,13 @@ const EMPTY_CHART_SERIES = [] as const;
 
 export default async function AnalysisPage({ params }: { params: Promise<{ ticker: string }> }) {
   const { ticker } = await params;
-  const analysisPayload = await getAnalysisByTicker(ticker);
+  const resolvedTicker = resolveTicker(ticker);
+
+  if (resolvedTicker !== ticker) {
+    redirect(`/analysis/${resolvedTicker}`);
+  }
+
+  const analysisPayload = await getAnalysisByTicker(resolvedTicker);
 
   if (!analysisPayload) {
     notFound();
@@ -46,8 +52,8 @@ export default async function AnalysisPage({ params }: { params: Promise<{ ticke
 
   const analysis = analysisPayload.item;
   const statusSummary = buildPublicDataStatusSummary("analysis", analysisPayload.generatedAt);
-  const { previous, next, readyItems } = getAdjacentReadySymbols(ticker);
-  const symbol = getSymbolByTicker(ticker);
+  const { previous, next, readyItems } = getAdjacentReadySymbols(resolvedTicker);
+  const symbol = getSymbolByTicker(resolvedTicker);
   const tradingViewSymbol = symbol ? buildTradingViewSymbol(symbol.ticker, symbol.market) : null;
 
   return (
@@ -55,7 +61,7 @@ export default async function AnalysisPage({ params }: { params: Promise<{ ticke
       <PageHeader
         eyebrow="Analysis"
         title={`${analysis.company} ${analysis.ticker} 심화 분석`}
-        description="관찰 근거, 기준 이탈, 가능한 시나리오를 한 화면에서 점검하는 분석 화면입니다."
+        description="관찰 근거, 기준 이탈, 가능한 시나리오를 한 화면에서 차분하게 정리한 분석 화면입니다."
       />
       <PublicDataStatusBar summary={statusSummary} />
       <AnalysisNavigation

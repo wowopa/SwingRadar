@@ -6,7 +6,35 @@ import { FavoriteTickerButton } from "@/components/shared/favorite-ticker-button
 import { SignalToneBadge } from "@/components/shared/signal-tone-badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatDateTimeShort, formatPercent, formatScore } from "@/lib/utils";
-import type { Recommendation } from "@/types/recommendation";
+import type { Recommendation, ValidationBasis } from "@/types/recommendation";
+
+function getValidationToneClasses(basis: ValidationBasis) {
+  if (basis === "실측 기반") {
+    return "border-emerald-200 bg-emerald-50 text-emerald-700";
+  }
+
+  if (basis === "유사 업종 참고") {
+    return "border-sky-200 bg-sky-50 text-sky-700";
+  }
+
+  if (basis === "유사 흐름 참고") {
+    return "border-amber-200 bg-amber-50 text-amber-700";
+  }
+
+  return "border-rose-200 bg-rose-50 text-rose-700";
+}
+
+function resolveValidationBasis(item: Recommendation): ValidationBasis {
+  if (item.validationBasis) {
+    return item.validationBasis;
+  }
+
+  if (item.validation.sampleSize >= 25 && !item.validationSummary.includes("참고") && !item.validationSummary.includes("보수")) {
+    return "실측 기반";
+  }
+
+  return "보수 계산";
+}
 
 export function RecommendationCard({
   item,
@@ -17,7 +45,7 @@ export function RecommendationCard({
   isFavorite: boolean;
   onToggleFavorite: (ticker: string) => void;
 }) {
-  const usesEstimatedValidation = item.validation.sampleSize < 25 || item.validationSummary.includes("참고") || item.validationSummary.includes("보수");
+  const validationBasis = resolveValidationBasis(item);
 
   return (
     <Card className="h-full">
@@ -79,13 +107,9 @@ export function RecommendationCard({
               <div className="flex flex-wrap items-center gap-2">
                 <p className="text-sm font-semibold text-muted-foreground">검증 메모</p>
                 <span
-                  className={`rounded-full border px-2.5 py-1 text-[11px] font-medium ${
-                    usesEstimatedValidation
-                      ? "border-amber-200 bg-amber-50 text-amber-700"
-                      : "border-emerald-200 bg-emerald-50 text-emerald-700"
-                  }`}
+                  className={`rounded-full border px-2.5 py-1 text-[11px] font-medium ${getValidationToneClasses(validationBasis)}`}
                 >
-                  {usesEstimatedValidation ? "참고 계산" : "실측 기반"}
+                  {validationBasis}
                 </span>
               </div>
               <p className="mt-2 text-sm leading-7 text-foreground/80">{item.validationSummary}</p>

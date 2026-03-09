@@ -20,7 +20,7 @@ function getSourceLabel() {
   }
 
   if (provider === "file") {
-    return "저장된 스냅샷 데이터";
+    return "저장된 스냅샷";
   }
 
   return "예시 데이터";
@@ -53,8 +53,8 @@ export function buildPublicDataStatusSummary(label: string, generatedAt: string)
       freshness: indicator.severity,
       badge: "배치 지연",
       sourceLabel: getSourceLabel(),
-      summary: "예정된 일일 업데이트가 늦어지고 있습니다.",
-      detail: `마지막 갱신은 ${formatAge(indicator.ageMinutes)}입니다. 하루 기준으로 보는 참고 데이터이며, 오늘 배치가 아직 반영되지 않았을 수 있습니다.`
+      summary: "예정된 일일 업데이트가 아직 반영되지 않았습니다.",
+      detail: `마지막 갱신은 ${formatAge(indicator.ageMinutes)}입니다. 일일 배치 기준으로 보면 새 스냅샷 반영이 늦어지고 있어 확인이 필요합니다.`
     };
   }
 
@@ -66,8 +66,8 @@ export function buildPublicDataStatusSummary(label: string, generatedAt: string)
       freshness: indicator.severity,
       badge: "점검 필요",
       sourceLabel: getSourceLabel(),
-      summary: "최근 배치 시각을 한 번 확인해보면 좋습니다.",
-      detail: `현재 기준 주의 구간은 ${policy.stale.warningMinutes}분 이후부터입니다. 마지막 갱신은 ${formatAge(indicator.ageMinutes)}입니다.`
+      summary: "최근 배치 시각을 한 번 더 확인해보면 좋습니다.",
+      detail: `현재 주의 구간은 ${policy.stale.warningMinutes}분 이후부터입니다. 마지막 갱신은 ${formatAge(indicator.ageMinutes)}입니다.`
     };
   }
 

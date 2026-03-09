@@ -46,7 +46,7 @@ function clamp(value: number, min: number, max: number) {
 }
 
 function parsePrice(text: string) {
-  const match = text.match(/([\d,]+)원/);
+  const match = text.match(/([\d,]+)/);
   return match ? Number(match[1].replaceAll(",", "")) : null;
 }
 
@@ -93,8 +93,8 @@ function buildScoreBreakdown(score: number) {
     { label: "추세", score: trend, description: "중기 가격 흐름" },
     { label: "수급", score: flow, description: "거래량과 회전 흐름" },
     { label: "변동성", score: volatility, description: "가격 흔들림 관리" },
-    { label: "이벤트", score: event, description: "뉴스와 공시 반영" },
-    { label: "품질", score: quality, description: "데이터 신뢰도" }
+    { label: "이벤트", score: event, description: "기사와 공시 반영" },
+    { label: "품질", score: quality, description: "데이터 정합성" }
   ];
 }
 
@@ -104,18 +104,18 @@ function buildAnalysisSummary(
   scoreBreakdown: ReturnType<typeof buildScoreBreakdown>
 ) {
   return [
-    { label: "신호", value: `${Math.round(recommendation.score)}점`, note: recommendation.signalLabel },
+    { label: "현재 점수", value: `${Math.round(recommendation.score)}점`, note: recommendation.signalLabel },
     {
-      label: "검증",
+      label: "검증 승률",
       value: `${recommendation.validation.hitRate}%`,
-      note: `표본 ${recommendation.validation.sampleSize}건`
+      note: `표본 ${recommendation.validation.sampleSize}건 기준`
     },
     {
       label: "평균 움직임",
       value: formatPercent(recommendation.validation.avgReturn),
       note: "과거 비슷한 흐름 기준"
     },
-    { label: "데이터 품질", value: coverage, note: `핵심 점수 ${scoreBreakdown[4]?.score ?? 0}점` }
+    { label: "데이터 신뢰도", value: coverage, note: `품질 점수 ${scoreBreakdown[4]?.score ?? 0}점` }
   ];
 }
 
@@ -134,12 +134,12 @@ function buildKeyLevels(recommendation: RecommendationListItemDto) {
     {
       label: "확인 가격",
       price: confirmationPrice ? `${confirmationPrice.toLocaleString()}원` : recommendation.checkpoints[1] ?? "확인 필요",
-      meaning: "상승 힘이 이어지는지 확인하는 구간입니다."
+      meaning: "상승 힘이 붙는지 확인하는 구간입니다."
     },
     {
       label: "다음 목표",
       price: expansionPrice ? `${expansionPrice.toLocaleString()}원` : recommendation.checkpoints[2] ?? "확인 필요",
-      meaning: "추가 상승이 나오면 보는 가격대입니다."
+      meaning: "추가 상승이 이어질 때 보는 가격대입니다."
     }
   ];
 }
@@ -165,7 +165,7 @@ function buildScenarios(keyLevels: ReturnType<typeof buildKeyLevels>, score: num
     {
       label: KO.basic,
       probability: basicProbability,
-      expectation: "지금 흐름을 이어가는 경우",
+      expectation: "지금 흐름이 이어지는 경우",
       trigger: `${confirmationPrice} 위에서 버티는지 확인`
     },
     {
@@ -188,12 +188,12 @@ function buildRiskChecklist(recommendation: RecommendationListItemDto, coverage:
     {
       label: "기준 이탈 거리",
       status: riskStatusFromDistance(recommendation.invalidationDistance),
-      note: `${formatPercent(recommendation.invalidationDistance)} 여유`
+      note: `${formatPercent(recommendation.invalidationDistance)} 수준`
     },
     {
       label: "이벤트 커버리지",
       status: riskStatusFromCoverage(coverage),
-      note: coverage === "보강됨" ? "기사와 보조 이벤트가 함께 반영됐습니다." : "추가 확인이 필요합니다."
+      note: coverage === "보강됨" ? "기사 외 보조 이벤트도 함께 반영됐습니다." : "추가 확인이 필요합니다."
     },
     {
       label: "검증 표본",
@@ -204,10 +204,7 @@ function buildRiskChecklist(recommendation: RecommendationListItemDto, coverage:
 }
 
 function buildDataQuality(recommendation: RecommendationListItemDto, coverage: string, generatedAt: string) {
-  const usesEstimatedValidation =
-    recommendation.validation.sampleSize < 25 ||
-    recommendation.validationSummary.includes("참고") ||
-    recommendation.validationSummary.includes("보수");
+  const validationBasis = recommendation.validationBasis ?? "보수 계산";
 
   return [
     {
@@ -222,10 +219,11 @@ function buildDataQuality(recommendation: RecommendationListItemDto, coverage: s
     },
     {
       label: "검증",
-      value: usesEstimatedValidation ? "참고 계산" : `${recommendation.validation.sampleSize}건`,
-      note: usesEstimatedValidation
-        ? "비슷한 흐름 표본이 아직 적어 보수적으로 계산한 참고값입니다."
-        : recommendation.validationSummary
+      value: validationBasis,
+      note:
+        validationBasis === "실측 기반"
+          ? recommendation.validationSummary
+          : `${recommendation.validationSummary} 실측 표본이 더 쌓이기 전까지는 참고용으로 보는 편이 좋습니다.`
     },
     {
       label: "커버리지",
@@ -253,19 +251,7 @@ function buildAnalysisFallback(
     invalidation: recommendation.invalidation,
     analysisSummary: buildAnalysisSummary(recommendation, coverage, scoreBreakdown),
     keyLevels,
-    technicalIndicators: {
-      sma20: null,
-      sma60: null,
-      ema20: null,
-      rsi14: null,
-      macd: null,
-      macdSignal: null,
-      macdHistogram: null,
-      bollingerUpper: null,
-      bollingerMiddle: null,
-      bollingerLower: null,
-      volumeRatio20: null
-    },
+    technicalIndicators: EMPTY_TECHNICAL_INDICATORS,
     chartSeries: [],
     decisionNotes: buildDecisionNotes(recommendation, coverage),
     scoreBreakdown,
@@ -291,6 +277,7 @@ function toRecommendationFromDailyCandidate(candidate: DailyCandidateDto, genera
     invalidationDistance: -4.5,
     riskRewardRatio: candidate.score >= 70 ? "1 : 1.6" : "1 : 1.1",
     validationSummary: candidate.validationSummary,
+    validationBasis: "유사 흐름 참고",
     checkpoints: [
       candidate.invalidation,
       `${candidate.company} 상승 확인 구간`,

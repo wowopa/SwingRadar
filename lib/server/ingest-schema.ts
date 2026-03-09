@@ -10,6 +10,7 @@ const signalTone = z.enum(["긍정", "중립", "주의"]);
 const resultStatus = z.enum(["진행중", "성공", "실패", "무효화"]);
 const riskStatus = z.enum(["양호", "확인 필요", "주의"]);
 const scenarioLabel = z.enum(["기본", "강세", "약세"]);
+const validationBasis = z.enum(["실측 기반", "유사 업종 참고", "유사 흐름 참고", "보수 계산"]);
 
 const recommendationItemSchema = z.object({
   ticker: z.string(),
@@ -23,6 +24,7 @@ const recommendationItemSchema = z.object({
   invalidationDistance: z.number(),
   riskRewardRatio: z.string(),
   validationSummary: z.string(),
+  validationBasis: validationBasis.optional(),
   checkpoints: z.array(z.string()),
   validation: z.object({
     hitRate: z.number(),

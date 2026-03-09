@@ -4,6 +4,7 @@ import process from "node:process";
 import { fileURLToPath } from "node:url";
 
 import { loadLocalEnv } from "./load-env.mjs";
+import { getProjectPaths } from "./lib/external-source-utils.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -37,20 +38,11 @@ function getSnapshotGenerationReportPath() {
     : path.join(projectRoot, "data", "ops", "latest-snapshot-generation.json");
 }
 
-function resolveProjectPath(configuredPath, fallbackPath) {
-  if (!configuredPath) {
-    return path.resolve(fallbackPath);
-  }
-
-  return path.isAbsolute(configuredPath)
-    ? path.resolve(configuredPath)
-    : path.resolve(projectRoot, configuredPath);
-}
-
 function parseArgs(argv) {
+  const defaults = getProjectPaths(projectRoot);
   const options = {
-    rawDir: resolveProjectPath(process.env.SWING_RADAR_RAW_DATA_DIR, path.join(projectRoot, "data/raw")),
-    outDir: resolveProjectPath(process.env.SWING_RADAR_DATA_DIR, path.join(projectRoot, "data/live"))
+    rawDir: defaults.rawDir,
+    outDir: defaults.liveDir
   };
 
   for (let index = 0; index < argv.length; index += 1) {
@@ -60,12 +52,12 @@ function parseArgs(argv) {
       continue;
     }
     if (arg === "--raw-dir") {
-      options.rawDir = resolveProjectPath(argv[index + 1], options.rawDir);
+      options.rawDir = path.resolve(argv[index + 1]);
       index += 1;
       continue;
     }
     if (arg === "--out-dir") {
-      options.outDir = resolveProjectPath(argv[index + 1], options.outDir);
+      options.outDir = path.resolve(argv[index + 1]);
       index += 1;
       continue;
     }
@@ -236,8 +228,170 @@ function resolveObservationWindow(sampleSize, hitRate) {
   return "1~7거래일";
 }
 
-function buildFallbackValidationItem(item) {
+function buildMeasuredValidationItem(item) {
+  return {
+    ...item,
+    basis: "실측 기반",
+    observationWindow: resolveObservationWindow(item.sampleSize, item.hitRate),
+    validationSummary: buildValidationSummary(item)
+  };
+}
+
+function getScoreBand(score) {
+  if (score >= 75) return "strong";
+  if (score >= 60) return "balanced";
+  return "watch";
+}
+
+function getMarketScore(item) {
+  return item.trendScore + item.flowScore + item.volatilityScore + item.eventScore + item.qualityScore;
+}
+
+function resolveTrackingResult(item) {
+  if (item.mae <= -5.5 || (item.holdingDays <= 5 && item.mfe < 2 && item.mae <= -4)) {
+    return "무효화";
+  }
+  if (item.mfe >= 5 && item.mae > -4) {
+    return "성공";
+  }
+  if (item.holdingDays >= 5 && item.mfe > 0) {
+    return "진행중";
+  }
+  return "실패";
+}
+
+function buildTrackingValidationProxy(item) {
+  const result = resolveTrackingResult(item);
+  const hitRateByResult = {
+    성공: 62,
+    진행중: 54,
+    실패: 39,
+    무효화: 28
+  };
+  const sampleSize = result === "성공" ? 10 : result === "진행중" ? 8 : 7;
+  const avgReturn = roundNumber(clamp(item.mfe * 0.6 + item.mae * 0.2, -4.5, 7.5), 1);
+
+  return {
+    hitRate: hitRateByResult[result],
+    avgReturn,
+    sampleSize,
+    maxDrawdown: roundNumber(item.mae, 1)
+  };
+}
+
+function aggregateValidationProfile(items) {
+  if (!items.length) {
+    return null;
+  }
+
+  const totalWeight = items.reduce((sum, item) => sum + Math.max(item.sampleSize, 1), 0);
+  const weighted = (field) =>
+    items.reduce((sum, item) => sum + item[field] * Math.max(item.sampleSize, 1), 0) / Math.max(totalWeight, 1);
+
+  const hitRate = Math.round(weighted("hitRate"));
+  const avgReturn = roundNumber(weighted("avgReturn"), 1);
+  const maxDrawdown = roundNumber(weighted("maxDrawdown"), 1);
+  const sampleSize = clamp(Math.round(totalWeight / items.length), 14, 42);
+
+  return {
+    hitRate,
+    avgReturn,
+    sampleSize,
+    maxDrawdown,
+    sourceCount: items.length
+  };
+}
+
+function buildValidationProfiles(validationItems, trackingItems, marketByTicker) {
+  const sectorBuckets = new Map();
+  const bandBuckets = new Map();
+
+  const addProfile = (sector, band, profile) => {
+    if (sector) {
+      const sectorItems = sectorBuckets.get(sector) ?? [];
+      sectorItems.push(profile);
+      sectorBuckets.set(sector, sectorItems);
+    }
+
+    const bandItems = bandBuckets.get(band) ?? [];
+    bandItems.push(profile);
+    bandBuckets.set(band, bandItems);
+  };
+
+  for (const item of validationItems) {
+    const marketItem = marketByTicker.get(item.ticker);
+    if (!marketItem) {
+      continue;
+    }
+
+    addProfile(
+      marketItem.sector,
+      getScoreBand(getMarketScore(marketItem)),
+      {
+        hitRate: item.hitRate,
+        avgReturn: item.avgReturn,
+        sampleSize: item.sampleSize,
+        maxDrawdown: item.maxDrawdown
+      }
+    );
+  }
+
+  for (const item of trackingItems) {
+    const marketItem = marketByTicker.get(item.ticker);
+    if (!marketItem) {
+      continue;
+    }
+
+    addProfile(marketItem.sector, getScoreBand(item.entryScore), buildTrackingValidationProxy(item));
+  }
+
+  return {
+    sector: new Map(Array.from(sectorBuckets.entries(), ([key, items]) => [key, aggregateValidationProfile(items)])),
+    band: new Map(Array.from(bandBuckets.entries(), ([key, items]) => [key, aggregateValidationProfile(items)]))
+  };
+}
+
+function buildEstimatedValidationItem(item, profiles) {
+  const sectorProfile = profiles.sector.get(item.sector);
+  const bandProfile = profiles.band.get(getScoreBand(getMarketScore(item)));
   const scoreBase = item.trendScore + item.flowScore + item.volatilityScore + item.qualityScore;
+
+  if (sectorProfile && sectorProfile.sourceCount >= 1) {
+    const hitRate = clamp(Math.round(sectorProfile.hitRate), 38, 66);
+    const avgReturn = roundNumber(sectorProfile.avgReturn, 1);
+    const sampleSize = clamp(Math.round(sectorProfile.sampleSize), 16, 38);
+    const maxDrawdown = roundNumber(sectorProfile.maxDrawdown, 1);
+
+    return {
+      ticker: item.ticker,
+      hitRate,
+      avgReturn,
+      sampleSize,
+      maxDrawdown,
+      basis: "유사 업종 참고",
+      observationWindow: resolveObservationWindow(sampleSize, hitRate),
+      validationSummary: `같은 업종 흐름 ${sectorProfile.sourceCount}건을 참고해 정리한 값입니다. 성공률 ${hitRate}%, 평균 움직임 ${formatPercent(avgReturn)}, 최대 하락 ${formatPercent(maxDrawdown)} 수준으로 보고 있습니다.`
+    };
+  }
+
+  if (bandProfile && bandProfile.sourceCount >= 2) {
+    const hitRate = clamp(Math.round(bandProfile.hitRate), 40, 63);
+    const avgReturn = roundNumber(bandProfile.avgReturn, 1);
+    const sampleSize = clamp(Math.round(bandProfile.sampleSize), 14, 30);
+    const maxDrawdown = roundNumber(bandProfile.maxDrawdown, 1);
+
+    return {
+      ticker: item.ticker,
+      hitRate,
+      avgReturn,
+      sampleSize,
+      maxDrawdown,
+      basis: "유사 흐름 참고",
+      observationWindow: resolveObservationWindow(sampleSize, hitRate),
+      validationSummary: `점수대가 비슷한 흐름 ${bandProfile.sourceCount}건을 참고한 값입니다. 실측 표본이 더 쌓이기 전까지는 참고용으로 가볍게 보는 편이 좋습니다.`
+    };
+  }
+
   const hitRate = clamp(Math.round(42 + scoreBase * 0.25), 45, 58);
   const avgReturn = Number((Math.max(0.8, (item.confirmationPrice - item.entryPrice) / Math.max(item.entryPrice, 1) * 100 * 0.45)).toFixed(1));
   const sampleSize = clamp(Math.round(12 + item.qualityScore * 0.8), 12, 24);
@@ -249,8 +403,9 @@ function buildFallbackValidationItem(item) {
     avgReturn,
     sampleSize,
     maxDrawdown,
+    basis: "보수 계산",
     observationWindow: resolveObservationWindow(sampleSize, hitRate),
-    validationSummary: "검증 표본이 아직 적어 보수적으로 계산한 참고값입니다."
+    validationSummary: "실측 표본이 아직 충분하지 않아 가격 거리와 점수를 기준으로 보수 계산한 참고값입니다."
   };
 }
 
@@ -477,19 +632,6 @@ function buildTrackingNews(newsItems) {
   }));
 }
 
-function resolveTrackingResult(item) {
-  if (item.mae <= -5.5 || (item.holdingDays <= 5 && item.mfe < 2 && item.mae <= -4)) {
-    return "무효화";
-  }
-  if (item.mfe >= 5 && item.mae > -4) {
-    return "성공";
-  }
-  if (item.holdingDays >= 5 && item.mfe > 0) {
-    return "진행중";
-  }
-  return "실패";
-}
-
 function buildTrackingSummary(item, recommendation, validationItem) {
   const company = recommendation?.company ?? item.ticker;
   const hitRate = validationItem?.hitRate ?? 0;
@@ -630,28 +772,35 @@ async function main() {
     newsByTicker.get(item.ticker).push(item);
   }
 
-  const validationByTicker = new Map(
-    validation.items.map((item) => [
-      item.ticker,
-      {
-        ...item,
-        observationWindow: resolveObservationWindow(item.sampleSize, item.hitRate),
-        validationSummary: buildValidationSummary(item)
-      }
-    ])
-  );
-
   const marketByTicker = new Map(market.items.map((item) => [item.ticker, item]));
+  const validationByTicker = new Map(validation.items.map((item) => [item.ticker, buildMeasuredValidationItem(item)]));
+  const validationProfiles = buildValidationProfiles(validation.items, trackingEvents.items, marketByTicker);
   const recommendations = [];
   const analysisItems = [];
   const validationFallbackTickers = [];
+  const validationBasisCounts = {
+    measured: 0,
+    sector: 0,
+    pattern: 0,
+    heuristic: 0
+  };
 
   for (const item of market.items) {
     const usesEstimatedValidation = !validationByTicker.has(item.ticker);
-    const validationItem = validationByTicker.get(item.ticker) ?? buildFallbackValidationItem(item);
+    const validationItem = validationByTicker.get(item.ticker) ?? buildEstimatedValidationItem(item, validationProfiles);
     if (usesEstimatedValidation) {
       validationFallbackTickers.push(item.ticker);
-      console.warn(`Validation data missing for ${item.ticker}; using conservative fallback.`);
+      console.warn(`Validation data missing for ${item.ticker}; using ${validationItem.basis}.`);
+    }
+
+    if (validationItem.basis === "실측 기반") {
+      validationBasisCounts.measured += 1;
+    } else if (validationItem.basis === "유사 업종 참고") {
+      validationBasisCounts.sector += 1;
+    } else if (validationItem.basis === "유사 흐름 참고") {
+      validationBasisCounts.pattern += 1;
+    } else {
+      validationBasisCounts.heuristic += 1;
     }
 
     const tickerNews = newsByTicker.get(item.ticker) ?? [];
@@ -676,6 +825,7 @@ async function main() {
       invalidationDistance,
       riskRewardRatio: score >= 75 ? "1 : 2.2" : score >= 55 ? "1 : 1.5" : "1 : 0.9",
       validationSummary: validationItem.validationSummary,
+      validationBasis: validationItem.basis,
       checkpoints: buildCheckpoints(item),
       validation: {
         hitRate: validationItem.hitRate,
@@ -727,10 +877,11 @@ async function main() {
         { label: "커버리지", value: coverage.confidence, note: coverage.note },
         {
           label: "검증",
-          value: usesEstimatedValidation ? "참고 계산" : "실측 기반",
-          note: usesEstimatedValidation
-            ? "비슷한 흐름 표본이 아직 충분하지 않아 보수적으로 계산한 참고값입니다."
-            : `비슷한 흐름 ${validationItem.sampleSize}건 기준으로 정리한 값입니다.`
+          value: validationItem.basis,
+          note:
+            validationItem.basis === "실측 기반"
+              ? `비슷한 흐름 ${validationItem.sampleSize}건 기준으로 정리한 값입니다.`
+              : validationItem.validationSummary
         },
         { label: "품질", value: quality, note: `score ${item.qualityScore}` },
         {
@@ -808,7 +959,8 @@ async function main() {
         analysisCount: analysisItems.length,
         trackingHistoryCount: trackingHistory.length,
         validationFallbackCount: validationFallbackTickers.length,
-        validationFallbackTickers
+        validationFallbackTickers,
+        validationBasisCounts
       },
       null,
       2

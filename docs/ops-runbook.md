@@ -1,5 +1,7 @@
 # SWING-RADAR Ops Runbook
 
+빠르게 매일 보는 흐름만 필요하면 [daily-ops-quickstart.md](/C:/Users/eugen/Documents/SwingRadar/docs/daily-ops-quickstart.md)를 먼저 보시면 됩니다.
+
 ## 1. Apply schema and ingest locally
 ```powershell
 cd C:\Users\eugen\Documents\SwingRadar
@@ -89,17 +91,27 @@ Use the KRX Open API after your API account is ready:
 $env:SWING_RADAR_SYMBOL_SYNC_ENABLED="true"
 $env:SWING_RADAR_SYMBOL_SYNC_KRX="true"
 $env:SWING_RADAR_KRX_FETCH_MODE="api"
-$env:SWING_RADAR_KRX_API_URL="https://data.krx.co.kr/your-open-api-endpoint"
+$env:SWING_RADAR_KRX_API_PROVIDER="official"
+$env:SWING_RADAR_KRX_API_BASE_URL="https://data-dbg.krx.co.kr/svc/apis"
 $env:SWING_RADAR_KRX_API_KEY="replace-with-issued-key"
-$env:SWING_RADAR_KRX_API_AUTH_HEADER="Authorization"
-$env:SWING_RADAR_KRX_API_RESPONSE_TYPE="json"
-$env:SWING_RADAR_KRX_API_DATA_PATH="data"
-$env:SWING_RADAR_KRX_API_FIELD_TICKER="ticker"
-$env:SWING_RADAR_KRX_API_FIELD_COMPANY="company"
-$env:SWING_RADAR_KRX_API_FIELD_MARKET="market"
-$env:SWING_RADAR_KRX_API_FIELD_SECTOR="sector"
-$env:SWING_RADAR_KRX_API_FIELD_DART="dartCorpCode"
+$env:SWING_RADAR_KRX_API_AUTH_HEADER="AUTH_KEY"
+$env:SWING_RADAR_KRX_API_METHOD="GET"
+$env:SWING_RADAR_KRX_API_MARKETS="KOSPI,KOSDAQ"
+$env:SWING_RADAR_KRX_API_BAS_DD="20260306"
 ```
+
+Test KRX Open API connectivity only:
+```powershell
+& "C:\Program Files\nodejs\npm.cmd" run symbols:test:krx -- --market ALL --bas-dd 20260306
+```
+
+If the response is `401 Unauthorized API Call`, check these first:
+1. Confirm the issued key is the same value stored in `SWING_RADAR_KRX_API_KEY`.
+2. Confirm the KRX Open API application is approved for the stock base-info service, not only issued.
+3. Wait a little after issuance; some KRX keys are not immediately active.
+4. Confirm the request header name is `AUTH_KEY`.
+5. Confirm the endpoint is `https://data-dbg.krx.co.kr/svc/apis/sto/stk_isu_base_info` or `.../ksq_isu_base_info` without `.json`.
+6. Retry with a recent business date like `20260306`.
 
 Use a local CSV that is already normalized for the importer:
 ```powershell
