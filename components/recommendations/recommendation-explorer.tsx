@@ -18,12 +18,24 @@ type SectorFilter = string;
 type FavoriteFilter = "all" | "favorites";
 type TrustFilter = "all" | ValidationBasis;
 
+const VALIDATION_BASIS_OPTIONS: ValidationBasis[] = [
+  "실측 기반",
+  "공용 추적 참고",
+  "유사 업종 참고",
+  "유사 흐름 참고",
+  "보수 계산"
+];
+
 function resolveValidationBasis(item: Recommendation): ValidationBasis {
   if (item.validationBasis) {
     return item.validationBasis;
   }
 
-  if (item.validation.sampleSize >= 25 && !item.validationSummary.includes("참고") && !item.validationSummary.includes("보수")) {
+  if (
+    item.validation.sampleSize >= 25 &&
+    !item.validationSummary.includes("참고") &&
+    !item.validationSummary.includes("보수")
+  ) {
     return "실측 기반";
   }
 
@@ -99,19 +111,32 @@ export function RecommendationExplorer({
     return next;
   }, [favoriteFilter, favorites, items, query, sector, sort, tone, trustFilter]);
 
+  const filteredTrustSummary = useMemo(() => {
+    return filteredItems.reduce<Record<ValidationBasis, number>>(
+      (acc, item) => {
+        acc[resolveValidationBasis(item)] += 1;
+        return acc;
+      },
+      {
+        "실측 기반": 0,
+        "공용 추적 참고": 0,
+        "유사 업종 참고": 0,
+        "유사 흐름 참고": 0,
+        "보수 계산": 0
+      }
+    );
+  }, [filteredItems]);
+
   return (
     <div>
-      <section className="mb-4 grid gap-3 md:grid-cols-2 xl:grid-cols-5">
-        <TrustCard label="실측 기반" value={trustSummary["실측 기반"]} tone="emerald" />
-        <TrustCard label="공용 추적 참고" value={trustSummary["공용 추적 참고"]} tone="teal" />
-        <TrustCard label="유사 업종 참고" value={trustSummary["유사 업종 참고"]} tone="sky" />
-        <TrustCard label="유사 흐름 참고" value={trustSummary["유사 흐름 참고"]} tone="amber" />
-        <TrustCard label="보수 계산" value={trustSummary["보수 계산"]} tone="rose" />
-      </section>
       <section className="mb-8 grid gap-4 rounded-3xl border border-border/70 bg-card/50 p-5 lg:grid-cols-[1.4fr_160px_160px_160px_170px_180px_auto] lg:items-end">
         <div>
           <p className="mb-2 text-sm text-muted-foreground">종목명, 티커, 섹터로 바로 찾을 수 있습니다.</p>
-          <Input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="예: 삼성전자, 005930, 반도체" />
+          <Input
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="예: 삼성전자, 005930, 반도체"
+          />
         </div>
         <FilterSelect label="신호 톤" value={tone} onChange={setTone}>
           <option value="all">전체</option>
@@ -133,11 +158,11 @@ export function RecommendationExplorer({
         </FilterSelect>
         <FilterSelect label="검증 근거" value={trustFilter} onChange={setTrustFilter}>
           <option value="all">전체</option>
-          <option value="실측 기반">실측 기반</option>
-          <option value="공용 추적 참고">공용 추적 참고</option>
-          <option value="유사 업종 참고">유사 업종 참고</option>
-          <option value="유사 흐름 참고">유사 흐름 참고</option>
-          <option value="보수 계산">보수 계산</option>
+          {VALIDATION_BASIS_OPTIONS.map((basis) => (
+            <option key={basis} value={basis}>
+              {basis}
+            </option>
+          ))}
         </FilterSelect>
         <FilterSelect label="정렬" value={sort} onChange={setSort}>
           <option value="score_desc">점수 높은 순</option>
@@ -145,12 +170,46 @@ export function RecommendationExplorer({
           <option value="name">종목명 순</option>
         </FilterSelect>
         <div className="rounded-2xl border border-border/70 bg-secondary/35 px-4 py-3 text-sm text-muted-foreground">
-          결과 <span className="font-semibold text-foreground">{filteredItems.length}</span>건
+          현재 관찰 종목 <span className="font-semibold text-foreground">{filteredItems.length}</span>개
         </div>
       </section>
+
+      <section className="mb-4 rounded-3xl border border-border/70 bg-card/40 px-5 py-4 text-sm leading-6 text-muted-foreground">
+        검증 통계는 두 층으로 나눠서 봅니다. 바로 아래 카드는 지금 화면에 남아 있는 현재 관찰 종목 기준이고, 그 아래 요약은 전체 분석 종목 기준입니다.
+      </section>
+
+      <section className="mb-4">
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+          <h2 className="text-base font-semibold text-foreground">현재 관찰 종목 기준 검증 분포</h2>
+          <p className="text-sm text-muted-foreground">{filteredItems.length}개 종목 기준</p>
+        </div>
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+          <TrustCard label="실측 기반" value={filteredTrustSummary["실측 기반"]} tone="emerald" />
+          <TrustCard label="공용 추적 참고" value={filteredTrustSummary["공용 추적 참고"]} tone="teal" />
+          <TrustCard label="유사 업종 참고" value={filteredTrustSummary["유사 업종 참고"]} tone="sky" />
+          <TrustCard label="유사 흐름 참고" value={filteredTrustSummary["유사 흐름 참고"]} tone="amber" />
+          <TrustCard label="보수 계산" value={filteredTrustSummary["보수 계산"]} tone="rose" />
+        </div>
+      </section>
+
+      <section className="mb-8">
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+          <h2 className="text-base font-semibold text-foreground">전체 분석 종목 기준 검증 분포</h2>
+          <p className="text-sm text-muted-foreground">{items.length}개 종목 기준</p>
+        </div>
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+          <TrustCard label="실측 기반" value={trustSummary["실측 기반"]} tone="emerald" />
+          <TrustCard label="공용 추적 참고" value={trustSummary["공용 추적 참고"]} tone="teal" />
+          <TrustCard label="유사 업종 참고" value={trustSummary["유사 업종 참고"]} tone="sky" />
+          <TrustCard label="유사 흐름 참고" value={trustSummary["유사 흐름 참고"]} tone="amber" />
+          <TrustCard label="보수 계산" value={trustSummary["보수 계산"]} tone="rose" />
+        </div>
+      </section>
+
       <section className="mb-6">
         <RecommendationsOverview items={filteredItems} dailyScan={dailyScan} />
       </section>
+
       {filteredItems.length ? (
         <>
           <section className="grid gap-6 xl:grid-cols-3">
@@ -169,12 +228,13 @@ export function RecommendationExplorer({
         </>
       ) : (
         <section className="rounded-3xl border border-border/70 bg-card/40 p-8 text-center">
-          <p className="text-lg font-semibold text-foreground">조건에 맞는 관찰 신호가 없습니다.</p>
+          <p className="text-lg font-semibold text-foreground">조건에 맞는 관찰 종목이 없습니다.</p>
           <p className="mt-3 text-sm leading-6 text-muted-foreground">
             검색어를 줄이거나 톤, 섹터, 검증 근거 조건을 조금 더 넓혀보면 더 많은 종목을 볼 수 있습니다.
           </p>
         </section>
       )}
+
       <section className="mt-6">
         <RecommendationFramework />
       </section>

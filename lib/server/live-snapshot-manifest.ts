@@ -1,4 +1,4 @@
-import { readFile } from "fs/promises";
+import { readFile, stat } from "fs/promises";
 import path from "path";
 
 type LiveSnapshotManifest = {
@@ -20,17 +20,35 @@ export function getLiveSnapshotManifestPath() {
 
 export async function resolveLiveDataDir() {
   const fallbackDir = getDefaultLiveDataDir();
+  let manifestDir: string | null = null;
 
   try {
     const payload = JSON.parse(await readFile(getLiveSnapshotManifestPath(), "utf8")) as LiveSnapshotManifest;
     if (typeof payload.currentDir === "string" && payload.currentDir.trim()) {
-      return path.isAbsolute(payload.currentDir)
+      manifestDir = path.isAbsolute(payload.currentDir)
         ? path.resolve(payload.currentDir)
         : path.resolve(process.cwd(), payload.currentDir);
     }
   } catch {
-    // Fall back to the legacy live directory when no manifest exists yet.
+    return fallbackDir;
   }
 
-  return fallbackDir;
+  if (!manifestDir) {
+    return fallbackDir;
+  }
+
+  try {
+    const [fallbackStat, manifestStat] = await Promise.all([
+      stat(path.join(fallbackDir, "recommendations.json")),
+      stat(path.join(manifestDir, "recommendations.json"))
+    ]);
+
+    if (fallbackStat.mtimeMs > manifestStat.mtimeMs) {
+      return fallbackDir;
+    }
+  } catch {
+    return manifestDir;
+  }
+
+  return manifestDir;
 }

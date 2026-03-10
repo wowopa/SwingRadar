@@ -132,7 +132,7 @@ $env:SWING_RADAR_SYMBOL_SYNC_ENABLED="true"
 $env:SWING_RADAR_SYMBOL_SYNC_KRX="true"
 $env:SWING_RADAR_KRX_DOWNLOADS_DIR="C:\Users\eugen\Downloads"
 $env:SWING_RADAR_KRX_DOWNLOAD_PATTERN="KRX"
-& "C:\Program Files\nodejs\npm.cmd" run universe:daily -- --sync-symbols --markets KOSPI,KOSDAQ --batch-size 20
+& "C:\Program Files\nodejs\npm.cmd" run universe:daily -- --sync-symbols --markets KOSPI,KOSDAQ --batch-size 100 --concurrency 4
 ```
 
 PowerShell wrapper for Windows Task Scheduler:
@@ -237,7 +237,7 @@ Refresh one watchlist symbol manually:
 
 ## 10. Suggested scheduler flow
 1. Run `npm run ops:check` on a short interval for passive monitoring.
-2. Run `npm run universe:daily -- --sync-symbols --markets KOSPI,KOSDAQ --batch-size 20` after market close.
+2. Run `npm run universe:daily -- --sync-symbols --markets KOSPI,KOSDAQ --batch-size 100 --concurrency 4` after market close.
 3. Run `npm run ops:auto-heal` after `ops:check` and after the daily cycle to retry safe recovery actions automatically.
 4. Review `/api/admin/status` and `/api/admin/audit` after any recovery attempt.
 5. Escalate when repeated critical freshness warnings continue after recovery.

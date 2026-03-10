@@ -3,7 +3,7 @@ param(
   [string]$DownloadsDir = "C:\Users\eugen\Downloads",
   [string]$DownloadPattern = "KRX",
   [string]$Markets = "KOSPI,KOSDAQ",
-  [int]$BatchSize = 20,
+  [int]$BatchSize = 100,
   [int]$Concurrency = 4,
   [int]$TopCandidates = 100,
   [int]$MaintenanceEtaMinutes = 90,

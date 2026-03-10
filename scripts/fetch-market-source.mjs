@@ -36,8 +36,8 @@ Environment:
 function mapRiskStatus(distancePercent, currentPrice, ma20, ma60, momentumPercent) {
   let score = 0;
 
-  if (distancePercent <= -6) score += 2;
-  else if (distancePercent <= -4) score += 1;
+  if (distancePercent <= -9) score += 2;
+  else if (distancePercent <= -6) score += 1;
 
   if (currentPrice < ma20) score += 1;
   if (currentPrice < ma60) score += 1;
@@ -97,6 +97,16 @@ function calculateQualityScore(closesLength, avg20Turnover, volumeRatio, turnove
   return clamp(Math.round(score), 8, 15);
 }
 
+function standardDeviation(values) {
+  if (!values.length) {
+    return 0;
+  }
+
+  const mean = average(values);
+  const variance = average(values.map((value) => (value - mean) ** 2));
+  return Math.sqrt(variance);
+}
+
 async function fetchYahooItem(entry, range) {
   const url = new URL(`https://query1.finance.yahoo.com/v8/finance/chart/${entry.marketSymbol}`);
   url.searchParams.set("interval", "1d");
@@ -142,12 +152,56 @@ async function fetchYahooItem(entry, range) {
   const avg20Turnover = average(turnovers.slice(-20));
   const volumeRatio = avg20Volume > 0 ? latestVolume / avg20Volume : 1;
   const turnoverRatio = avg20Turnover > 0 ? latestTurnover / avg20Turnover : 1;
-  const low15 = Math.min(...closes.slice(-15));
-  const high10 = Math.max(...closes.slice(-10));
-  const invalidationPrice = Math.round(low15 * 0.995);
-  const confirmationPrice = Math.round(Math.max(currentPrice * 1.01, high10));
-  const expansionPrice = Math.round(currentPrice + (currentPrice - invalidationPrice) * 1.8);
+  const recentCloses7 = closes.slice(-7);
+  const recentCloses10 = closes.slice(-10);
+  const low7 = Math.min(...recentCloses7);
+  const high10 = Math.max(...recentCloses10);
+  const distanceFromRecentHigh = ((high10 - currentPrice) / currentPrice) * 100;
   const momentumPercent = ((currentPrice - ma20) / ma20) * 100;
+  const recentReturns = closes.slice(-21).flatMap((close, index, array) => {
+    if (index === 0 || !Number.isFinite(array[index - 1]) || array[index - 1] === 0) {
+      return [];
+    }
+
+    return [((close - array[index - 1]) / array[index - 1]) * 100];
+  });
+  const averageAbsMove = average(recentReturns.map((value) => Math.abs(value)));
+  const returnVolatility = standardDeviation(recentReturns);
+  const recentSupport = Math.max(low7 * 0.995, ma20 * 0.98, ma60 * 0.96);
+  const rawInvalidationDistance = ((currentPrice - recentSupport) / currentPrice) * 100;
+  const recentSwingRangePercent = ((high10 - low7) / currentPrice) * 100;
+  const supportGapPercent = Math.abs(((ma20 - ma60) / currentPrice) * 100);
+  const trendCompression = Math.max(0, momentumPercent - 6) * 0.12;
+  const breakoutCompression = Math.max(0, 5 - distanceFromRecentHigh) * 0.18;
+  const invalidationFloor = clamp(
+    Math.max(2.8, averageAbsMove * 0.82, returnVolatility * 0.5),
+    2.8,
+    5.4
+  );
+  const invalidationCeilingBase =
+    averageAbsMove * 1.25 +
+    returnVolatility * 0.22 +
+    supportGapPercent * 0.1 +
+    recentSwingRangePercent * 0.04 -
+    trendCompression -
+    breakoutCompression;
+  const invalidationCeiling = clamp(
+    invalidationCeilingBase,
+    currentPrice >= ma20 && ma20 >= ma60 ? 4.4 : 5.2,
+    currentPrice >= ma20 && ma20 >= ma60 ? 12.5 : 14.5
+  );
+  const invalidationDistancePercent = clamp(
+    rawInvalidationDistance,
+    invalidationFloor,
+    invalidationCeiling
+  );
+  const invalidationPrice = Math.round(currentPrice * (1 - invalidationDistancePercent / 100));
+  const confirmationPrice =
+    distanceFromRecentHigh <= 8 && currentPrice >= ma20
+      ? Math.round(Math.max(currentPrice * 1.018, high10 * 1.002))
+      : Math.round(Math.max(currentPrice * 1.04, ma20 * 1.025, ma60 * 1.04));
+  const rewardDistance = Math.max(confirmationPrice - invalidationPrice, currentPrice * 0.05);
+  const expansionPrice = Math.round(confirmationPrice + rewardDistance * 1.4);
   const riskDistance = ((invalidationPrice - currentPrice) / currentPrice) * 100;
 
   return {

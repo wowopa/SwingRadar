@@ -21,25 +21,22 @@ if (-not (Test-Path $scriptPath)) {
   throw "Missing script: $scriptPath"
 }
 
-$taskCommand = @(
-  "powershell.exe",
+$taskArguments = @(
   "-ExecutionPolicy", "Bypass",
   "-File", "`"$scriptPath`"",
   "-ProjectRoot", "`"$ProjectRoot`""
 )
 
 if ($SkipIngest.IsPresent) {
-  $taskCommand += "-SkipIngest"
+  $taskArguments += "-SkipIngest"
 }
 
 if ($SkipDailyCycle.IsPresent) {
-  $taskCommand += "-SkipDailyCycle"
+  $taskArguments += "-SkipDailyCycle"
 }
 
 if ($Force.IsPresent) {
-  $taskCommand += "-Force"
+  $taskArguments += "-Force"
 }
 
-$taskRun = $taskCommand -join " "
-
-schtasks /Create /F /SC DAILY /TN $TaskName /TR $taskRun /ST $StartTime
+Register-SwingRadarScheduledTask -TaskName $TaskName -Command "powershell.exe" -Arguments $taskArguments -StartTime $StartTime

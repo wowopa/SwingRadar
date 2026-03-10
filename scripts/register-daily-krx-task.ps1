@@ -22,7 +22,7 @@ $TaskName = Resolve-SwingRadarSetting -Name "SWING_RADAR_DAILY_TASK_NAME" -Expli
 $DownloadsDir = Resolve-SwingRadarSetting -Name "SWING_RADAR_KRX_DOWNLOADS_DIR" -ExplicitValue $DownloadsDir -DefaultValue "C:\Users\eugen\Downloads" -EnvConfig $envConfig
 $DownloadPattern = Resolve-SwingRadarSetting -Name "SWING_RADAR_KRX_DOWNLOAD_PATTERN" -ExplicitValue $DownloadPattern -DefaultValue "KRX" -EnvConfig $envConfig
 $Markets = Resolve-SwingRadarSetting -Name "SWING_RADAR_UNIVERSE_MARKETS" -ExplicitValue $Markets -DefaultValue "KOSPI,KOSDAQ" -EnvConfig $envConfig
-$BatchSize = Resolve-SwingRadarIntSetting -Name "SWING_RADAR_UNIVERSE_BATCH_SIZE" -ExplicitValue $BatchSize -DefaultValue 20 -EnvConfig $envConfig
+$BatchSize = Resolve-SwingRadarIntSetting -Name "SWING_RADAR_UNIVERSE_BATCH_SIZE" -ExplicitValue $BatchSize -DefaultValue 100 -EnvConfig $envConfig
 $Concurrency = Resolve-SwingRadarIntSetting -Name "SWING_RADAR_UNIVERSE_CONCURRENCY" -ExplicitValue $Concurrency -DefaultValue 4 -EnvConfig $envConfig
 $TopCandidates = Resolve-SwingRadarIntSetting -Name "SWING_RADAR_UNIVERSE_TOP_CANDIDATES" -ExplicitValue $TopCandidates -DefaultValue 100 -EnvConfig $envConfig
 $StartTime = Resolve-SwingRadarSetting -Name "SWING_RADAR_DAILY_TASK_START_TIME" -ExplicitValue $StartTime -DefaultValue "04:00" -EnvConfig $envConfig
@@ -33,8 +33,7 @@ if (-not (Test-Path $scriptPath)) {
   throw "Missing script: $scriptPath"
 }
 
-$taskCommand = @(
-  "powershell.exe",
+$taskArguments = @(
   "-ExecutionPolicy", "Bypass",
   "-File", "`"$scriptPath`"",
   "-ProjectRoot", "`"$ProjectRoot`"",
@@ -48,9 +47,7 @@ $taskCommand = @(
 )
 
 if ($SkipIngest.IsPresent) {
-  $taskCommand += "-SkipIngest"
+  $taskArguments += "-SkipIngest"
 }
 
-$taskRun = $taskCommand -join " "
-
-schtasks /Create /F /SC DAILY /TN $TaskName /TR $taskRun /ST $StartTime
+Register-SwingRadarScheduledTask -TaskName $TaskName -Command "powershell.exe" -Arguments $taskArguments -StartTime $StartTime

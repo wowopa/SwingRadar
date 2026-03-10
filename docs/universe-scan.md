@@ -3,18 +3,18 @@
 ## 목표
 - 전체 KRX 종목을 검색 가능한 상태로 확장
 - 종목 마스터를 기반으로 watchlist / universe 스캔 파이프라인 구성
-- 매일 추천 후보를 만들 수 있는 기반 데이터 구조 확보
-- 이후 미국 주식까지 같은 심볼 마스터에 병합 가능한 구조 준비
+- 매일 추천 후보를 만들 수 있는 데이터 구조 정리
+- 이후 미국 주식까지 같은 구조로 병합 가능한 형태 준비
 
 ## 현재 구조
 - 종목 마스터 원본: `data/config/symbol-master.json`
 - 운영 watchlist 원본: `data/config/watchlist.json`
-- 유니버스 watchlist 산출물: `data/config/watchlist.universe.json`
-- 데일리 후보 산출물: `data/universe/daily-candidates.json`
+- 유니버스 watchlist 출력: `data/config/watchlist.universe.json`
+- 데일리 후보 출력: `data/universe/daily-candidates.json`
 - 일일 실행 엔트리: `scripts/run-daily-universe-cycle.mjs`
 
 ## 1. 종목 마스터 가져오기
-KRX 또는 내부 보유 CSV를 아래 형식으로 준비합니다.
+KRX 또는 이미 보유한 CSV를 아래 형식으로 준비합니다.
 
 ```csv
 ticker,company,market,sector,dartCorpCode,aliases
@@ -29,24 +29,24 @@ ticker,company,market,sector,dartCorpCode,aliases
 - KRX: `KOSPI`, `KOSDAQ`
 - US: `NYSE`, `NASDAQ`, `AMEX`
 
-KRX 다운로드 CSV를 먼저 importer 형식으로 변환:
+KRX 다운로드 CSV를 importer 형식으로 변환:
 ```powershell
 & "C:\Program Files\nodejs\npm.cmd" run symbols:prepare:krx -- --input C:\path\to\krx-download.csv --output C:\path\to\krx-symbol-master.csv
 ```
 
-KRX 전체를 새로 적재:
+KRX 전체 적재:
 ```powershell
 cd C:\Users\eugen\Documents\SwingRadar
 & "C:\Program Files\nodejs\npm.cmd" run symbols:import -- --input C:\path\to\krx-symbol-master.csv
 ```
 
-기존 KRX 마스터에 미국 종목을 병합:
+기존 KRX 마스터에 미국 종목 병합:
 ```powershell
 & "C:\Program Files\nodejs\npm.cmd" run symbols:import -- --input data/config/us-core.csv --merge
 ```
 
 ## 2. 유니버스 watchlist 생성
-당장은 KRX를 기준으로 watchlist를 생성하는 것을 권장합니다.
+확장된 KRX를 기준으로 watchlist를 생성합니다.
 
 전체 KRX:
 ```powershell
@@ -64,14 +64,14 @@ KOSDAQ만:
 ```
 
 참고:
-- 미국 시장도 symbol master에는 같이 들어갈 수 있습니다.
-- 다만 현재 universe 일일 운용 기본값은 KRX 중심으로 두는 편이 안정적입니다.
+- 미국 시장은 symbol master에는 같이 들어갈 수 있습니다.
+- 다만 현재 universe 일일 운영 기본값은 KRX 중심으로 두는 편이 안정적입니다.
 
 ## 3. 유니버스 batch 스캔 실행
-유니버스 watchlist를 batch 단위로 나눠 외부 데이터 파이프라인을 돌리고, 데일리 후보를 합칩니다.
+유니버스 watchlist를 batch 단위로 나눠서 외부 데이터 파이프라인을 돌리고 데일리 후보를 만듭니다.
 
 ```powershell
-& "C:\Program Files\nodejs\npm.cmd" run universe:scan -- --batch-size 20 --limit 100
+& "C:\Program Files\nodejs\npm.cmd" run universe:scan -- --batch-size 100 --concurrency 4 --limit 100
 ```
 
 출력:
@@ -83,17 +83,17 @@ KOSDAQ만:
 운영 환경에서는 아래 엔트리를 스케줄러에 연결하면 됩니다.
 
 ```powershell
-& "C:\Program Files\nodejs\npm.cmd" run universe:daily -- --markets KOSPI,KOSDAQ --batch-size 20
+& "C:\Program Files\nodejs\npm.cmd" run universe:daily -- --markets KOSPI,KOSDAQ --batch-size 100 --concurrency 4
 ```
 
 옵션 예시:
 
 ```powershell
-& "C:\Program Files\nodejs\npm.cmd" run universe:daily -- --markets KOSPI,KOSDAQ --batch-size 20
-& "C:\Program Files\nodejs\npm.cmd" run universe:daily -- --markets KOSDAQ --limit 300 --batch-size 15
+& "C:\Program Files\nodejs\npm.cmd" run universe:daily -- --markets KOSPI,KOSDAQ --batch-size 100 --concurrency 4
+& "C:\Program Files\nodejs\npm.cmd" run universe:daily -- --markets KOSDAQ --limit 300 --batch-size 60 --concurrency 3
 ```
 
-이 스크립트는 다음 순서로 실행합니다.
+이 스크립트는 다음 순서로 실행됩니다.
 1. universe watchlist 생성
 2. batch scan 실행
 3. `daily-candidates.json` 갱신
@@ -102,16 +102,16 @@ KOSDAQ만:
 ## 5. 운영 권장 흐름
 1. `symbol-master.json`을 KRX 전체 기준으로 먼저 갱신
 2. `universe:daily`를 하루 1회 실행
-3. `/recommendations`와 `/admin`에서 오늘의 상위 후보를 검토
-4. 운영실에서 watchlist / 뉴스 / 검증 보정 필요 항목만 수동 조정
+3. `/recommendations`와 `/admin`에서 오늘의 상위 후보 확인
+4. 운영상 watchlist / 뉴스 / 검증 보정이 필요한 종목만 수동 조정
 5. 이후 미국 종목 CSV를 `--merge`로 병합
 
 자동화 기준:
 - `symbols:sync --krx`는 KRX 원본 fetch, CSV 정규화, symbol master import를 한 번에 수행할 수 있습니다.
-- `universe:daily -- --sync-symbols`에 붙이면 장 마감 후 심볼 마스터 갱신까지 daily cycle에 포함됩니다.
+- `universe:daily -- --sync-symbols`를 붙이면 장 마감 후 마스터 갱신까지 daily cycle에 포함됩니다.
 
 ## 주의
-- 전체 종목을 한 번에 외부 뉴스/시장 API로 돌리면 rate limit이 걸릴 수 있습니다.
-- 실서비스에서는 `batch 실행`, `시장별 분할`, `섹터별 분할`, `queue 기반 스케줄링`이 필요합니다.
-- 현재 코드는 KRX 중심 운영을 우선으로 하고, 심볼 마스터는 미국 시장까지 병합 가능한 형태로 준비한 상태입니다.
-- Windows 환경에서는 작업 스케줄러에서 `npm.cmd run universe:daily`를 오후 장 마감 이후 한 번 실행하는 구성이 가장 현실적입니다.
+- 전체 종목을 한 번에 모든 뉴스/시장 API로 돌리면 rate limit에 걸릴 수 있습니다.
+- 따라서 서비스에서는 `batch 실행`, `시장별 분할`, `섹터별 분할`, `queue 기반 재시도`가 필요합니다.
+- 현재 코드는 KRX 중심 운영을 우선으로 하고, 이후 마스터는 미국 시장까지 병합 가능한 상태로 준비돼 있습니다.
+- Windows 환경에서는 작업 스케줄러에서 `npm.cmd run universe:daily`를 장 마감 이후 하루 한 번 실행하는 구성이 가장 안정적입니다.

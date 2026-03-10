@@ -5,7 +5,11 @@ import { mkdir } from "node:fs/promises";
 
 import { loadLocalEnv } from "./load-env.mjs";
 import { getProjectPaths, parseArgs } from "./lib/external-source-utils.mjs";
-import { getLiveSnapshotRoot, writeLiveSnapshotManifest } from "./lib/live-snapshot-manifest.mjs";
+import {
+  getLiveSnapshotRoot,
+  pruneOldLiveSnapshots,
+  writeLiveSnapshotManifest
+} from "./lib/live-snapshot-manifest.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -85,9 +89,11 @@ async function main() {
 
   if (!useDirectLive) {
     const manifestPath = await writeLiveSnapshotManifest(projectRoot, targetOutDir);
+    const removedSnapshots = await pruneOldLiveSnapshots(projectRoot, targetOutDir);
     console.log(`Live snapshot promoted.`);
     console.log(`- snapshotDir: ${targetOutDir}`);
     console.log(`- manifest: ${manifestPath}`);
+    console.log(`- removedSnapshots: ${removedSnapshots.length}`);
   }
 }
 

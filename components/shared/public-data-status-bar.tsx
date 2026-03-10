@@ -40,7 +40,7 @@ export function PublicDataStatusBar({ summary }: { summary: PublicDataStatusSumm
         <div className="min-w-[220px] rounded-[22px] border border-border/60 bg-white/80 px-4 py-3">
           <p className="text-[11px] font-semibold tracking-[0.12em] text-muted-foreground">데이터 기준</p>
           <p className="mt-2 text-sm font-semibold text-foreground">{summary.sourceLabel}</p>
-          <p className="mt-1 text-xs text-muted-foreground">업데이트 {formatDateTimeShort(summary.generatedAt)}</p>
+          <p className="mt-1 text-xs text-muted-foreground">기준 시각 {formatDateTimeShort(summary.generatedAt)}</p>
         </div>
       </div>
     </div>
