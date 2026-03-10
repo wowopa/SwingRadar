@@ -18,6 +18,7 @@ import { buildPublicDataStatusSummary } from "@/lib/server/public-data-status";
 describe("buildPublicDataStatusSummary", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.unstubAllEnvs();
     mocks.getOperationalPolicy.mockReturnValue({
       stale: {
         warningMinutes: 1560,
@@ -54,5 +55,21 @@ describe("buildPublicDataStatusSummary", () => {
 
     expect(summary.badge).toBe("배치 지연");
     expect(summary.detail).toContain("확인이 필요");
+  });
+
+  it("returns provider-specific source labels", () => {
+    mocks.buildStaleDataIndicator.mockReturnValue({
+      label: "analysis",
+      generatedAt: "2026-03-09T09:00:00.000Z",
+      ageMinutes: 20,
+      stale: false,
+      severity: "ok"
+    });
+
+    vi.stubEnv("SWING_RADAR_DATA_PROVIDER", "postgres");
+
+    const summary = buildPublicDataStatusSummary("analysis", "2026-03-09T09:00:00.000Z");
+
+    expect(summary.sourceLabel).toBe("자동 갱신 스냅샷");
   });
 });

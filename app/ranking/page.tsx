@@ -2,9 +2,11 @@ import Link from "next/link";
 import { CheckCircle2, TrendingUp } from "lucide-react";
 
 import { PageHeader } from "@/components/shared/page-header";
+import { PublicDataStatusBar } from "@/components/shared/public-data-status-bar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getDailyCandidates, getDailyCandidatesHistory } from "@/lib/repositories/daily-candidates";
 import { getRecommendations } from "@/lib/repositories/recommendations";
+import { buildPublicDataStatusSummary } from "@/lib/server/public-data-status";
 import { cn, formatDateTimeShort, formatPercent, formatPrice } from "@/lib/utils";
 
 function formatTurnover(value?: number | null) {
@@ -154,6 +156,10 @@ export default async function RankingPage() {
     recommendation: recommendationMap.get(item.ticker)
   }));
   const historySummary = buildHistorySummary(history);
+  const statusSummary = buildPublicDataStatusSummary(
+    dailyCandidates ? "daily-candidates" : "recommendations",
+    dailyCandidates?.generatedAt ?? recommendations.generatedAt
+  );
 
   return (
     <main>
@@ -162,6 +168,7 @@ export default async function RankingPage() {
         title="오늘의 추천 순위"
         description="추세, 거래대금, 상대 거래량, 검증 근거를 함께 반영해 오늘 먼저 볼 만한 종목을 정리한 순위입니다."
       />
+      <PublicDataStatusBar summary={statusSummary} />
 
       <section className="mb-6 grid gap-4 lg:grid-cols-3">
         <Card>
@@ -238,75 +245,93 @@ export default async function RankingPage() {
             </p>
           </CardHeader>
           <CardContent className="overflow-x-auto">
-            <div className="min-w-[1100px]">
-              <table className="w-full table-fixed text-left text-sm">
-                <thead className="border-b border-border text-xs font-semibold tracking-[0.08em] text-muted-foreground">
-                  <tr>
-                    <th className="w-[64px] pb-3 pr-3">순위</th>
-                    <th className="w-[180px] pb-3 pr-4">종목</th>
-                    <th className="w-[96px] pb-3 pr-4">후보 점수</th>
-                    <th className="w-[96px] pb-3 pr-4">기본 점수</th>
-                    <th className="w-[104px] pb-3 pr-4">현재가</th>
-                    <th className="w-[120px] pb-3 pr-4">20일 평균 거래대금</th>
-                    <th className="w-[240px] pb-3 pr-4">후보 해석</th>
-                    <th className="w-[84px] pb-3 pr-4">검증 표본</th>
-                    <th className="w-[92px] pb-3 pr-4">평균 수익</th>
-                    <th className="w-[96px] pb-3 text-right">상세</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {todayRanking.map((item) => {
-                    const badges = buildSignalBadges(item);
+            {todayRanking.length ? (
+              <div className="min-w-[1100px]">
+                <table className="w-full table-fixed text-left text-sm">
+                  <thead className="border-b border-border text-xs font-semibold tracking-[0.08em] text-muted-foreground">
+                    <tr>
+                      <th className="w-[64px] pb-3 pr-3">순위</th>
+                      <th className="w-[180px] pb-3 pr-4">종목</th>
+                      <th className="w-[96px] pb-3 pr-4">후보 점수</th>
+                      <th className="w-[96px] pb-3 pr-4">기본 점수</th>
+                      <th className="w-[104px] pb-3 pr-4">현재가</th>
+                      <th className="w-[120px] pb-3 pr-4">20일 평균 거래대금</th>
+                      <th className="w-[240px] pb-3 pr-4">후보 해석</th>
+                      <th className="w-[84px] pb-3 pr-4">검증 표본</th>
+                      <th className="w-[92px] pb-3 pr-4">평균 수익</th>
+                      <th className="w-[96px] pb-3 text-right">상세</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {todayRanking.map((item) => {
+                      const badges = buildSignalBadges(item);
 
-                    return (
-                      <tr key={item.ticker} className="border-b border-border/60 align-top text-foreground/84 last:border-0">
-                        <td className="py-4 pr-3 font-semibold text-foreground">#{item.rank}</td>
-                        <td className="py-4 pr-4">
-                          <div className="min-w-0">
-                            <div className="truncate font-medium text-foreground">{item.company}</div>
-                            <div className="mt-1 text-xs text-muted-foreground">{item.ticker}</div>
-                          </div>
-                        </td>
-                        <td className="py-4 pr-4">
-                          <div className="font-medium text-foreground">{item.candidateScore}</div>
-                          <div className="mt-1 text-xs text-muted-foreground">최종 후보 순위 점수</div>
-                        </td>
-                        <td className="py-4 pr-4">
-                          <div className="text-foreground/78">{item.score}</div>
-                          <div className="mt-1 text-xs text-muted-foreground">차트·추세 중심 기본값</div>
-                        </td>
-                        <td className="py-4 pr-4 text-foreground/78">{item.currentPrice ? formatPrice(item.currentPrice) : "-"}</td>
-                        <td className="py-4 pr-4 text-foreground/78">{formatTurnover(item.averageTurnover20)}</td>
-                        <td className="py-4 pr-4">
-                          <div className="flex flex-wrap gap-2">
-                            {badges.map((badge) => (
-                              <span
-                                key={`${item.ticker}-${badge.label}`}
-                                className={cn("rounded-full px-3 py-1 text-xs font-medium whitespace-nowrap", badge.className)}
-                              >
-                                {badge.label}
-                              </span>
-                            ))}
-                          </div>
-                        </td>
-                        <td className="py-4 pr-4 text-foreground/78">{item.recommendation?.validation.sampleSize ?? "-"}</td>
-                        <td className="py-4 pr-4 text-foreground/78">
-                          {item.recommendation ? formatPercent(item.recommendation.validation.avgReturn) : "-"}
-                        </td>
-                        <td className="py-4 text-right">
-                          <Link
-                            className="inline-flex rounded-full border border-primary/20 bg-primary/6 px-3 py-1.5 text-sm font-medium whitespace-nowrap text-primary transition-colors hover:bg-primary/10"
-                            href={`/analysis/${item.ticker}`}
-                          >
-                            분석 보기
-                          </Link>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+                      return (
+                        <tr key={item.ticker} className="border-b border-border/60 align-top text-foreground/84 last:border-0">
+                          <td className="py-4 pr-3 font-semibold text-foreground">#{item.rank}</td>
+                          <td className="py-4 pr-4">
+                            <div className="min-w-0">
+                              <div className="truncate font-medium text-foreground">{item.company}</div>
+                              <div className="mt-1 text-xs text-muted-foreground">{item.ticker}</div>
+                            </div>
+                          </td>
+                          <td className="py-4 pr-4">
+                            <div className="font-medium text-foreground">{item.candidateScore}</div>
+                            <div className="mt-1 text-xs text-muted-foreground">최종 후보 순위 점수</div>
+                          </td>
+                          <td className="py-4 pr-4">
+                            <div className="text-foreground/78">{item.score}</div>
+                            <div className="mt-1 text-xs text-muted-foreground">차트·추세 중심 기본값</div>
+                          </td>
+                          <td className="py-4 pr-4 text-foreground/78">{item.currentPrice ? formatPrice(item.currentPrice) : "-"}</td>
+                          <td className="py-4 pr-4 text-foreground/78">{formatTurnover(item.averageTurnover20)}</td>
+                          <td className="py-4 pr-4">
+                            <div className="flex flex-wrap gap-2">
+                              {badges.map((badge) => (
+                                <span
+                                  key={`${item.ticker}-${badge.label}`}
+                                  className={cn("rounded-full px-3 py-1 text-xs font-medium whitespace-nowrap", badge.className)}
+                                >
+                                  {badge.label}
+                                </span>
+                              ))}
+                            </div>
+                          </td>
+                          <td className="py-4 pr-4 text-foreground/78">{item.recommendation?.validation.sampleSize ?? "-"}</td>
+                          <td className="py-4 pr-4 text-foreground/78">
+                            {item.recommendation ? formatPercent(item.recommendation.validation.avgReturn) : "-"}
+                          </td>
+                          <td className="py-4 text-right">
+                            <Link
+                              className="inline-flex rounded-full border border-primary/20 bg-primary/6 px-3 py-1.5 text-sm font-medium whitespace-nowrap text-primary transition-colors hover:bg-primary/10"
+                              href={`/analysis/${item.ticker}`}
+                            >
+                              분석 보기
+                            </Link>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="rounded-[24px] border border-dashed border-border/70 bg-secondary/20 px-6 py-10 text-center">
+                <p className="text-lg font-semibold text-foreground">오늘 표시할 랭킹 후보가 아직 없습니다.</p>
+                <p className="mx-auto mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
+                  일일 유니버스 스캔 결과가 아직 생성되지 않았거나 후보 점수가 기준에 미치지 못했습니다. 먼저 추천 보드에서 현재 관찰 종목을
+                  확인할 수 있습니다.
+                </p>
+                <div className="mt-5">
+                  <Link
+                    className="inline-flex rounded-full border border-primary/20 bg-primary/6 px-4 py-2 text-sm font-medium text-primary transition-colors hover:bg-primary/10"
+                    href="/recommendations"
+                  >
+                    추천 보드 보기
+                  </Link>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
       </section>
