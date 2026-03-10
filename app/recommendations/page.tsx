@@ -20,7 +20,7 @@ export default async function RecommendationsPage() {
       <section className="mb-6">
         <DailyCandidatesPanel dailyScan={response.dailyScan} />
       </section>
-      <RecommendationExplorer items={response.items} dailyScan={response.dailyScan} />
+      <RecommendationExplorer items={response.items} />
     </main>
   );
 }

@@ -3,10 +3,8 @@
 import type { ReactNode } from "react";
 import { useMemo, useState } from "react";
 
-import type { DailyScanSummaryDto } from "@/lib/api-contracts/swing-radar";
 import { RecommendationCard } from "@/components/recommendations/recommendation-card";
 import { RecommendationFramework } from "@/components/recommendations/recommendation-framework";
-import { RecommendationsOverview } from "@/components/recommendations/recommendations-overview";
 import { RecommendationTable } from "@/components/recommendations/recommendation-table";
 import { Input } from "@/components/ui/input";
 import { formatPercent } from "@/lib/utils";
@@ -32,11 +30,7 @@ function resolveValidationBasis(item: Recommendation): ValidationBasis {
     return item.validationBasis;
   }
 
-  if (
-    item.validation.sampleSize >= 25 &&
-    !item.validationSummary.includes("참고") &&
-    !item.validationSummary.includes("보수")
-  ) {
+  if (item.validation.sampleSize >= 25 && !item.validationSummary.includes("참고") && !item.validationSummary.includes("보수")) {
     return "실측 기반";
   }
 
@@ -60,7 +54,7 @@ function buildReasons(item: Recommendation) {
     reasons.push(`오늘 후보 상위권 #${item.featuredRank}`);
   }
   if (item.validation.hitRate >= 58) {
-    reasons.push(`유사 패턴 적중률 ${item.validation.hitRate}%`);
+    reasons.push(`유사 사례 적중률 ${item.validation.hitRate}%`);
   }
   if (item.validation.avgReturn >= 4) {
     reasons.push(`평균 수익 ${formatPercent(item.validation.avgReturn)}`);
@@ -80,25 +74,30 @@ function getWatchout(item: Recommendation) {
     return "신호 톤이 주의라서 진입 전 추가 확인이 필요합니다.";
   }
   if (resolveValidationBasis(item) === "보수 계산") {
-    return "실측 표본이 부족해 보수 계산이 섞여 있습니다.";
+    return "실측 표본이 아직 충분하지 않아 보수 계산 비중이 큽니다.";
   }
   if (item.eventCoverage === "취약" || !item.eventCoverage) {
-    return "뉴스·이벤트 근거는 약한 편입니다.";
+    return "뉴스나 이벤트 근거가 약해 차트와 거래 흐름 확인 비중이 큽니다.";
   }
   if (item.invalidationDistance > -4) {
-    return "무효화 구간이 가까워 손절 기준을 타이트하게 봐야 합니다.";
+    return "무효화 구간이 가까워 손절 기준을 더 타이트하게 봐야 합니다.";
   }
 
-  return "조건은 괜찮지만 추격보다는 눌림 확인이 더 유리합니다.";
+  return "조건은 무난하지만 추격보다 눌림 확인 쪽이 더 자연스럽습니다.";
 }
 
-export function RecommendationExplorer({
-  items,
-  dailyScan
-}: {
-  items: Recommendation[];
-  dailyScan: DailyScanSummaryDto | null;
-}) {
+function getToneClasses(tone: "emerald" | "sky" | "teal" | "amber") {
+  const tones = {
+    emerald: "border-emerald-200 bg-emerald-50 text-emerald-700",
+    sky: "border-sky-200 bg-sky-50 text-sky-700",
+    teal: "border-teal-200 bg-teal-50 text-teal-700",
+    amber: "border-amber-200 bg-amber-50 text-amber-700"
+  };
+
+  return tones[tone];
+}
+
+export function RecommendationExplorer({ items }: { items: Recommendation[] }) {
   const [query, setQuery] = useState("");
   const [tone, setTone] = useState<ToneFilter>("all");
   const [sector, setSector] = useState<SectorFilter>("all");
@@ -184,8 +183,8 @@ export function RecommendationExplorer({
   const verifiedCount = filteredItems.filter((item) => resolveValidationBasis(item) !== "보수 계산").length;
 
   return (
-    <div>
-      <section className="mb-8 grid gap-4 rounded-3xl border border-border/70 bg-card/50 p-5 lg:grid-cols-[1.4fr_160px_160px_160px_170px_180px_auto] lg:items-end">
+    <div className="space-y-8">
+      <section className="grid gap-4 rounded-3xl border border-border/70 bg-card/50 p-5 lg:grid-cols-[minmax(0,1.5fr)_repeat(5,minmax(0,0.75fr))] lg:items-end">
         <div>
           <p className="mb-2 text-sm text-muted-foreground">종목명, 티커, 섹터로 바로 찾을 수 있습니다.</p>
           <Input
@@ -225,84 +224,77 @@ export function RecommendationExplorer({
           <option value="score_asc">점수 낮은 순</option>
           <option value="name">종목명 순</option>
         </FilterSelect>
-        <div className="rounded-2xl border border-border/70 bg-secondary/35 px-4 py-3 text-sm text-muted-foreground">
-          현재 관찰 종목 <span className="font-semibold text-foreground">{filteredItems.length}</span>개
-        </div>
       </section>
 
-      <section className="mb-6 grid gap-4 lg:grid-cols-4">
-        <TrustCard label="오늘 바로 볼 후보" value={strongCount} tone="emerald" detail="상위권 또는 긍정 신호 기준" />
-        <TrustCard label="무효화 여유 확보" value={enoughInvalidationCount} tone="sky" detail="무효화 거리 -6% 이하" />
-        <TrustCard label="실측·참고 기반" value={verifiedCount} tone="teal" detail="보수 계산 외 검증 근거" />
-        <TrustCard
-          label="필터 내 전체 후보"
-          value={filteredItems.length}
-          tone="amber"
-          detail={additionalCount > 0 ? `상위 ${shortlist.length}개 우선 노출` : "현재 후보를 모두 표시 중"}
-        />
-      </section>
-
-      <section className="mb-6 rounded-3xl border border-border/70 bg-card/40 px-5 py-4">
-        <p className="text-sm font-semibold text-foreground">오늘은 이렇게 보시면 됩니다.</p>
-        <p className="mt-2 text-sm leading-6 text-muted-foreground">
-          숫자 자체보다 먼저 봐야 할 것은 왜 이 종목을 지금 보는지, 그리고 무엇이 아직 부족한지입니다. 아래 카드는 오늘 우선해서 볼 후보만
-          추려 보여주고, 더 넓은 비교는 표에서 이어서 확인할 수 있게 구성했습니다.
-        </p>
-      </section>
-
-      <section className="mb-4">
-        <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-          <h2 className="text-base font-semibold text-foreground">현재 관찰 종목 기준 검증 분포</h2>
-          <p className="text-sm text-muted-foreground">{filteredItems.length}개 종목 기준</p>
+      <section className="grid gap-4 xl:grid-cols-[minmax(0,1.3fr)_minmax(0,0.9fr)]">
+        <div className="space-y-4 rounded-3xl border border-border/70 bg-card/40 p-5">
+          <div>
+            <p className="text-sm font-semibold text-foreground">오늘은 이 후보부터 보면 됩니다</p>
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">
+              이 화면은 가능한 많은 종목을 나열하기보다, 지금 볼 만한 관찰 후보를 먼저 추리고 그 이유와 리스크를 빠르게 읽는 데
+              맞춰져 있습니다.
+            </p>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <SummaryCard label="현재 관찰 후보" value={`${filteredItems.length}개`} detail="필터 기준으로 남은 후보" tone="emerald" />
+            <SummaryCard label="바로 볼 후보" value={`${strongCount}개`} detail="상위권 또는 긍정 신호" tone="sky" />
+            <SummaryCard label="검증 근거 확보" value={`${verifiedCount}개`} detail="보수 계산만으로 보지 않은 후보" tone="teal" />
+            <SummaryCard
+              label="무효화 여유"
+              value={`${enoughInvalidationCount}개`}
+              detail="무효화 거리 -6% 이하"
+              tone="amber"
+            />
+          </div>
         </div>
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
-          <TrustCard label="실측 기반" value={filteredTrustSummary["실측 기반"]} tone="emerald" />
-          <TrustCard label="공용 추적 참고" value={filteredTrustSummary["공용 추적 참고"]} tone="teal" />
-          <TrustCard label="유사 업종 참고" value={filteredTrustSummary["유사 업종 참고"]} tone="sky" />
-          <TrustCard label="유사 흐름 참고" value={filteredTrustSummary["유사 흐름 참고"]} tone="amber" />
-          <TrustCard label="보수 계산" value={filteredTrustSummary["보수 계산"]} tone="rose" />
-        </div>
-      </section>
 
-      <section className="mb-8">
-        <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-          <h2 className="text-base font-semibold text-foreground">전체 분석 종목 기준 검증 분포</h2>
-          <p className="text-sm text-muted-foreground">{items.length}개 종목 기준</p>
+        <div className="rounded-3xl border border-border/70 bg-card/40 p-5">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-sm font-semibold text-foreground">검증 근거 분포</p>
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                현재 필터 결과와 전체 관찰 종목의 검증 근거를 한 번에 비교합니다.
+              </p>
+            </div>
+            <div className="rounded-2xl border border-border/70 bg-secondary/35 px-3 py-2 text-sm text-muted-foreground">
+              현재 {filteredItems.length}개 / 전체 {items.length}개
+            </div>
+          </div>
+          <div className="mt-4 space-y-3">
+            {VALIDATION_BASIS_OPTIONS.map((basis) => (
+              <BasisRow
+                key={basis}
+                label={basis}
+                filteredCount={filteredTrustSummary[basis]}
+                totalCount={trustSummary[basis]}
+              />
+            ))}
+          </div>
         </div>
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
-          <TrustCard label="실측 기반" value={trustSummary["실측 기반"]} tone="emerald" />
-          <TrustCard label="공용 추적 참고" value={trustSummary["공용 추적 참고"]} tone="teal" />
-          <TrustCard label="유사 업종 참고" value={trustSummary["유사 업종 참고"]} tone="sky" />
-          <TrustCard label="유사 흐름 참고" value={trustSummary["유사 흐름 참고"]} tone="amber" />
-          <TrustCard label="보수 계산" value={trustSummary["보수 계산"]} tone="rose" />
-        </div>
-      </section>
-
-      <section className="mb-6">
-        <RecommendationsOverview items={filteredItems} dailyScan={dailyScan} />
       </section>
 
       {shortlist.length ? (
         <>
-          <section className="mb-4 flex flex-wrap items-end justify-between gap-3">
+          <section className="flex flex-wrap items-end justify-between gap-3">
             <div>
-              <h2 className="text-xl font-semibold text-foreground">오늘 우선해서 볼 스윙 후보</h2>
+              <h2 className="text-xl font-semibold text-foreground">우선 볼 관찰 종목</h2>
               <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                상위 {shortlist.length}개만 먼저 보여줍니다. 카드를 펼쳐 보며 왜 보는지와 무엇을 조심해야 하는지를 먼저 확인해보세요.
+                카드에서는 왜 보는지와 무엇을 조심해야 하는지부터 먼저 읽고, 더 넓은 비교는 아래 표에서 이어서 보면 됩니다.
               </p>
             </div>
             <div className="rounded-2xl border border-border/70 bg-secondary/35 px-4 py-3 text-sm text-muted-foreground">
-              {additionalCount > 0 ? `나머지 ${additionalCount}개 후보는 아래 표에서 비교` : "현재 필터 기준 모든 후보를 카드로 표시 중"}
+              {additionalCount > 0 ? `나머지 ${additionalCount}개 후보는 아래 비교표에서 확인` : "현재 필터 기준 모든 후보를 카드로 보여주고 있습니다."}
             </div>
           </section>
-          <section className="grid gap-6 xl:grid-cols-3">
+
+          <section className="grid gap-6 2xl:grid-cols-3 xl:grid-cols-2">
             {shortlist.map((item) => {
               const reasons = buildReasons(item);
 
               return (
                 <div key={item.ticker} className="space-y-3">
                   <div className="rounded-[24px] border border-border/70 bg-secondary/25 p-4">
-                    <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-start justify-between gap-3">
                       <div>
                         <p className="text-sm font-semibold text-foreground">{getCandidateLabel(item)}</p>
                         <p className="mt-1 text-sm leading-6 text-muted-foreground">{getWatchout(item)}</p>
@@ -331,7 +323,14 @@ export function RecommendationExplorer({
               );
             })}
           </section>
-          <section className="mt-6">
+
+          <section className="space-y-4">
+            <div>
+              <h2 className="text-lg font-semibold text-foreground">전체 후보 비교표</h2>
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                카드에서 먼저 본 후보를 다른 종목과 비교하거나, 필터 결과 전체를 한 줄씩 빠르게 훑을 때 쓰는 표입니다.
+              </p>
+            </div>
             <RecommendationTable items={filteredItems} favorites={favorites} onToggleFavorite={toggleFavorite} />
           </section>
         </>
@@ -339,12 +338,12 @@ export function RecommendationExplorer({
         <section className="rounded-3xl border border-border/70 bg-card/40 p-8 text-center">
           <p className="text-lg font-semibold text-foreground">조건에 맞는 관찰 종목이 없습니다.</p>
           <p className="mt-3 text-sm leading-6 text-muted-foreground">
-            검색어를 줄이거나 톤, 섹터, 검증 근거 조건을 조금 더 넓혀보면 더 많은 종목을 볼 수 있습니다.
+            검색어나 톤, 섹터, 검증 근거 조건을 조금 더 넓히면 더 많은 종목을 볼 수 있습니다.
           </p>
         </section>
       )}
 
-      <section className="mt-6">
+      <section>
         <RecommendationFramework />
       </section>
     </div>
@@ -376,30 +375,49 @@ function FilterSelect<T extends string>({
   );
 }
 
-function TrustCard({
+function SummaryCard({
   label,
   value,
-  tone,
-  detail
+  detail,
+  tone
 }: {
   label: string;
-  value: number | string;
-  tone: "emerald" | "teal" | "sky" | "amber" | "rose";
-  detail?: string;
+  value: string;
+  detail: string;
+  tone: "emerald" | "sky" | "teal" | "amber";
 }) {
-  const tones = {
-    emerald: "border-emerald-200 bg-emerald-50 text-emerald-700",
-    teal: "border-teal-200 bg-teal-50 text-teal-700",
-    sky: "border-sky-200 bg-sky-50 text-sky-700",
-    amber: "border-amber-200 bg-amber-50 text-amber-700",
-    rose: "border-rose-200 bg-rose-50 text-rose-700"
-  };
-
   return (
-    <div className={`rounded-3xl border px-5 py-4 ${tones[tone]}`}>
+    <div className={`rounded-3xl border px-4 py-4 ${getToneClasses(tone)}`}>
       <p className="text-xs font-medium">{label}</p>
       <p className="mt-2 text-2xl font-semibold">{value}</p>
-      {detail ? <p className="mt-2 text-xs leading-5 opacity-80">{detail}</p> : null}
+      <p className="mt-2 text-xs leading-5 opacity-80">{detail}</p>
+    </div>
+  );
+}
+
+function BasisRow({
+  label,
+  filteredCount,
+  totalCount
+}: {
+  label: string;
+  filteredCount: number;
+  totalCount: number;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-4 rounded-2xl border border-border/70 bg-background/50 px-4 py-3">
+      <div>
+        <p className="text-sm font-medium text-foreground">{label}</p>
+        <p className="text-xs text-muted-foreground">현재 필터와 전체 기준 분포</p>
+      </div>
+      <div className="flex items-center gap-2 text-sm">
+        <span className="rounded-full border border-primary/20 bg-primary/10 px-3 py-1 font-medium text-primary">
+          현재 {filteredCount}
+        </span>
+        <span className="rounded-full border border-border/70 bg-secondary/35 px-3 py-1 text-muted-foreground">
+          전체 {totalCount}
+        </span>
+      </div>
     </div>
   );
 }
