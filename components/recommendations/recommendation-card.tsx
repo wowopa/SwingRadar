@@ -66,13 +66,13 @@ function buildWhyNow(item: Recommendation) {
   return reasons.slice(0, 3);
 }
 
-function buildWatchouts(item: Recommendation) {
+function buildWatchouts(item: Recommendation, validationBasis: ValidationBasis) {
   const watchouts = [];
 
   if (item.signalTone === "주의") {
     watchouts.push("신호 톤이 주의라서 추격 진입보다는 확인 후 접근이 낫습니다.");
   }
-  if (resolveValidationBasis(item) === "보수 계산") {
+  if (validationBasis === "보수 계산") {
     watchouts.push("실측 표본이 부족해 보수 계산이 섞여 있습니다.");
   }
   if (item.validation.avgReturn <= 0) {
@@ -107,7 +107,7 @@ export function RecommendationCard({
 }) {
   const validationBasis = resolveValidationBasis(item);
   const whyNow = buildWhyNow(item);
-  const watchouts = buildWatchouts(item);
+  const watchouts = buildWatchouts(item, validationBasis);
   const historicalSummary = buildHistoricalSummary(item, validationBasis);
 
   return (
