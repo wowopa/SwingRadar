@@ -42,6 +42,14 @@ This flow pulls real market, news, and disclosure inputs before the existing sna
 ## Watchlist
 `data/config/watchlist.json`
 
+When `SWING_RADAR_FOCUSED_WATCHLIST_ENABLED=true`, the default external refresh watchlist is narrowed to:
+- manual watchlist entries
+- recent daily candidates
+- recent daily candidate history
+- top slice of the universe watchlist
+
+This lets the daily external fetch keep 6-month price/news/disclosure history for the symbols that matter most without pulling the full universe every run.
+
 Each item can contain:
 - `ticker`
 - `company`
@@ -59,6 +67,11 @@ Each item can contain:
 ```env
 SWING_RADAR_MARKET_PROVIDER=yahoo
 SWING_RADAR_MARKET_LOOKBACK_RANGE=6mo
+SWING_RADAR_FOCUSED_WATCHLIST_ENABLED=true
+SWING_RADAR_FOCUSED_WATCHLIST_TOP_UNIVERSE=80
+SWING_RADAR_FOCUSED_WATCHLIST_RECENT_CANDIDATES=40
+SWING_RADAR_FOCUSED_WATCHLIST_RECENT_RUNS=5
+SWING_RADAR_FOCUSED_WATCHLIST_RECENT_HISTORY_PER_RUN=20
 SWING_RADAR_NEWS_PROVIDER=naver
 SWING_RADAR_NAVER_CLIENT_ID=replace-with-naver-client-id
 SWING_RADAR_NAVER_CLIENT_SECRET=replace-with-naver-client-secret
