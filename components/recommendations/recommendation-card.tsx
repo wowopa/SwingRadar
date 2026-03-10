@@ -1,4 +1,4 @@
-﻿import type { ComponentType } from "react";
+import type { ComponentType } from "react";
 import Link from "next/link";
 import { ArrowRight, ShieldAlert, Sparkles, Target } from "lucide-react";
 
@@ -40,6 +40,62 @@ function resolveValidationBasis(item: Recommendation): ValidationBasis {
   return "보수 계산";
 }
 
+function buildWhyNow(item: Recommendation) {
+  const reasons = [];
+
+  if (item.featuredRank) {
+    reasons.push(`오늘 후보 순위 ${item.featuredRank}위에 들어 있습니다.`);
+  }
+  if (item.validation.hitRate >= 55) {
+    reasons.push(`유사 패턴 적중률이 ${item.validation.hitRate}%로 비교적 안정적입니다.`);
+  }
+  if (item.validation.avgReturn > 0) {
+    reasons.push(`과거 유사 구간 평균 수익이 ${formatPercent(item.validation.avgReturn)}입니다.`);
+  }
+  if (item.invalidationDistance <= -8) {
+    reasons.push(`무효화 여유가 ${formatPercent(item.invalidationDistance)}로 너무 타이트하지 않습니다.`);
+  }
+  if (item.eventCoverage && item.eventCoverage !== "취약") {
+    reasons.push(`뉴스·이벤트 근거는 ${item.eventCoverage} 수준입니다.`);
+  }
+
+  if (!reasons.length) {
+    reasons.push(item.signalLabel);
+  }
+
+  return reasons.slice(0, 3);
+}
+
+function buildWatchouts(item: Recommendation) {
+  const watchouts = [];
+
+  if (item.signalTone === "주의") {
+    watchouts.push("신호 톤이 주의라서 추격 진입보다는 확인 후 접근이 낫습니다.");
+  }
+  if (resolveValidationBasis(item) === "보수 계산") {
+    watchouts.push("실측 표본이 부족해 보수 계산이 섞여 있습니다.");
+  }
+  if (item.validation.avgReturn <= 0) {
+    watchouts.push("과거 유사 구간 평균 수익이 아직 안정적으로 플러스는 아닙니다.");
+  }
+  if (item.invalidationDistance > -5) {
+    watchouts.push("무효화 기준이 가까워 손절 기준을 더 타이트하게 잡아야 합니다.");
+  }
+  if (item.eventCoverage === "취약" || !item.eventCoverage) {
+    watchouts.push("뉴스·이벤트 근거는 약한 편이라 차트와 수급 확인 비중이 더 큽니다.");
+  }
+
+  if (!watchouts.length) {
+    watchouts.push("지금 조건은 무난하지만 눌림과 거래량 유지 여부를 함께 보는 편이 좋습니다.");
+  }
+
+  return watchouts.slice(0, 2);
+}
+
+function buildHistoricalSummary(item: Recommendation, validationBasis: ValidationBasis) {
+  return `${validationBasis} 기준 표본 ${item.validation.sampleSize}건, 적중률 ${item.validation.hitRate}%, 평균 수익 ${formatPercent(item.validation.avgReturn)}, 최대 하락 ${formatPercent(item.validation.maxDrawdown)}입니다.`;
+}
+
 export function RecommendationCard({
   item,
   isFavorite,
@@ -50,6 +106,9 @@ export function RecommendationCard({
   onToggleFavorite: (ticker: string) => void;
 }) {
   const validationBasis = resolveValidationBasis(item);
+  const whyNow = buildWhyNow(item);
+  const watchouts = buildWatchouts(item);
+  const historicalSummary = buildHistoricalSummary(item, validationBasis);
 
   return (
     <Card className="h-full">
@@ -75,26 +134,42 @@ export function RecommendationCard({
           </div>
         </div>
         <div className="grid grid-cols-2 gap-3 rounded-[24px] border border-border/80 bg-background/40 p-4 xl:grid-cols-4">
-          <Metric label="점수" value={formatScore(item.score)} icon={Sparkles} />
+          <Metric label="기본 신호" value={formatScore(item.score)} icon={Sparkles} />
           <Metric label="검증 승률" value={`${item.validation.hitRate}%`} icon={Target} />
           <Metric label="평균 수익" value={formatPercent(item.validation.avgReturn)} icon={ArrowRight} />
           <Metric label="최대 하락" value={formatPercent(item.validation.maxDrawdown)} icon={ShieldAlert} />
         </div>
       </CardHeader>
       <CardContent className="space-y-6">
-        <section className="space-y-2">
-          <p className="text-sm font-semibold text-muted-foreground">관찰 근거</p>
-          <p className="text-sm leading-7 text-foreground/80">{item.rationale}</p>
+        <section className="rounded-2xl border border-border/70 bg-background/35 p-4">
+          <p className="text-sm font-semibold text-foreground">왜 지금 볼까</p>
+          <div className="mt-3 space-y-2">
+            {whyNow.map((reason) => (
+              <p key={`${item.ticker}-${reason}`} className="text-sm leading-7 text-foreground/80">
+                {reason}
+              </p>
+            ))}
+          </div>
         </section>
-        <section className="space-y-2">
-          <p className="text-sm font-semibold text-muted-foreground">기준 이탈</p>
-          <p className="text-sm leading-7 text-foreground/72">{item.invalidation}</p>
+
+        <section className="rounded-2xl border border-border/70 bg-secondary/25 p-4">
+          <p className="text-sm font-semibold text-foreground">무엇을 조심할까</p>
+          <div className="mt-3 space-y-2">
+            {watchouts.map((watchout) => (
+              <p key={`${item.ticker}-${watchout}`} className="text-sm leading-7 text-foreground/78">
+                {watchout}
+              </p>
+            ))}
+          </div>
+          <p className="mt-4 text-sm leading-7 text-muted-foreground">{item.invalidation}</p>
         </section>
+
         <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
           <DetailStat label="이탈 여유" value={formatPercent(item.invalidationDistance)} />
           <DetailStat label="기대 손익" value={item.riskRewardRatio} />
           <DetailStat label="업데이트" value={formatDateTimeShort(item.updatedAt)} />
         </section>
+
         <section className="space-y-2">
           <p className="text-sm font-semibold text-muted-foreground">체크포인트</p>
           <div className="flex flex-wrap gap-2">
@@ -105,18 +180,20 @@ export function RecommendationCard({
             ))}
           </div>
         </section>
+
         <section className="rounded-2xl border border-border/70 bg-background/35 p-4">
           <div className="flex items-start justify-between gap-3">
             <div>
               <div className="flex flex-wrap items-center gap-2">
-                <p className="text-sm font-semibold text-muted-foreground">검증 메모</p>
+                <p className="text-sm font-semibold text-muted-foreground">과거 검증 요약</p>
                 <span
                   className={`rounded-full border px-2.5 py-1 text-[11px] font-medium ${getValidationToneClasses(validationBasis)}`}
                 >
                   {validationBasis}
                 </span>
               </div>
-              <p className="mt-2 text-sm leading-7 text-foreground/80">{item.validationSummary}</p>
+              <p className="mt-2 text-sm leading-7 text-foreground/80">{historicalSummary}</p>
+              <p className="mt-2 text-sm leading-7 text-muted-foreground">{item.validationSummary}</p>
             </div>
             {item.candidateScore ? (
               <div className="shrink-0 rounded-2xl border border-primary/30 bg-primary/10 px-3 py-2 text-right">
@@ -127,6 +204,12 @@ export function RecommendationCard({
           </div>
           {item.eventCoverage ? <p className="mt-3 text-xs text-muted-foreground">이벤트 커버리지: {item.eventCoverage}</p> : null}
         </section>
+
+        <section className="rounded-2xl border border-border/70 bg-secondary/25 p-4">
+          <p className="text-sm font-semibold text-muted-foreground">판단 메모</p>
+          <p className="mt-2 text-sm leading-7 text-foreground/80">{item.rationale}</p>
+        </section>
+
         <div className="flex items-center justify-between rounded-2xl border border-border/70 bg-secondary/45 px-4 py-3 text-sm text-muted-foreground">
           <span>관찰 기간 {item.observationWindow}</span>
           <Link className="font-medium text-primary transition hover:text-primary/80" href={`/analysis/${item.ticker}`}>
