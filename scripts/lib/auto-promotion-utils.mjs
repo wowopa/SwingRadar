@@ -29,12 +29,12 @@ export function getAutoPromotionPolicy(env = process.env) {
     maxAverageRank: parsePositiveNumber(env.SWING_RADAR_AUTO_PROMOTION_MAX_AVERAGE_RANK ?? "18", 18),
     minBestRank: parsePositiveInteger(env.SWING_RADAR_AUTO_PROMOTION_MIN_BEST_RANK ?? "10", 10),
     minAverageCandidateScore: parsePositiveNumber(
-      env.SWING_RADAR_AUTO_PROMOTION_MIN_AVERAGE_CANDIDATE_SCORE ?? "175",
-      175
+      env.SWING_RADAR_AUTO_PROMOTION_MIN_AVERAGE_CANDIDATE_SCORE ?? "28",
+      28
     ),
     minCurrentCandidateScore: parsePositiveNumber(
-      env.SWING_RADAR_AUTO_PROMOTION_MIN_CURRENT_CANDIDATE_SCORE ?? "185",
-      185
+      env.SWING_RADAR_AUTO_PROMOTION_MIN_CURRENT_CANDIDATE_SCORE ?? "30",
+      30
     ),
     minAverageTurnover20: parsePositiveNumber(
       env.SWING_RADAR_AUTO_PROMOTION_MIN_AVG_TURNOVER20 ?? "30000000000",

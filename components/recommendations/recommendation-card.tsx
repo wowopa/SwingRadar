@@ -120,7 +120,7 @@ export function RecommendationCard({
             </div>
             {item.candidateScore ? (
               <div className="shrink-0 rounded-2xl border border-primary/30 bg-primary/10 px-3 py-2 text-right">
-                <p className="text-[11px] text-primary/80">오늘 후보 점수</p>
+                <p className="text-[11px] text-primary/80">오늘 랭킹 점수</p>
                 <p className="mt-1 text-sm font-semibold text-primary">{item.candidateScore}</p>
               </div>
             ) : null}

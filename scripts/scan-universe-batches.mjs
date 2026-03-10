@@ -7,6 +7,7 @@ import { promisify } from "node:util";
 import { fileURLToPath } from "node:url";
 
 import { loadLocalEnv } from "./load-env.mjs";
+import { calculateCandidateScore, getLiquidityAdjustment } from "./lib/candidate-score-utils.mjs";
 
 const execFileAsync = promisify(execFile);
 const __filename = fileURLToPath(import.meta.url);
@@ -155,48 +156,6 @@ async function runNodeScript(scriptName, args, env) {
   });
 }
 
-function getLiquidityAdjustment(averageTurnover20) {
-  if (averageTurnover20 >= 150_000_000_000) {
-    return { score: 10, rating: "매우 풍부" };
-  }
-  if (averageTurnover20 >= 70_000_000_000) {
-    return { score: 7, rating: "풍부" };
-  }
-  if (averageTurnover20 >= 30_000_000_000) {
-    return { score: 4, rating: "양호" };
-  }
-  if (averageTurnover20 >= 10_000_000_000) {
-    return { score: 1, rating: "보통" };
-  }
-  if (averageTurnover20 >= 5_000_000_000) {
-    return { score: -2, rating: "다소 약함" };
-  }
-
-  return { score: -8, rating: "부족" };
-}
-
-function getLowPricePenalty(currentPrice, averageTurnover20) {
-  const turnover = averageTurnover20 ?? 0;
-
-  if (currentPrice < 1_500) {
-    return -18;
-  }
-  if (currentPrice < 2_000) {
-    return -14;
-  }
-  if (currentPrice < 3_000) {
-    return turnover >= 20_000_000_000 ? -8 : -12;
-  }
-  if (currentPrice < 5_000) {
-    return turnover >= 20_000_000_000 ? -4 : -7;
-  }
-  if (currentPrice < 10_000) {
-    return -2;
-  }
-
-  return 0;
-}
-
 function shouldExcludeCandidate(currentPrice, averageTurnover20, thresholds) {
   if (!Number.isFinite(currentPrice) || !Number.isFinite(averageTurnover20)) {
     return true;
@@ -229,16 +188,18 @@ function scoreCandidates(recommendations, analysis, marketItemsByTicker, batchIn
       return [];
     }
 
-    const hitRateWeight = item.validation.hitRate * 0.35;
-    const returnWeight = item.validation.avgReturn * 3;
-    const sampleWeight = Math.min(item.validation.sampleSize, 40) * 0.15;
     const eventCoverage = detail?.dataQuality.find((entry) => entry.label === "커버리지")?.value ?? "취약";
-    const coverageWeight = eventCoverage === "보강됨" ? 6 : eventCoverage === "제한적" ? 3 : 0;
     const liquidity = getLiquidityAdjustment(averageTurnover20);
-    const lowPricePenalty = getLowPricePenalty(currentPrice, averageTurnover20);
-    const candidateScore = Number(
-      (item.score + hitRateWeight + returnWeight + sampleWeight + coverageWeight + liquidity.score + lowPricePenalty).toFixed(1)
-    );
+    const candidateScore = calculateCandidateScore({
+      score: item.score,
+      validation: item.validation,
+      validationBasis: item.validationBasis,
+      eventCoverage,
+      averageTurnover20,
+      currentPrice,
+      volumeRatio,
+      signalTone: item.signalTone
+    });
 
     return [{
       batch: batchIndex + 1,
