@@ -5,6 +5,7 @@ import { AnalysisNavigation } from "@/components/analysis/analysis-navigation";
 import { AnalysisSummaryBoard } from "@/components/analysis/analysis-summary-board";
 import { DataQualityPanel } from "@/components/analysis/data-quality-panel";
 import { EventCoveragePanel } from "@/components/analysis/event-coverage-panel";
+import { HistoricalValidationPanel } from "@/components/analysis/historical-validation-panel";
 import { NewsImpactList } from "@/components/analysis/news-impact-list";
 import { RiskChecklist } from "@/components/analysis/risk-checklist";
 import { ScenarioPanel } from "@/components/analysis/scenario-panel";
@@ -17,6 +18,7 @@ import { SignalToneBadge } from "@/components/shared/signal-tone-badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { DataQualityItem, NewsImpactItem, RiskChecklistItem, TickerAnalysis } from "@/types/analysis";
 import { getAnalysisByTicker } from "@/lib/repositories/analysis";
+import { getTrackingPayload } from "@/lib/repositories/tracking";
 import { buildPublicDataStatusSummary } from "@/lib/server/public-data-status";
 import { buildTradingViewSymbol, getAdjacentReadySymbols, getSymbolByTicker, resolveTicker } from "@/lib/symbols/master";
 import { formatScore } from "@/lib/utils";
@@ -113,6 +115,7 @@ export default async function AnalysisPage({ params }: { params: Promise<{ ticke
   }
 
   const analysisPayload = await getAnalysisByTicker(resolvedTicker);
+  const trackingPayload = await getTrackingPayload().catch(() => null);
 
   if (!analysisPayload) {
     notFound();
@@ -127,6 +130,11 @@ export default async function AnalysisPage({ params }: { params: Promise<{ ticke
   const watchouts = buildWatchouts(analysis);
   const historicalRead = getHistoricalRead(analysis.dataQuality);
   const coverageRead = getCoverageRead(analysis.newsImpact, analysis.riskChecklist);
+  const historicalItems =
+    trackingPayload?.history.filter((item) => resolveTicker(item.ticker) === resolvedTicker).sort((left, right) => right.signalDate.localeCompare(left.signalDate)) ?? [];
+  const historicalDetails = Object.fromEntries(
+    historicalItems.map((item) => [item.id, trackingPayload?.details[item.id]]).filter((entry): entry is [string, NonNullable<typeof trackingPayload>["details"][string]] => Boolean(entry[1]))
+  );
 
   return (
     <main className="space-y-6">
@@ -211,6 +219,8 @@ export default async function AnalysisPage({ params }: { params: Promise<{ ticke
       </section>
 
       <AnalysisSummaryBoard items={analysis.analysisSummary} />
+
+      <HistoricalValidationPanel history={historicalItems} details={historicalDetails} />
 
       <TradingViewChartCard company={analysis.company} symbol={tradingViewSymbol} points={analysis.chartSeries ?? EMPTY_CHART_SERIES} />
 
