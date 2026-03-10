@@ -14,7 +14,7 @@ $ErrorActionPreference = "Stop"
 
 $envConfig = Get-SwingRadarEnvConfig -ProjectRoot $ProjectRoot -EnvFile $EnvFile
 $TaskName = Resolve-SwingRadarSetting -Name "SWING_RADAR_AUTO_HEAL_TASK_NAME" -ExplicitValue $TaskName -DefaultValue "SwingRadarAutoHeal" -EnvConfig $envConfig
-$StartTime = Resolve-SwingRadarSetting -Name "SWING_RADAR_AUTO_HEAL_START_TIME" -ExplicitValue $StartTime -DefaultValue "18:40" -EnvConfig $envConfig
+$StartTime = Resolve-SwingRadarSetting -Name "SWING_RADAR_AUTO_HEAL_START_TIME" -ExplicitValue $StartTime -DefaultValue "05:30" -EnvConfig $envConfig
 
 $scriptPath = Join-Path $ProjectRoot "scripts\run-ops-auto-heal.ps1"
 if (-not (Test-Path $scriptPath)) {

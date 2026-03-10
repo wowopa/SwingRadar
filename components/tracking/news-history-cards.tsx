@@ -30,7 +30,7 @@ export function NewsHistoryCards({ items }: { items: TrackingNewsCard[] }) {
         {items.map((item) => (
           <div key={item.id} className="rounded-2xl border border-border/70 bg-secondary/35 p-4">
             <div className="flex items-start justify-between gap-4">
-              <div>
+              <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2 text-xs uppercase tracking-[0.2em] text-muted-foreground">
                   <span>{item.date}</span>
                   <span className="rounded-full border border-border/80 px-2 py-1 normal-case tracking-normal">{item.source}</span>
@@ -51,7 +51,9 @@ export function NewsHistoryCards({ items }: { items: TrackingNewsCard[] }) {
                   </a>
                 ) : null}
               </div>
-              <SignalToneBadge tone={item.impact} />
+              <div className="shrink-0 pt-0.5">
+                <SignalToneBadge tone={item.impact} />
+              </div>
             </div>
           </div>
         ))}

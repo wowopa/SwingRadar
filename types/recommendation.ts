@@ -7,7 +7,7 @@ export interface ValidationStats {
   maxDrawdown: number;
 }
 
-export type ValidationBasis = "실측 기반" | "유사 업종 참고" | "유사 흐름 참고" | "보수 계산";
+export type ValidationBasis = "실측 기반" | "공용 추적 참고" | "유사 업종 참고" | "유사 흐름 참고" | "보수 계산";
 
 export interface Recommendation {
   ticker: string;

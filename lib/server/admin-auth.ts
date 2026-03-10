@@ -12,11 +12,11 @@ function normalizeBearerToken(header: string | null) {
     return null;
   }
 
-  return token;
+  return token.trim();
 }
 
 export function assertAdminRequest(request: Request) {
-  const expected = process.env.SWING_RADAR_ADMIN_TOKEN;
+  const expected = process.env.SWING_RADAR_ADMIN_TOKEN?.trim();
   if (!expected) {
     throw new ApiError(500, "ADMIN_TOKEN_NOT_CONFIGURED", "SWING_RADAR_ADMIN_TOKEN is not configured");
   }

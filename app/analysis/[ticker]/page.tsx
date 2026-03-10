@@ -57,11 +57,11 @@ export default async function AnalysisPage({ params }: { params: Promise<{ ticke
   const tradingViewSymbol = symbol ? buildTradingViewSymbol(symbol.ticker, symbol.market) : null;
 
   return (
-    <main>
+    <main className="space-y-6">
       <PageHeader
         eyebrow="Analysis"
         title={`${analysis.company} ${analysis.ticker} 심화 분석`}
-        description="관찰 근거, 기준 이탈, 가능한 시나리오를 한 화면에서 차분하게 정리한 분석 화면입니다."
+        description="핵심 판단, 차트, 가격 기준, 신뢰도와 이벤트를 넓은 흐름으로 읽을 수 있게 다시 정리한 분석 화면입니다."
       />
       <PublicDataStatusBar summary={statusSummary} />
       <AnalysisNavigation
@@ -74,10 +74,8 @@ export default async function AnalysisPage({ params }: { params: Promise<{ ticke
           sector: item.sector
         }))}
       />
-      <section className="mb-6">
-        <AnalysisSummaryBoard items={analysis.analysisSummary} />
-      </section>
-      <section className="mb-7 grid gap-6 xl:grid-cols-[minmax(0,1.18fr)_minmax(320px,0.82fr)]">
+
+      <section className="grid gap-6 xl:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)]">
         <Card>
           <CardHeader className="gap-4 pb-3">
             <div className="flex items-center justify-between gap-4">
@@ -98,22 +96,27 @@ export default async function AnalysisPage({ params }: { params: Promise<{ ticke
         </Card>
         <RiskChecklist items={analysis.riskChecklist} />
       </section>
-      <section className="mb-6">
+
+      <AnalysisSummaryBoard items={analysis.analysisSummary} />
+
+      <TradingViewChartCard company={analysis.company} symbol={tradingViewSymbol} points={analysis.chartSeries ?? EMPTY_CHART_SERIES} />
+
+      <section className="grid gap-6 xl:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
         <AnalysisDecisionPanel levels={analysis.keyLevels} notes={analysis.decisionNotes} />
+        <ScenarioPanel scenarios={analysis.scenarios} />
       </section>
-      <section className="mb-6 grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-        <TechnicalIndicatorsPanel indicators={analysis.technicalIndicators ?? EMPTY_TECHNICAL_INDICATORS} />
-        <TradingViewChartCard company={analysis.company} symbol={tradingViewSymbol} points={analysis.chartSeries ?? EMPTY_CHART_SERIES} />
-      </section>
+
       <section className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
         <ScoreBreakdown items={analysis.scoreBreakdown} />
-        <ScenarioPanel scenarios={analysis.scenarios} />
+        <TechnicalIndicatorsPanel indicators={analysis.technicalIndicators ?? EMPTY_TECHNICAL_INDICATORS} />
+      </section>
+
+      <section className="grid gap-6 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
         <EventCoveragePanel items={analysis.newsImpact} />
         <DataQualityPanel items={analysis.dataQuality} />
-        <div className="xl:col-span-2">
-          <NewsImpactList items={analysis.newsImpact} />
-        </div>
       </section>
+
+      <NewsImpactList items={analysis.newsImpact} />
     </main>
   );
 }

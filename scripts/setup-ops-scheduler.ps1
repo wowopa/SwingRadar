@@ -24,9 +24,9 @@ $resolvedDownloadPattern = Resolve-SwingRadarSetting -Name "SWING_RADAR_KRX_DOWN
 $resolvedMarkets = Resolve-SwingRadarSetting -Name "SWING_RADAR_UNIVERSE_MARKETS" -ExplicitValue $Markets -DefaultValue "KOSPI,KOSDAQ" -EnvConfig $envConfig
 $resolvedBatchSize = Resolve-SwingRadarIntSetting -Name "SWING_RADAR_UNIVERSE_BATCH_SIZE" -ExplicitValue $BatchSize -DefaultValue 20 -EnvConfig $envConfig
 $resolvedDailyTaskName = Resolve-SwingRadarSetting -Name "SWING_RADAR_DAILY_TASK_NAME" -ExplicitValue $DailyTaskName -DefaultValue "SwingRadarDailyKrxCycle" -EnvConfig $envConfig
-$resolvedDailyStartTime = Resolve-SwingRadarSetting -Name "SWING_RADAR_DAILY_TASK_START_TIME" -ExplicitValue $DailyStartTime -DefaultValue "18:10" -EnvConfig $envConfig
+$resolvedDailyStartTime = Resolve-SwingRadarSetting -Name "SWING_RADAR_DAILY_TASK_START_TIME" -ExplicitValue $DailyStartTime -DefaultValue "04:00" -EnvConfig $envConfig
 $resolvedAutoHealTaskName = Resolve-SwingRadarSetting -Name "SWING_RADAR_AUTO_HEAL_TASK_NAME" -ExplicitValue $AutoHealTaskName -DefaultValue "SwingRadarAutoHeal" -EnvConfig $envConfig
-$resolvedAutoHealStartTime = Resolve-SwingRadarSetting -Name "SWING_RADAR_AUTO_HEAL_START_TIME" -ExplicitValue $AutoHealStartTime -DefaultValue "18:40" -EnvConfig $envConfig
+$resolvedAutoHealStartTime = Resolve-SwingRadarSetting -Name "SWING_RADAR_AUTO_HEAL_START_TIME" -ExplicitValue $AutoHealStartTime -DefaultValue "05:30" -EnvConfig $envConfig
 
 $diagnostics = & "$PSScriptRoot\test-ops-environment.ps1" `
   -ProjectRoot $ProjectRoot `

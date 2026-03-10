@@ -4,7 +4,15 @@ import { fileURLToPath } from "node:url";
 
 import { loadLocalEnv } from "./load-env.mjs";
 import { getProjectPaths, loadWatchlist, parseArgs, readJson, writeJson } from "./lib/external-source-utils.mjs";
-import { dedupeArticles, fetchGNews, fetchGoogleNewsRss, fetchNaverNews, matchesFilters } from "./lib/news-providers.mjs";
+import {
+  dedupeArticles,
+  fetchCuratedRssPool,
+  fetchGNews,
+  fetchGoogleNewsRss,
+  fetchNaverNews,
+  matchesFilters,
+  selectCuratedRssNews
+} from "./lib/news-providers.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -20,7 +28,7 @@ Usage:
   node scripts/fetch-news-source.mjs [--out-file <path>] [--cache-file <path>]
 
 Environment:
-  SWING_RADAR_NEWS_PROVIDER=naver | google-news-rss | gnews | file
+  SWING_RADAR_NEWS_PROVIDER=auto | curated-rss | google-news-rss | gnews | naver | file
   SWING_RADAR_NAVER_CLIENT_ID=<id>
   SWING_RADAR_NAVER_CLIENT_SECRET=<secret>
   SWING_RADAR_NEWS_API_KEY=<gnews-key>
@@ -29,6 +37,9 @@ Environment:
   SWING_RADAR_NEWS_LIVE_FETCH_TICKER_LIMIT=200
   SWING_RADAR_NEWS_PRIORITY_WINDOW=100
   SWING_RADAR_NEWS_RETRY_LIMIT=2
+  SWING_RADAR_NEWS_SOURCE_DIVERSITY_LIMIT=2
+  SWING_RADAR_NEWS_CURATED_RSS_ENABLED=true
+  SWING_RADAR_NEWS_NAVER_MAX_PRIORITY_RANK=20
   SWING_RADAR_NEWS_NAVER_ENABLED=false
   SWING_RADAR_NEWS_GNEWS_ENABLED=false
 `);
@@ -70,27 +81,32 @@ function loadCacheNews(cache, entry, maxItems) {
 }
 
 function resolveProviderOrder() {
-  const requested = process.env.SWING_RADAR_NEWS_PROVIDER;
+  const requested = process.env.SWING_RADAR_NEWS_PROVIDER ?? "auto";
+  const curatedEnabled = process.env.SWING_RADAR_NEWS_CURATED_RSS_ENABLED !== "false";
   const rssEnabled = process.env.SWING_RADAR_NEWS_RSS_ENABLED !== "false";
   const naverEnabled = process.env.SWING_RADAR_NEWS_NAVER_ENABLED === "true";
   const gnewsEnabled = process.env.SWING_RADAR_NEWS_GNEWS_ENABLED === "true";
+  const curatedProvider = curatedEnabled ? ["curated-rss"] : [];
   const rssProvider = rssEnabled ? ["google-news-rss"] : [];
   const naverProvider = naverEnabled ? ["naver"] : [];
   const gnewsProvider = gnewsEnabled ? ["gnews"] : [];
   if (requested === "file") {
     return ["file"];
   }
-  if (requested === "google-news-rss") {
-    return ["google-news-rss", ...naverProvider, ...gnewsProvider];
+  if (requested === "curated-rss" && curatedEnabled) {
+    return ["curated-rss", ...rssProvider, ...naverProvider, ...gnewsProvider];
   }
-  if (requested === "gnews") {
-    return ["gnews", ...rssProvider, ...naverProvider];
+  if (requested === "google-news-rss" && rssEnabled) {
+    return ["google-news-rss", ...curatedProvider, ...naverProvider, ...gnewsProvider];
   }
-  if (requested === "naver") {
-    return ["naver", ...rssProvider, ...gnewsProvider];
+  if (requested === "gnews" && gnewsEnabled) {
+    return ["gnews", ...curatedProvider, ...rssProvider, ...naverProvider];
+  }
+  if (requested === "naver" && naverEnabled) {
+    return ["naver", ...curatedProvider, ...rssProvider, ...gnewsProvider];
   }
 
-  return [...rssProvider, ...naverProvider, ...gnewsProvider];
+  return [...curatedProvider, ...rssProvider, ...naverProvider, ...gnewsProvider];
 }
 
 async function readDailyCandidates(paths) {
@@ -152,7 +168,10 @@ function getNewsFetchReportPath() {
     : path.join(projectRoot, "data", "ops", "latest-news-fetch.json");
 }
 
-async function fetchFromProvider(provider, entry, maxItems, telemetry, options = {}) {
+async function fetchFromProvider(provider, entry, maxItems, telemetry, options = {}, feedPool = []) {
+  if (provider === "curated-rss") {
+    return selectCuratedRssNews(feedPool, entry, maxItems, options);
+  }
   if (provider === "naver") {
     return fetchNaverNews(entry, maxItems, telemetry, options);
   }
@@ -163,6 +182,25 @@ async function fetchFromProvider(provider, entry, maxItems, telemetry, options =
     return fetchGNews(entry, maxItems, telemetry, options);
   }
   return [];
+}
+
+function filterProviderOrderForRank(providerOrder, priorityRank) {
+  const naverMaxPriorityRank = normalizePositiveInteger(
+    process.env.SWING_RADAR_NEWS_NAVER_MAX_PRIORITY_RANK ?? "20",
+    20
+  );
+
+  return providerOrder.filter((provider) => {
+    if (provider !== "naver") {
+      return true;
+    }
+
+    if (!priorityRank) {
+      return false;
+    }
+
+    return priorityRank <= naverMaxPriorityRank;
+  });
 }
 
 async function main() {
@@ -192,10 +230,16 @@ async function main() {
   let providerUsed = "file";
   let anyLiveFetch = false;
   const priorityWindow = normalizePositiveInteger(process.env.SWING_RADAR_NEWS_PRIORITY_WINDOW ?? "100", 100);
+  const feedFailures = [];
   const report = {
     startedAt: new Date().toISOString(),
     completedAt: null,
     providerOrder,
+    effectiveNaverMaxPriorityRank: normalizePositiveInteger(
+      process.env.SWING_RADAR_NEWS_NAVER_MAX_PRIORITY_RANK ?? "20",
+      20
+    ),
+    curatedFeedItems: 0,
     requestedProvider: process.env.SWING_RADAR_NEWS_PROVIDER ?? "auto",
     totalTickers: watchlist.length,
     prioritizedTickers: Math.min(prioritizedWatchlist.length, liveFetchTickerLimit),
@@ -203,20 +247,42 @@ async function main() {
     priorityWindow,
     concurrency,
     liveFetchTickers: 0,
+    liveFetchPriorityTickers: 0,
     cacheFallbackTickers: 0,
+    cacheFallbackPriorityTickers: 0,
     fileFallbackTickers: 0,
     retryCount: 0,
     providerFailures: [],
     totalItems: 0
   };
+  const curatedFeedPool = providerOrder.includes("curated-rss")
+    ? await fetchCuratedRssPool({
+      onFeedFailure: ({ provider, source, url, message }) => {
+        feedFailures.push({
+          ticker: null,
+          provider,
+          source,
+          status: null,
+          attempt: null,
+          delayMs: null,
+          url,
+          phase: "feed-failed",
+          message
+        });
+      }
+    })
+    : [];
+  report.curatedFeedItems = curatedFeedPool.length;
+  report.providerFailures.push(...feedFailures);
 
   await runEntriesInParallel(prioritizedWatchlist, concurrency, async (entry, index) => {
     let fetched = [];
     const useLiveFetch = index < liveFetchTickerLimit;
     const priorityRank = index < priorityWindow ? index + 1 : null;
+    const rankedProviderOrder = filterProviderOrderForRank(providerOrder, priorityRank);
 
     if (useLiveFetch) {
-      for (const provider of providerOrder) {
+      for (const provider of rankedProviderOrder) {
         try {
           fetched = await fetchFromProvider(provider, entry, maxItems, {
             onRetry: ({ status, delayMs, attempt, url }) => {
@@ -233,12 +299,15 @@ async function main() {
             }
           }, {
             priorityRank
-          });
+          }, curatedFeedPool);
 
           if (fetched.length) {
             providerUsed = provider;
             anyLiveFetch = true;
             report.liveFetchTickers += 1;
+            if (priorityRank) {
+              report.liveFetchPriorityTickers += 1;
+            }
             break;
           }
         } catch (error) {
@@ -261,6 +330,9 @@ async function main() {
       fetched = loadCacheNews(cache, entry, maxItems);
       if (fetched.length) {
         report.cacheFallbackTickers += 1;
+        if (priorityRank) {
+          report.cacheFallbackPriorityTickers += 1;
+        }
       }
     }
 

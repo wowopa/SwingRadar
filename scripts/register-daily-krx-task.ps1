@@ -25,7 +25,7 @@ $Markets = Resolve-SwingRadarSetting -Name "SWING_RADAR_UNIVERSE_MARKETS" -Expli
 $BatchSize = Resolve-SwingRadarIntSetting -Name "SWING_RADAR_UNIVERSE_BATCH_SIZE" -ExplicitValue $BatchSize -DefaultValue 20 -EnvConfig $envConfig
 $Concurrency = Resolve-SwingRadarIntSetting -Name "SWING_RADAR_UNIVERSE_CONCURRENCY" -ExplicitValue $Concurrency -DefaultValue 4 -EnvConfig $envConfig
 $TopCandidates = Resolve-SwingRadarIntSetting -Name "SWING_RADAR_UNIVERSE_TOP_CANDIDATES" -ExplicitValue $TopCandidates -DefaultValue 100 -EnvConfig $envConfig
-$StartTime = Resolve-SwingRadarSetting -Name "SWING_RADAR_DAILY_TASK_START_TIME" -ExplicitValue $StartTime -DefaultValue "18:10" -EnvConfig $envConfig
+$StartTime = Resolve-SwingRadarSetting -Name "SWING_RADAR_DAILY_TASK_START_TIME" -ExplicitValue $StartTime -DefaultValue "04:00" -EnvConfig $envConfig
 $MaintenanceEtaMinutes = Resolve-SwingRadarIntSetting -Name "SWING_RADAR_MAINTENANCE_ETA_MINUTES" -ExplicitValue $MaintenanceEtaMinutes -DefaultValue 90 -EnvConfig $envConfig
 
 $scriptPath = Join-Path $ProjectRoot "scripts\run-daily-krx-cycle.ps1"

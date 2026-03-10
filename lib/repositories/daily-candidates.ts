@@ -11,6 +11,7 @@ export type DailyCandidate = {
   candidateScore: number;
   currentPrice?: number | null;
   averageTurnover20?: number | null;
+  volumeRatio?: number | null;
   liquidityRating?: string;
   invalidation: string;
   validationSummary: string;

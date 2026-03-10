@@ -68,7 +68,28 @@ function parseArgs(argv) {
 }
 
 async function readJson(dir, filename) {
-  return JSON.parse(await readFile(path.join(dir, filename), "utf8"));
+  const filePath = path.join(dir, filename);
+  let lastError = null;
+
+  for (let attempt = 0; attempt < 4; attempt += 1) {
+    try {
+      const content = (await readFile(filePath, "utf8")).replace(/^\uFEFF/, "").trim();
+      if (!content) {
+        throw new SyntaxError(`Empty JSON file: ${filePath}`);
+      }
+      return JSON.parse(content);
+    } catch (error) {
+      lastError = error;
+      const isSyntaxError = error instanceof SyntaxError || /Unexpected end of JSON input/i.test(String(error));
+      if (!isSyntaxError || attempt === 3) {
+        throw error;
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, 150 * (attempt + 1)));
+    }
+  }
+
+  throw lastError ?? new Error(`Failed to read JSON: ${filePath}`);
 }
 
 async function readOptionalJson(dir, filename, fallback) {
@@ -229,11 +250,12 @@ function resolveObservationWindow(sampleSize, hitRate) {
 }
 
 function buildMeasuredValidationItem(item) {
+  const basis = item.basis ?? "실측 기반";
   return {
     ...item,
-    basis: "실측 기반",
-    observationWindow: resolveObservationWindow(item.sampleSize, item.hitRate),
-    validationSummary: buildValidationSummary(item)
+    basis,
+    observationWindow: item.observationWindow ?? resolveObservationWindow(item.sampleSize, item.hitRate),
+    validationSummary: item.validationSummary ?? buildValidationSummary(item)
   };
 }
 
@@ -243,8 +265,19 @@ function getScoreBand(score) {
   return "watch";
 }
 
+function getSwingBaseScore(item) {
+  const weighted =
+    item.trendScore * 1.35 +
+    item.flowScore * 1.15 +
+    item.volatilityScore * 1.05 +
+    item.eventScore * 0.7 +
+    item.qualityScore * 1.15;
+
+  return roundNumber(weighted / 5.4, 1) ?? 0;
+}
+
 function getMarketScore(item) {
-  return item.trendScore + item.flowScore + item.volatilityScore + item.eventScore + item.qualityScore;
+  return getSwingBaseScore(item);
 }
 
 function resolveTrackingResult(item) {
@@ -337,6 +370,10 @@ function buildValidationProfiles(validationItems, trackingItems, marketByTicker)
   }
 
   for (const item of trackingItems) {
+    if (item.status === "watch" || item.status === "active") {
+      continue;
+    }
+
     const marketItem = marketByTicker.get(item.ticker);
     if (!marketItem) {
       continue;
@@ -477,14 +514,14 @@ function summarizeEventCoverage(newsItems) {
 }
 
 function resolveSignalTone(score, invalidationDistance, hitRate) {
-  if (score >= 75 && invalidationDistance <= -3 && hitRate >= 55) return KO.positive;
-  if (score < 55 || invalidationDistance > -2.5) return KO.caution;
-  return KO.neutral;
+  if (score >= 22 && invalidationDistance <= -4 && invalidationDistance >= -14 && hitRate >= 55) return KO.positive;
+  if (score >= 14 && invalidationDistance <= -2.5 && hitRate >= 50) return KO.neutral;
+  return KO.caution;
 }
 
 function resolveSignalLabel(score) {
-  if (score >= 75) return "흐름이 강한 편";
-  if (score >= 55) return "조금 더 확인해볼 만함";
+  if (score >= 22) return "흐름이 강한 편";
+  if (score >= 14) return "조금 더 확인해볼 만함";
   return "가볍게 지켜보기";
 }
 
@@ -561,36 +598,67 @@ function calculateTechnicalAdjustment(indicators, item) {
   let adjustment = 0;
 
   if (indicators.sma20 !== null && indicators.sma60 !== null) {
-    adjustment += indicators.sma20 >= indicators.sma60 ? 2.4 : -2.1;
+    adjustment += indicators.sma20 >= indicators.sma60 ? 2.8 : -2.6;
   }
 
   if (indicators.ema20 !== null && item.currentPrice) {
-    adjustment += item.currentPrice >= indicators.ema20 ? 1.2 : -1.2;
+    adjustment += item.currentPrice >= indicators.ema20 ? 1.4 : -1.6;
+  }
+
+  if (indicators.sma20 !== null && item.currentPrice) {
+    adjustment += item.currentPrice >= indicators.sma20 ? 1.2 : -1.5;
   }
 
   if (indicators.rsi14 !== null) {
-    if (indicators.rsi14 >= 48 && indicators.rsi14 <= 68) {
-      adjustment += 1.4;
-    } else if (indicators.rsi14 > 75) {
-      adjustment -= 1.8;
-    } else if (indicators.rsi14 < 32) {
-      adjustment -= 0.8;
+    if (indicators.rsi14 >= 52 && indicators.rsi14 <= 66) {
+      adjustment += 1.8;
+    } else if (indicators.rsi14 >= 45 && indicators.rsi14 < 52) {
+      adjustment += 0.9;
+    } else if (indicators.rsi14 > 72) {
+      adjustment -= 2.4;
+    } else if (indicators.rsi14 < 40) {
+      adjustment -= 1.3;
     }
   }
 
-  if (indicators.macd !== null && indicators.macdSignal !== null) {
-    adjustment += indicators.macd >= indicators.macdSignal ? 1.8 : -1.8;
+  if (indicators.macd !== null && indicators.macdSignal !== null && indicators.macdHistogram !== null) {
+    if (indicators.macd >= indicators.macdSignal && indicators.macdHistogram >= 0) {
+      adjustment += 2;
+    } else if (indicators.macd >= indicators.macdSignal) {
+      adjustment += 0.8;
+    } else {
+      adjustment -= 1.8;
+    }
   }
 
   if (indicators.volumeRatio20 !== null) {
-    if (indicators.volumeRatio20 >= 1.2) {
-      adjustment += 1.2;
+    if (indicators.volumeRatio20 >= 1.05 && indicators.volumeRatio20 <= 1.8) {
+      adjustment += 1.6;
+    } else if (indicators.volumeRatio20 > 1.8 && indicators.volumeRatio20 <= 3) {
+      adjustment += 0.4;
+    } else if (indicators.volumeRatio20 > 3) {
+      adjustment -= 1.6;
     } else if (indicators.volumeRatio20 <= 0.75) {
+      adjustment -= 1.4;
+    } else if (indicators.volumeRatio20 < 0.95) {
+      adjustment -= 0.6;
+    }
+  }
+
+  if (
+    indicators.bollingerUpper !== null &&
+    indicators.bollingerLower !== null &&
+    item.currentPrice &&
+    item.currentPrice > 0
+  ) {
+    if (item.currentPrice > indicators.bollingerUpper) {
+      adjustment -= 1.8;
+    } else if (item.currentPrice < indicators.bollingerLower) {
       adjustment -= 1.2;
     }
   }
 
-  return roundNumber(clamp(adjustment, -6, 6), 1) ?? 0;
+  return roundNumber(clamp(adjustment, -8, 8), 1) ?? 0;
 }
 
 function buildChartSeries(item) {
@@ -664,6 +732,67 @@ function qualityLabel(item) {
   if (item.qualityScore >= 13) return "양호";
   if (item.qualityScore >= 10) return "보통";
   return "주의";
+}
+
+function buildQualityValue(item, coverage, validationItem) {
+  let score = item.qualityScore;
+
+  if (validationItem.basis === "실측 기반") score += 2;
+  else if (validationItem.basis === "유사 업종 참고") score += 0.5;
+  else if (validationItem.basis === "보수 계산") score -= 2.5;
+  else score -= 1;
+
+  if (coverage.confidence === "보강됨") score += 1.5;
+  else if (coverage.confidence === "제한적") score -= 0.5;
+  else if (coverage.confidence === "취약") score -= 1.5;
+
+  if (item.eventRiskStatus === "양호") score += 0.5;
+  else if (item.eventRiskStatus === "확인 필요") score -= 0.5;
+  else if (item.eventRiskStatus === "주의") score -= 1;
+
+  if (item.heatStatus === "확인 필요") score -= 0.5;
+  else if (item.heatStatus === "주의") score -= 1.5;
+
+  if (item.riskStatus === "확인 필요") score -= 1;
+  else if (item.riskStatus === "주의") score -= 2;
+
+  if (score >= 17.5) return "양호";
+  if (score >= 13.5) return "보통";
+  return "주의";
+}
+
+function buildMarketDataQuality(item) {
+  const closeCount = Array.isArray(item.closes) ? item.closes.length : 0;
+  const averageTurnover20 = Number(item.averageTurnover20 ?? 0);
+  const latestTurnover = Number(item.latestTurnover ?? 0);
+  const turnoverRatio = averageTurnover20 > 0 ? latestTurnover / averageTurnover20 : null;
+
+  let value = "가격 이력 제한";
+  if (closeCount >= 85 && averageTurnover20 >= 1000000000000) {
+    value = "매우 풍부한 가격 이력";
+  } else if (closeCount >= 80 && averageTurnover20 >= 100000000000) {
+    value = "풍부한 가격 이력";
+  } else if (closeCount >= 75 && averageTurnover20 >= 10000000000) {
+    value = "안정적인 가격 이력";
+  } else if (closeCount >= 60) {
+    value = "기본 가격 이력";
+  }
+
+  const ratioText = turnoverRatio === null ? "거래대금 비교값 없음" : `최근 거래대금은 20일 평균의 ${turnoverRatio.toFixed(2)}배`;
+  const note = `${closeCount}일 가격 이력 기준 · 20일 평균 거래대금 ${Math.round(averageTurnover20 / 100000000)}억원 · ${ratioText}`;
+
+  return { value, note };
+}
+
+function buildQualityDataNote(item) {
+  const parts = [
+    `품질 점수 ${item.qualityScore}점`,
+    `가격 리스크 ${item.riskStatus}`,
+    `이벤트 리스크 ${item.eventRiskStatus}`,
+    `과열 상태 ${item.heatStatus}`
+  ];
+
+  return parts.join(" · ");
 }
 
 function riskStatusForChecklist(status) {
@@ -802,6 +931,460 @@ function buildScoreLog(item, recommendation) {
   ];
 }
 
+function getServiceTrackingStatePath() {
+  return path.join(projectRoot, "data", "tracking", "service-tracking-state.json");
+}
+
+function getTrackingEventsPath(rawDir) {
+  return path.join(rawDir, "tracking-events.json");
+}
+
+function getDailyCandidatesPath() {
+  return path.join(projectRoot, "data", "universe", "daily-candidates.json");
+}
+
+function parseDateOnly(value) {
+  return new Date(`${value}T00:00:00+09:00`);
+}
+
+function diffDays(startDate, endDate) {
+  return Math.max(0, Math.floor((endDate.getTime() - startDate.getTime()) / 86400000));
+}
+
+function getAverageTurnover20(item) {
+  if (!item.averageVolume20 || !item.currentPrice) {
+    return 0;
+  }
+
+  return item.averageVolume20 * item.currentPrice;
+}
+
+function buildRankingStats(runs) {
+  const stats = new Map();
+
+  for (const run of runs) {
+    const topCandidates = run.topCandidates ?? [];
+    topCandidates.forEach((candidate, index) => {
+      const current = stats.get(candidate.ticker) ?? {
+        appearances: 0,
+        latestRank: null,
+        bestRank: null,
+        averageRank: null
+      };
+
+      current.appearances += 1;
+      current.bestRank = current.bestRank === null ? index + 1 : Math.min(current.bestRank, index + 1);
+      current.latestRank = current.latestRank === null ? index + 1 : current.latestRank;
+      current.averageRank =
+        current.averageRank === null
+          ? index + 1
+          : roundNumber((current.averageRank * (current.appearances - 1) + (index + 1)) / current.appearances, 1);
+
+      stats.set(candidate.ticker, current);
+    });
+  }
+
+  return stats;
+}
+
+function getTrackingConfig() {
+  return {
+    maxActive: Number(process.env.SWING_RADAR_TRACKING_MAX_ACTIVE ?? 8),
+    maxWatch: Number(process.env.SWING_RADAR_TRACKING_MAX_WATCH ?? 12),
+    minAverageTurnover20: Number(process.env.SWING_RADAR_TRACKING_MIN_AVG_TURNOVER20 ?? 3000000000),
+    minWatchActivationScore: Number(process.env.SWING_RADAR_TRACKING_MIN_WATCH_ACTIVATION_SCORE ?? 52),
+    minEntryActivationScore: Number(process.env.SWING_RADAR_TRACKING_MIN_ENTRY_ACTIVATION_SCORE ?? 68),
+    minEntryAppearances: Number(process.env.SWING_RADAR_TRACKING_MIN_ENTRY_APPEARANCES ?? 1),
+    minEntryAverageTurnover20: Number(process.env.SWING_RADAR_TRACKING_MIN_ENTRY_AVG_TURNOVER20 ?? 3000000000),
+    confirmationBufferRatio: Number(process.env.SWING_RADAR_TRACKING_CONFIRMATION_BUFFER_RATIO ?? 0.97),
+    forceEntryMaxRank: Number(process.env.SWING_RADAR_TRACKING_FORCE_ENTRY_MAX_RANK ?? 100),
+    forceEntryMinHoldingDays: Number(process.env.SWING_RADAR_TRACKING_FORCE_ENTRY_MIN_HOLDING_DAYS ?? 1),
+    cooldownDays: Number(process.env.SWING_RADAR_TRACKING_REENTRY_COOLDOWN_DAYS ?? 5),
+    maxWatchDays: Number(process.env.SWING_RADAR_TRACKING_MAX_WATCH_DAYS ?? 7),
+    maxHoldingDays: Number(process.env.SWING_RADAR_TRACKING_MAX_HOLDING_DAYS ?? 20)
+  };
+}
+
+function buildActivationScore(item, rankingStat) {
+  const historyBonus = (rankingStat?.appearances ?? 0) * 1.5;
+  const rankBonus = rankingStat?.latestRank ? Math.max(0, 24 - rankingStat.latestRank) * 0.9 : 0;
+  const liquidityBonus = getAverageTurnover20(item) >= 10000000000 ? 4 : getAverageTurnover20(item) >= 5000000000 ? 2 : 0;
+  const structureBonus = item.currentPrice > item.invalidationPrice ? 6 : -8;
+
+  return (
+    item.trendScore * 1.1 +
+    item.flowScore * 1.05 +
+    item.qualityScore +
+    item.eventScore * 0.75 +
+    item.volatilityScore * 0.35 +
+    historyBonus +
+    rankBonus +
+    liquidityBonus +
+    structureBonus
+  );
+}
+
+function buildTrackingEntryPlan(item) {
+  const indicators = calculateTechnicalIndicators(item);
+  const currentPrice = Number(item.currentPrice ?? item.entryPrice ?? 0);
+  const breakoutLevel = Math.max(
+    Number(item.confirmationPrice ?? currentPrice),
+    Number(indicators.sma20 ?? 0),
+    Number(indicators.ema20 ?? 0)
+  );
+  const volumeConfirmed = (indicators.volumeRatio20 ?? 0) >= 1.05 || item.flowScore >= 18;
+  const trendConfirmed =
+    (((indicators.sma20 ?? 0) > 0 && (indicators.sma60 ?? 0) > 0 && (indicators.sma20 ?? 0) >= (indicators.sma60 ?? 0))) ||
+    item.trendScore >= 20;
+  const momentumConfirmed = (indicators.rsi14 ?? 50) >= 47;
+  const entryReady = currentPrice >= breakoutLevel * 0.995 && volumeConfirmed && trendConfirmed && momentumConfirmed;
+  const entryPrice = roundNumber(Math.max(currentPrice, breakoutLevel), 0) ?? currentPrice;
+  const bounds = buildTrackingPositionBounds(item, entryPrice, breakoutLevel);
+
+  return {
+    entryReady,
+    entryPrice,
+    invalidationPrice: bounds.invalidationPrice,
+    targetPrice: bounds.targetPrice
+  };
+}
+
+function buildTrackingPositionBounds(item, entryPrice, breakoutLevel = null) {
+  const safeEntryPrice = Number(entryPrice ?? item.currentPrice ?? item.entryPrice ?? 0);
+  const invalidationFloor = Number(item.invalidationPrice ?? safeEntryPrice);
+  const structureAnchor = Math.max(
+    Number(breakoutLevel ?? item.confirmationPrice ?? safeEntryPrice),
+    Number(item.confirmationPrice ?? safeEntryPrice)
+  );
+  const invalidationPrice = roundNumber(Math.max(invalidationFloor, safeEntryPrice * 0.92), 0) ?? invalidationFloor;
+  const riskPercent = clamp(((safeEntryPrice - invalidationPrice) / Math.max(safeEntryPrice, 1)) * 100, 2.5, 9.5);
+  const expansionPercent = clamp(((Math.max(item.expansionPrice ?? safeEntryPrice, structureAnchor) - safeEntryPrice) / Math.max(safeEntryPrice, 1)) * 100, 3.5, 18);
+  const targetPercent = clamp(Math.max(riskPercent * 1.8, expansionPercent * 0.6), 4.5, 16);
+  const targetPrice = roundNumber(safeEntryPrice * (1 + targetPercent / 100), 0) ?? item.expansionPrice ?? item.confirmationPrice;
+
+  return {
+    invalidationPrice,
+    targetPrice
+  };
+}
+
+function resolveTrackingOutcome(entry, config) {
+  if (entry.currentPrice <= entry.invalidationPrice) {
+    return {
+      status: "closed_loss",
+      closedReason: "기준 이탈"
+    };
+  }
+
+  if (entry.currentPrice >= entry.targetPrice) {
+    return {
+      status: "closed_win",
+      closedReason: "목표 도달"
+    };
+  }
+
+  if (entry.holdingDays >= config.maxHoldingDays) {
+    return {
+      status: "closed_timeout",
+      closedReason: "보유 기간 종료"
+    };
+  }
+
+  if (
+    entry.holdingDays >= 5 &&
+    entry.currentPrice < entry.entryPrice &&
+    entry.activationScore < config.minWatchActivationScore
+  ) {
+    return {
+      status: "closed_timeout",
+      closedReason: "흐름 둔화"
+    };
+  }
+
+  return {
+    status: "active",
+    closedReason: null
+  };
+}
+
+function isWatchCandidateEligible(item, activationScore, rankingStat, config) {
+  return (
+    activationScore >= config.minWatchActivationScore &&
+    getAverageTurnover20(item) >= config.minAverageTurnover20 &&
+    item.currentPrice > item.invalidationPrice &&
+    (rankingStat?.appearances ?? 0) >= 1
+  );
+}
+
+function isEntryCandidateEligible(item, activationScore, rankingStat, config) {
+  const entryPlan = buildTrackingEntryPlan(item);
+  const confirmationBuffer = item.confirmationPrice * config.confirmationBufferRatio;
+  const rankEligible = (rankingStat?.latestRank ?? Number.POSITIVE_INFINITY) <= config.forceEntryMaxRank;
+  const structureEligible =
+    entryPlan.entryReady ||
+    (rankEligible && item.currentPrice > confirmationBuffer && item.currentPrice > item.invalidationPrice);
+
+  return (
+    activationScore >= config.minEntryActivationScore &&
+    getAverageTurnover20(item) >= config.minEntryAverageTurnover20 &&
+    structureEligible &&
+    (rankingStat?.appearances ?? 0) >= config.minEntryAppearances
+  );
+}
+
+function buildTrackingState({ generatedAt, candidateEntries, marketByTicker, previousState, rankingStats }) {
+  const config = getTrackingConfig();
+  const today = generatedAt.slice(0, 10);
+  const stateVersion = 3;
+  const previousEntries = previousState?.version === stateVersion && Array.isArray(previousState?.entries) ? previousState.entries : [];
+  const entries = [];
+  const liveTickers = new Set();
+  const latestClosedByTicker = new Map();
+
+  for (const entry of previousEntries) {
+    const marketItem = marketByTicker.get(entry.ticker);
+    if (!marketItem) {
+      entries.push(entry);
+      continue;
+    }
+
+    const currentPrice = marketItem.currentPrice;
+    const highestPrice = Math.max(entry.highestPrice ?? entry.entryPrice, currentPrice);
+    const lowestPrice = Math.min(entry.lowestPrice ?? entry.entryPrice, currentPrice);
+    const holdingDays = diffDays(parseDateOnly(entry.signalDate), parseDateOnly(today)) + 1;
+    const rankingStat = rankingStats.get(entry.ticker);
+    const activationScore = roundNumber(buildActivationScore(marketItem, rankingStat), 1) ?? entry.activationScore ?? 0;
+
+    const updated = {
+      ...entry,
+      company: marketItem.company,
+      currentPrice,
+      highestPrice,
+      lowestPrice,
+      holdingDays,
+      latestRank: rankingStat?.latestRank ?? null,
+      appearances: rankingStat?.appearances ?? 0,
+      activationScore
+    };
+
+    if (entry.status === "active") {
+      const bounds = buildTrackingPositionBounds(marketItem, updated.entryPrice);
+      updated.invalidationPrice = bounds.invalidationPrice;
+      updated.targetPrice = bounds.targetPrice;
+      const outcome = resolveTrackingOutcome(updated, config);
+      updated.status = outcome.status;
+      if (outcome.status !== "active") {
+        updated.closedAt = generatedAt;
+        updated.closedReason = outcome.closedReason;
+      }
+    } else if (entry.status === "watch") {
+      if (isEntryCandidateEligible(marketItem, activationScore, rankingStat, config)) {
+        const entryPlan = buildTrackingEntryPlan(marketItem);
+        updated.status = "active";
+        updated.startedAt = generatedAt;
+        updated.entryPrice = entryPlan.entryPrice;
+        updated.highestPrice = Math.max(entryPlan.entryPrice, currentPrice);
+        updated.lowestPrice = Math.min(entryPlan.entryPrice, currentPrice);
+        updated.invalidationPrice = entryPlan.invalidationPrice;
+        updated.targetPrice = entryPlan.targetPrice;
+        updated.closedAt = null;
+        updated.closedReason = null;
+      } else if (!isWatchCandidateEligible(marketItem, activationScore, rankingStat, config) || updated.holdingDays > config.maxWatchDays) {
+        updated.status = "closed_timeout";
+        updated.closedAt = generatedAt;
+        updated.closedReason = !isWatchCandidateEligible(marketItem, activationScore, rankingStat, config) ? "감시 기준 이탈" : "감시 기간 종료";
+      } else if (
+        updated.holdingDays >= config.forceEntryMinHoldingDays &&
+        (rankingStat?.latestRank ?? Number.POSITIVE_INFINITY) <= config.forceEntryMaxRank &&
+        marketItem.currentPrice > marketItem.invalidationPrice
+      ) {
+        updated.status = "active";
+        updated.closedAt = null;
+        updated.closedReason = null;
+      }
+    }
+
+    entries.push(updated);
+
+    if (updated.status === "active" || updated.status === "watch") {
+      liveTickers.add(updated.ticker);
+    } else if (updated.closedAt) {
+      latestClosedByTicker.set(updated.ticker, updated);
+    }
+  }
+
+  const activeEntries = entries.filter((entry) => entry.status === "active");
+  const watchEntries = entries.filter((entry) => entry.status === "watch");
+  const availableSlots = Math.max(config.maxActive - activeEntries.length, 0);
+  const availableWatchSlots = Math.max(config.maxWatch - watchEntries.length - activeEntries.length, 0);
+
+  if (availableWatchSlots > 0) {
+    const watchCandidates = candidateEntries
+      .map((candidateEntry) => marketByTicker.get(candidateEntry.ticker))
+      .filter(Boolean)
+      .map((item) => {
+        const rankingStat = rankingStats.get(item.ticker);
+        const activationScore = roundNumber(buildActivationScore(item, rankingStat), 1) ?? 0;
+        const lastClosed = latestClosedByTicker.get(item.ticker);
+        const cooldownDays = lastClosed?.closedAt ? diffDays(parseDateOnly(lastClosed.signalDate), parseDateOnly(today)) : null;
+
+        return {
+          item,
+          activationScore,
+          rankingStat,
+          inCooldown: cooldownDays !== null && cooldownDays < config.cooldownDays
+        };
+      })
+      .filter(({ item, activationScore, rankingStat, inCooldown }) => {
+        if (liveTickers.has(item.ticker) || inCooldown) {
+          return false;
+        }
+
+        return isWatchCandidateEligible(item, activationScore, rankingStat, config);
+      })
+      .sort((left, right) => {
+        if (right.activationScore !== left.activationScore) {
+          return right.activationScore - left.activationScore;
+        }
+
+        return (left.rankingStat?.latestRank ?? Number.POSITIVE_INFINITY) - (right.rankingStat?.latestRank ?? Number.POSITIVE_INFINITY);
+      })
+      .slice(0, availableWatchSlots);
+
+    for (const candidate of watchCandidates) {
+      const item = candidate.item;
+      const entryPlan = buildTrackingEntryPlan(item);
+      entries.push({
+        id: `svc-${item.ticker}-${today.replace(/-/g, "")}`,
+        ticker: item.ticker,
+        company: item.company,
+        signalDate: today,
+        startedAt: null,
+        entryPrice: entryPlan.entryPrice,
+        currentPrice: item.currentPrice,
+        highestPrice: entryPlan.entryPrice,
+        lowestPrice: entryPlan.entryPrice,
+        invalidationPrice: entryPlan.invalidationPrice,
+        targetPrice: entryPlan.targetPrice,
+        entryScore: roundNumber(getMarketScore(item), 1) ?? 0,
+        activationScore: candidate.activationScore,
+        holdingDays: 1,
+        appearances: candidate.rankingStat?.appearances ?? 0,
+        latestRank: candidate.rankingStat?.latestRank ?? null,
+        status: "watch",
+        closedAt: null,
+        closedReason: null
+      });
+      liveTickers.add(item.ticker);
+    }
+  }
+
+  if (availableSlots > 0) {
+    const candidates = entries
+      .filter((entry) => entry.status === "watch")
+      .map((entry) => {
+        const item = marketByTicker.get(entry.ticker);
+        const rankingStat = rankingStats.get(entry.ticker);
+        const activationScore = item ? roundNumber(buildActivationScore(item, rankingStat), 1) ?? entry.activationScore ?? 0 : entry.activationScore ?? 0;
+
+        return {
+          entry,
+          item,
+          activationScore,
+          rankingStat
+        };
+      })
+      .filter(({ item, activationScore, rankingStat }) => item && isEntryCandidateEligible(item, activationScore, rankingStat, config))
+      .sort((left, right) => {
+        if (right.activationScore !== left.activationScore) {
+          return right.activationScore - left.activationScore;
+        }
+
+        return (left.rankingStat?.latestRank ?? Number.POSITIVE_INFINITY) - (right.rankingStat?.latestRank ?? Number.POSITIVE_INFINITY);
+      })
+      .slice(0, availableSlots);
+
+    for (const candidate of candidates) {
+      const entryPlan = buildTrackingEntryPlan(candidate.item);
+      candidate.entry.status = "active";
+      candidate.entry.startedAt = generatedAt;
+      candidate.entry.entryPrice = entryPlan.entryPrice;
+      candidate.entry.highestPrice = Math.max(entryPlan.entryPrice, candidate.item.currentPrice);
+      candidate.entry.lowestPrice = Math.min(entryPlan.entryPrice, candidate.item.currentPrice);
+      candidate.entry.invalidationPrice = entryPlan.invalidationPrice;
+      candidate.entry.targetPrice = entryPlan.targetPrice;
+      candidate.entry.closedAt = null;
+      candidate.entry.closedReason = null;
+      candidate.entry.activationScore = candidate.activationScore;
+    }
+  }
+
+  return {
+    version: stateVersion,
+    generatedAt,
+    entries: entries.sort((left, right) => {
+      const leftDate = left.closedAt ?? left.startedAt ?? `${left.signalDate}T00:00:00+09:00`;
+      const rightDate = right.closedAt ?? right.startedAt ?? `${right.signalDate}T00:00:00+09:00`;
+      return rightDate.localeCompare(leftDate);
+    })
+  };
+}
+
+function buildTrackingEventsFromState(state) {
+  return {
+    asOf: state.generatedAt,
+    items: state.entries.map((entry) => {
+      if (entry.status === "watch") {
+        return {
+          historyId: entry.id,
+          ticker: entry.ticker,
+          company: entry.company,
+          signalDate: entry.signalDate,
+          entryScore: entry.entryScore,
+          status: entry.status,
+          mfe: 0,
+          mae: 0,
+          holdingDays: entry.holdingDays
+        };
+      }
+
+      const mfe = entry.entryPrice > 0 ? roundNumber(((entry.highestPrice - entry.entryPrice) / entry.entryPrice) * 100, 1) ?? 0 : 0;
+      const mae = entry.entryPrice > 0 ? roundNumber(((entry.lowestPrice - entry.entryPrice) / entry.entryPrice) * 100, 1) ?? 0 : 0;
+
+      return {
+        historyId: entry.id,
+        ticker: entry.ticker,
+        company: entry.company,
+        signalDate: entry.signalDate,
+        entryScore: entry.entryScore,
+        status: entry.status,
+        mfe,
+        mae,
+        holdingDays: entry.holdingDays
+      };
+    })
+  };
+}
+
+function mapTrackingStateToResult(status) {
+  if (status === "watch") {
+    return "감시중";
+  }
+  if (status === "active") {
+    return "진행중";
+  }
+  if (status === "closed_win") {
+    return "성공";
+  }
+  if (status === "closed_loss") {
+    return "무효화";
+  }
+  if (status === "closed_timeout") {
+    return "실패";
+  }
+  return "진행중";
+}
+
 async function main() {
   const options = parseArgs(process.argv.slice(2));
   if (options.help) {
@@ -810,11 +1393,14 @@ async function main() {
   }
   const startedAt = new Date().toISOString();
 
-  const [market, news, validation, trackingEvents] = await Promise.all([
+  const [market, news, validation, watchlistDocument, candidateHistoryDocument, currentDailyCandidatesDocument, previousTrackingState] = await Promise.all([
     readJson(options.rawDir, "market-snapshot.json"),
     readJson(options.rawDir, "news-snapshot.json"),
     readOptionalJson(options.rawDir, "validation-snapshot.json", { items: [] }),
-    readOptionalJson(options.rawDir, "tracking-events.json", { items: [] })
+    readOptionalJson(path.join(projectRoot, "data", "config"), "watchlist.json", { tickers: [] }),
+    readOptionalJson(path.join(projectRoot, "data", "universe"), "daily-candidates-history.json", { runs: [] }),
+    readOptionalJson(path.dirname(getDailyCandidatesPath()), path.basename(getDailyCandidatesPath()), { topCandidates: [] }),
+    readOptionalJson(path.join(projectRoot, "data", "tracking"), "service-tracking-state.json", { generatedAt: null, entries: [] })
   ]);
 
   const generatedAt = market.asOf;
@@ -825,6 +1411,30 @@ async function main() {
   }
 
   const marketByTicker = new Map(market.items.map((item) => [item.ticker, item]));
+  const trackingPool = new Map();
+  for (const entry of watchlistDocument.tickers ?? []) {
+    if (entry?.ticker) {
+      trackingPool.set(entry.ticker, entry);
+    }
+  }
+  for (const candidate of currentDailyCandidatesDocument.topCandidates ?? []) {
+    if (candidate?.ticker) {
+      trackingPool.set(candidate.ticker, {
+        ticker: candidate.ticker,
+        company: candidate.company ?? marketByTicker.get(candidate.ticker)?.company ?? candidate.ticker,
+        note: "daily-top-candidate"
+      });
+    }
+  }
+
+  const trackingState = buildTrackingState({
+    generatedAt,
+    candidateEntries: Array.from(trackingPool.values()),
+    marketByTicker,
+    previousState: previousTrackingState,
+    rankingStats: buildRankingStats(candidateHistoryDocument.runs ?? [])
+  });
+  const trackingEvents = buildTrackingEventsFromState(trackingState);
   const validationByTicker = new Map(validation.items.map((item) => [item.ticker, buildMeasuredValidationItem(item)]));
   const validationProfiles = buildValidationProfiles(validation.items, trackingEvents.items, marketByTicker);
   const recommendations = [];
@@ -832,6 +1442,7 @@ async function main() {
   const validationFallbackTickers = [];
   const validationBasisCounts = {
     measured: 0,
+    tracking: 0,
     sector: 0,
     pattern: 0,
     heuristic: 0
@@ -847,6 +1458,8 @@ async function main() {
 
     if (validationItem.basis === "실측 기반") {
       validationBasisCounts.measured += 1;
+    } else if (validationItem.basis === "공용 추적 참고") {
+      validationBasisCounts.tracking += 1;
     } else if (validationItem.basis === "유사 업종 참고") {
       validationBasisCounts.sector += 1;
     } else if (validationItem.basis === "유사 흐름 참고") {
@@ -860,12 +1473,13 @@ async function main() {
     const coverage = summarizeEventCoverage(tickerNews);
     const technicalIndicators = calculateTechnicalIndicators(item);
     const technicalAdjustment = calculateTechnicalAdjustment(technicalIndicators, item);
-    const baseScore = item.trendScore + item.flowScore + item.volatilityScore + item.eventScore + item.qualityScore;
+    const baseScore = getSwingBaseScore(item);
     const score = clamp(roundNumber(baseScore + technicalAdjustment, 1) ?? baseScore, 0, 100);
     const invalidationDistance = Number((((item.invalidationPrice - item.currentPrice) / item.currentPrice) * 100).toFixed(1));
     const signalTone = resolveSignalTone(score, invalidationDistance, validationItem.hitRate);
     const label = resolveSignalLabel(score);
-    const quality = qualityLabel(item);
+    const quality = buildQualityValue(item, coverage, validationItem);
+    const marketQuality = buildMarketDataQuality(item);
 
     recommendations.push({
       ticker: item.ticker,
@@ -877,7 +1491,7 @@ async function main() {
       rationale: buildRationale(item, topNews, coverage),
       invalidation: buildInvalidation(item),
       invalidationDistance,
-      riskRewardRatio: score >= 75 ? "1 : 2.2" : score >= 55 ? "1 : 1.5" : "1 : 0.9",
+      riskRewardRatio: score >= 22 ? "1 : 2.2" : score >= 14 ? "1 : 1.5" : "1 : 0.9",
       validationSummary: validationItem.validationSummary,
       validationBasis: validationItem.basis,
       checkpoints: buildCheckpoints(item),
@@ -927,7 +1541,7 @@ async function main() {
         eventType: entry.eventType ?? "news"
       })),
       dataQuality: [
-        { label: "시세", value: "실시간 스냅샷", note: "Yahoo chart API 기준" },
+        { label: "시세", value: marketQuality.value, note: marketQuality.note },
         { label: "이벤트", value: `${tickerNews.length}건`, note: topNews ? topNews.headline : "해당 없음" },
         { label: "커버리지", value: coverage.confidence, note: coverage.note },
         {
@@ -938,7 +1552,7 @@ async function main() {
               ? `비슷한 흐름 ${validationItem.sampleSize}건 기준으로 정리한 값입니다.`
               : validationItem.validationSummary
         },
-        { label: "품질", value: quality, note: `score ${item.qualityScore}` },
+        { label: "품질", value: quality, note: buildQualityDataNote(item) },
         {
           label: "보조지표",
           value: technicalIndicators.rsi14 !== null ? `RSI ${technicalIndicators.rsi14}` : "계산 중",
@@ -948,21 +1562,36 @@ async function main() {
     });
   }
 
+  recommendations.sort((left, right) => {
+    if (right.score !== left.score) return right.score - left.score;
+    return left.company.localeCompare(right.company, "ko");
+  });
+
+  analysisItems.sort((left, right) => {
+    if (right.score !== left.score) return right.score - left.score;
+    return left.company.localeCompare(right.company, "ko");
+  });
+
   const recommendationByTicker = new Map(recommendations.map((item) => [item.ticker, item]));
 
+  const trackingStateById = new Map(trackingState.entries.map((entry) => [entry.id, entry]));
+
   const trackingHistory = trackingEvents.items.map((item) => {
-    const nextResult = resolveTrackingResult(item);
     const marketItem = marketByTicker.get(item.ticker);
     const recommendation = recommendationByTicker.get(item.ticker);
+    const stateEntry = trackingStateById.get(item.historyId);
 
     return {
       id: item.historyId,
       ticker: item.ticker,
       company: marketItem?.company ?? item.company ?? item.ticker,
       signalDate: item.signalDate,
+      startedAt: stateEntry?.startedAt ?? null,
+      closedAt: stateEntry?.closedAt ?? null,
+      closedReason: stateEntry?.closedReason ?? null,
       signalTone: recommendation?.signalTone ?? KO.neutral,
       entryScore: item.entryScore,
-      result: nextResult,
+      result: mapTrackingStateToResult(stateEntry?.status),
       mfe: item.mfe,
       mae: item.mae,
       holdingDays: item.holdingDays
@@ -976,7 +1605,8 @@ async function main() {
       const validationItem = validationByTicker.get(item.ticker);
       const tickerNews = newsByTicker.get(item.ticker) ?? [];
       const coverage = summarizeEventCoverage(tickerNews);
-      const basePrice = marketByTicker.get(item.ticker)?.currentPrice ?? 100000;
+      const stateEntry = trackingStateById.get(item.historyId);
+      const basePrice = stateEntry?.entryPrice ?? marketByTicker.get(item.ticker)?.currentPrice ?? 100000;
 
       return [
         item.historyId,
@@ -996,10 +1626,14 @@ async function main() {
   );
 
   await mkdir(options.outDir, { recursive: true });
+  await mkdir(path.dirname(getServiceTrackingStatePath()), { recursive: true });
+  await mkdir(options.rawDir, { recursive: true });
   await Promise.all([
     writeFile(path.join(options.outDir, "recommendations.json"), `${JSON.stringify({ generatedAt, items: recommendations }, null, 2)}\n`, "utf8"),
     writeFile(path.join(options.outDir, "analysis.json"), `${JSON.stringify({ generatedAt, items: analysisItems }, null, 2)}\n`, "utf8"),
-    writeFile(path.join(options.outDir, "tracking.json"), `${JSON.stringify({ generatedAt, history: trackingHistory, details: trackingDetails }, null, 2)}\n`, "utf8")
+    writeFile(path.join(options.outDir, "tracking.json"), `${JSON.stringify({ generatedAt, history: trackingHistory, details: trackingDetails }, null, 2)}\n`, "utf8"),
+    writeFile(getServiceTrackingStatePath(), `${JSON.stringify(trackingState, null, 2)}\n`, "utf8"),
+    writeFile(getTrackingEventsPath(options.rawDir), `${JSON.stringify(trackingEvents, null, 2)}\n`, "utf8")
   ]);
   await mkdir(path.dirname(getSnapshotGenerationReportPath()), { recursive: true });
   await writeFile(

@@ -6,26 +6,26 @@ export function TrackingReviewPanel({ detail }: { detail: TrackingDetail }) {
     <section className="grid gap-6 xl:grid-cols-[1fr_1fr]">
       <Card>
         <CardHeader>
-        <CardTitle>복기</CardTitle>
+          <CardTitle>공용 추적 메모</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="rounded-2xl border border-border/70 bg-secondary/35 p-4">
-            <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">요약</p>
+            <p className="text-xs text-muted-foreground">요약</p>
             <p className="mt-3 text-sm leading-6 text-foreground/80">{detail.summary}</p>
           </div>
           <div className="rounded-2xl border border-border/70 bg-secondary/35 p-4">
-            <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">기준 점검</p>
+            <p className="text-xs text-muted-foreground">기준 점검</p>
             <p className="mt-3 text-sm leading-6 text-foreground/80">{detail.invalidationReview}</p>
           </div>
           <div className="rounded-2xl border border-border/70 bg-secondary/35 p-4">
-            <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">AAR 메모</p>
+            <p className="text-xs text-muted-foreground">결과 메모</p>
             <p className="mt-3 text-sm leading-6 text-foreground/80">{detail.afterActionReview}</p>
           </div>
         </CardContent>
       </Card>
       <Card>
         <CardHeader>
-        <CardTitle>복기 체크리스트</CardTitle>
+          <CardTitle>다시 볼 체크포인트</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           {detail.reviewChecklist.map((item) => (

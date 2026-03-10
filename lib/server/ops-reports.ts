@@ -154,6 +154,7 @@ export type SnapshotGenerationReport = {
   validationFallbackTickers: string[];
   validationBasisCounts?: {
     measured: number;
+    tracking?: number;
     sector: number;
     pattern: number;
     heuristic: number;
@@ -222,7 +223,13 @@ export async function loadSnapshotGenerationReport() {
 }
 
 export async function loadPostLaunchHistory() {
-  return readJsonFile<PostLaunchHistoryEntry[]>(getPostLaunchHistoryPath());
+  const payload = await readJsonFile<PostLaunchHistoryEntry[] | PostLaunchHistoryEntry>(getPostLaunchHistoryPath());
+
+  if (!payload) {
+    return null;
+  }
+
+  return Array.isArray(payload) ? payload : [payload];
 }
 
 export async function loadThresholdAdviceReport() {

@@ -13,6 +13,10 @@ function getValidationToneClasses(basis: ValidationBasis) {
     return "border-emerald-200 bg-emerald-50 text-emerald-700";
   }
 
+  if (basis === "공용 추적 참고") {
+    return "border-teal-200 bg-teal-50 text-teal-700";
+  }
+
   if (basis === "유사 업종 참고") {
     return "border-sky-200 bg-sky-50 text-sky-700";
   }

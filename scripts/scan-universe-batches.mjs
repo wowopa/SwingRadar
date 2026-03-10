@@ -220,6 +220,10 @@ function scoreCandidates(recommendations, analysis, marketItemsByTicker, batchIn
     const market = marketItemsByTicker.get(item.ticker);
     const currentPrice = market?.currentPrice ?? null;
     const averageTurnover20 = market?.averageTurnover20 ?? null;
+    const volumeRatio =
+      Number(market?.latestVolume ?? 0) > 0 && Number(market?.averageVolume20 ?? 0) > 0
+        ? Number((market.latestVolume / market.averageVolume20).toFixed(2))
+        : null;
 
     if (shouldExcludeCandidate(currentPrice, averageTurnover20, thresholds)) {
       return [];
@@ -246,6 +250,7 @@ function scoreCandidates(recommendations, analysis, marketItemsByTicker, batchIn
       candidateScore,
       currentPrice,
       averageTurnover20,
+      volumeRatio,
       liquidityRating: liquidity.rating,
       invalidation: item.invalidation,
       validationSummary: item.validationSummary,
@@ -279,11 +284,14 @@ function summarizeBatchWarnings(errors) {
 }
 
 function buildBatchEnv(baseEnv, batchWatchlistPath, rawDir, liveDir, options) {
+  const reportDir = path.join(path.dirname(rawDir), "ops");
+
   return {
     ...baseEnv,
     SWING_RADAR_WATCHLIST_FILE: batchWatchlistPath,
     SWING_RADAR_RAW_DATA_DIR: rawDir,
     SWING_RADAR_DATA_DIR: liveDir,
+    SWING_RADAR_SNAPSHOT_GENERATION_REPORT_PATH: path.join(reportDir, "latest-snapshot-generation.json"),
     ...(options.newsProvider ? { SWING_RADAR_NEWS_PROVIDER: options.newsProvider } : {}),
     ...(options.disclosureProvider ? { SWING_RADAR_DISCLOSURE_PROVIDER: options.disclosureProvider } : {})
   };
@@ -296,6 +304,31 @@ async function fileExists(filePath) {
   } catch {
     return false;
   }
+}
+
+async function readJsonWithRetry(filePath) {
+  let lastError = null;
+
+  for (let attempt = 0; attempt < 4; attempt += 1) {
+    try {
+      const content = (await readFile(filePath, "utf8")).replace(/^\uFEFF/, "").trim();
+      if (!content) {
+        throw new SyntaxError(`Empty JSON file: ${filePath}`);
+      }
+
+      return JSON.parse(content);
+    } catch (error) {
+      lastError = error;
+      const isSyntaxError = error instanceof SyntaxError || /Unexpected end of JSON input/i.test(String(error));
+      if (!isSyntaxError || attempt === 3) {
+        throw error;
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, 150 * (attempt + 1)));
+    }
+  }
+
+  throw lastError ?? new Error(`Failed to read JSON: ${filePath}`);
 }
 
 async function runBatch(batch, index, tempRoot, options) {
@@ -343,10 +376,10 @@ async function runBatch(batch, index, tempRoot, options) {
     };
   }
 
-  const recommendations = JSON.parse(await readFile(recommendationPath, "utf8"));
-  const analysis = JSON.parse(await readFile(analysisPath, "utf8"));
-  const tracking = JSON.parse(await readFile(trackingPath, "utf8"));
-  const marketSnapshot = JSON.parse(await readFile(marketSnapshotPath, "utf8"));
+  const recommendations = await readJsonWithRetry(recommendationPath);
+  const analysis = await readJsonWithRetry(analysisPath);
+  const tracking = await readJsonWithRetry(trackingPath);
+  const marketSnapshot = await readJsonWithRetry(marketSnapshotPath);
   const marketItemsByTicker = new Map((marketSnapshot.items ?? []).map((item) => [item.ticker, item]));
 
   if (!options.skipIngest) {

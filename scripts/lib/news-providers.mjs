@@ -19,6 +19,78 @@ const GLOBAL_BLOCKED_TITLE_PATTERNS = [
   /\uBCC4\uC138/u
 ];
 
+const TRUSTED_SOURCE_PATTERNS = [
+  /hankyung/i,
+  /mk\.co\.kr/i,
+  /edaily/i,
+  /yna/i,
+  /sedaily/i,
+  /newsis/i,
+  /chosun/i,
+  /joongang/i,
+  /donga/i,
+  /moneytoday/i,
+  /fnnews/i,
+  /sbs biz/i,
+  /mbn/i
+];
+
+const LOWER_QUALITY_SOURCE_PATTERNS = [
+  /topstarnews/i,
+  /joongangenews/i,
+  /digitaltoday/i,
+  /news2day/i,
+  /pinpointnews/i,
+  /cbci/i,
+  /e-science/i,
+  /ggilbo/i,
+  /biotimes/i,
+  /ftoday/i
+];
+
+const CURATED_RSS_FEEDS = [
+  {
+    source: "hankyung.com",
+    url: "https://www.hankyung.com/feed/economy"
+  },
+  {
+    source: "hankyung.com",
+    url: "https://www.hankyung.com/feed/finance"
+  },
+  {
+    source: "hankyung.com",
+    url: "https://www.hankyung.com/feed/it"
+  },
+  {
+    source: "mk.co.kr",
+    url: "https://www.mk.co.kr/rss/30100041/"
+  },
+  {
+    source: "mk.co.kr",
+    url: "https://www.mk.co.kr/rss/50300009/"
+  },
+  {
+    source: "yna.co.kr",
+    url: "https://www.yna.co.kr/rss/economy.xml"
+  },
+  {
+    source: "newsis.com",
+    url: "https://www.newsis.com/RSS/economy.xml"
+  },
+  {
+    source: "newsis.com",
+    url: "https://www.newsis.com/RSS/industry.xml"
+  },
+  {
+    source: "etnews.com",
+    url: "https://www.etnews.com/rss/04.xml"
+  },
+  {
+    source: "etnews.com",
+    url: "https://www.etnews.com/rss/02.xml"
+  }
+];
+
 function includesAny(text, keywords = []) {
   return keywords.some((keyword) => text.includes(normalizeText(keyword)));
 }
@@ -28,7 +100,25 @@ function unique(values) {
 }
 
 function canonicalHeadline(value) {
-  return normalizeText(value).replace(/[^\p{L}\p{N}]+/gu, " ").trim();
+  return normalizeHeadline(value).replace(/[^\p{L}\p{N}]+/gu, " ").trim();
+}
+
+function normalizeHeadline(value) {
+  return normalizeText(value)
+    .replace(/\s*[-|｜·•]\s*[^-|｜·•]{1,24}$/u, "")
+    .replace(/\[[^\]]+\]/gu, " ")
+    .replace(/[“”"'`]/gu, " ")
+    .replace(/\s+/gu, " ")
+    .trim();
+}
+
+function summarySignature(value) {
+  return normalizeText(stripHtml(value))
+    .replace(/[^\p{L}\p{N}\s]+/gu, " ")
+    .split(/\s+/u)
+    .filter(Boolean)
+    .slice(0, 16)
+    .join(" ");
 }
 
 export function mapImpact(title, description) {
@@ -61,6 +151,32 @@ function hostnameOf(urlValue) {
   } catch {
     return "";
   }
+}
+
+function sourceLabelOf(article) {
+  return normalizeText(article.source ?? "");
+}
+
+function sourceBucketOf(article) {
+  const host = hostnameOf(article.url ?? "");
+  const sourceLabel = sourceLabelOf(article);
+  if (host.includes("news.google.com") && sourceLabel) {
+    return sourceLabel;
+  }
+
+  if (host) {
+    return host.replace(/^www\./, "");
+  }
+
+  return sourceLabel || "unknown-source";
+}
+
+function isTrustedSource(host, sourceLabel) {
+  return TRUSTED_SOURCE_PATTERNS.some((pattern) => pattern.test(host) || pattern.test(sourceLabel));
+}
+
+function isLowerQualitySource(host, sourceLabel) {
+  return LOWER_QUALITY_SOURCE_PATTERNS.some((pattern) => pattern.test(host) || pattern.test(sourceLabel));
 }
 
 function isPreferredDomain(host, entry) {
@@ -161,6 +277,7 @@ function scoreArticle(article, entry, options = {}) {
   const summary = normalizeText(article.summary ?? "");
   const body = `${title} ${summary}`.trim();
   const host = hostnameOf(article.url ?? "");
+  const sourceLabel = sourceLabelOf(article);
   const priorityBand = getPriorityBand(options.priorityRank ?? null);
   let score = 0;
 
@@ -178,6 +295,8 @@ function scoreArticle(article, entry, options = {}) {
 
   if (title.includes(normalizeText(entry.company))) score += priorityBand === "default" ? 5 : 7;
   if (isPreferredDomain(host, entry)) score += priorityBand === "default" ? 8 : 12;
+  if (isTrustedSource(host, sourceLabel)) score += priorityBand === "default" ? 5 : 8;
+  if (isLowerQualitySource(host, sourceLabel)) score -= priorityBand === "default" ? 4 : 7;
   if (host.endsWith(".kr") || host.endsWith(".co.kr")) score += 3;
   if (priorityBand !== "default" && /(hankyung\.com|mk\.co\.kr|edaily\.co\.kr|yna\.co\.kr|sedaily\.com|newsis\.com)/i.test(host)) {
     score += 5;
@@ -186,21 +305,97 @@ function scoreArticle(article, entry, options = {}) {
   if (isBlockedDomain(host, entry)) score -= 20;
   if (!(host.endsWith(".kr") || host.endsWith(".co.kr"))) score -= 6;
 
+  const articleTime = Date.parse(article.date ?? "");
+  if (Number.isFinite(articleTime)) {
+    const ageDays = (Date.now() - articleTime) / (1000 * 60 * 60 * 24);
+    if (ageDays > 21) score -= 12;
+    else if (ageDays > 10) score -= 6;
+    else if (ageDays <= 2) score += 2;
+  }
+
   return score;
 }
 
+function ageDaysOf(article) {
+  const articleTime = Date.parse(article.date ?? "");
+  if (!Number.isFinite(articleTime)) {
+    return null;
+  }
+
+  return (Date.now() - articleTime) / (1000 * 60 * 60 * 24);
+}
+
+function shouldExcludeArticleByQuality(article, entry, options = {}) {
+  const host = hostnameOf(article.url ?? "");
+  const sourceLabel = sourceLabelOf(article);
+  const priorityBand = getPriorityBand(options.priorityRank ?? null);
+  const trusted = isTrustedSource(host, sourceLabel);
+  const lowerQuality = isLowerQualitySource(host, sourceLabel);
+  const preferredDomain = isPreferredDomain(host, entry);
+  const koreanDomain = host.endsWith(".kr") || host.endsWith(".co.kr");
+  const ageDays = ageDaysOf(article);
+
+  if (priorityBand === "top20") {
+    if (lowerQuality) return true;
+    if (ageDays !== null && ageDays > 7) return true;
+    if (!(trusted || preferredDomain || koreanDomain)) return true;
+  }
+
+  if (priorityBand === "top100") {
+    if (lowerQuality) return true;
+    if (ageDays !== null && ageDays > 14) return true;
+    if (!(trusted || preferredDomain || koreanDomain)) return true;
+  }
+
+  return false;
+}
+
 export function dedupeArticles(items) {
-  const seen = new Set();
-  return items.filter((item) => {
-    const key = `${item.ticker ?? ""}|${hostnameOf(item.url ?? "")}|${canonicalHeadline(item.headline ?? "")}`;
-    if (seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
+  const bestByKey = new Map();
+
+  for (const item of items) {
+    const host = hostnameOf(item.url ?? "");
+    const sourceLabel = sourceLabelOf(item);
+    const titleKey = canonicalHeadline(item.headline ?? "");
+    const summaryKey = summarySignature(item.summary ?? "");
+    const dedupeKey = titleKey.length >= 12 ? titleKey : `${titleKey}|${summaryKey}`;
+    const qualityScore =
+      (isTrustedSource(host, sourceLabel) ? 10 : 0) +
+      (isPreferredDomain(host, {
+        preferredDomains: [],
+        blockedDomains: []
+      })
+        ? 3
+        : 0) +
+      (host.endsWith(".kr") || host.endsWith(".co.kr") ? 2 : 0) -
+      (isLowerQualitySource(host, sourceLabel) ? 5 : 0);
+    const recencyScore = Date.parse(item.date ?? "") || 0;
+    const existing = bestByKey.get(`${item.ticker ?? ""}|${dedupeKey}`);
+
+    if (!existing) {
+      bestByKey.set(`${item.ticker ?? ""}|${dedupeKey}`, {
+        item,
+        qualityScore,
+        recencyScore
+      });
+      continue;
+    }
+
+    if (qualityScore > existing.qualityScore || (qualityScore === existing.qualityScore && recencyScore > existing.recencyScore)) {
+      bestByKey.set(`${item.ticker ?? ""}|${dedupeKey}`, {
+        item,
+        qualityScore,
+        recencyScore
+      });
+    }
+  }
+
+  return Array.from(bestByKey.values()).map((entry) => entry.item);
 }
 
 function decodeXmlEntities(value) {
   return (value ?? "")
+    .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1")
     .replace(/&lt;/g, "<")
     .replace(/&gt;/g, ">")
     .replace(/&amp;/g, "&")
@@ -213,7 +408,30 @@ function extractTagValue(block, tagName) {
   return match ? decodeXmlEntities(match[1].trim()) : "";
 }
 
+function extractTagAttribute(block, tagName, attributeName) {
+  const match = block.match(new RegExp(`<${tagName}[^>]*${attributeName}="([^"]+)"[^>]*>`, "i"));
+  return match ? decodeXmlEntities(match[1].trim()) : "";
+}
+
 function parseGoogleNewsRss(xml) {
+  const items = [];
+  const matches = xml.match(/<item>[\s\S]*?<\/item>/gi) ?? [];
+
+  for (const itemBlock of matches) {
+    items.push({
+      title: stripHtml(extractTagValue(itemBlock, "title")),
+      link: extractTagValue(itemBlock, "link"),
+      pubDate: extractTagValue(itemBlock, "pubDate"),
+      description: stripHtml(extractTagValue(itemBlock, "description")),
+      sourceName: stripHtml(extractTagValue(itemBlock, "source")),
+      sourceUrl: extractTagAttribute(itemBlock, "source", "url")
+    });
+  }
+
+  return items;
+}
+
+function parseStandardRss(xml) {
   const items = [];
   const matches = xml.match(/<item>[\s\S]*?<\/item>/gi) ?? [];
 
@@ -231,7 +449,19 @@ function parseGoogleNewsRss(xml) {
 
 function rankArticles(items, entry, maxItems, options = {}) {
   const minScore = entry.minArticleScore ?? 10;
-  return dedupeArticles(items)
+  const sourceDiversityLimit =
+    options.sourceDiversityLimit ??
+    (() => {
+      const configured = Math.max(1, Number.parseInt(process.env.SWING_RADAR_NEWS_SOURCE_DIVERSITY_LIMIT ?? "2", 10));
+      const priorityBand = getPriorityBand(options.priorityRank ?? null);
+      if (priorityBand === "top20") return 1;
+      if (priorityBand === "top100") return Math.min(configured, 2);
+      return configured;
+    })();
+
+  return applySourceDiversity(
+    dedupeArticles(items)
+    .filter((item) => !shouldExcludeArticleByQuality(item, entry, options))
     .map((item) => ({ item, score: scoreArticle(item, entry, options) }))
     .filter((entryScore) => entryScore.score >= minScore)
     .sort((left, right) => {
@@ -239,7 +469,36 @@ function rankArticles(items, entry, maxItems, options = {}) {
       return right.item.date.localeCompare(left.item.date);
     })
     .map((entryScore) => entryScore.item)
-    .slice(0, maxItems);
+    .slice(0, Math.max(maxItems * 3, maxItems)),
+    sourceDiversityLimit
+  ).slice(0, maxItems);
+}
+
+export function filterAndRankArticles(items, entry, maxItems, options = {}) {
+  return rankArticles(
+    items.filter((item) => matchesFilters(item, entry)),
+    entry,
+    maxItems,
+    options
+  );
+}
+
+function applySourceDiversity(items, perSourceLimit) {
+  const counts = new Map();
+  const filtered = [];
+
+  for (const item of items) {
+    const bucket = sourceBucketOf(item);
+    const currentCount = counts.get(bucket) ?? 0;
+    if (currentCount >= perSourceLimit) {
+      continue;
+    }
+
+    counts.set(bucket, currentCount + 1);
+    filtered.push(item);
+  }
+
+  return filtered;
 }
 
 function parseRetryDelayMs(error, attempt) {
@@ -322,8 +581,8 @@ export async function fetchNaverNews(entry, maxItems, telemetry, options = {}) {
       items.push({
         ...candidate,
         impact: mapImpact(candidate.headline, candidate.summary)
-      });
-    }
+  });
+}
   }
 
   return rankArticles(items, entry, effectiveMaxItems, options).slice(0, effectiveMaxItems);
@@ -401,12 +660,10 @@ export async function fetchGoogleNewsRss(entry, maxItems, telemetry, options = {
         company: entry.company,
         headline: article.title,
         summary: article.description,
-        source: "google-news-rss",
-        url: article.link,
+        source: article.sourceName || "google-news-rss",
+        url: article.sourceUrl || article.link,
         date: article.pubDate ? new Date(article.pubDate).toISOString().slice(0, 10) : new Date().toISOString().slice(0, 10)
       };
-
-      if (!matchesFilters(candidate, entry)) continue;
 
       items.push({
         ...candidate,
@@ -415,5 +672,55 @@ export async function fetchGoogleNewsRss(entry, maxItems, telemetry, options = {
     }
   }
 
-  return rankArticles(items, entry, effectiveMaxItems, options).slice(0, effectiveMaxItems);
+  return filterAndRankArticles(items, entry, effectiveMaxItems, options).slice(0, effectiveMaxItems);
+}
+
+export async function fetchCuratedRssPool(telemetry = {}) {
+  const items = [];
+
+  for (const feed of CURATED_RSS_FEEDS) {
+    try {
+      const xml = await fetchText(feed.url, {
+        headers: {
+          "User-Agent": "SWING-RADAR/0.1"
+        }
+      }, telemetry);
+
+      for (const article of parseStandardRss(xml)) {
+        items.push({
+          headline: article.title,
+          summary: article.description,
+          source: feed.source,
+          url: article.link,
+          date: article.pubDate ? new Date(article.pubDate).toISOString().slice(0, 10) : new Date().toISOString().slice(0, 10)
+        });
+      }
+    } catch (error) {
+      telemetry.onFeedFailure?.({
+        provider: "curated-rss",
+        source: feed.source,
+        url: feed.url,
+        message: error instanceof Error ? error.message : String(error)
+      });
+    }
+  }
+
+  return dedupeArticles(items);
+}
+
+export function selectCuratedRssNews(feedItems, entry, maxItems, options = {}) {
+  const priorityBand = getPriorityBand(options.priorityRank ?? null);
+  const effectiveMaxItems = priorityBand === "top20" ? Math.max(maxItems, 8) : priorityBand === "top100" ? Math.max(maxItems, 6) : maxItems;
+
+  return filterAndRankArticles(
+    feedItems.map((item) => ({
+      ...item,
+      ticker: entry.ticker,
+      company: entry.company,
+      impact: item.impact ?? mapImpact(item.headline, item.summary)
+    })),
+    entry,
+    effectiveMaxItems,
+    options
+  ).slice(0, effectiveMaxItems);
 }

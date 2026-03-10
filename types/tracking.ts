@@ -5,9 +5,12 @@ export interface SignalHistoryEntry {
   ticker: string;
   company: string;
   signalDate: string;
+  startedAt?: string | null;
+  closedAt?: string | null;
+  closedReason?: string | null;
   signalTone: SignalTone;
   entryScore: number;
-  result: "\uC9C4\uD589\uC911" | "\uC131\uACF5" | "\uC2E4\uD328" | "\uBB34\uD6A8\uD654";
+  result: "감시중" | "진행중" | "성공" | "실패" | "무효화";
   mfe: number;
   mae: number;
   holdingDays: number;

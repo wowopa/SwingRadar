@@ -31,15 +31,15 @@ function getSyncTone(state: WatchlistSyncStatus["state"]) {
 
 function getSyncLabel(state: WatchlistSyncStatus["state"]) {
   if (state === "ready") {
-    return "\uBC18\uC601 \uC644\uB8CC";
+    return "반영 완료";
   }
   if (state === "failed") {
-    return "\uBC18\uC601 \uC2E4\uD328";
+    return "반영 실패";
   }
   if (state === "syncing") {
-    return "\uBC18\uC601 \uC911";
+    return "반영 중";
   }
-  return "\uB300\uAE30";
+  return "대기";
 }
 
 export function WatchlistTab({
@@ -80,20 +80,20 @@ export function WatchlistTab({
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
-            <CardTitle>{"\uC885\uBAA9 \uCD94\uAC00"}</CardTitle>
+            <CardTitle>종목 추가</CardTitle>
             <p className="mt-2 text-sm text-muted-foreground">
-              {"\uC900\uBE44 \uC911\uC778 \uC885\uBAA9\uC744 watchlist\uC5D0 \uB123\uC73C\uBA74 \uBD84\uC11D \uD750\uB984\uC5D0 \uB2E4\uC2DC \uBC18\uC601\uB429\uB2C8\uB2E4."}
+              준비 중인 종목을 watchlist에 넣으면 분석 흐름에 다시 반영됩니다.
             </p>
           </div>
           <div className="flex gap-2">
             <Input
               value={symbolQuery}
               onChange={(event) => setSymbolQuery(event.target.value)}
-              placeholder="\uD2F0\uCEE4, \uC885\uBAA9\uBA85, \uC139\uD130 \uAC80\uC0C9"
+              placeholder="티커, 종목명, 섹터 검색"
             />
             <Button onClick={onSearch} variant="secondary">
               <Search className="h-4 w-4" />
-              {"\uAC80\uC0C9"}
+              검색
             </Button>
           </div>
         </CardHeader>
@@ -109,12 +109,12 @@ export function WatchlistTab({
                 </div>
                 <Button onClick={() => addWatchlistSymbol(item.ticker)} disabled={loading || item.status === "ready"}>
                   <PlusCircle className="h-4 w-4" />
-                  {item.status === "ready" ? "\uD3B8\uC785 \uC644\uB8CC" : "watchlist \uCD94\uAC00"}
+                  {item.status === "ready" ? "편입 완료" : "watchlist 추가"}
                 </Button>
               </div>
             ))
           ) : (
-            <p className="text-sm text-muted-foreground">{"\uAC80\uC0C9 \uACB0\uACFC\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4."}</p>
+            <p className="text-sm text-muted-foreground">검색 결과가 없습니다.</p>
           )}
         </CardContent>
       </Card>
@@ -122,9 +122,9 @@ export function WatchlistTab({
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
-            <CardTitle>{"\uC885\uBAA9 \uC124\uC815 \uBCF4\uC815"}</CardTitle>
+            <CardTitle>종목 설정 보정</CardTitle>
             <p className="mt-2 text-sm text-muted-foreground">
-              {"\uAC80\uC0C9\uC5B4, \uD0A4\uC6CC\uB4DC, \uB3C4\uBA54\uC778 \uADDC\uCE59\uC744 \uB2E4\uB4EC\uACE0 \uC800\uC7A5 \uC804 \uCC28\uC774\uB97C \uD655\uC778\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4."}
+              검색어, 키워드, 도메인 규칙을 다듬고 저장 전 차이를 확인할 수 있습니다.
             </p>
           </div>
           <WatchlistPreviewDialog changes={watchlistChanges} disabled={!activeWatchlist || loading} onConfirm={onSaveMetadata} />
@@ -163,7 +163,7 @@ export function WatchlistTab({
                   <div className="rounded-[24px] border border-border/70 bg-secondary/35 p-4">
                     <div className="flex items-center justify-between gap-3">
                       <div>
-                        <p className="text-sm font-semibold text-foreground">{"\uBC18\uC601 \uC0C1\uD0DC"}</p>
+                        <p className="text-sm font-semibold text-foreground">반영 상태</p>
                         <p className="mt-1 text-sm text-muted-foreground">{activeSyncStatus.message}</p>
                       </div>
                       <span
@@ -175,20 +175,16 @@ export function WatchlistTab({
                       </span>
                     </div>
                     <div className="mt-3 flex flex-wrap gap-3 text-xs text-muted-foreground">
-                      {activeSyncStatus.lastStartedAt ? (
-                        <span>{"\uC2DC\uC791"} {formatDateTimeShort(activeSyncStatus.lastStartedAt)}</span>
-                      ) : null}
-                      {activeSyncStatus.lastCompletedAt ? (
-                        <span>{"\uC644\uB8CC"} {formatDateTimeShort(activeSyncStatus.lastCompletedAt)}</span>
-                      ) : null}
+                      {activeSyncStatus.lastStartedAt ? <span>시작 {formatDateTimeShort(activeSyncStatus.lastStartedAt)}</span> : null}
+                      {activeSyncStatus.lastCompletedAt ? <span>완료 {formatDateTimeShort(activeSyncStatus.lastCompletedAt)}</span> : null}
                       {activeSyncStatus.lastDurationMs !== null ? (
-                        <span>{Math.max(1, Math.round(activeSyncStatus.lastDurationMs / 1000))}{"\uCD08 \uC18C\uC694"}</span>
+                        <span>{Math.max(1, Math.round(activeSyncStatus.lastDurationMs / 1000))}초 소요</span>
                       ) : null}
                     </div>
                   </div>
                 ) : null}
 
-                <Field label="\uC139\uD130">
+                <Field label="섹터">
                   <Input
                     value={activeWatchlist.sector}
                     onChange={(event) =>
@@ -200,7 +196,7 @@ export function WatchlistTab({
                     }
                   />
                 </Field>
-                <Field label="\uAE30\uBCF8 \uB274\uC2A4 \uAC80\uC0C9\uC5B4">
+                <Field label="기본 뉴스 검색어">
                   <Input
                     value={activeWatchlist.newsQuery}
                     onChange={(event) =>
@@ -212,7 +208,7 @@ export function WatchlistTab({
                     }
                   />
                 </Field>
-                <Field label="DART \uD68C\uC0AC\uCF54\uB4DC">
+                <Field label="DART 회사코드">
                   <Input
                     value={activeWatchlist.dartCorpCode ?? ""}
                     onChange={(event) =>
@@ -224,7 +220,7 @@ export function WatchlistTab({
                     }
                   />
                 </Field>
-                <Field label="\uD544\uC218 \uD0A4\uC6CC\uB4DC (\uC904\uBC14\uAFC8 \uAD6C\uBD84)">
+                <Field label="필수 키워드 (줄바꿈 구분)">
                   <Textarea
                     value={activeWatchlist.requiredKeywords.join("\n")}
                     onChange={(event) =>
@@ -238,7 +234,7 @@ export function WatchlistTab({
                     }
                   />
                 </Field>
-                <Field label="\uBB38\uB9E5 \uD0A4\uC6CC\uB4DC (\uC904\uBC14\uAFC8 \uAD6C\uBD84)">
+                <Field label="문맥 키워드 (줄바꿈 구분)">
                   <Textarea
                     value={activeWatchlist.contextKeywords.join("\n")}
                     onChange={(event) =>
@@ -252,7 +248,7 @@ export function WatchlistTab({
                     }
                   />
                 </Field>
-                <Field label="\uCC28\uB2E8 \uD0A4\uC6CC\uB4DC (\uC904\uBC14\uAFC8 \uAD6C\uBD84)">
+                <Field label="차단 키워드 (줄바꿈 구분)">
                   <Textarea
                     value={activeWatchlist.blockedKeywords.join("\n")}
                     onChange={(event) =>
@@ -266,7 +262,7 @@ export function WatchlistTab({
                     }
                   />
                 </Field>
-                <Field label="\uC120\uD638 \uB3C4\uBA54\uC778 (\uC904\uBC14\uAFC8 \uAD6C\uBD84)">
+                <Field label="선호 도메인 (줄바꿈 구분)">
                   <Textarea
                     value={activeWatchlist.preferredDomains.join("\n")}
                     onChange={(event) =>
@@ -280,7 +276,7 @@ export function WatchlistTab({
                     }
                   />
                 </Field>
-                <Field label="\uCC28\uB2E8 \uB3C4\uBA54\uC778 (\uC904\uBC14\uAFC8 \uAD6C\uBD84)">
+                <Field label="차단 도메인 (줄바꿈 구분)">
                   <Textarea
                     value={activeWatchlist.blockedDomains.join("\n")}
                     onChange={(event) =>
@@ -294,7 +290,7 @@ export function WatchlistTab({
                     }
                   />
                 </Field>
-                <Field label="\uCD5C\uC18C \uAE30\uC0AC \uC810\uC218">
+                <Field label="최소 기사 점수">
                   <Input
                     type="number"
                     min={0}
@@ -314,7 +310,7 @@ export function WatchlistTab({
               </>
             ) : (
               <p className="text-sm text-muted-foreground">
-                {"\uC67C\uCABD\uC5D0\uC11C watchlist \uC885\uBAA9\uC744 \uACE0\uB974\uBA74 \uC124\uC815\uC744 \uC218\uC815\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4."}
+                왼쪽에서 watchlist 종목을 고르면 설정을 수정할 수 있습니다.
               </p>
             )}
           </div>

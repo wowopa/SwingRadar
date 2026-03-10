@@ -79,6 +79,8 @@ async function main() {
   process.argv = [process.argv[0], process.argv[1]];
   await runScript("sync-external-raw.mjs");
   process.argv = [process.argv[0], process.argv[1]];
+  await runScript("refresh-validation-snapshot.mjs");
+  process.argv = [process.argv[0], process.argv[1]];
   await runScript("generate-snapshots.mjs");
 
   if (!useDirectLive) {

@@ -142,7 +142,7 @@ powershell -ExecutionPolicy Bypass -File C:\Users\eugen\Documents\SwingRadar\scr
 
 Register the scheduled task:
 ```powershell
-powershell -ExecutionPolicy Bypass -File C:\Users\eugen\Documents\SwingRadar\scripts\register-daily-krx-task.ps1 -StartTime 18:10 -DownloadsDir C:\Users\eugen\Downloads -DownloadPattern KRX
+powershell -ExecutionPolicy Bypass -File C:\Users\eugen\Documents\SwingRadar\scripts\register-daily-krx-task.ps1 -StartTime 04:00 -DownloadsDir C:\Users\eugen\Downloads -DownloadPattern KRX
 ```
 
 Check task status:
@@ -163,12 +163,12 @@ powershell -ExecutionPolicy Bypass -File C:\Users\eugen\Documents\SwingRadar\scr
 
 Register the auto-heal task:
 ```powershell
-powershell -ExecutionPolicy Bypass -File C:\Users\eugen\Documents\SwingRadar\scripts\register-auto-heal-task.ps1 -StartTime 18:40
+powershell -ExecutionPolicy Bypass -File C:\Users\eugen\Documents\SwingRadar\scripts\register-auto-heal-task.ps1 -StartTime 05:30
 ```
 
 Register both tasks together:
 ```powershell
-powershell -ExecutionPolicy Bypass -File C:\Users\eugen\Documents\SwingRadar\scripts\register-ops-scheduler.ps1 -DailyStartTime 18:10 -AutoHealStartTime 18:40 -DownloadsDir C:\Users\eugen\Downloads -DownloadPattern KRX
+powershell -ExecutionPolicy Bypass -File C:\Users\eugen\Documents\SwingRadar\scripts\register-ops-scheduler.ps1 -DailyStartTime 04:00 -AutoHealStartTime 05:30 -DownloadsDir C:\Users\eugen\Downloads -DownloadPattern KRX
 ```
 
 Check resolved settings without registering:

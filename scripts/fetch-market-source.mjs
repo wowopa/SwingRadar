@@ -33,15 +33,32 @@ Environment:
 `);
 }
 
-function mapRiskStatus(distancePercent) {
-  if (distancePercent <= -4.5) return "주의";
-  if (distancePercent <= -2.2) return "확인 필요";
+function mapRiskStatus(distancePercent, currentPrice, ma20, ma60, momentumPercent) {
+  let score = 0;
+
+  if (distancePercent <= -6) score += 2;
+  else if (distancePercent <= -4) score += 1;
+
+  if (currentPrice < ma20) score += 1;
+  if (currentPrice < ma60) score += 1;
+  if (momentumPercent <= -9) score += 1;
+
+  if (score >= 3) return "주의";
+  if (score >= 1) return "확인 필요";
   return "양호";
 }
 
-function mapHeatStatus(momentumPercent) {
-  if (momentumPercent >= 8) return "주의";
-  if (momentumPercent >= 3) return "확인 필요";
+function mapHeatStatus(momentumPercent, volumeRatio, turnoverRatio) {
+  let score = 0;
+
+  if (momentumPercent >= 12) score += 2;
+  else if (momentumPercent >= 6) score += 1;
+
+  if (volumeRatio >= 3) score += 1;
+  if (turnoverRatio >= 2.4) score += 1;
+
+  if (score >= 3) return "주의";
+  if (score >= 1) return "확인 필요";
   return "양호";
 }
 
@@ -61,6 +78,23 @@ function scoreFlow(latestVolume, avg20Volume) {
 function scoreVolatility(currentPrice, invalidationPrice) {
   const distance = Math.abs((currentPrice - invalidationPrice) / currentPrice) * 100;
   return clamp(Math.round(20 - distance * 2.2), 5, 20);
+}
+
+function calculateQualityScore(closesLength, avg20Turnover, volumeRatio, turnoverRatio) {
+  let score = 8;
+
+  if (closesLength >= 80) score += 3;
+  else if (closesLength >= 60) score += 2;
+  else if (closesLength >= 40) score += 1;
+
+  if (avg20Turnover >= 300000000000) score += 3;
+  else if (avg20Turnover >= 50000000000) score += 2;
+  else if (avg20Turnover >= 10000000000) score += 1;
+
+  if (volumeRatio >= 0.7 && volumeRatio <= 2.2) score += 1;
+  if (turnoverRatio >= 0.65 && turnoverRatio <= 1.9) score += 1;
+
+  return clamp(Math.round(score), 8, 15);
 }
 
 async function fetchYahooItem(entry, range) {
@@ -106,12 +140,15 @@ async function fetchYahooItem(entry, range) {
   const ma60 = average(last60.length ? last60 : closes);
   const avg20Volume = average(volumes.slice(-20));
   const avg20Turnover = average(turnovers.slice(-20));
+  const volumeRatio = avg20Volume > 0 ? latestVolume / avg20Volume : 1;
+  const turnoverRatio = avg20Turnover > 0 ? latestTurnover / avg20Turnover : 1;
   const low15 = Math.min(...closes.slice(-15));
   const high10 = Math.max(...closes.slice(-10));
   const invalidationPrice = Math.round(low15 * 0.995);
   const confirmationPrice = Math.round(Math.max(currentPrice * 1.01, high10));
   const expansionPrice = Math.round(currentPrice + (currentPrice - invalidationPrice) * 1.8);
   const momentumPercent = ((currentPrice - ma20) / ma20) * 100;
+  const riskDistance = ((invalidationPrice - currentPrice) / currentPrice) * 100;
 
   return {
     ticker: entry.ticker,
@@ -128,14 +165,14 @@ async function fetchYahooItem(entry, range) {
     trendScore: scoreTrend(currentPrice, ma20, ma60),
     flowScore: scoreFlow(latestVolume, avg20Volume),
     volatilityScore: scoreVolatility(currentPrice, invalidationPrice),
-    qualityScore: clamp(Math.round(10 + closes.length / 25), 8, 15),
+    qualityScore: calculateQualityScore(closes.length, avg20Turnover, volumeRatio, turnoverRatio),
     averageVolume20: Math.round(avg20Volume),
     latestVolume: Math.round(latestVolume),
     averageTurnover20: Math.round(avg20Turnover),
     latestTurnover: Math.round(latestTurnover),
     momentumPercent: Number(momentumPercent.toFixed(1)),
-    riskStatus: mapRiskStatus(((invalidationPrice - currentPrice) / currentPrice) * 100),
-    heatStatus: mapHeatStatus(momentumPercent),
+    riskStatus: mapRiskStatus(riskDistance, currentPrice, ma20, ma60, momentumPercent),
+    heatStatus: mapHeatStatus(momentumPercent, volumeRatio, turnoverRatio),
     closes: closes.slice(-90),
     volumes: volumes.slice(-90)
   };
@@ -180,7 +217,7 @@ async function main() {
   console.log("External market fetch completed.");
   console.log(`- items: ${items.length}`);
   console.log(`- skipped: ${skipped.length}`);
-  console.log(`- outFile: ${path.resolve(args.outFile)}`);
+  console.log(`- output: ${path.resolve(args.outFile)}`);
 }
 
 main().catch((error) => {

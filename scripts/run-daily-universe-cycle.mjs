@@ -19,7 +19,7 @@ function printHelp() {
 SWING-RADAR daily universe refresh
 
 Usage:
-  node scripts/run-daily-universe-cycle.mjs [--markets <KOSPI,KOSDAQ>] [--limit <number>] [--batch-size <number>] [--concurrency <number>] [--top-candidates <number>] [--skip-ingest] [--sync-symbols]
+  node scripts/run-daily-universe-cycle.mjs [--markets <KOSPI,KOSDAQ>] [--limit <number>] [--batch-size <number>] [--concurrency <number>] [--top-candidates <number>] [--skip-ingest] [--sync-symbols] [--auto-promote]
 
 Environment:
   SWING_RADAR_UNIVERSE_MARKETS
@@ -41,6 +41,7 @@ function parseArgs(argv) {
     topCandidates: process.env.SWING_RADAR_UNIVERSE_TOP_CANDIDATES ?? "100",
     skipIngest: false,
     syncSymbols: process.env.SWING_RADAR_SYMBOL_SYNC_ENABLED === "true",
+    autoPromote: process.env.SWING_RADAR_AUTO_PROMOTION_ENABLED === "true",
     help: false
   };
 
@@ -81,6 +82,10 @@ function parseArgs(argv) {
     }
     if (arg === "--sync-symbols") {
       options.syncSymbols = true;
+      continue;
+    }
+    if (arg === "--auto-promote") {
+      options.autoPromote = true;
       continue;
     }
     throw new Error(`Unknown argument: ${arg}`);
@@ -211,6 +216,11 @@ async function main() {
 
     console.log("[daily-cycle] start: universe batch scan");
     await runStep(report, "universe-scan", () => runScript("scan-universe-batches.mjs", scanArgs));
+
+    if (options.autoPromote) {
+      console.log("[daily-cycle] start: auto promotion review");
+      await runStep(report, "auto-promotion", () => runScript("auto-promote-universe-candidates.mjs", ["--apply"]));
+    }
 
     report.summary = await readDailyCandidatesSummary();
     report.status = report.summary.failedBatchCount > 0 ? "warning" : "ok";

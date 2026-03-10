@@ -57,6 +57,7 @@ export function RecommendationExplorer({
       },
       {
         "실측 기반": 0,
+        "공용 추적 참고": 0,
         "유사 업종 참고": 0,
         "유사 흐름 참고": 0,
         "보수 계산": 0
@@ -100,8 +101,9 @@ export function RecommendationExplorer({
 
   return (
     <div>
-      <section className="mb-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+      <section className="mb-4 grid gap-3 md:grid-cols-2 xl:grid-cols-5">
         <TrustCard label="실측 기반" value={trustSummary["실측 기반"]} tone="emerald" />
+        <TrustCard label="공용 추적 참고" value={trustSummary["공용 추적 참고"]} tone="teal" />
         <TrustCard label="유사 업종 참고" value={trustSummary["유사 업종 참고"]} tone="sky" />
         <TrustCard label="유사 흐름 참고" value={trustSummary["유사 흐름 참고"]} tone="amber" />
         <TrustCard label="보수 계산" value={trustSummary["보수 계산"]} tone="rose" />
@@ -132,6 +134,7 @@ export function RecommendationExplorer({
         <FilterSelect label="검증 근거" value={trustFilter} onChange={setTrustFilter}>
           <option value="all">전체</option>
           <option value="실측 기반">실측 기반</option>
+          <option value="공용 추적 참고">공용 추적 참고</option>
           <option value="유사 업종 참고">유사 업종 참고</option>
           <option value="유사 흐름 참고">유사 흐름 참고</option>
           <option value="보수 계산">보수 계산</option>
@@ -211,17 +214,18 @@ function TrustCard({
 }: {
   label: string;
   value: number;
-  tone: "emerald" | "sky" | "amber" | "rose";
+  tone: "emerald" | "teal" | "sky" | "amber" | "rose";
 }) {
   const tones = {
     emerald: "border-emerald-200 bg-emerald-50 text-emerald-700",
+    teal: "border-teal-200 bg-teal-50 text-teal-700",
     sky: "border-sky-200 bg-sky-50 text-sky-700",
     amber: "border-amber-200 bg-amber-50 text-amber-700",
     rose: "border-rose-200 bg-rose-50 text-rose-700"
   };
 
   return (
-    <div className={`rounded-[24px] border p-4 ${tones[tone]}`}>
+    <div className={`rounded-3xl border px-5 py-4 ${tones[tone]}`}>
       <p className="text-xs font-medium">{label}</p>
       <p className="mt-2 text-2xl font-semibold">{value}</p>
     </div>

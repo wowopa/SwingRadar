@@ -1,8 +1,13 @@
 export type SignalToneDto = "긍정" | "중립" | "주의";
 export type ScenarioLabelDto = "기본" | "강세" | "약세";
 export type RiskStatusDto = "양호" | "확인 필요" | "주의";
-export type TrackingResultDto = "진행중" | "성공" | "실패" | "무효화";
-export type ValidationBasisDto = "실측 기반" | "유사 업종 참고" | "유사 흐름 참고" | "보수 계산";
+export type TrackingResultDto = "감시중" | "진행중" | "성공" | "실패" | "무효화";
+export type ValidationBasisDto =
+  | "실측 기반"
+  | "공용 추적 참고"
+  | "유사 업종 참고"
+  | "유사 흐름 참고"
+  | "보수 계산";
 
 export interface RecommendationListItemDto {
   ticker: string;
@@ -154,6 +159,9 @@ export interface SignalHistoryEntryDto {
   ticker: string;
   company: string;
   signalDate: string;
+  startedAt?: string | null;
+  closedAt?: string | null;
+  closedReason?: string | null;
   signalTone: SignalToneDto;
   entryScore: number;
   result: TrackingResultDto;

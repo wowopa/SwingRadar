@@ -123,8 +123,8 @@ if ($PassThru.IsPresent) {
       downloadPattern = $DownloadPattern
       dailyTaskName = if ($dailyTask) { $dailyTask } else { "SwingRadarDailyKrxCycle" }
       autoHealTaskName = if ($autoHealTask) { $autoHealTask } else { "SwingRadarAutoHeal" }
-      dailyStartTime = if ($dailyStartTime) { $dailyStartTime } else { "18:10" }
-      autoHealStartTime = if ($autoHealStartTime) { $autoHealStartTime } else { "18:40" }
+      dailyStartTime = if ($dailyStartTime) { $dailyStartTime } else { "04:00" }
+      autoHealStartTime = if ($autoHealStartTime) { $autoHealStartTime } else { "05:30" }
     }
     checks = $checks
   }
