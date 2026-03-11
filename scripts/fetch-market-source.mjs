@@ -209,6 +209,8 @@ async function fetchYahooItem(entry, range) {
     company: entry.company,
     sector: entry.sector,
     market: entry.market,
+    watchlistSourceTags: entry.watchlistSourceTags ?? [],
+    watchlistSourceDetails: entry.watchlistSourceDetails ?? [],
     sourceSymbol: entry.marketSymbol,
     currentPrice: Math.round(currentPrice),
     invalidationPrice,
@@ -255,6 +257,8 @@ async function main() {
       skipped.push({
         ticker: entry.ticker,
         company: entry.company,
+        watchlistSourceTags: entry.watchlistSourceTags ?? [],
+        watchlistSourceDetails: entry.watchlistSourceDetails ?? [],
         message: error instanceof Error ? error.message : String(error)
       });
       console.warn(`Market fetch skipped for ${entry.ticker}: ${error instanceof Error ? error.message : error}`);

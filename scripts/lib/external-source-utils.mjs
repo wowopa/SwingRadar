@@ -96,6 +96,26 @@ function normalizePositiveInteger(value, fallback) {
   return Math.floor(parsed);
 }
 
+function appendWatchlistReason(entry, reason) {
+  if (!reason) {
+    return;
+  }
+
+  const tags = Array.isArray(entry.watchlistSourceTags) ? [...entry.watchlistSourceTags] : [];
+  const details = Array.isArray(entry.watchlistSourceDetails) ? [...entry.watchlistSourceDetails] : [];
+
+  if (!tags.includes(reason.label)) {
+    tags.push(reason.label);
+  }
+
+  if (!details.some((item) => item?.key === reason.key && item?.detail === reason.detail)) {
+    details.push(reason);
+  }
+
+  entry.watchlistSourceTags = tags;
+  entry.watchlistSourceDetails = details;
+}
+
 async function readOptionalJson(filePath, fallback) {
   try {
     return await readJson(filePath);
@@ -104,14 +124,23 @@ async function readOptionalJson(filePath, fallback) {
   }
 }
 
-function mergeUniqueEntries(target, seen, entries) {
+function mergeUniqueEntries(targetMap, entries, reasonFactory) {
   for (const item of entries ?? []) {
-    if (!item?.ticker || seen.has(item.ticker)) {
+    if (!item?.ticker) {
       continue;
     }
 
-    seen.add(item.ticker);
-    target.push(item);
+    const reason = reasonFactory?.(item);
+    const existing = targetMap.get(item.ticker);
+
+    if (existing) {
+      appendWatchlistReason(existing, reason);
+      continue;
+    }
+
+    const next = { ...item };
+    appendWatchlistReason(next, reason);
+    targetMap.set(item.ticker, next);
   }
 }
 
@@ -138,27 +167,91 @@ async function loadFocusedWatchlist(configDir) {
   ]);
 
   const universeMap = new Map((universeWatchlist.tickers ?? []).map((item) => [item.ticker, item]));
-  const focused = [];
-  const seen = new Set();
+  const focused = new Map();
 
-  mergeUniqueEntries(focused, seen, manualWatchlist.tickers);
+  mergeUniqueEntries(focused, manualWatchlist.tickers, () => ({
+    key: "manual-watchlist",
+    label: "관심종목",
+    detail: "수동 관심종목"
+  }));
   mergeUniqueEntries(
     focused,
-    seen,
-    (dailyCandidates.topCandidates ?? []).slice(0, recentCandidateCount).map((item) => universeMap.get(item.ticker)).filter(Boolean)
+    (dailyCandidates.topCandidates ?? [])
+      .slice(0, recentCandidateCount)
+      .map((item, index) => ({
+        ...(universeMap.get(item.ticker) ?? item),
+        watchlistReasonDetail: `현재 후보 #${item.featuredRank ?? index + 1}`
+      }))
+      .filter((item) => item?.ticker),
+    (item) => ({
+      key: "recent-candidate",
+      label: "최근후보",
+      detail: item.watchlistReasonDetail ?? "최근 상위 후보"
+    })
   );
 
   for (const run of (dailyCandidateHistory.runs ?? []).slice(0, recentHistoryRuns)) {
     mergeUniqueEntries(
       focused,
-      seen,
-      (run.topCandidates ?? []).slice(0, recentHistoryCandidatesPerRun).map((item) => universeMap.get(item.ticker)).filter(Boolean)
+      (run.topCandidates ?? [])
+        .slice(0, recentHistoryCandidatesPerRun)
+        .map((item, index) => ({
+          ...(universeMap.get(item.ticker) ?? item),
+          watchlistReasonDetail: `${run.generatedAt?.slice(0, 10) ?? "최근"} 후보 #${item.featuredRank ?? index + 1}`
+        }))
+        .filter((item) => item?.ticker),
+      (item) => ({
+        key: "recent-candidate",
+        label: "최근후보",
+        detail: item.watchlistReasonDetail ?? "최근 후보 히스토리 포함"
+      })
     );
   }
 
-  mergeUniqueEntries(focused, seen, (universeWatchlist.tickers ?? []).slice(0, topUniverseCount));
+  mergeUniqueEntries(
+    focused,
+    (universeWatchlist.tickers ?? []).slice(0, topUniverseCount).map((item, index) => ({
+      ...item,
+      watchlistReasonDetail: `상위 유니버스 ${index + 1}위`
+    })),
+    (item) => ({
+      key: "top-universe",
+      label: "상위유니버스",
+      detail: item.watchlistReasonDetail ?? "상위 유니버스"
+    })
+  );
 
-  return focused;
+  return Array.from(focused.values());
+}
+
+function getFocusedWatchlistReportPath(configDir) {
+  const projectRoot = path.dirname(path.dirname(configDir));
+  return path.join(projectRoot, "data", "ops", "latest-focused-watchlist.json");
+}
+
+async function writeFocusedWatchlistReport(configDir, entries) {
+  const sourceCounts = entries.reduce(
+    (acc, entry) => {
+      for (const tag of entry.watchlistSourceTags ?? []) {
+        acc[tag] = (acc[tag] ?? 0) + 1;
+      }
+      return acc;
+    },
+    {}
+  );
+
+  await writeJson(getFocusedWatchlistReportPath(configDir), {
+    generatedAt: new Date().toISOString(),
+    totalTickers: entries.length,
+    sourceCounts,
+    items: entries.map((entry) => ({
+      ticker: entry.ticker,
+      company: entry.company,
+      sector: entry.sector,
+      watchlistSourceTags: entry.watchlistSourceTags ?? [],
+      watchlistSourceDetails: entry.watchlistSourceDetails ?? []
+    }))
+  });
 }
 
 export async function loadWatchlist(configDir) {
@@ -183,8 +276,9 @@ export async function loadWatchlist(configDir) {
       // Optional file
     }
 
-    const focused = await loadFocusedWatchlist(configDir);
-    return focused.filter((item) => item?.ticker && !replacementTickers.has(item.ticker));
+    const focused = (await loadFocusedWatchlist(configDir)).filter((item) => item?.ticker && !replacementTickers.has(item.ticker));
+    await writeFocusedWatchlistReport(configDir, focused);
+    return focused;
   }
 
   const sources = [watchlistFile];

@@ -175,7 +175,9 @@ async function fetchDartDisclosures(entry, maxItems) {
         url: buildDisclosureUrl(item.rcept_no),
         date,
         impact: classification.impact,
-        eventType: classification.eventType
+        eventType: classification.eventType,
+        watchlistSourceTags: entry.watchlistSourceTags ?? [],
+        watchlistSourceDetails: entry.watchlistSourceDetails ?? []
       };
     })
     .slice(0, maxItems);
@@ -200,16 +202,23 @@ function resolveProviderOrder() {
 }
 
 async function fetchFromProvider(provider, entry, maxItems, paths, cache) {
+  const annotate = (items) =>
+    items.map((item) => ({
+      ...item,
+      watchlistSourceTags: entry.watchlistSourceTags ?? item.watchlistSourceTags ?? [],
+      watchlistSourceDetails: entry.watchlistSourceDetails ?? item.watchlistSourceDetails ?? []
+    }));
+
   if (provider === "dart") {
-    return fetchDartDisclosures(entry, maxItems);
+    return annotate(await fetchDartDisclosures(entry, maxItems));
   }
 
   const cached = loadCacheDisclosures(cache, entry.ticker, maxItems);
   if (cached.length) {
-    return cached;
+    return annotate(cached);
   }
 
-  return loadFileDisclosures(paths, entry.ticker, maxItems);
+  return annotate(await loadFileDisclosures(paths, entry.ticker, maxItems));
 }
 
 async function main() {

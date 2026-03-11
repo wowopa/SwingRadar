@@ -54,7 +54,13 @@ async function readOptionalJson(filePath) {
 }
 
 function filterFallbackItems(items, entry, maxItems) {
-  return dedupeArticles(items.filter((item) => matchesFilters(item, entry))).slice(0, maxItems);
+  return dedupeArticles(items.filter((item) => matchesFilters(item, entry)))
+    .slice(0, maxItems)
+    .map((item) => ({
+      ...item,
+      watchlistSourceTags: entry.watchlistSourceTags ?? [],
+      watchlistSourceDetails: entry.watchlistSourceDetails ?? []
+    }));
 }
 
 async function loadFileNews(paths, entry, maxItems) {
@@ -69,14 +75,20 @@ async function loadFileNews(paths, entry, maxItems) {
       source: "file",
       url: `https://fallback.local/${item.ticker}`,
       date: item.date,
-      impact: item.impact
+      impact: item.impact,
+      watchlistSourceTags: entry.watchlistSourceTags ?? [],
+      watchlistSourceDetails: entry.watchlistSourceDetails ?? []
     }));
 
   return filterFallbackItems(items, entry, maxItems);
 }
 
 function loadCacheNews(cache, entry, maxItems) {
-  const items = (cache.items ?? []).filter((item) => item.ticker === entry.ticker);
+  const items = (cache.items ?? []).filter((item) => item.ticker === entry.ticker).map((item) => ({
+    ...item,
+    watchlistSourceTags: entry.watchlistSourceTags ?? item.watchlistSourceTags ?? [],
+    watchlistSourceDetails: entry.watchlistSourceDetails ?? item.watchlistSourceDetails ?? []
+  }));
   return filterFallbackItems(items, entry, maxItems);
 }
 
@@ -169,17 +181,24 @@ function getNewsFetchReportPath() {
 }
 
 async function fetchFromProvider(provider, entry, maxItems, telemetry, options = {}, feedPool = []) {
+  const annotate = (items) =>
+    items.map((item) => ({
+      ...item,
+      watchlistSourceTags: entry.watchlistSourceTags ?? item.watchlistSourceTags ?? [],
+      watchlistSourceDetails: entry.watchlistSourceDetails ?? item.watchlistSourceDetails ?? []
+    }));
+
   if (provider === "curated-rss") {
-    return selectCuratedRssNews(feedPool, entry, maxItems, options);
+    return annotate(selectCuratedRssNews(feedPool, entry, maxItems, options));
   }
   if (provider === "naver") {
-    return fetchNaverNews(entry, maxItems, telemetry, options);
+    return annotate(await fetchNaverNews(entry, maxItems, telemetry, options));
   }
   if (provider === "google-news-rss") {
-    return fetchGoogleNewsRss(entry, maxItems, telemetry, options);
+    return annotate(await fetchGoogleNewsRss(entry, maxItems, telemetry, options));
   }
   if (provider === "gnews") {
-    return fetchGNews(entry, maxItems, telemetry, options);
+    return annotate(await fetchGNews(entry, maxItems, telemetry, options));
   }
   return [];
 }

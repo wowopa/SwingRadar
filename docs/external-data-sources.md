@@ -50,6 +50,13 @@ When `SWING_RADAR_FOCUSED_WATCHLIST_ENABLED=true`, the default external refresh 
 
 This lets the daily external fetch keep 6-month price/news/disclosure history for the symbols that matter most without pulling the full universe every run.
 
+Focused watchlist entries also carry source tags so later screens and ops logs can tell whether a ticker came from:
+- `관심종목`
+- `최근후보`
+- `상위유니버스`
+
+The latest focused watchlist breakdown is written to `data/ops/latest-focused-watchlist.json`.
+
 Each item can contain:
 - `ticker`
 - `company`
