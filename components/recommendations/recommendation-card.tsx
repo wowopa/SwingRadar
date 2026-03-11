@@ -96,10 +96,14 @@ function buildHistoricalSummary(item: Recommendation, validationBasis: Validatio
 
 export function RecommendationCard({
   item,
+  summaryLabel,
+  summaryReasons,
   isFavorite,
   onToggleFavorite
 }: {
   item: Recommendation;
+  summaryLabel?: string;
+  summaryReasons?: string[];
   isFavorite: boolean;
   onToggleFavorite: (ticker: string) => void;
 }) {
@@ -112,7 +116,7 @@ export function RecommendationCard({
     <Card className="h-full rounded-[28px]">
       <CardHeader className="gap-4">
         <div className="flex items-start justify-between gap-4">
-          <div>
+          <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
               <p className="text-xs text-muted-foreground">{item.sector}</p>
               {item.featuredRank ? (
@@ -125,12 +129,26 @@ export function RecommendationCard({
               {item.company} <span className="text-base font-medium text-muted-foreground">{item.ticker}</span>
             </CardTitle>
             <p className="mt-2 text-sm text-primary">{item.signalLabel}</p>
+            {summaryLabel ? <p className="mt-2 text-xs font-medium text-foreground/70">{summaryLabel}</p> : null}
           </div>
           <div className="flex items-center gap-2">
             <FavoriteTickerButton active={isFavorite} label={`${item.company} 즐겨찾기`} onClick={() => onToggleFavorite(item.ticker)} />
             <SignalToneBadge tone={item.signalTone} />
           </div>
         </div>
+
+        {summaryReasons?.length ? (
+          <div className="flex flex-wrap gap-2">
+            {summaryReasons.map((reason) => (
+              <span
+                key={`${item.ticker}-${reason}`}
+                className="rounded-full border border-border/70 bg-secondary/30 px-3 py-1 text-xs text-foreground/80"
+              >
+                {reason}
+              </span>
+            ))}
+          </div>
+        ) : null}
 
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           <QuickMetric label="기본 신호" value={formatScore(item.score)} />
@@ -142,27 +160,31 @@ export function RecommendationCard({
 
       <CardContent className="space-y-5">
         <section className="rounded-2xl border border-border/70 bg-background/35 p-4">
-          <p className="text-sm font-semibold text-foreground">왜 지금 볼까</p>
-          <ul className="mt-3 space-y-2 text-sm leading-7 text-foreground/80">
-            {whyNow.map((reason) => (
-              <li key={`${item.ticker}-${reason}`}>{reason}</li>
-            ))}
-          </ul>
-        </section>
-
-        <section className="rounded-2xl border border-border/70 bg-secondary/25 p-4">
-          <p className="text-sm font-semibold text-foreground">무엇을 조심할까</p>
-          <ul className="mt-3 space-y-2 text-sm leading-7 text-foreground/80">
-            {watchouts.map((watchout) => (
-              <li key={`${item.ticker}-${watchout}`}>{watchout}</li>
-            ))}
-          </ul>
+          <p className="text-sm font-semibold text-foreground">핵심 판단</p>
+          <div className="mt-3 grid gap-4 lg:grid-cols-2">
+            <div>
+              <p className="text-xs font-medium text-muted-foreground">왜 보는가</p>
+              <ul className="mt-2 space-y-2 text-sm leading-7 text-foreground/80">
+                {whyNow.map((reason) => (
+                  <li key={`${item.ticker}-${reason}`}>{reason}</li>
+                ))}
+              </ul>
+            </div>
+            <div>
+              <p className="text-xs font-medium text-muted-foreground">무엇을 조심할까</p>
+              <ul className="mt-2 space-y-2 text-sm leading-7 text-foreground/80">
+                {watchouts.map((watchout) => (
+                  <li key={`${item.ticker}-${watchout}`}>{watchout}</li>
+                ))}
+              </ul>
+            </div>
+          </div>
           <div className="mt-4 rounded-2xl border border-border/70 bg-background/70 px-4 py-3 text-sm text-muted-foreground">
             무효화 기준: {item.invalidation}
           </div>
         </section>
 
-        <section className="grid gap-4 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
+        <section className="grid gap-4 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,0.9fr)]">
           <div className="rounded-2xl border border-border/70 bg-background/35 p-4">
             <div className="flex flex-wrap items-center gap-2">
               <p className="text-sm font-semibold text-foreground">과거 검증 요약</p>
@@ -171,10 +193,10 @@ export function RecommendationCard({
               </span>
             </div>
             <p className="mt-3 text-sm leading-7 text-foreground/80">{historicalSummary}</p>
-            <p className="mt-2 text-sm leading-7 text-muted-foreground">{item.validationSummary}</p>
+            <p className="mt-2 line-clamp-4 text-sm leading-7 text-muted-foreground">{item.validationSummary}</p>
           </div>
 
-          <div className="space-y-4">
+          <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-1">
             <CompactStat label="무효화 여유" value={formatPercent(item.invalidationDistance)} />
             <CompactStat label="기대 손익" value={item.riskRewardRatio} />
             <CompactStat label="업데이트" value={formatDateTimeShort(item.updatedAt)} />
@@ -201,7 +223,7 @@ export function RecommendationCard({
                 </span>
               ))}
             </div>
-            <p className="mt-4 text-sm leading-7 text-foreground/80">{item.rationale}</p>
+            <p className="mt-4 line-clamp-5 text-sm leading-7 text-foreground/80">{item.rationale}</p>
           </section>
         )}
 

@@ -262,7 +262,7 @@ export function RecommendationExplorer({ items }: { items: Recommendation[] }) {
             <div>
               <h2 className="text-xl font-semibold text-foreground">우선 볼 관찰 종목</h2>
               <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                카드에서는 왜 보는지와 무엇을 조심해야 하는지부터 먼저 읽고, 더 넓은 비교는 아래 표에서 이어서 보면 됩니다.
+                카드에서는 종목별 핵심 판단만 먼저 보고, 더 넓은 비교는 아래 표에서 이어서 보면 됩니다.
               </p>
             </div>
             <div className="rounded-2xl border border-border/70 bg-secondary/35 px-4 py-3 text-sm text-muted-foreground">
@@ -270,39 +270,19 @@ export function RecommendationExplorer({ items }: { items: Recommendation[] }) {
             </div>
           </section>
 
-          <section className="grid gap-6 2xl:grid-cols-3 xl:grid-cols-2">
+          <section className="grid gap-6 xl:grid-cols-2">
             {shortlist.map((item) => {
               const reasons = buildReasons(item);
 
               return (
-                <div key={item.ticker} className="space-y-3">
-                  <div className="rounded-[24px] border border-border/70 bg-secondary/25 p-4">
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <p className="text-sm font-semibold text-foreground">{getCandidateLabel(item)}</p>
-                        <p className="mt-1 text-xs text-muted-foreground">카드에서 판단 근거와 리스크를 바로 확인할 수 있습니다.</p>
-                      </div>
-                      {item.featuredRank ? (
-                        <span className="rounded-full border border-primary/25 bg-primary/8 px-3 py-1 text-xs font-medium text-primary">
-                          오늘 후보 #{item.featuredRank}
-                        </span>
-                      ) : null}
-                    </div>
-                    {reasons.length ? (
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        {reasons.map((reason) => (
-                          <span
-                            key={`${item.ticker}-${reason}`}
-                            className="rounded-full border border-border/70 bg-background/80 px-3 py-1 text-xs text-foreground/80"
-                          >
-                            {reason}
-                          </span>
-                        ))}
-                      </div>
-                    ) : null}
-                  </div>
-                  <RecommendationCard item={item} isFavorite={isFavorite(item.ticker)} onToggleFavorite={toggleFavorite} />
-                </div>
+                <RecommendationCard
+                  key={item.ticker}
+                  item={item}
+                  summaryLabel={getCandidateLabel(item)}
+                  summaryReasons={reasons}
+                  isFavorite={isFavorite(item.ticker)}
+                  onToggleFavorite={toggleFavorite}
+                />
               );
             })}
           </section>
