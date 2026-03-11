@@ -21,13 +21,24 @@ function formatEventType(eventType: string) {
 }
 
 export function NewsImpactList({ items }: { items: NewsImpactItem[] }) {
+  const sortedItems = [...items].sort((left, right) => {
+    const leftTime = Date.parse(left.date);
+    const rightTime = Date.parse(right.date);
+
+    if (Number.isNaN(leftTime) || Number.isNaN(rightTime)) {
+      return right.date.localeCompare(left.date);
+    }
+
+    return rightTime - leftTime;
+  });
+
   return (
     <Card>
       <CardHeader>
         <CardTitle>외부 이벤트</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        {items.map((item) => (
+        {sortedItems.map((item) => (
           <div key={`${item.date}-${item.headline}`} className="rounded-2xl border border-border/70 bg-secondary/35 p-4">
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0 flex-1">

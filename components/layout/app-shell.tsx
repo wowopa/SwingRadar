@@ -34,8 +34,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   </div>
                 </div>
 
-                <div className="max-w-3xl border-b border-border/70 pb-5">
-                  <h1 className="text-balance text-3xl font-semibold leading-[0.98] tracking-[-0.05em] text-foreground sm:text-4xl lg:text-[3.35rem]">
+                <div className="max-w-[880px] border-b border-border/70 pb-5">
+                  <h1 className="text-3xl font-semibold leading-[1.02] tracking-[-0.05em] text-foreground sm:text-4xl lg:text-[3.35rem]">
                     국내 스윙 후보를 선별하고 검증합니다
                   </h1>
                   <p className="mt-3 text-sm leading-7 text-muted-foreground sm:text-base">
