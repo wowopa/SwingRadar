@@ -3,9 +3,10 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { ArrowLeft, ArrowRight, ChevronDown, History } from "lucide-react";
+import { ArrowLeft, ArrowRight, ChevronDown, History, Search } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 
 type ReadySymbol = {
   ticker: string;
@@ -25,6 +26,8 @@ const MAX_RECENT_ITEMS = 5;
 
 export function AnalysisNavigation({ currentTicker, previous, next, readyItems }: AnalysisNavigationProps) {
   const [recentTickers, setRecentTickers] = useState<string[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [pickerFocused, setPickerFocused] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -41,6 +44,24 @@ export function AnalysisNavigation({ currentTicker, previous, next, readyItems }
       .map((ticker) => readyItems.find((item) => item.ticker === ticker))
       .filter((item): item is ReadySymbol => Boolean(item));
   }, [currentTicker, readyItems, recentTickers]);
+
+  const filteredItems = useMemo(() => {
+    const normalized = searchQuery.trim().toLowerCase();
+
+    return readyItems
+      .filter((item) => {
+        if (!normalized) {
+          return true;
+        }
+
+        return (
+          item.company.toLowerCase().includes(normalized) ||
+          item.ticker.toLowerCase().includes(normalized) ||
+          item.sector.toLowerCase().includes(normalized)
+        );
+      })
+      .slice(0, 12);
+  }, [readyItems, searchQuery]);
 
   return (
     <section className="mb-6 grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
@@ -74,23 +95,62 @@ export function AnalysisNavigation({ currentTicker, previous, next, readyItems }
               <ChevronDown className="h-4 w-4" />
               종목 선택
             </div>
-            <div className="mt-3">
-              <select
-                value={currentTicker}
-                onChange={(event) => {
-                  const nextTicker = event.target.value;
-                  if (nextTicker && nextTicker !== currentTicker) {
-                    router.push(`/analysis/${nextTicker}`);
-                  }
-                }}
-                className="flex h-12 w-full rounded-2xl border border-border bg-background px-4 text-sm text-foreground outline-none transition focus:border-primary/50"
-              >
-                {readyItems.map((item) => (
-                  <option key={item.ticker} value={item.ticker}>
-                    {item.company} ({item.ticker}) · {item.sector}
-                  </option>
-                ))}
-              </select>
+            <div className="relative mt-3">
+              <div className="flex items-center gap-3 rounded-2xl border border-border bg-background px-4">
+                <Search className="h-4 w-4 text-muted-foreground" />
+                <Input
+                  value={searchQuery}
+                  onChange={(event) => {
+                    setSearchQuery(event.target.value);
+                    setPickerFocused(true);
+                  }}
+                  onFocus={() => setPickerFocused(true)}
+                  onBlur={() => setTimeout(() => setPickerFocused(false), 120)}
+                  placeholder={`${readyItems.find((item) => item.ticker === currentTicker)?.company ?? ""} (${currentTicker}) 검색`}
+                  className="h-12 border-0 bg-transparent px-0 text-sm shadow-none focus-visible:ring-0"
+                />
+              </div>
+
+              {(pickerFocused || searchQuery.trim().length > 0) && (
+                <div className="absolute left-0 right-0 top-[calc(100%+0.75rem)] z-30 rounded-2xl border border-border/80 bg-white p-2 shadow-[0_24px_48px_rgba(66,50,34,0.14)]">
+                  <div className="flex items-center justify-between px-3 py-2">
+                    <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">검색 결과</p>
+                    <p className="text-xs text-muted-foreground">{filteredItems.length}개</p>
+                  </div>
+                  {filteredItems.length ? (
+                    <div className="space-y-1">
+                      {filteredItems.map((item) => (
+                        <button
+                          key={item.ticker}
+                          type="button"
+                          onClick={() => {
+                            setSearchQuery("");
+                            setPickerFocused(false);
+                            if (item.ticker !== currentTicker) {
+                              router.push(`/analysis/${item.ticker}`);
+                            }
+                          }}
+                          className={`flex w-full items-center justify-between rounded-[18px] px-4 py-3 text-left transition ${
+                            item.ticker === currentTicker ? "bg-primary/8 text-primary" : "hover:bg-secondary/60"
+                          }`}
+                        >
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-medium">{item.company}</p>
+                            <p className="mt-1 text-xs text-muted-foreground">
+                              {item.ticker} · {item.sector}
+                            </p>
+                          </div>
+                          <span className="ml-4 shrink-0 text-xs text-muted-foreground">
+                            {item.ticker === currentTicker ? "현재" : "이동"}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="px-4 py-5 text-sm text-muted-foreground">일치하는 분석 종목이 없습니다.</div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </CardContent>

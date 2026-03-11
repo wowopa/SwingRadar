@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useDeferredValue, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { ArrowUpRight, Search, Sparkles } from "lucide-react";
 
 import { Input } from "@/components/ui/input";
@@ -44,13 +44,12 @@ export function GlobalSymbolSearch() {
   const [description, setDescription] = useState("");
   const [mode, setMode] = useState<SearchResponse["mode"]>("featured");
   const [focused, setFocused] = useState(false);
-  const deferredQuery = useDeferredValue(query);
 
   useEffect(() => {
     let ignore = false;
 
     async function load() {
-      const search = deferredQuery.trim();
+      const search = query.trim();
       const url = search ? `/api/symbols?q=${encodeURIComponent(search)}&limit=12` : "/api/symbols?limit=12";
       const response = await fetch(url, { cache: "no-store" });
       if (!response.ok) {
@@ -70,9 +69,9 @@ export function GlobalSymbolSearch() {
     return () => {
       ignore = true;
     };
-  }, [deferredQuery]);
+  }, [query]);
 
-  const showDropdown = focused && (query.trim().length > 0 || items.length > 0);
+  const showDropdown = focused || query.trim().length > 0;
 
   return (
     <div className="relative z-[120] w-full">
@@ -85,7 +84,10 @@ export function GlobalSymbolSearch() {
             <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">종목 검색</p>
             <Input
               value={query}
-              onChange={(event) => setQuery(event.target.value)}
+              onChange={(event) => {
+                setQuery(event.target.value);
+                setFocused(true);
+              }}
               onFocus={() => setFocused(true)}
               onBlur={() => setTimeout(() => setFocused(false), 120)}
               placeholder="티커, 종목명, 별칭, 섹터로 검색"
