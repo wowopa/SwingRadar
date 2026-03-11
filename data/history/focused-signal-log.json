@@ -1,8 +1,1629 @@
 {
-  "generatedAt": "2026-03-11T04:37:56.909Z",
-  "tickerCount": 122,
-  "entryCount": 42,
+  "generatedAt": "2026-03-11T19:15:35.966Z",
+  "tickerCount": 118,
+  "entryCount": 81,
   "entries": [
+    {
+      "generatedAt": "2026-03-11T19:15:15.324Z",
+      "signalDate": "2026-03-11",
+      "ticker": "000250",
+      "company": "삼천당제약",
+      "sector": "중견기업부",
+      "signalTone": "주의",
+      "score": 21.2,
+      "candidateScore": 20.3,
+      "featuredRank": 37,
+      "validationBasis": "유사 업종 참고",
+      "hitRate": 38,
+      "avgReturn": -2.2,
+      "invalidation": "677,250원 아래로 내려가면 이번 흐름은 다시 봐야 합니다.",
+      "invalidationDistance": -12.5,
+      "observationWindow": "1~7거래일",
+      "watchlistSourceTags": [
+        "최근후보",
+        "상위유니버스"
+      ],
+      "watchlistSourceDetails": [
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "현재 후보 #37"
+        },
+        {
+          "key": "top-universe",
+          "label": "상위유니버스",
+          "detail": "상위 유니버스 24위"
+        }
+      ],
+      "trackingStatus": null,
+      "trackingAppearances": null,
+      "trackingLatestRank": null,
+      "trackingClosedReason": null
+    },
+    {
+      "generatedAt": "2026-03-11T19:15:15.324Z",
+      "signalDate": "2026-03-11",
+      "ticker": "000660",
+      "company": "SK하이닉스",
+      "sector": "주권",
+      "signalTone": "중립",
+      "score": 19.9,
+      "candidateScore": 44.7,
+      "featuredRank": 2,
+      "validationBasis": "유사 업종 참고",
+      "hitRate": 62,
+      "avgReturn": 7.5,
+      "invalidation": "910,861원 아래로 내려가면 이번 흐름은 다시 봐야 합니다.",
+      "invalidationDistance": -4.6,
+      "observationWindow": "3~10거래일",
+      "watchlistSourceTags": [
+        "관심종목",
+        "최근후보",
+        "상위유니버스"
+      ],
+      "watchlistSourceDetails": [
+        {
+          "key": "manual-watchlist",
+          "label": "관심종목",
+          "detail": "수동 관심종목"
+        },
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "현재 후보 #2"
+        },
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "2026-03-11 후보 #2"
+        },
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "2026-03-10 후보 #1"
+        },
+        {
+          "key": "top-universe",
+          "label": "상위유니버스",
+          "detail": "상위 유니버스 45위"
+        }
+      ],
+      "trackingStatus": null,
+      "trackingAppearances": null,
+      "trackingLatestRank": null,
+      "trackingClosedReason": null
+    },
+    {
+      "generatedAt": "2026-03-11T19:15:15.324Z",
+      "signalDate": "2026-03-11",
+      "ticker": "005090",
+      "company": "SGC에너지",
+      "sector": "주권",
+      "signalTone": "중립",
+      "score": 19.2,
+      "candidateScore": 31.7,
+      "featuredRank": 34,
+      "validationBasis": "보수 계산",
+      "hitRate": 55,
+      "avgReturn": 14.7,
+      "invalidation": "50,061원 아래로 내려가면 이번 흐름은 다시 봐야 합니다.",
+      "invalidationDistance": -11.4,
+      "observationWindow": "3~10거래일",
+      "watchlistSourceTags": [
+        "최근후보"
+      ],
+      "watchlistSourceDetails": [
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "현재 후보 #34"
+        },
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "2026-03-10 후보 #15"
+        },
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "2026-03-10 후보 #14"
+        }
+      ],
+      "trackingStatus": null,
+      "trackingAppearances": null,
+      "trackingLatestRank": null,
+      "trackingClosedReason": null
+    },
+    {
+      "generatedAt": "2026-03-11T19:15:15.324Z",
+      "signalDate": "2026-03-11",
+      "ticker": "005380",
+      "company": "현대차",
+      "sector": "주권",
+      "signalTone": "중립",
+      "score": 14,
+      "candidateScore": 36.1,
+      "featuredRank": 21,
+      "validationBasis": "유사 업종 참고",
+      "hitRate": 62,
+      "avgReturn": 6.1,
+      "invalidation": "508,610원 아래로 내려가면 이번 흐름은 다시 봐야 합니다.",
+      "invalidationDistance": -4,
+      "observationWindow": "3~10거래일",
+      "watchlistSourceTags": [
+        "관심종목",
+        "최근후보"
+      ],
+      "watchlistSourceDetails": [
+        {
+          "key": "manual-watchlist",
+          "label": "관심종목",
+          "detail": "수동 관심종목"
+        },
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "현재 후보 #21"
+        },
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "2026-03-11 후보 #20"
+        }
+      ],
+      "trackingStatus": null,
+      "trackingAppearances": null,
+      "trackingLatestRank": null,
+      "trackingClosedReason": null
+    },
+    {
+      "generatedAt": "2026-03-11T19:15:15.324Z",
+      "signalDate": "2026-03-11",
+      "ticker": "005860",
+      "company": "한일사료",
+      "sector": "우량기업부",
+      "signalTone": "중립",
+      "score": 21,
+      "candidateScore": 34.1,
+      "featuredRank": 29,
+      "validationBasis": "유사 흐름 참고",
+      "hitRate": 53,
+      "avgReturn": 6.2,
+      "invalidation": "3,662원 아래로 내려가면 이번 흐름은 다시 봐야 합니다.",
+      "invalidationDistance": -7.5,
+      "observationWindow": "1~7거래일",
+      "watchlistSourceTags": [
+        "최근후보"
+      ],
+      "watchlistSourceDetails": [
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "현재 후보 #29"
+        },
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "2026-03-10 후보 #11"
+        }
+      ],
+      "trackingStatus": null,
+      "trackingAppearances": null,
+      "trackingLatestRank": null,
+      "trackingClosedReason": null
+    },
+    {
+      "generatedAt": "2026-03-11T19:15:15.324Z",
+      "signalDate": "2026-03-11",
+      "ticker": "005930",
+      "company": "삼성전자",
+      "sector": "주권",
+      "signalTone": "중립",
+      "score": 19.3,
+      "candidateScore": 41.4,
+      "featuredRank": 10,
+      "validationBasis": "유사 업종 참고",
+      "hitRate": 62,
+      "avgReturn": 6.1,
+      "invalidation": "182,672원 아래로 내려가면 이번 흐름은 다시 봐야 합니다.",
+      "invalidationDistance": -3.9,
+      "observationWindow": "3~10거래일",
+      "watchlistSourceTags": [
+        "관심종목",
+        "최근후보"
+      ],
+      "watchlistSourceDetails": [
+        {
+          "key": "manual-watchlist",
+          "label": "관심종목",
+          "detail": "수동 관심종목"
+        },
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "현재 후보 #10"
+        },
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "2026-03-11 후보 #10"
+        },
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "2026-03-10 후보 #2"
+        }
+      ],
+      "trackingStatus": null,
+      "trackingAppearances": null,
+      "trackingLatestRank": null,
+      "trackingClosedReason": null
+    },
+    {
+      "generatedAt": "2026-03-11T19:15:15.324Z",
+      "signalDate": "2026-03-11",
+      "ticker": "010170",
+      "company": "대한광통신",
+      "sector": "중견기업부",
+      "signalTone": "중립",
+      "score": 19.4,
+      "candidateScore": 42.2,
+      "featuredRank": 7,
+      "validationBasis": "유사 업종 참고",
+      "hitRate": 62,
+      "avgReturn": 7.5,
+      "invalidation": "6,489원 아래로 내려가면 이번 흐름은 다시 봐야 합니다.",
+      "invalidationDistance": -9.4,
+      "observationWindow": "3~10거래일",
+      "watchlistSourceTags": [
+        "최근후보"
+      ],
+      "watchlistSourceDetails": [
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "현재 후보 #7"
+        },
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "2026-03-11 후보 #7"
+        },
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "2026-03-10 후보 #7"
+        },
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "2026-03-10 후보 #8"
+        },
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "2026-03-10 후보 #6"
+        }
+      ],
+      "trackingStatus": null,
+      "trackingAppearances": null,
+      "trackingLatestRank": null,
+      "trackingClosedReason": null
+    },
+    {
+      "generatedAt": "2026-03-11T19:15:15.324Z",
+      "signalDate": "2026-03-11",
+      "ticker": "010820",
+      "company": "퍼스텍",
+      "sector": "주권",
+      "signalTone": "중립",
+      "score": 21.2,
+      "candidateScore": 35.1,
+      "featuredRank": 25,
+      "validationBasis": "보수 계산",
+      "hitRate": 56,
+      "avgReturn": 9.3,
+      "invalidation": "6,711원 아래로 내려가면 이번 흐름은 다시 봐야 합니다.",
+      "invalidationDistance": -12.5,
+      "observationWindow": "3~10거래일",
+      "watchlistSourceTags": [
+        "최근후보"
+      ],
+      "watchlistSourceDetails": [
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "현재 후보 #25"
+        }
+      ],
+      "trackingStatus": null,
+      "trackingAppearances": null,
+      "trackingLatestRank": null,
+      "trackingClosedReason": null
+    },
+    {
+      "generatedAt": "2026-03-11T19:15:15.324Z",
+      "signalDate": "2026-03-11",
+      "ticker": "015750",
+      "company": "성우하이텍",
+      "sector": "우량기업부",
+      "signalTone": "중립",
+      "score": 20.1,
+      "candidateScore": 32.8,
+      "featuredRank": 32,
+      "validationBasis": "보수 계산",
+      "hitRate": 58,
+      "avgReturn": 13.8,
+      "invalidation": "9,771원 아래로 내려가면 이번 흐름은 다시 봐야 합니다.",
+      "invalidationDistance": -8.3,
+      "observationWindow": "3~10거래일",
+      "watchlistSourceTags": [
+        "최근후보"
+      ],
+      "watchlistSourceDetails": [
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "현재 후보 #32"
+        }
+      ],
+      "trackingStatus": null,
+      "trackingAppearances": null,
+      "trackingLatestRank": null,
+      "trackingClosedReason": null
+    },
+    {
+      "generatedAt": "2026-03-11T19:15:15.324Z",
+      "signalDate": "2026-03-11",
+      "ticker": "031980",
+      "company": "피에스케이홀딩스",
+      "sector": "우량기업부",
+      "signalTone": "긍정",
+      "score": 22.6,
+      "candidateScore": 42.4,
+      "featuredRank": 5,
+      "validationBasis": "보수 계산",
+      "hitRate": 57,
+      "avgReturn": 10,
+      "invalidation": "93,373원 아래로 내려가면 이번 흐름은 다시 봐야 합니다.",
+      "invalidationDistance": -10.6,
+      "observationWindow": "3~10거래일",
+      "watchlistSourceTags": [
+        "최근후보"
+      ],
+      "watchlistSourceDetails": [
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "현재 후보 #5"
+        },
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "2026-03-11 후보 #5"
+        },
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "2026-03-10 후보 #17"
+        },
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "2026-03-10 후보 #14"
+        },
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "2026-03-10 후보 #15"
+        }
+      ],
+      "trackingStatus": null,
+      "trackingAppearances": null,
+      "trackingLatestRank": null,
+      "trackingClosedReason": null
+    },
+    {
+      "generatedAt": "2026-03-11T19:15:15.324Z",
+      "signalDate": "2026-03-11",
+      "ticker": "032820",
+      "company": "우리기술",
+      "sector": "벤처기업부",
+      "signalTone": "중립",
+      "score": 20,
+      "candidateScore": 41.7,
+      "featuredRank": 9,
+      "validationBasis": "보수 계산",
+      "hitRate": 58,
+      "avgReturn": 23.4,
+      "invalidation": "19,863원 아래로 내려가면 이번 흐름은 다시 봐야 합니다.",
+      "invalidationDistance": -12.5,
+      "observationWindow": "3~10거래일",
+      "watchlistSourceTags": [
+        "최근후보"
+      ],
+      "watchlistSourceDetails": [
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "현재 후보 #9"
+        },
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "2026-03-11 후보 #9"
+        },
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "2026-03-11 후보 #13"
+        },
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "2026-03-10 후보 #9"
+        },
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "2026-03-10 후보 #4"
+        }
+      ],
+      "trackingStatus": null,
+      "trackingAppearances": null,
+      "trackingLatestRank": null,
+      "trackingClosedReason": null
+    },
+    {
+      "generatedAt": "2026-03-11T19:15:15.324Z",
+      "signalDate": "2026-03-11",
+      "ticker": "035420",
+      "company": "NAVER",
+      "sector": "주권",
+      "signalTone": "주의",
+      "score": 2.9,
+      "candidateScore": 12,
+      "featuredRank": 39,
+      "validationBasis": "보수 계산",
+      "hitRate": 54,
+      "avgReturn": 2.9,
+      "invalidation": "215,784원 아래로 내려가면 이번 흐름은 다시 봐야 합니다.",
+      "invalidationDistance": -2.8,
+      "observationWindow": "1~7거래일",
+      "watchlistSourceTags": [
+        "관심종목",
+        "최근후보"
+      ],
+      "watchlistSourceDetails": [
+        {
+          "key": "manual-watchlist",
+          "label": "관심종목",
+          "detail": "수동 관심종목"
+        },
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "현재 후보 #39"
+        }
+      ],
+      "trackingStatus": null,
+      "trackingAppearances": null,
+      "trackingLatestRank": null,
+      "trackingClosedReason": null
+    },
+    {
+      "generatedAt": "2026-03-11T19:15:15.324Z",
+      "signalDate": "2026-03-11",
+      "ticker": "036930",
+      "company": "주성엔지니어링",
+      "sector": "우량기업부",
+      "signalTone": "긍정",
+      "score": 22,
+      "candidateScore": 41.4,
+      "featuredRank": 11,
+      "validationBasis": "보수 계산",
+      "hitRate": 56,
+      "avgReturn": 11.2,
+      "invalidation": "59,711원 아래로 내려가면 이번 흐름은 다시 봐야 합니다.",
+      "invalidationDistance": -10.9,
+      "observationWindow": "3~10거래일",
+      "watchlistSourceTags": [
+        "최근후보"
+      ],
+      "watchlistSourceDetails": [
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "현재 후보 #11"
+        },
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "2026-03-11 후보 #11"
+        },
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "2026-03-11 후보 #9"
+        },
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "2026-03-10 후보 #12"
+        },
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "2026-03-10 후보 #19"
+        }
+      ],
+      "trackingStatus": null,
+      "trackingAppearances": null,
+      "trackingLatestRank": null,
+      "trackingClosedReason": null
+    },
+    {
+      "generatedAt": "2026-03-11T19:15:15.324Z",
+      "signalDate": "2026-03-11",
+      "ticker": "037350",
+      "company": "성도이엔지",
+      "sector": "우량기업부",
+      "signalTone": "중립",
+      "score": 21.8,
+      "candidateScore": 35.7,
+      "featuredRank": 22,
+      "validationBasis": "보수 계산",
+      "hitRate": 56,
+      "avgReturn": 16.5,
+      "invalidation": "10,395원 아래로 내려가면 이번 흐름은 다시 봐야 합니다.",
+      "invalidationDistance": -9.1,
+      "observationWindow": "3~10거래일",
+      "watchlistSourceTags": [
+        "최근후보"
+      ],
+      "watchlistSourceDetails": [
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "현재 후보 #22"
+        }
+      ],
+      "trackingStatus": null,
+      "trackingAppearances": null,
+      "trackingLatestRank": null,
+      "trackingClosedReason": null
+    },
+    {
+      "generatedAt": "2026-03-11T19:15:15.324Z",
+      "signalDate": "2026-03-11",
+      "ticker": "042700",
+      "company": "한미반도체",
+      "sector": "주권",
+      "signalTone": "중립",
+      "score": 21.2,
+      "candidateScore": 38.1,
+      "featuredRank": 18,
+      "validationBasis": "보수 계산",
+      "hitRate": 56,
+      "avgReturn": 15.7,
+      "invalidation": "277,110원 아래로 내려가면 이번 흐름은 다시 봐야 합니다.",
+      "invalidationDistance": -11.3,
+      "observationWindow": "3~10거래일",
+      "watchlistSourceTags": [
+        "최근후보"
+      ],
+      "watchlistSourceDetails": [
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "현재 후보 #18"
+        },
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "2026-03-11 후보 #18"
+        },
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "2026-03-11 후보 #17"
+        },
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "2026-03-10 후보 #19"
+        },
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "2026-03-10 후보 #9"
+        }
+      ],
+      "trackingStatus": null,
+      "trackingAppearances": null,
+      "trackingLatestRank": null,
+      "trackingClosedReason": null
+    },
+    {
+      "generatedAt": "2026-03-11T19:15:15.324Z",
+      "signalDate": "2026-03-11",
+      "ticker": "047040",
+      "company": "대우건설",
+      "sector": "주권",
+      "signalTone": "중립",
+      "score": 20.9,
+      "candidateScore": 39.8,
+      "featuredRank": 16,
+      "validationBasis": "보수 계산",
+      "hitRate": 56,
+      "avgReturn": 11.1,
+      "invalidation": "8,745원 아래로 내려가면 이번 흐름은 다시 봐야 합니다.",
+      "invalidationDistance": -12.1,
+      "observationWindow": "3~10거래일",
+      "watchlistSourceTags": [
+        "최근후보"
+      ],
+      "watchlistSourceDetails": [
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "현재 후보 #16"
+        },
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "2026-03-11 후보 #16"
+        },
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "2026-03-11 후보 #15"
+        }
+      ],
+      "trackingStatus": null,
+      "trackingAppearances": null,
+      "trackingLatestRank": null,
+      "trackingClosedReason": null
+    },
+    {
+      "generatedAt": "2026-03-11T19:15:15.324Z",
+      "signalDate": "2026-03-11",
+      "ticker": "052020",
+      "company": "에스티큐브",
+      "sector": "투자주의환기종목(소속부없음)",
+      "signalTone": "중립",
+      "score": 19.8,
+      "candidateScore": 34.5,
+      "featuredRank": 26,
+      "validationBasis": "보수 계산",
+      "hitRate": 58,
+      "avgReturn": 20.8,
+      "invalidation": "12,656원 아래로 내려가면 이번 흐름은 다시 봐야 합니다.",
+      "invalidationDistance": -5.6,
+      "observationWindow": "3~10거래일",
+      "watchlistSourceTags": [
+        "최근후보"
+      ],
+      "watchlistSourceDetails": [
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "현재 후보 #26"
+        },
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "2026-03-10 후보 #11"
+        }
+      ],
+      "trackingStatus": null,
+      "trackingAppearances": null,
+      "trackingLatestRank": null,
+      "trackingClosedReason": null
+    },
+    {
+      "generatedAt": "2026-03-11T19:15:15.324Z",
+      "signalDate": "2026-03-11",
+      "ticker": "058470",
+      "company": "리노공업",
+      "sector": "우량기업부",
+      "signalTone": "긍정",
+      "score": 22,
+      "candidateScore": 40.4,
+      "featuredRank": 15,
+      "validationBasis": "보수 계산",
+      "hitRate": 56,
+      "avgReturn": 5.8,
+      "invalidation": "103,369원 아래로 내려가면 이번 흐름은 다시 봐야 합니다.",
+      "invalidationDistance": -9.1,
+      "observationWindow": "3~10거래일",
+      "watchlistSourceTags": [
+        "최근후보"
+      ],
+      "watchlistSourceDetails": [
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "현재 후보 #15"
+        },
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "2026-03-11 후보 #15"
+        },
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "2026-03-11 후보 #14"
+        },
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "2026-03-10 후보 #6"
+        }
+      ],
+      "trackingStatus": null,
+      "trackingAppearances": null,
+      "trackingLatestRank": null,
+      "trackingClosedReason": null
+    },
+    {
+      "generatedAt": "2026-03-11T19:15:15.324Z",
+      "signalDate": "2026-03-11",
+      "ticker": "068270",
+      "company": "셀트리온",
+      "sector": "주권",
+      "signalTone": "주의",
+      "score": 8.6,
+      "candidateScore": 15.9,
+      "featuredRank": 38,
+      "validationBasis": "보수 계산",
+      "hitRate": 55,
+      "avgReturn": 1.1,
+      "invalidation": "203,148원 아래로 내려가면 이번 흐름은 다시 봐야 합니다.",
+      "invalidationDistance": -2.8,
+      "observationWindow": "3~10거래일",
+      "watchlistSourceTags": [
+        "관심종목",
+        "최근후보"
+      ],
+      "watchlistSourceDetails": [
+        {
+          "key": "manual-watchlist",
+          "label": "관심종목",
+          "detail": "수동 관심종목"
+        },
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "현재 후보 #38"
+        }
+      ],
+      "trackingStatus": null,
+      "trackingAppearances": null,
+      "trackingLatestRank": null,
+      "trackingClosedReason": null
+    },
+    {
+      "generatedAt": "2026-03-11T19:15:15.324Z",
+      "signalDate": "2026-03-11",
+      "ticker": "078600",
+      "company": "대주전자재료",
+      "sector": "우량기업부",
+      "signalTone": "중립",
+      "score": 21.8,
+      "candidateScore": 38.6,
+      "featuredRank": 17,
+      "validationBasis": "보수 계산",
+      "hitRate": 56,
+      "avgReturn": 6.6,
+      "invalidation": "94,252원 아래로 내려가면 이번 흐름은 다시 봐야 합니다.",
+      "invalidationDistance": -11.1,
+      "observationWindow": "3~10거래일",
+      "watchlistSourceTags": [
+        "최근후보"
+      ],
+      "watchlistSourceDetails": [
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "현재 후보 #17"
+        },
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "2026-03-11 후보 #17"
+        },
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "2026-03-11 후보 #16"
+        },
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "2026-03-10 후보 #14"
+        }
+      ],
+      "trackingStatus": null,
+      "trackingAppearances": null,
+      "trackingLatestRank": null,
+      "trackingClosedReason": null
+    },
+    {
+      "generatedAt": "2026-03-11T19:15:15.324Z",
+      "signalDate": "2026-03-11",
+      "ticker": "079550",
+      "company": "LIG넥스원",
+      "sector": "주권",
+      "signalTone": "긍정",
+      "score": 22.6,
+      "candidateScore": 45.4,
+      "featuredRank": 1,
+      "validationBasis": "보수 계산",
+      "hitRate": 57,
+      "avgReturn": 16.1,
+      "invalidation": "683,732원 아래로 내려가면 이번 흐름은 다시 봐야 합니다.",
+      "invalidationDistance": -7.9,
+      "observationWindow": "3~10거래일",
+      "watchlistSourceTags": [
+        "최근후보"
+      ],
+      "watchlistSourceDetails": [
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "현재 후보 #1"
+        },
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "2026-03-11 후보 #1"
+        },
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "2026-03-10 후보 #3"
+        }
+      ],
+      "trackingStatus": null,
+      "trackingAppearances": null,
+      "trackingLatestRank": null,
+      "trackingClosedReason": null
+    },
+    {
+      "generatedAt": "2026-03-11T19:15:15.324Z",
+      "signalDate": "2026-03-11",
+      "ticker": "083650",
+      "company": "비에이치아이",
+      "sector": "중견기업부",
+      "signalTone": "긍정",
+      "score": 22.4,
+      "candidateScore": 42.2,
+      "featuredRank": 8,
+      "validationBasis": "보수 계산",
+      "hitRate": 57,
+      "avgReturn": 10.2,
+      "invalidation": "90,812원 아래로 내려가면 이번 흐름은 다시 봐야 합니다.",
+      "invalidationDistance": -9.5,
+      "observationWindow": "3~10거래일",
+      "watchlistSourceTags": [
+        "최근후보"
+      ],
+      "watchlistSourceDetails": [
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "현재 후보 #8"
+        },
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "2026-03-11 후보 #8"
+        },
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "2026-03-10 후보 #16"
+        }
+      ],
+      "trackingStatus": null,
+      "trackingAppearances": null,
+      "trackingLatestRank": null,
+      "trackingClosedReason": null
+    },
+    {
+      "generatedAt": "2026-03-11T19:15:15.324Z",
+      "signalDate": "2026-03-11",
+      "ticker": "085620",
+      "company": "미래에셋생명",
+      "sector": "주권",
+      "signalTone": "긍정",
+      "score": 22.5,
+      "candidateScore": 41.3,
+      "featuredRank": 14,
+      "validationBasis": "보수 계산",
+      "hitRate": 57,
+      "avgReturn": 13.6,
+      "invalidation": "13,615원 아래로 내려가면 이번 흐름은 다시 봐야 합니다.",
+      "invalidationDistance": -12.5,
+      "observationWindow": "3~10거래일",
+      "watchlistSourceTags": [
+        "최근후보"
+      ],
+      "watchlistSourceDetails": [
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "현재 후보 #14"
+        },
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "2026-03-11 후보 #14"
+        },
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "2026-03-11 후보 #12"
+        }
+      ],
+      "trackingStatus": null,
+      "trackingAppearances": null,
+      "trackingLatestRank": null,
+      "trackingClosedReason": null
+    },
+    {
+      "generatedAt": "2026-03-11T19:15:15.324Z",
+      "signalDate": "2026-03-11",
+      "ticker": "087010",
+      "company": "펩트론",
+      "sector": "기술성장기업부",
+      "signalTone": "긍정",
+      "score": 22.9,
+      "candidateScore": 42.7,
+      "featuredRank": 4,
+      "validationBasis": "보수 계산",
+      "hitRate": 57,
+      "avgReturn": 6.8,
+      "invalidation": "278,130원 아래로 내려가면 이번 흐름은 다시 봐야 합니다.",
+      "invalidationDistance": -7.9,
+      "observationWindow": "3~10거래일",
+      "watchlistSourceTags": [
+        "최근후보"
+      ],
+      "watchlistSourceDetails": [
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "현재 후보 #4"
+        },
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "2026-03-11 후보 #4"
+        },
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "2026-03-10 후보 #13"
+        }
+      ],
+      "trackingStatus": null,
+      "trackingAppearances": null,
+      "trackingLatestRank": null,
+      "trackingClosedReason": null
+    },
+    {
+      "generatedAt": "2026-03-11T19:15:15.324Z",
+      "signalDate": "2026-03-11",
+      "ticker": "115180",
+      "company": "큐리언트",
+      "sector": "벤처기업부",
+      "signalTone": "중립",
+      "score": 20.2,
+      "candidateScore": 33.9,
+      "featuredRank": 30,
+      "validationBasis": "보수 계산",
+      "hitRate": 58,
+      "avgReturn": 18.9,
+      "invalidation": "43,818원 아래로 내려가면 이번 흐름은 다시 봐야 합니다.",
+      "invalidationDistance": -10.6,
+      "observationWindow": "3~10거래일",
+      "watchlistSourceTags": [
+        "최근후보"
+      ],
+      "watchlistSourceDetails": [
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "현재 후보 #30"
+        },
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "2026-03-10 후보 #5"
+        }
+      ],
+      "trackingStatus": null,
+      "trackingAppearances": null,
+      "trackingLatestRank": null,
+      "trackingClosedReason": null
+    },
+    {
+      "generatedAt": "2026-03-11T19:15:15.324Z",
+      "signalDate": "2026-03-11",
+      "ticker": "138080",
+      "company": "오이솔루션",
+      "sector": "벤처기업부",
+      "signalTone": "중립",
+      "score": 17.8,
+      "candidateScore": 30.5,
+      "featuredRank": 35,
+      "validationBasis": "보수 계산",
+      "hitRate": 58,
+      "avgReturn": 26.7,
+      "invalidation": "28,458원 아래로 내려가면 이번 흐름은 다시 봐야 합니다.",
+      "invalidationDistance": -7.2,
+      "observationWindow": "3~10거래일",
+      "watchlistSourceTags": [
+        "최근후보"
+      ],
+      "watchlistSourceDetails": [
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "현재 후보 #35"
+        },
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "2026-03-10 후보 #20"
+        }
+      ],
+      "trackingStatus": null,
+      "trackingAppearances": null,
+      "trackingLatestRank": null,
+      "trackingClosedReason": null
+    },
+    {
+      "generatedAt": "2026-03-11T19:15:15.324Z",
+      "signalDate": "2026-03-11",
+      "ticker": "178320",
+      "company": "서진시스템",
+      "sector": "벤처기업부",
+      "signalTone": "긍정",
+      "score": 22.4,
+      "candidateScore": 43.2,
+      "featuredRank": 3,
+      "validationBasis": "보수 계산",
+      "hitRate": 57,
+      "avgReturn": 8.8,
+      "invalidation": "39,754원 아래로 내려가면 이번 흐름은 다시 봐야 합니다.",
+      "invalidationDistance": -11.5,
+      "observationWindow": "3~10거래일",
+      "watchlistSourceTags": [
+        "최근후보"
+      ],
+      "watchlistSourceDetails": [
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "현재 후보 #3"
+        },
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "2026-03-11 후보 #3"
+        },
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "2026-03-10 후보 #10"
+        }
+      ],
+      "trackingStatus": null,
+      "trackingAppearances": null,
+      "trackingLatestRank": null,
+      "trackingClosedReason": null
+    },
+    {
+      "generatedAt": "2026-03-11T19:15:15.324Z",
+      "signalDate": "2026-03-11",
+      "ticker": "187660",
+      "company": "현대ADM",
+      "sector": "중견기업부",
+      "signalTone": "중립",
+      "score": 19.4,
+      "candidateScore": 35.3,
+      "featuredRank": 23,
+      "validationBasis": "보수 계산",
+      "hitRate": 56,
+      "avgReturn": 30.6,
+      "invalidation": "15,925원 아래로 내려가면 이번 흐름은 다시 봐야 합니다.",
+      "invalidationDistance": -12.5,
+      "observationWindow": "3~10거래일",
+      "watchlistSourceTags": [
+        "최근후보"
+      ],
+      "watchlistSourceDetails": [
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "현재 후보 #23"
+        },
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "2026-03-10 후보 #1"
+        }
+      ],
+      "trackingStatus": null,
+      "trackingAppearances": null,
+      "trackingLatestRank": null,
+      "trackingClosedReason": null
+    },
+    {
+      "generatedAt": "2026-03-11T19:15:15.324Z",
+      "signalDate": "2026-03-11",
+      "ticker": "218410",
+      "company": "RFHIC",
+      "sector": "우량기업부",
+      "signalTone": "중립",
+      "score": 18,
+      "candidateScore": 33.7,
+      "featuredRank": 31,
+      "validationBasis": "보수 계산",
+      "hitRate": 58,
+      "avgReturn": 24,
+      "invalidation": "82,053원 아래로 내려가면 이번 흐름은 다시 봐야 합니다.",
+      "invalidationDistance": -8.4,
+      "observationWindow": "3~10거래일",
+      "watchlistSourceTags": [
+        "최근후보"
+      ],
+      "watchlistSourceDetails": [
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "현재 후보 #31"
+        },
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "2026-03-10 후보 #18"
+        },
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "2026-03-10 후보 #16"
+        }
+      ],
+      "trackingStatus": null,
+      "trackingAppearances": null,
+      "trackingLatestRank": null,
+      "trackingClosedReason": null
+    },
+    {
+      "generatedAt": "2026-03-11T19:15:15.324Z",
+      "signalDate": "2026-03-11",
+      "ticker": "221800",
+      "company": "유투바이오",
+      "sector": "기술성장기업부",
+      "signalTone": "중립",
+      "score": 18.9,
+      "candidateScore": 32.4,
+      "featuredRank": 33,
+      "validationBasis": "보수 계산",
+      "hitRate": 55,
+      "avgReturn": 28.4,
+      "invalidation": "23,538원 아래로 내려가면 이번 흐름은 다시 봐야 합니다.",
+      "invalidationDistance": -12.5,
+      "observationWindow": "3~10거래일",
+      "watchlistSourceTags": [
+        "최근후보"
+      ],
+      "watchlistSourceDetails": [
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "현재 후보 #33"
+        },
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "2026-03-10 후보 #2"
+        }
+      ],
+      "trackingStatus": null,
+      "trackingAppearances": null,
+      "trackingLatestRank": null,
+      "trackingClosedReason": null
+    },
+    {
+      "generatedAt": "2026-03-11T19:15:15.324Z",
+      "signalDate": "2026-03-11",
+      "ticker": "226950",
+      "company": "올릭스",
+      "sector": "기술성장기업부",
+      "signalTone": "긍정",
+      "score": 22,
+      "candidateScore": 41.4,
+      "featuredRank": 12,
+      "validationBasis": "보수 계산",
+      "hitRate": 56,
+      "avgReturn": 8.6,
+      "invalidation": "162,583원 아래로 내려가면 이번 흐름은 다시 봐야 합니다.",
+      "invalidationDistance": -9.7,
+      "observationWindow": "3~10거래일",
+      "watchlistSourceTags": [
+        "최근후보"
+      ],
+      "watchlistSourceDetails": [
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "현재 후보 #12"
+        },
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "2026-03-11 후보 #12"
+        },
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "2026-03-11 후보 #10"
+        },
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "2026-03-10 후보 #5"
+        }
+      ],
+      "trackingStatus": "active",
+      "trackingAppearances": 12,
+      "trackingLatestRank": 10,
+      "trackingClosedReason": null
+    },
+    {
+      "generatedAt": "2026-03-11T19:15:15.324Z",
+      "signalDate": "2026-03-11",
+      "ticker": "229000",
+      "company": "젠큐릭스",
+      "sector": "기술성장기업부",
+      "signalTone": "중립",
+      "score": 21.3,
+      "candidateScore": 34.2,
+      "featuredRank": 28,
+      "validationBasis": "보수 계산",
+      "hitRate": 56,
+      "avgReturn": 10.1,
+      "invalidation": "3,505원 아래로 내려가면 이번 흐름은 다시 봐야 합니다.",
+      "invalidationDistance": -5.4,
+      "observationWindow": "3~10거래일",
+      "watchlistSourceTags": [
+        "최근후보"
+      ],
+      "watchlistSourceDetails": [
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "현재 후보 #28"
+        },
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "2026-03-10 후보 #15"
+        },
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "2026-03-10 후보 #18"
+        }
+      ],
+      "trackingStatus": null,
+      "trackingAppearances": null,
+      "trackingLatestRank": null,
+      "trackingClosedReason": null
+    },
+    {
+      "generatedAt": "2026-03-11T19:15:15.324Z",
+      "signalDate": "2026-03-11",
+      "ticker": "234340",
+      "company": "헥토파이낸셜",
+      "sector": "우량기업부",
+      "signalTone": "중립",
+      "score": 19.6,
+      "candidateScore": 34.5,
+      "featuredRank": 27,
+      "validationBasis": "보수 계산",
+      "hitRate": 56,
+      "avgReturn": 15.4,
+      "invalidation": "32,486원 아래로 내려가면 이번 흐름은 다시 봐야 합니다.",
+      "invalidationDistance": -11.1,
+      "observationWindow": "3~10거래일",
+      "watchlistSourceTags": [
+        "최근후보"
+      ],
+      "watchlistSourceDetails": [
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "현재 후보 #27"
+        },
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "2026-03-10 후보 #13"
+        }
+      ],
+      "trackingStatus": null,
+      "trackingAppearances": null,
+      "trackingLatestRank": null,
+      "trackingClosedReason": null
+    },
+    {
+      "generatedAt": "2026-03-11T19:15:15.324Z",
+      "signalDate": "2026-03-11",
+      "ticker": "272210",
+      "company": "한화시스템",
+      "sector": "주권",
+      "signalTone": "긍정",
+      "score": 22,
+      "candidateScore": 42.4,
+      "featuredRank": 6,
+      "validationBasis": "보수 계산",
+      "hitRate": 56,
+      "avgReturn": 11.7,
+      "invalidation": "129,238원 아래로 내려가면 이번 흐름은 다시 봐야 합니다.",
+      "invalidationDistance": -12.5,
+      "observationWindow": "3~10거래일",
+      "watchlistSourceTags": [
+        "최근후보"
+      ],
+      "watchlistSourceDetails": [
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "현재 후보 #6"
+        },
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "2026-03-11 후보 #6"
+        },
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "2026-03-10 후보 #4"
+        },
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "2026-03-10 후보 #10"
+        }
+      ],
+      "trackingStatus": "active",
+      "trackingAppearances": 12,
+      "trackingLatestRank": 6,
+      "trackingClosedReason": null
+    },
+    {
+      "generatedAt": "2026-03-11T19:15:15.324Z",
+      "signalDate": "2026-03-11",
+      "ticker": "290550",
+      "company": "디케이티",
+      "sector": "우량기업부",
+      "signalTone": "중립",
+      "score": 19,
+      "candidateScore": 35.3,
+      "featuredRank": 24,
+      "validationBasis": "보수 계산",
+      "hitRate": 57,
+      "avgReturn": 24.8,
+      "invalidation": "17,260원 아래로 내려가면 이번 흐름은 다시 봐야 합니다.",
+      "invalidationDistance": -8.8,
+      "observationWindow": "3~10거래일",
+      "watchlistSourceTags": [
+        "최근후보"
+      ],
+      "watchlistSourceDetails": [
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "현재 후보 #24"
+        },
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "2026-03-10 후보 #6"
+        },
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "2026-03-10 후보 #7"
+        }
+      ],
+      "trackingStatus": null,
+      "trackingAppearances": null,
+      "trackingLatestRank": null,
+      "trackingClosedReason": null
+    },
+    {
+      "generatedAt": "2026-03-11T19:15:15.324Z",
+      "signalDate": "2026-03-11",
+      "ticker": "310210",
+      "company": "보로노이",
+      "sector": "기술성장기업부",
+      "signalTone": "긍정",
+      "score": 22,
+      "candidateScore": 41.4,
+      "featuredRank": 13,
+      "validationBasis": "보수 계산",
+      "hitRate": 56,
+      "avgReturn": 10.1,
+      "invalidation": "301,588원 아래로 내려가면 이번 흐름은 다시 봐야 합니다.",
+      "invalidationDistance": -8.3,
+      "observationWindow": "3~10거래일",
+      "watchlistSourceTags": [
+        "최근후보"
+      ],
+      "watchlistSourceDetails": [
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "현재 후보 #13"
+        },
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "2026-03-11 후보 #13"
+        },
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "2026-03-11 후보 #11"
+        },
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "2026-03-10 후보 #8"
+        }
+      ],
+      "trackingStatus": null,
+      "trackingAppearances": null,
+      "trackingLatestRank": null,
+      "trackingClosedReason": null
+    },
+    {
+      "generatedAt": "2026-03-11T19:15:15.324Z",
+      "signalDate": "2026-03-11",
+      "ticker": "322000",
+      "company": "HD현대에너지솔루션",
+      "sector": "주권",
+      "signalTone": "중립",
+      "score": 21,
+      "candidateScore": 37.5,
+      "featuredRank": 19,
+      "validationBasis": "보수 계산",
+      "hitRate": 55,
+      "avgReturn": 9.4,
+      "invalidation": "91,875원 아래로 내려가면 이번 흐름은 다시 봐야 합니다.",
+      "invalidationDistance": -12.5,
+      "observationWindow": "3~10거래일",
+      "watchlistSourceTags": [
+        "최근후보"
+      ],
+      "watchlistSourceDetails": [
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "현재 후보 #19"
+        },
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "2026-03-11 후보 #19"
+        },
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "2026-03-11 후보 #18"
+        },
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "2026-03-10 후보 #20"
+        }
+      ],
+      "trackingStatus": null,
+      "trackingAppearances": null,
+      "trackingLatestRank": null,
+      "trackingClosedReason": null
+    },
+    {
+      "generatedAt": "2026-03-11T19:15:15.324Z",
+      "signalDate": "2026-03-11",
+      "ticker": "327260",
+      "company": "RF머트리얼즈",
+      "sector": "벤처기업부",
+      "signalTone": "중립",
+      "score": 21.5,
+      "candidateScore": 37.2,
+      "featuredRank": 20,
+      "validationBasis": "보수 계산",
+      "hitRate": 58,
+      "avgReturn": 21.9,
+      "invalidation": "59,394원 아래로 내려가면 이번 흐름은 다시 봐야 합니다.",
+      "invalidationDistance": -10.7,
+      "observationWindow": "3~10거래일",
+      "watchlistSourceTags": [
+        "최근후보"
+      ],
+      "watchlistSourceDetails": [
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "현재 후보 #20"
+        },
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "2026-03-11 후보 #20"
+        },
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "2026-03-11 후보 #19"
+        },
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "2026-03-10 후보 #12"
+        }
+      ],
+      "trackingStatus": null,
+      "trackingAppearances": null,
+      "trackingLatestRank": null,
+      "trackingClosedReason": null
+    },
+    {
+      "generatedAt": "2026-03-11T19:15:15.324Z",
+      "signalDate": "2026-03-11",
+      "ticker": "389030",
+      "company": "지니너스",
+      "sector": "기술성장기업부",
+      "signalTone": "중립",
+      "score": 18.9,
+      "candidateScore": 29.6,
+      "featuredRank": 36,
+      "validationBasis": "보수 계산",
+      "hitRate": 58,
+      "avgReturn": 24.8,
+      "invalidation": "5,151원 아래로 내려가면 이번 흐름은 다시 봐야 합니다.",
+      "invalidationDistance": -5.3,
+      "observationWindow": "3~10거래일",
+      "watchlistSourceTags": [
+        "최근후보"
+      ],
+      "watchlistSourceDetails": [
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "현재 후보 #36"
+        },
+        {
+          "key": "recent-candidate",
+          "label": "최근후보",
+          "detail": "2026-03-10 후보 #17"
+        }
+      ],
+      "trackingStatus": null,
+      "trackingAppearances": null,
+      "trackingLatestRank": null,
+      "trackingClosedReason": null
+    },
     {
       "generatedAt": "2026-03-10T06:49:43.565Z",
       "signalDate": "2026-03-10",
