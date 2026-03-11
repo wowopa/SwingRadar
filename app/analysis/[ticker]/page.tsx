@@ -19,7 +19,7 @@ import { getDailyCandidates } from "@/lib/repositories/daily-candidates";
 import { getTrackingPayload } from "@/lib/repositories/tracking";
 import { buildPublicDataStatusSummary } from "@/lib/server/public-data-status";
 import { buildTradingViewSymbol, getAdjacentReadySymbols, getSymbolByTicker, resolveTicker } from "@/lib/symbols/master";
-import { formatScore } from "@/lib/utils";
+import { describeSignalScore, formatScore } from "@/lib/utils";
 
 const EMPTY_TECHNICAL_INDICATORS = {
   sma20: null,
@@ -129,6 +129,7 @@ export default async function AnalysisPage({ params }: { params: Promise<{ ticke
   const watchouts = buildWatchouts(analysis);
   const historicalRead = getHistoricalRead(analysis.dataQuality);
   const coverageRead = getCoverageRead(analysis.newsImpact, analysis.riskChecklist);
+  const signalScoreLabel = describeSignalScore(analysis.score);
   const featuredRank = dailyCandidates?.topCandidates.findIndex((item) => item.ticker === resolvedTicker);
   const historicalItems =
     trackingPayload?.history.filter((item) => resolveTicker(item.ticker) === resolvedTicker).sort((left, right) => right.signalDate.localeCompare(left.signalDate)) ?? [];
@@ -165,7 +166,8 @@ export default async function AnalysisPage({ params }: { params: Promise<{ ticke
             <div className="flex items-center justify-between gap-4">
               <div>
                 <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">현재 판단</p>
-                <CardTitle className="mt-2 text-3xl text-foreground sm:text-[2.2rem]">{formatScore(analysis.score)}</CardTitle>
+                <CardTitle className="mt-2 text-3xl text-foreground sm:text-[2.2rem]">{signalScoreLabel}</CardTitle>
+                <p className="mt-2 text-sm text-muted-foreground">기본 신호 {formatScore(analysis.score)}점</p>
               </div>
               <SignalToneBadge tone={analysis.signalTone} />
             </div>

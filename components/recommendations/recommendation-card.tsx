@@ -3,7 +3,7 @@ import Link from "next/link";
 import { FavoriteTickerButton } from "@/components/shared/favorite-ticker-button";
 import { SignalToneBadge } from "@/components/shared/signal-tone-badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { formatDateTimeShort, formatPercent, formatScore } from "@/lib/utils";
+import { describeSignalScore, formatDateTimeShort, formatPercent, formatScore } from "@/lib/utils";
 import type { Recommendation, ValidationBasis } from "@/types/recommendation";
 
 function getValidationToneClasses(basis: ValidationBasis) {
@@ -111,6 +111,7 @@ export function RecommendationCard({
   const whyNow = buildWhyNow(item);
   const watchouts = buildWatchouts(item, validationBasis);
   const historicalSummary = buildHistoricalSummary(item, validationBasis);
+  const signalScoreLabel = describeSignalScore(item.score);
 
   return (
     <Card className="h-full rounded-[28px]">
@@ -151,7 +152,7 @@ export function RecommendationCard({
         ) : null}
 
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          <QuickMetric label="기본 신호" value={formatScore(item.score)} />
+          <QuickMetric label="기본 신호" value={signalScoreLabel} detail={`${formatScore(item.score)}점`} />
           <QuickMetric label="적중률" value={`${item.validation.hitRate}%`} />
           <QuickMetric label="평균 수익" value={formatPercent(item.validation.avgReturn)} />
           <QuickMetric label="표본 수" value={`${item.validation.sampleSize}건`} />
@@ -240,11 +241,12 @@ export function RecommendationCard({
   );
 }
 
-function QuickMetric({ label, value }: { label: string; value: string }) {
+function QuickMetric({ label, value, detail }: { label: string; value: string; detail?: string }) {
   return (
     <div className="rounded-[20px] border border-border/70 bg-background/65 px-4 py-3">
       <p className="text-xs text-muted-foreground">{label}</p>
       <p className="mt-2 text-sm font-semibold text-foreground">{value}</p>
+      {detail ? <p className="mt-1 text-xs text-muted-foreground">{detail}</p> : null}
     </div>
   );
 }

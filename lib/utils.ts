@@ -9,8 +9,22 @@ export function formatPercent(value: number) {
   return `${value > 0 ? "+" : ""}${value.toFixed(1)}%`;
 }
 
-export function formatScore(value: number, max = 100) {
-  return `${value.toFixed(0)} / ${max}`;
+export function formatScore(value: number, digits = 1) {
+  return value.toFixed(digits);
+}
+
+export function describeSignalScore(value: number) {
+  if (value >= 24) {
+    return "강한 신호";
+  }
+  if (value >= 18) {
+    return "볼 만한 신호";
+  }
+  if (value >= 12) {
+    return "확인 필요";
+  }
+
+  return "주의 구간";
 }
 
 export function formatPrice(value: number) {
