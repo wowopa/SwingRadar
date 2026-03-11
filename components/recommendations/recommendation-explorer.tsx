@@ -69,23 +69,6 @@ function buildReasons(item: Recommendation) {
   return reasons.slice(0, 3);
 }
 
-function getWatchout(item: Recommendation) {
-  if (item.signalTone === "주의") {
-    return "신호 톤이 주의라서 진입 전 추가 확인이 필요합니다.";
-  }
-  if (resolveValidationBasis(item) === "보수 계산") {
-    return "실측 표본이 아직 충분하지 않아 보수 계산 비중이 큽니다.";
-  }
-  if (item.eventCoverage === "취약" || !item.eventCoverage) {
-    return "뉴스나 이벤트 근거가 약해 차트와 거래 흐름 확인 비중이 큽니다.";
-  }
-  if (item.invalidationDistance > -4) {
-    return "무효화 구간이 가까워 손절 기준을 더 타이트하게 봐야 합니다.";
-  }
-
-  return "조건은 무난하지만 추격보다 눌림 확인 쪽이 더 자연스럽습니다.";
-}
-
 function getToneClasses(tone: "emerald" | "sky" | "teal" | "amber") {
   const tones = {
     emerald: "border-emerald-200 bg-emerald-50 text-emerald-700",
@@ -297,7 +280,7 @@ export function RecommendationExplorer({ items }: { items: Recommendation[] }) {
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <p className="text-sm font-semibold text-foreground">{getCandidateLabel(item)}</p>
-                        <p className="mt-1 text-sm leading-6 text-muted-foreground">{getWatchout(item)}</p>
+                        <p className="mt-1 text-xs text-muted-foreground">카드에서 판단 근거와 리스크를 바로 확인할 수 있습니다.</p>
                       </div>
                       {item.featuredRank ? (
                         <span className="rounded-full border border-primary/25 bg-primary/8 px-3 py-1 text-xs font-medium text-primary">
