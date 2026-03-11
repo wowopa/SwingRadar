@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ArrowUpRight, Search, Sparkles } from "lucide-react";
 
 import { Input } from "@/components/ui/input";
@@ -39,6 +39,7 @@ function StatusBadge({ status }: { status: SearchItem["status"] }) {
 }
 
 export function GlobalSymbolSearch() {
+  const containerRef = useRef<HTMLDivElement | null>(null);
   const [inputValue, setInputValue] = useState("");
   const [query, setQuery] = useState("");
   const [items, setItems] = useState<SearchItem[]>([]);
@@ -78,10 +79,32 @@ export function GlobalSymbolSearch() {
     };
   }, [query]);
 
-  const showDropdown = focused || inputValue.trim().length > 0;
+  useEffect(() => {
+    function handlePointerDown(event: MouseEvent) {
+      if (!containerRef.current?.contains(event.target as Node)) {
+        setFocused(false);
+      }
+    }
+
+    function handleEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setFocused(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("keydown", handleEscape);
+
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, []);
+
+  const showDropdown = focused && !isComposing;
 
   return (
-    <div className="relative z-[120] w-full">
+    <div ref={containerRef} className="relative z-[120] w-full">
       <div className="rounded-[28px] border border-border/70 bg-white/88 p-2 shadow-panel backdrop-blur-xl">
         <div className="flex items-center gap-3 rounded-[22px] border border-border/60 bg-background/85 px-4 py-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-accent/70 text-foreground">
@@ -97,7 +120,7 @@ export function GlobalSymbolSearch() {
                 if (!isComposing) {
                   setQuery(nextValue);
                 }
-                setFocused(true);
+                setFocused(Boolean(nextValue.trim()));
               }}
               onCompositionStart={() => setIsComposing(true)}
               onCompositionEnd={(event) => {
@@ -105,10 +128,9 @@ export function GlobalSymbolSearch() {
                 const nextValue = event.currentTarget.value;
                 setInputValue(nextValue);
                 setQuery(nextValue);
-                setFocused(true);
+                setFocused(Boolean(nextValue.trim()));
               }}
               onFocus={() => setFocused(true)}
-              onBlur={() => setTimeout(() => setFocused(false), 120)}
               placeholder="티커, 종목명, 별칭, 섹터로 검색"
               className="h-auto border-0 bg-transparent px-0 pb-0 pt-1 text-base shadow-none focus-visible:ring-0"
             />
@@ -119,7 +141,7 @@ export function GlobalSymbolSearch() {
         </div>
       </div>
 
-      {showDropdown && !isComposing ? (
+      {showDropdown ? (
         <div className="absolute left-0 right-0 top-[calc(100%+0.75rem)] z-[240] rounded-[28px] border border-border/80 bg-white p-2 shadow-[0_28px_60px_rgba(66,50,34,0.18)]">
           <div className="flex items-center justify-between px-3 py-2">
             <div className="flex items-center gap-2 text-xs uppercase tracking-[0.24em] text-muted-foreground">
