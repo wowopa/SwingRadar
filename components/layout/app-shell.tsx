@@ -15,26 +15,38 @@ const navItems = [
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen bg-radar-grid">
-      <div className="mx-auto flex min-h-screen w-full max-w-[1440px] flex-col px-4 pb-10 pt-5 sm:px-6 lg:px-8">
-        <header className="relative z-40 mb-8 rounded-[36px] border border-border/70 bg-white/72 px-5 py-5 shadow-panel backdrop-blur-xl sm:px-7 sm:py-7">
-          <div className="pointer-events-none absolute inset-x-0 top-0 h-28 rounded-t-[36px] bg-gradient-to-r from-accent/60 via-transparent to-primary/10" />
+    <div className="min-h-screen">
+      <div className="mx-auto flex min-h-screen w-full max-w-[1480px] flex-col px-4 pb-12 pt-5 sm:px-6 lg:px-8">
+        <header className="relative z-40 mb-10 overflow-hidden rounded-[36px] border border-border/80 bg-white/72 px-5 py-6 shadow-panel backdrop-blur-xl sm:px-7 sm:py-7">
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,hsl(38_38%_74%_/_0.18),transparent_34%),linear-gradient(135deg,hsl(38_20%_82%_/_0.18),transparent_42%)]" />
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/55 to-transparent" />
+
           <div className="relative flex flex-col gap-8">
-            <div className="flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
-              <div className="max-w-3xl space-y-4">
-                <div className="inline-flex items-center gap-2 rounded-full border border-foreground/10 bg-white/70 px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.28em] text-foreground/72">
-                  <ShieldCheck className="h-3.5 w-3.5 text-primary" />
-                  Swing Radar Workspace
+            <div className="flex flex-col gap-7 xl:flex-row xl:items-end xl:justify-between">
+              <div className="max-w-4xl space-y-5">
+                <div className="flex flex-wrap items-center gap-3">
+                  <div className="brand-mark flex h-12 w-12 items-center justify-center rounded-2xl text-sm font-semibold tracking-[0.18em] text-primary-foreground">
+                    SR
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.32em] text-muted-foreground">Swing Trading Workbench</p>
+                    <p className="mt-1 text-2xl font-semibold text-foreground sm:text-3xl">SwingRadar</p>
+                  </div>
                 </div>
+
                 <div className="space-y-3">
-                  <h1 className="max-w-2xl text-3xl font-semibold tracking-[-0.04em] text-foreground sm:text-4xl lg:text-[3.1rem] lg:leading-[1.04]">
-                    신호와 추적을 한곳에서
+                  <h1 className="max-w-3xl text-3xl font-semibold leading-[1.08] text-foreground sm:text-4xl lg:text-[3.3rem]">
+                    오늘 볼 스윙 후보와
+                    <br />
+                    그 판단의 과거 결과를 함께 봅니다
                   </h1>
-                  <p className="max-w-2xl text-sm leading-6 text-muted-foreground sm:text-base">
-                    관찰 근거, 기준 이탈, 검증 흐름, 운영 상태를 한 화면 흐름 안에서 차분하게 살펴볼 수 있습니다.
+                  <p className="max-w-3xl text-sm leading-7 text-muted-foreground sm:text-base">
+                    SwingRadar는 종목을 무작정 나열하는 화면이 아니라, 왜 봐야 하는지와 어디서 판단이 깨지는지, 그리고 비슷한 조건이
+                    과거에 어떤 결과를 냈는지까지 연결해 읽는 스윙 분석 데스크입니다.
                   </p>
                 </div>
               </div>
+
               <div className="w-full max-w-xl xl:min-w-[420px]">
                 <GlobalSymbolSearch />
               </div>
@@ -49,7 +61,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                       key={item.href}
                       href={item.href as Route}
                       className={cn(
-                        "inline-flex items-center gap-2 rounded-full border border-border/70 bg-white/72 px-4 py-2.5 text-sm font-medium text-foreground/88 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/35 hover:bg-white"
+                        "inline-flex items-center gap-2 rounded-full border border-border/80 bg-white/72 px-4 py-2.5 text-sm font-medium text-foreground/88 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/45 hover:bg-white"
                       )}
                     >
                       <Icon className="h-4 w-4 text-primary" />
@@ -60,24 +72,24 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               </nav>
 
               <div className="grid gap-3 sm:grid-cols-3">
-                <div className="rounded-2xl border border-border/70 bg-white/68 px-4 py-3">
-                  <p className="text-[11px] uppercase tracking-[0.24em] text-muted-foreground">Mode</p>
-                  <p className="mt-1 text-sm font-semibold text-foreground">Snapshot First</p>
-                </div>
-                <div className="rounded-2xl border border-border/70 bg-white/68 px-4 py-3">
-                  <p className="text-[11px] uppercase tracking-[0.24em] text-muted-foreground">Universe</p>
-                  <p className="mt-1 text-sm font-semibold text-foreground">KRX Daily Cycle</p>
-                </div>
-                <div className="rounded-2xl border border-border/70 bg-white/68 px-4 py-3">
-                  <p className="text-[11px] uppercase tracking-[0.24em] text-muted-foreground">Ops</p>
-                  <p className="mt-1 text-sm font-semibold text-foreground">자동 점검 중</p>
-                </div>
+                <MetricCard label="Service" value="SwingRadar" />
+                <MetricCard label="Focus" value="Signal and History" />
+                <MetricCard label="Mode" value="Snapshot First" />
               </div>
             </div>
           </div>
         </header>
         {children}
       </div>
+    </div>
+  );
+}
+
+function MetricCard({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-2xl border border-border/80 bg-white/70 px-4 py-3">
+      <p className="text-[11px] uppercase tracking-[0.24em] text-muted-foreground">{label}</p>
+      <p className="mt-1 text-sm font-semibold text-foreground">{value}</p>
     </div>
   );
 }
