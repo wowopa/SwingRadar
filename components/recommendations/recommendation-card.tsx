@@ -160,26 +160,28 @@ export function RecommendationCard({
 
       <CardContent className="space-y-5">
         <section className="rounded-2xl border border-border/70 bg-background/35 p-4">
-          <p className="text-sm font-semibold text-foreground">핵심 판단</p>
-          <div className="mt-3 grid gap-4 lg:grid-cols-2">
-            <div>
+          <div className="border-b border-border/60 pb-3">
+            <p className="text-sm font-semibold text-foreground">핵심 판단</p>
+          </div>
+          <div className="mt-4 grid gap-4 md:grid-cols-2">
+            <div className="space-y-2">
               <p className="text-xs font-medium text-muted-foreground">왜 보는가</p>
-              <ul className="mt-2 space-y-2 text-sm leading-7 text-foreground/80">
+              <ul className="space-y-2 text-sm leading-7 text-foreground/80">
                 {whyNow.map((reason) => (
                   <li key={`${item.ticker}-${reason}`}>{reason}</li>
                 ))}
               </ul>
             </div>
-            <div>
+            <div className="space-y-2">
               <p className="text-xs font-medium text-muted-foreground">무엇을 조심할까</p>
-              <ul className="mt-2 space-y-2 text-sm leading-7 text-foreground/80">
+              <ul className="space-y-2 text-sm leading-7 text-foreground/80">
                 {watchouts.map((watchout) => (
                   <li key={`${item.ticker}-${watchout}`}>{watchout}</li>
                 ))}
               </ul>
             </div>
           </div>
-          <div className="mt-4 rounded-2xl border border-border/70 bg-background/70 px-4 py-3 text-sm text-muted-foreground">
+          <div className="mt-4 rounded-2xl border border-border/70 bg-background/70 px-4 py-3 text-sm leading-6 text-muted-foreground">
             무효화 기준: {item.invalidation}
           </div>
         </section>

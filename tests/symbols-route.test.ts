@@ -76,4 +76,73 @@ describe("symbols route", () => {
     expect(payload.items[0]?.ticker).toBe("000660");
     expect(payload.items[0]?.status).toBe("ready");
   });
+
+  it("uses live candidate priority for default featured results", async () => {
+    mocks.getAnalysis.mockResolvedValue({
+      generatedAt: "2026-03-09T09:00:00.000Z",
+      items: [
+        {
+          ticker: "005930",
+          company: "Samsung Electronics",
+          signalTone: "중립",
+          score: 60,
+          headline: "headline",
+          invalidation: "60,000원 아래",
+          analysisSummary: [],
+          keyLevels: [],
+          technicalIndicators: {
+            sma20: null,
+            sma60: null,
+            ema20: null,
+            rsi14: null,
+            macd: null,
+            macdSignal: null,
+            macdHistogram: null,
+            bollingerUpper: null,
+            bollingerMiddle: null,
+            bollingerLower: null,
+            volumeRatio20: null
+          },
+          chartSeries: [],
+          decisionNotes: [],
+          scoreBreakdown: [],
+          scenarios: [],
+          riskChecklist: [],
+          newsImpact: [],
+          dataQuality: []
+        }
+      ]
+    });
+    mocks.getRecommendations.mockResolvedValue({
+      generatedAt: "2026-03-09T09:00:00.000Z",
+      items: [
+        {
+          ticker: "000660"
+        }
+      ],
+      dailyScan: null
+    });
+    mocks.getDailyCandidates.mockResolvedValue({
+      generatedAt: "2026-03-09T09:00:00.000Z",
+      topCandidates: [
+        {
+          ticker: "068270"
+        }
+      ]
+    });
+
+    const response = await getSymbolsRoute(new Request("http://localhost/api/symbols?limit=3"));
+    const payload = JSON.parse(await response.text()) as {
+      items: Array<{ ticker: string }>;
+      mode: "search" | "featured";
+      description: string;
+      limit: number;
+    };
+
+    expect(response.status).toBe(200);
+    expect(payload.mode).toBe("featured");
+    expect(payload.limit).toBe(3);
+    expect(payload.description).toContain("오늘 후보");
+    expect(payload.items.map((item) => item.ticker)).toEqual(["000660", "068270", "005930"]);
+  });
 });

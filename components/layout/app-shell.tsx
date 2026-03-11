@@ -17,7 +17,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen">
       <div className="mx-auto flex min-h-screen w-full max-w-[1480px] flex-col px-4 pb-12 pt-5 sm:px-6 lg:px-8">
-        <header className="relative z-40 mb-10 overflow-hidden rounded-[36px] border border-border/80 bg-white/72 px-5 py-6 shadow-panel backdrop-blur-xl sm:px-7 sm:py-7">
+        <header className="relative z-40 mb-10 overflow-visible rounded-[36px] border border-border/80 bg-white/72 px-5 py-6 shadow-panel backdrop-blur-xl sm:px-7 sm:py-7">
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,hsl(38_38%_74%_/_0.18),transparent_34%),linear-gradient(135deg,hsl(38_20%_82%_/_0.18),transparent_42%)]" />
           <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/55 to-transparent" />
 
@@ -34,13 +34,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   </div>
                 </div>
 
-                <div className="space-y-3">
-                  <h1 className="max-w-3xl text-3xl font-semibold leading-[1.08] text-foreground sm:text-4xl lg:text-[3.3rem]">
-                    국내 스윙 후보를
-                    <br />
-                    선별하고 검증합니다
+                <div className="max-w-3xl border-b border-border/70 pb-5">
+                  <h1 className="text-balance text-3xl font-semibold leading-[0.98] tracking-[-0.05em] text-foreground sm:text-4xl lg:text-[3.35rem]">
+                    국내 스윙 후보를 선별하고 검증합니다
                   </h1>
-                  <p className="max-w-3xl text-sm leading-7 text-muted-foreground sm:text-base">
+                  <p className="mt-3 text-sm leading-7 text-muted-foreground sm:text-base">
                     당일 후보, 무효화 기준, 검증 이력을 한 화면에서 점검하는 KRX 스윙 리서치 워크스페이스입니다.
                   </p>
                 </div>

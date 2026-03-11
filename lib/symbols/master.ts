@@ -246,8 +246,8 @@ export function searchSymbols(query: string, limit = 8) {
   return searchSymbolItems(symbolMaster, query, limit);
 }
 
-export function getFeaturedSymbols(limit = 8) {
-  return getFeaturedSymbolItems(symbolMaster, limit);
+export function getFeaturedSymbols(limit = 8, preferredTickers: string[] = []) {
+  return getFeaturedSymbolItems(symbolMaster, limit, preferredTickers);
 }
 
 export function searchSymbolItems(items: SymbolMasterItem[], query: string, limit = 8) {
@@ -274,16 +274,32 @@ export function searchSymbolItems(items: SymbolMasterItem[], query: string, limi
     .map((entry) => entry.item);
 }
 
-export function getFeaturedSymbolItems(items: SymbolMasterItem[], limit = 8) {
-  return [...items]
+export function getFeaturedSymbolItems(items: SymbolMasterItem[], limit = 8, preferredTickers: string[] = []) {
+  const itemByTicker = new Map(items.map((item) => [item.ticker, item]));
+  const seen = new Set<string>();
+  const preferredItems = preferredTickers
+    .map((ticker) => itemByTicker.get(ticker))
+    .filter((item): item is SymbolMasterItem => Boolean(item))
+    .filter((item) => {
+      if (seen.has(item.ticker)) {
+        return false;
+      }
+
+      seen.add(item.ticker);
+      return true;
+    });
+
+  const remainingItems = [...items]
+    .filter((item) => !seen.has(item.ticker))
     .sort((left, right) => {
       if (left.status !== right.status) {
         return left.status === "ready" ? -1 : 1;
       }
 
       return left.ticker.localeCompare(right.ticker);
-    })
-    .slice(0, limit);
+    });
+
+  return [...preferredItems, ...remainingItems].slice(0, limit);
 }
 
 export function getReadySymbols() {

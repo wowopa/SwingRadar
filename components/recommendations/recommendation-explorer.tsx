@@ -212,7 +212,7 @@ export function RecommendationExplorer({ items }: { items: Recommendation[] }) {
 
       <section className="grid gap-4 xl:grid-cols-[minmax(0,1.3fr)_minmax(0,0.9fr)]">
         <div className="space-y-4 rounded-3xl border border-border/70 bg-card/40 p-5">
-          <div>
+          <div className="border-b border-border/60 pb-4">
             <p className="text-sm font-semibold text-foreground">오늘은 이 후보부터 보면 됩니다</p>
             <p className="mt-2 text-sm leading-6 text-muted-foreground">
               이 화면은 가능한 많은 종목을 나열하기보다, 지금 볼 만한 관찰 후보를 먼저 추리고 그 이유와 리스크를 빠르게 읽는 데
@@ -233,11 +233,13 @@ export function RecommendationExplorer({ items }: { items: Recommendation[] }) {
         </div>
 
         <div className="rounded-3xl border border-border/70 bg-card/40 p-5">
-          <div className="flex items-center justify-between gap-3">
-            <div>
+          <div className="flex flex-col gap-4 border-b border-border/60 pb-4 sm:flex-row sm:items-start sm:justify-between">
+            <div className="min-w-0 flex-1">
               <p className="text-sm font-semibold text-foreground">검증 근거 분포</p>
               <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                {countsMatchAll ? "지금은 필터가 적용되지 않아 현재 분포와 전체 분포가 같습니다." : "현재 필터 결과와 전체 관찰 종목의 검증 근거를 한 번에 비교합니다."}
+                {countsMatchAll
+                  ? "필터가 적용되지 않은 기본 상태라 현재 분포와 전체 분포가 같습니다."
+                  : "현재 필터 결과와 전체 관찰 종목의 검증 근거를 한 번에 비교합니다."}
               </p>
             </div>
             <div className="rounded-2xl border border-border/70 bg-secondary/35 px-3 py-2 text-sm text-muted-foreground">

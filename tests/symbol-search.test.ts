@@ -21,6 +21,12 @@ describe("symbol search", () => {
     expect(featured[0]?.status).toBe("ready");
   });
 
+  it("prioritizes preferred tickers in featured results", () => {
+    const featured = getFeaturedSymbols(5, ["000660", "005930"]);
+
+    expect(featured.slice(0, 2).map((item) => item.ticker)).toEqual(["000660", "005930"]);
+  });
+
   it("resolves replaced legacy tickers to the current symbol", () => {
     expect(searchSymbols("091990", 5)[0]?.ticker).toBe("068270");
     expect(getSymbolByTicker("091990")?.ticker).toBe("068270");
