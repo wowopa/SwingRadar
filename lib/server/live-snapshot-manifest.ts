@@ -38,6 +38,12 @@ export async function resolveLiveDataDir() {
   }
 
   try {
+    await stat(path.join(manifestDir, "recommendations.json"));
+  } catch {
+    return fallbackDir;
+  }
+
+  try {
     const [fallbackStat, manifestStat] = await Promise.all([
       stat(path.join(fallbackDir, "recommendations.json")),
       stat(path.join(manifestDir, "recommendations.json"))
@@ -47,7 +53,7 @@ export async function resolveLiveDataDir() {
       return fallbackDir;
     }
   } catch {
-    return manifestDir;
+    return fallbackDir;
   }
 
   return manifestDir;
