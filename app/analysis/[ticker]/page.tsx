@@ -16,6 +16,7 @@ import { SignalToneBadge } from "@/components/shared/signal-tone-badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { DataQualityItem, NewsImpactItem, RiskChecklistItem, TickerAnalysis } from "@/types/analysis";
 import { getAnalysisByTicker } from "@/lib/repositories/analysis";
+import { getDailyCandidates } from "@/lib/repositories/daily-candidates";
 import { getTrackingPayload } from "@/lib/repositories/tracking";
 import { buildPublicDataStatusSummary } from "@/lib/server/public-data-status";
 import { buildTradingViewSymbol, getAdjacentReadySymbols, getSymbolByTicker, resolveTicker } from "@/lib/symbols/master";
@@ -113,6 +114,7 @@ export default async function AnalysisPage({ params }: { params: Promise<{ ticke
   }
 
   const analysisPayload = await getAnalysisByTicker(resolvedTicker);
+  const dailyCandidates = await getDailyCandidates().catch(() => null);
   const trackingPayload = await getTrackingPayload().catch(() => null);
 
   if (!analysisPayload) {
@@ -128,17 +130,22 @@ export default async function AnalysisPage({ params }: { params: Promise<{ ticke
   const watchouts = buildWatchouts(analysis);
   const historicalRead = getHistoricalRead(analysis.dataQuality);
   const coverageRead = getCoverageRead(analysis.newsImpact, analysis.riskChecklist);
+  const featuredRank = dailyCandidates?.topCandidates.findIndex((item) => item.ticker === resolvedTicker);
   const historicalItems =
     trackingPayload?.history.filter((item) => resolveTicker(item.ticker) === resolvedTicker).sort((left, right) => right.signalDate.localeCompare(left.signalDate)) ?? [];
   const historicalDetails = Object.fromEntries(
     historicalItems.map((item) => [item.id, trackingPayload?.details[item.id]]).filter((entry): entry is [string, NonNullable<typeof trackingPayload>["details"][string]] => Boolean(entry[1]))
   );
+  const headerTitle =
+    typeof featuredRank === "number" && featuredRank >= 0
+      ? `${analysis.company} (${analysis.ticker}) - 오늘 후보 #${featuredRank + 1}`
+      : `${analysis.company} (${analysis.ticker})`;
 
   return (
     <main className="space-y-6">
       <PageHeader
         eyebrow="Analysis"
-        title={`${analysis.company} ${analysis.ticker}`}
+        title={headerTitle}
         description="지금 스윙 관점에서 무엇을 보고 무엇을 조심해야 하는지, 과거 검증과 함께 읽는 화면입니다."
       />
       <PublicDataStatusBar summary={statusSummary} />
