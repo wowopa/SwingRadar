@@ -1,4 +1,4 @@
-﻿import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { NewsImpactItem } from "@/types/analysis";
 
 function summarize(items: NewsImpactItem[]) {
@@ -44,16 +44,32 @@ function summarize(items: NewsImpactItem[]) {
     items.length === 0
       ? "기사 수집이 비어 있어 이벤트 점수 해석을 보수적으로 봐야 합니다."
       : externalNews === 0 && disclosure + curated > 0
-        ? "절대 기사 수는 적지만 공시/큐레이션 이벤트로 커버리지를 보강한 상태입니다."
+        ? "절대 기사 수는 적지만 공시와 큐레이션으로 커버리지를 보강한 상태입니다."
         : disclosure + curated > 0
-          ? "외부 기사와 공시/큐레이션 커버리지를 함께 해석합니다."
-          : "외부 기사 커버리지가 중심인 상태이므로 가격/무효화 기준과 함께 보수적으로 해석합니다.";
+          ? "외부 기사와 공시, 큐레이션을 함께 해석하는 구간입니다."
+          : "외부 기사 중심이라 가격과 무효화 기준을 더 보수적으로 읽어야 합니다.";
 
   return { disclosure, curated, externalNews, confidence, note };
 }
 
+function sortRecent(items: NewsImpactItem[]) {
+  return [...items]
+    .sort((left, right) => {
+      const leftTime = Date.parse(left.date);
+      const rightTime = Date.parse(right.date);
+
+      if (Number.isNaN(leftTime) || Number.isNaN(rightTime)) {
+        return right.date.localeCompare(left.date);
+      }
+
+      return rightTime - leftTime;
+    })
+    .slice(0, 3);
+}
+
 export function EventCoveragePanel({ items }: { items: NewsImpactItem[] }) {
   const coverage = summarize(items);
+  const recentItems = sortRecent(items);
 
   return (
     <Card>
@@ -61,26 +77,48 @@ export function EventCoveragePanel({ items }: { items: NewsImpactItem[] }) {
         <CardTitle>이벤트 커버리지</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="grid gap-3 sm:grid-cols-4">
+        <div className="grid gap-3 sm:grid-cols-[minmax(0,1.2fr)_repeat(3,minmax(0,0.8fr))]">
           <div className="rounded-2xl border border-border/70 bg-secondary/35 p-4">
-            <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">신뢰도</p>
+            <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">커버리지 판단</p>
             <p className="mt-2 text-xl font-semibold text-foreground">{coverage.confidence}</p>
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">{coverage.note}</p>
           </div>
-          <div className="rounded-2xl border border-border/70 bg-secondary/35 p-4">
-            <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">공시</p>
-            <p className="mt-2 text-xl font-semibold text-foreground">{coverage.disclosure}건</p>
-          </div>
-          <div className="rounded-2xl border border-border/70 bg-secondary/35 p-4">
-            <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">큐레이션</p>
-            <p className="mt-2 text-xl font-semibold text-foreground">{coverage.curated}건</p>
-          </div>
-          <div className="rounded-2xl border border-border/70 bg-secondary/35 p-4">
-            <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">외부 기사</p>
-            <p className="mt-2 text-xl font-semibold text-foreground">{coverage.externalNews}건</p>
-          </div>
+          <MetricCard label="공시" value={`${coverage.disclosure}건`} />
+          <MetricCard label="큐레이션" value={`${coverage.curated}건`} />
+          <MetricCard label="외부 기사" value={`${coverage.externalNews}건`} />
         </div>
-        <p className="text-sm leading-6 text-muted-foreground">{coverage.note}</p>
+
+        <div className="rounded-[24px] border border-border/70 bg-secondary/20 p-4">
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-sm font-semibold text-foreground">최근 반영 이벤트</p>
+            <p className="text-xs text-muted-foreground">최신순 3건</p>
+          </div>
+          {recentItems.length ? (
+            <div className="mt-3 space-y-3">
+              {recentItems.map((item) => (
+                <div key={`${item.date}-${item.headline}`} className="rounded-2xl border border-border/60 bg-background/60 px-4 py-3">
+                  <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                    <span>{item.date}</span>
+                    <span className="rounded-full border border-border/70 px-2 py-0.5">{item.source}</span>
+                  </div>
+                  <p className="mt-2 text-sm font-medium leading-6 text-foreground">{item.headline}</p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="mt-3 text-sm leading-6 text-muted-foreground">아직 반영된 외부 이벤트가 없습니다.</p>
+          )}
+        </div>
       </CardContent>
     </Card>
+  );
+}
+
+function MetricCard({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-2xl border border-border/70 bg-secondary/35 p-4">
+      <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">{label}</p>
+      <p className="mt-2 text-xl font-semibold text-foreground">{value}</p>
+    </div>
   );
 }

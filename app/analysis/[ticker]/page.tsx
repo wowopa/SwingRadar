@@ -241,7 +241,7 @@ export default async function AnalysisPage({ params }: { params: Promise<{ ticke
         <ScenarioPanel scenarios={analysis.scenarios} />
       </section>
 
-      <section className="grid gap-6 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+      <section className="grid gap-6 xl:items-start xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
         <EventCoveragePanel items={analysis.newsImpact} />
         <DataQualityPanel items={analysis.dataQuality} />
       </section>
