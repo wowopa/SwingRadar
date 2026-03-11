@@ -28,6 +28,7 @@ export function AnalysisNavigation({ currentTicker, previous, next, readyItems }
   const [recentTickers, setRecentTickers] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [pickerFocused, setPickerFocused] = useState(false);
+  const [isComposing, setIsComposing] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -64,8 +65,8 @@ export function AnalysisNavigation({ currentTicker, previous, next, readyItems }
   }, [readyItems, searchQuery]);
 
   return (
-    <section className="mb-6 grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-      <Card>
+    <section className="relative z-20 mb-6 grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
+      <Card className="relative z-20">
         <CardHeader>
           <CardTitle className="text-base text-foreground">분석 이동</CardTitle>
         </CardHeader>
@@ -104,6 +105,16 @@ export function AnalysisNavigation({ currentTicker, previous, next, readyItems }
                     setSearchQuery(event.target.value);
                     setPickerFocused(true);
                   }}
+                  onInput={(event) => {
+                    setSearchQuery((event.target as HTMLInputElement).value);
+                    setPickerFocused(true);
+                  }}
+                  onCompositionStart={() => setIsComposing(true)}
+                  onCompositionEnd={(event) => {
+                    setIsComposing(false);
+                    setSearchQuery(event.currentTarget.value);
+                    setPickerFocused(true);
+                  }}
                   onFocus={() => setPickerFocused(true)}
                   onBlur={() => setTimeout(() => setPickerFocused(false), 120)}
                   placeholder={`${readyItems.find((item) => item.ticker === currentTicker)?.company ?? ""} (${currentTicker}) 검색`}
@@ -111,8 +122,8 @@ export function AnalysisNavigation({ currentTicker, previous, next, readyItems }
                 />
               </div>
 
-              {(pickerFocused || searchQuery.trim().length > 0) && (
-                <div className="absolute left-0 right-0 top-[calc(100%+0.75rem)] z-30 rounded-2xl border border-border/80 bg-white p-2 shadow-[0_24px_48px_rgba(66,50,34,0.14)]">
+              {(pickerFocused || searchQuery.trim().length > 0) && !isComposing && (
+                <div className="absolute left-0 right-0 top-[calc(100%+0.75rem)] z-[280] rounded-2xl border border-border/80 bg-white p-2 shadow-[0_24px_48px_rgba(66,50,34,0.14)]">
                   <div className="flex items-center justify-between px-3 py-2">
                     <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">검색 결과</p>
                     <p className="text-xs text-muted-foreground">{filteredItems.length}개</p>

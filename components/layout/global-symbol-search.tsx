@@ -44,12 +44,18 @@ export function GlobalSymbolSearch() {
   const [description, setDescription] = useState("");
   const [mode, setMode] = useState<SearchResponse["mode"]>("featured");
   const [focused, setFocused] = useState(false);
+  const [isComposing, setIsComposing] = useState(false);
 
   useEffect(() => {
     let ignore = false;
+    const search = query.trim();
+
+    if (search) {
+      setMode("search");
+      setDescription("티커, 종목명, 별칭, 섹터 일치도를 기준으로 최대 12개를 보여줍니다.");
+    }
 
     async function load() {
-      const search = query.trim();
       const url = search ? `/api/symbols?q=${encodeURIComponent(search)}&limit=12` : "/api/symbols?limit=12";
       const response = await fetch(url, { cache: "no-store" });
       if (!response.ok) {
@@ -85,7 +91,19 @@ export function GlobalSymbolSearch() {
             <Input
               value={query}
               onChange={(event) => {
-                setQuery(event.target.value);
+                const nextValue = event.target.value;
+                setQuery(nextValue);
+                setFocused(true);
+              }}
+              onInput={(event) => {
+                const nextValue = (event.target as HTMLInputElement).value;
+                setQuery(nextValue);
+                setFocused(true);
+              }}
+              onCompositionStart={() => setIsComposing(true)}
+              onCompositionEnd={(event) => {
+                setIsComposing(false);
+                setQuery(event.currentTarget.value);
                 setFocused(true);
               }}
               onFocus={() => setFocused(true)}
@@ -100,7 +118,7 @@ export function GlobalSymbolSearch() {
         </div>
       </div>
 
-      {showDropdown ? (
+      {showDropdown && !isComposing ? (
         <div className="absolute left-0 right-0 top-[calc(100%+0.75rem)] z-[240] rounded-[28px] border border-border/80 bg-white p-2 shadow-[0_28px_60px_rgba(66,50,34,0.18)]">
           <div className="flex items-center justify-between px-3 py-2">
             <div className="flex items-center gap-2 text-xs uppercase tracking-[0.24em] text-muted-foreground">
