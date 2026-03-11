@@ -138,8 +138,8 @@ export default async function AnalysisPage({ params }: { params: Promise<{ ticke
     <main className="space-y-6">
       <PageHeader
         eyebrow="Analysis"
-        title={`${analysis.company} ${analysis.ticker} 스윙 판단 리포트`}
-        description="이 종목을 지금 스윙 관점에서 봐야 하는지, 무엇을 조심해야 하는지, 과거엔 어땠는지를 한 흐름으로 읽는 화면입니다."
+        title={`${analysis.company} ${analysis.ticker}`}
+        description="지금 스윙 관점에서 무엇을 보고 무엇을 조심해야 하는지, 과거 검증과 함께 읽는 화면입니다."
       />
       <PublicDataStatusBar summary={statusSummary} />
       <AnalysisNavigation
