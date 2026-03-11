@@ -125,8 +125,10 @@ async function fetchYahooItem(entry, range) {
   }
 
   const quote = result.indicators?.quote?.[0] ?? {};
+  const timestamps = Array.isArray(result.timestamp) ? result.timestamp : [];
   const pairedHistory = (quote.close ?? [])
     .map((close, index) => ({
+      timestamp: timestamps[index],
       close,
       volume: quote.volume?.[index]
     }))
@@ -230,7 +232,12 @@ async function fetchYahooItem(entry, range) {
     riskStatus: mapRiskStatus(riskDistance, currentPrice, ma20, ma60, momentumPercent),
     heatStatus: mapHeatStatus(momentumPercent, volumeRatio, turnoverRatio),
     closes: closes.slice(-90),
-    volumes: volumes.slice(-90)
+    volumes: volumes.slice(-90),
+    history: pairedHistory.slice(-190).map((item) => ({
+      date: Number.isFinite(item.timestamp) ? new Date(item.timestamp * 1000).toISOString().slice(0, 10) : null,
+      close: Math.round(item.close),
+      volume: Math.round(item.volume)
+    })).filter((item) => item.date)
   };
 }
 

@@ -217,6 +217,9 @@ async function main() {
     console.log("[daily-cycle] start: universe batch scan");
     await runStep(report, "universe-scan", () => runScript("scan-universe-batches.mjs", scanArgs));
 
+    console.log("[daily-cycle] start: focused history append");
+    await runStep(report, "focused-history", () => runScript("append-focused-history.mjs", []));
+
     if (options.autoPromote) {
       console.log("[daily-cycle] start: auto promotion review");
       await runStep(report, "auto-promotion", () => runScript("auto-promote-universe-candidates.mjs", ["--apply"]));

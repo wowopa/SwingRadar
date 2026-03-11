@@ -1,20 +1,14 @@
 import type { Metadata } from "next";
-import { IBM_Plex_Sans_KR, Noto_Serif_KR } from "next/font/google";
+import { Noto_Sans_KR } from "next/font/google";
 
 import { AppShell } from "@/components/layout/app-shell";
 
 import "./globals.css";
 
-const bodyFont = IBM_Plex_Sans_KR({
+const bodyFont = Noto_Sans_KR({
   variable: "--font-body",
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"]
-});
-
-const displayFont = Noto_Serif_KR({
-  variable: "--font-display",
-  subsets: ["latin"],
-  weight: ["500", "600", "700"]
+  weight: ["400", "500", "700"]
 });
 
 export const metadata: Metadata = {
@@ -25,7 +19,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ko" className="dark">
-      <body className={`${bodyFont.variable} ${displayFont.variable}`}>
+      <body className={bodyFont.variable}>
         <AppShell>{children}</AppShell>
       </body>
     </html>

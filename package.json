@@ -20,6 +20,7 @@
     "etl:fetch:disclosures": "node scripts/fetch-disclosures-source.mjs",
     "etl:sync:external": "node scripts/sync-external-raw.mjs",
     "etl:refresh:external": "node scripts/refresh-external-pipeline.mjs",
+    "history:append:focused": "node scripts/append-focused-history.mjs",
     "ops:check": "node scripts/ops-health-check.mjs",
     "ops:heal": "node scripts/ops-health-check.mjs --auto-recover",
     "ops:auto-heal": "node scripts/auto-heal-operations.mjs",
