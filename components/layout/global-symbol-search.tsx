@@ -39,6 +39,7 @@ function StatusBadge({ status }: { status: SearchItem["status"] }) {
 }
 
 export function GlobalSymbolSearch() {
+  const [inputValue, setInputValue] = useState("");
   const [query, setQuery] = useState("");
   const [items, setItems] = useState<SearchItem[]>([]);
   const [description, setDescription] = useState("");
@@ -77,7 +78,7 @@ export function GlobalSymbolSearch() {
     };
   }, [query]);
 
-  const showDropdown = focused || query.trim().length > 0;
+  const showDropdown = focused || inputValue.trim().length > 0;
 
   return (
     <div className="relative z-[120] w-full">
@@ -89,21 +90,21 @@ export function GlobalSymbolSearch() {
           <div className="min-w-0 flex-1">
             <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">종목 검색</p>
             <Input
-              value={query}
+              value={inputValue}
               onChange={(event) => {
                 const nextValue = event.target.value;
-                setQuery(nextValue);
-                setFocused(true);
-              }}
-              onInput={(event) => {
-                const nextValue = (event.target as HTMLInputElement).value;
-                setQuery(nextValue);
+                setInputValue(nextValue);
+                if (!isComposing) {
+                  setQuery(nextValue);
+                }
                 setFocused(true);
               }}
               onCompositionStart={() => setIsComposing(true)}
               onCompositionEnd={(event) => {
                 setIsComposing(false);
-                setQuery(event.currentTarget.value);
+                const nextValue = event.currentTarget.value;
+                setInputValue(nextValue);
+                setQuery(nextValue);
                 setFocused(true);
               }}
               onFocus={() => setFocused(true)}
@@ -136,7 +137,10 @@ export function GlobalSymbolSearch() {
                   key={item.ticker}
                   href={`/analysis/${item.ticker}`}
                   className="block rounded-[22px] px-4 py-3 transition hover:bg-secondary/72"
-                  onClick={() => setQuery("")}
+                  onClick={() => {
+                    setInputValue("");
+                    setQuery("");
+                  }}
                 >
                   <div className="flex items-center justify-between gap-4">
                     <div className="min-w-0">
@@ -159,7 +163,10 @@ export function GlobalSymbolSearch() {
                   key={item.ticker}
                   href={`/admin?tab=watchlist&q=${encodeURIComponent(item.ticker)}&returnTo=${encodeURIComponent(`/analysis/${item.ticker}`)}`}
                   className="block rounded-[22px] px-4 py-3 transition hover:bg-secondary/72"
-                  onClick={() => setQuery("")}
+                  onClick={() => {
+                    setInputValue("");
+                    setQuery("");
+                  }}
                 >
                   <div className="flex items-center justify-between gap-4">
                     <div className="min-w-0">

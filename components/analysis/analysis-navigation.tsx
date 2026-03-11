@@ -26,6 +26,7 @@ const MAX_RECENT_ITEMS = 5;
 
 export function AnalysisNavigation({ currentTicker, previous, next, readyItems }: AnalysisNavigationProps) {
   const [recentTickers, setRecentTickers] = useState<string[]>([]);
+  const [searchInput, setSearchInput] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [pickerFocused, setPickerFocused] = useState(false);
   const [isComposing, setIsComposing] = useState(false);
@@ -100,19 +101,21 @@ export function AnalysisNavigation({ currentTicker, previous, next, readyItems }
               <div className="flex items-center gap-3 rounded-2xl border border-border bg-background px-4">
                 <Search className="h-4 w-4 text-muted-foreground" />
                 <Input
-                  value={searchQuery}
+                  value={searchInput}
                   onChange={(event) => {
-                    setSearchQuery(event.target.value);
-                    setPickerFocused(true);
-                  }}
-                  onInput={(event) => {
-                    setSearchQuery((event.target as HTMLInputElement).value);
+                    const nextValue = event.target.value;
+                    setSearchInput(nextValue);
+                    if (!isComposing) {
+                      setSearchQuery(nextValue);
+                    }
                     setPickerFocused(true);
                   }}
                   onCompositionStart={() => setIsComposing(true)}
                   onCompositionEnd={(event) => {
                     setIsComposing(false);
-                    setSearchQuery(event.currentTarget.value);
+                    const nextValue = event.currentTarget.value;
+                    setSearchInput(nextValue);
+                    setSearchQuery(nextValue);
                     setPickerFocused(true);
                   }}
                   onFocus={() => setPickerFocused(true)}
@@ -135,6 +138,7 @@ export function AnalysisNavigation({ currentTicker, previous, next, readyItems }
                           key={item.ticker}
                           type="button"
                           onClick={() => {
+                            setSearchInput("");
                             setSearchQuery("");
                             setPickerFocused(false);
                             if (item.ticker !== currentTicker) {
