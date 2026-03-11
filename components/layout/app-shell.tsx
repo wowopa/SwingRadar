@@ -29,20 +29,19 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     SR
                   </div>
                   <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.32em] text-muted-foreground">Swing Trading Workbench</p>
-                    <p className="mt-1 text-2xl font-semibold text-foreground sm:text-3xl">SwingRadar</p>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.32em] text-muted-foreground">KRX Swing Research</p>
+                    <p className="mt-1 text-2xl font-semibold tracking-[-0.03em] text-foreground sm:text-3xl">SwingRadar</p>
                   </div>
                 </div>
 
                 <div className="space-y-3">
                   <h1 className="max-w-3xl text-3xl font-semibold leading-[1.08] text-foreground sm:text-4xl lg:text-[3.3rem]">
-                    오늘 볼 스윙 후보와
+                    국내 스윙 후보를
                     <br />
-                    그 판단의 과거 결과를 함께 봅니다
+                    선별하고 검증합니다
                   </h1>
                   <p className="max-w-3xl text-sm leading-7 text-muted-foreground sm:text-base">
-                    SwingRadar는 종목을 무작정 나열하는 화면이 아니라, 왜 봐야 하는지와 어디서 판단이 깨지는지, 그리고 비슷한 조건이
-                    과거에 어떤 결과를 냈는지까지 연결해 읽는 스윙 분석 데스크입니다.
+                    당일 후보, 무효화 기준, 검증 이력을 한 화면에서 점검하는 KRX 스윙 리서치 워크스페이스입니다.
                   </p>
                 </div>
               </div>
@@ -72,9 +71,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               </nav>
 
               <div className="grid gap-3 sm:grid-cols-3">
-                <MetricCard label="Service" value="SwingRadar" />
-                <MetricCard label="Focus" value="Signal and History" />
-                <MetricCard label="Mode" value="Snapshot First" />
+                <MetricCard label="Universe" value="KRX Daily" />
+                <MetricCard label="Focus" value="Candidate Validation" />
+                <MetricCard label="Method" value="Signal with History" />
               </div>
             </div>
           </div>
