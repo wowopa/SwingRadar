@@ -2,7 +2,6 @@ import { notFound, redirect } from "next/navigation";
 
 import { AnalysisDecisionPanel } from "@/components/analysis/analysis-decision-panel";
 import { AnalysisNavigation } from "@/components/analysis/analysis-navigation";
-import { AnalysisSummaryBoard } from "@/components/analysis/analysis-summary-board";
 import { DataQualityPanel } from "@/components/analysis/data-quality-panel";
 import { EventCoveragePanel } from "@/components/analysis/event-coverage-panel";
 import { HistoricalValidationPanel } from "@/components/analysis/historical-validation-panel";
@@ -217,7 +216,9 @@ export default async function AnalysisPage({ params }: { params: Promise<{ ticke
         </div>
       </section>
 
-      <AnalysisSummaryBoard items={analysis.analysisSummary} />
+      <section>
+        <ScoreBreakdown items={analysis.scoreBreakdown} />
+      </section>
 
       <HistoricalValidationPanel history={historicalItems} details={historicalDetails} />
 
@@ -231,10 +232,6 @@ export default async function AnalysisPage({ params }: { params: Promise<{ ticke
       <section className="grid gap-6 xl:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
         <AnalysisDecisionPanel levels={analysis.keyLevels} notes={analysis.decisionNotes} />
         <ScenarioPanel scenarios={analysis.scenarios} />
-      </section>
-
-      <section>
-        <ScoreBreakdown items={analysis.scoreBreakdown} />
       </section>
 
       <section className="grid gap-6 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
