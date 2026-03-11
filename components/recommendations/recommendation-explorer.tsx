@@ -161,9 +161,10 @@ export function RecommendationExplorer({ items }: { items: Recommendation[] }) {
 
   const shortlist = useMemo(() => filteredItems.slice(0, 12), [filteredItems]);
   const additionalCount = Math.max(filteredItems.length - shortlist.length, 0);
-  const strongCount = filteredItems.filter((item) => getCandidateLabel(item) === "오늘 바로 볼 후보").length;
+  const immediateCount = filteredItems.filter((item) => (item.featuredRank ?? Number.MAX_SAFE_INTEGER) <= 5).length;
   const enoughInvalidationCount = filteredItems.filter((item) => item.invalidationDistance <= -6).length;
   const verifiedCount = filteredItems.filter((item) => resolveValidationBasis(item) !== "보수 계산").length;
+  const countsMatchAll = filteredItems.length === items.length;
 
   return (
     <div className="space-y-8">
@@ -220,7 +221,7 @@ export function RecommendationExplorer({ items }: { items: Recommendation[] }) {
           </div>
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
             <SummaryCard label="현재 관찰 후보" value={`${filteredItems.length}개`} detail="필터 기준으로 남은 후보" tone="emerald" />
-            <SummaryCard label="바로 볼 후보" value={`${strongCount}개`} detail="상위권 또는 긍정 신호" tone="sky" />
+            <SummaryCard label="바로 볼 후보" value={`${immediateCount}개`} detail="오늘 후보 상위 5개 기준" tone="sky" />
             <SummaryCard label="검증 근거 확보" value={`${verifiedCount}개`} detail="보수 계산만으로 보지 않은 후보" tone="teal" />
             <SummaryCard
               label="무효화 여유"
@@ -236,11 +237,11 @@ export function RecommendationExplorer({ items }: { items: Recommendation[] }) {
             <div>
               <p className="text-sm font-semibold text-foreground">검증 근거 분포</p>
               <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                현재 필터 결과와 전체 관찰 종목의 검증 근거를 한 번에 비교합니다.
+                {countsMatchAll ? "지금은 필터가 적용되지 않아 현재 분포와 전체 분포가 같습니다." : "현재 필터 결과와 전체 관찰 종목의 검증 근거를 한 번에 비교합니다."}
               </p>
             </div>
             <div className="rounded-2xl border border-border/70 bg-secondary/35 px-3 py-2 text-sm text-muted-foreground">
-              현재 {filteredItems.length}개 / 전체 {items.length}개
+              {countsMatchAll ? `현재와 전체 동일 ${items.length}개` : `현재 ${filteredItems.length}개 / 전체 ${items.length}개`}
             </div>
           </div>
           <div className="mt-4 space-y-3">
@@ -367,19 +368,29 @@ function BasisRow({
   filteredCount: number;
   totalCount: number;
 }) {
+  const isSame = filteredCount === totalCount;
+
   return (
     <div className="flex items-center justify-between gap-4 rounded-2xl border border-border/70 bg-background/50 px-4 py-3">
       <div>
         <p className="text-sm font-medium text-foreground">{label}</p>
-        <p className="text-xs text-muted-foreground">현재 필터와 전체 기준 분포</p>
+        <p className="text-xs text-muted-foreground">{isSame ? "현재와 전체 기준이 동일합니다." : "현재 필터와 전체 기준 분포"}</p>
       </div>
       <div className="flex items-center gap-2 text-sm">
-        <span className="rounded-full border border-primary/20 bg-primary/10 px-3 py-1 font-medium text-primary">
-          현재 {filteredCount}
-        </span>
-        <span className="rounded-full border border-border/70 bg-secondary/35 px-3 py-1 text-muted-foreground">
-          전체 {totalCount}
-        </span>
+        {isSame ? (
+          <span className="rounded-full border border-primary/20 bg-primary/10 px-3 py-1 font-medium text-primary">
+            동일 {totalCount}
+          </span>
+        ) : (
+          <>
+            <span className="rounded-full border border-primary/20 bg-primary/10 px-3 py-1 font-medium text-primary">
+              현재 {filteredCount}
+            </span>
+            <span className="rounded-full border border-border/70 bg-secondary/35 px-3 py-1 text-muted-foreground">
+              전체 {totalCount}
+            </span>
+          </>
+        )}
       </div>
     </div>
   );
