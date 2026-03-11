@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { ArrowLeft, ArrowRight, History } from "lucide-react";
+import { ArrowLeft, ArrowRight, ChevronDown, History } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -24,6 +25,7 @@ const MAX_RECENT_ITEMS = 5;
 
 export function AnalysisNavigation({ currentTicker, previous, next, readyItems }: AnalysisNavigationProps) {
   const [recentTickers, setRecentTickers] = useState<string[]>([]);
+  const router = useRouter();
 
   useEffect(() => {
     const parsed = readRecentTickers();
@@ -46,24 +48,51 @@ export function AnalysisNavigation({ currentTicker, previous, next, readyItems }
         <CardHeader>
           <CardTitle className="text-base text-foreground">분석 이동</CardTitle>
         </CardHeader>
-        <CardContent className="grid gap-3 sm:grid-cols-2">
-          <NavigationLink
-            href={previous ? `/analysis/${previous.ticker}` : undefined}
-            title="이전 종목"
-            label={previous ? `${previous.company} · ${previous.ticker}` : "이전 분석 종목이 없습니다."}
-            note={previous?.sector ?? "현재 감시 종목 중 첫 번째 분석입니다."}
-            icon={<ArrowLeft className="h-4 w-4" />}
-            disabled={!previous}
-          />
-          <NavigationLink
-            href={next ? `/analysis/${next.ticker}` : undefined}
-            title="다음 종목"
-            label={next ? `${next.company} · ${next.ticker}` : "다음 분석 종목이 없습니다."}
-            note={next?.sector ?? "현재 감시 종목 중 마지막 분석입니다."}
-            icon={<ArrowRight className="h-4 w-4" />}
-            align="right"
-            disabled={!next}
-          />
+        <CardContent className="space-y-4">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <NavigationLink
+              href={previous ? `/analysis/${previous.ticker}` : undefined}
+              title="이전 종목"
+              label={previous ? `${previous.company} · ${previous.ticker}` : "이전 분석 종목이 없습니다."}
+              note={previous?.sector ?? "현재 감시 종목 중 첫 번째 분석입니다."}
+              icon={<ArrowLeft className="h-4 w-4" />}
+              disabled={!previous}
+            />
+            <NavigationLink
+              href={next ? `/analysis/${next.ticker}` : undefined}
+              title="다음 종목"
+              label={next ? `${next.company} · ${next.ticker}` : "다음 분석 종목이 없습니다."}
+              note={next?.sector ?? "현재 감시 종목 중 마지막 분석입니다."}
+              icon={<ArrowRight className="h-4 w-4" />}
+              align="right"
+              disabled={!next}
+            />
+          </div>
+
+          <div className="rounded-2xl border border-border/70 bg-secondary/20 px-4 py-4">
+            <div className="flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-muted-foreground">
+              <ChevronDown className="h-4 w-4" />
+              종목 선택
+            </div>
+            <div className="mt-3">
+              <select
+                value={currentTicker}
+                onChange={(event) => {
+                  const nextTicker = event.target.value;
+                  if (nextTicker && nextTicker !== currentTicker) {
+                    router.push(`/analysis/${nextTicker}`);
+                  }
+                }}
+                className="flex h-12 w-full rounded-2xl border border-border bg-background px-4 text-sm text-foreground outline-none transition focus:border-primary/50"
+              >
+                {readyItems.map((item) => (
+                  <option key={item.ticker} value={item.ticker}>
+                    {item.company} ({item.ticker}) · {item.sector}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
         </CardContent>
       </Card>
       <Card>
