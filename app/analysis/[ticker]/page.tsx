@@ -5,7 +5,6 @@ import { AnalysisNavigation } from "@/components/analysis/analysis-navigation";
 import { DataQualityPanel } from "@/components/analysis/data-quality-panel";
 import { EventCoveragePanel } from "@/components/analysis/event-coverage-panel";
 import { HistoricalValidationPanel } from "@/components/analysis/historical-validation-panel";
-import { NewsImpactList } from "@/components/analysis/news-impact-list";
 import { RiskChecklist } from "@/components/analysis/risk-checklist";
 import { ScenarioPanel } from "@/components/analysis/scenario-panel";
 import { ScoreBreakdown } from "@/components/analysis/score-breakdown";
@@ -245,8 +244,6 @@ export default async function AnalysisPage({ params }: { params: Promise<{ ticke
         <EventCoveragePanel items={analysis.newsImpact} />
         <DataQualityPanel items={analysis.dataQuality} />
       </section>
-
-      <NewsImpactList items={analysis.newsImpact} />
     </main>
   );
 }
