@@ -23,6 +23,7 @@ export async function listRecommendations(query: RecommendationsQuery): Promise<
     return candidate
       ? {
           ...item,
+          score: dailyCandidates?.topCandidates.find((entry) => entry.ticker === item.ticker)?.score ?? item.score,
           featuredRank: candidate.rank,
           candidateScore: candidate.candidateScore,
           eventCoverage: candidate.eventCoverage,
@@ -55,7 +56,7 @@ export async function listRecommendations(query: RecommendationsQuery): Promise<
   }
 
   return {
-    generatedAt: source.generatedAt,
+    generatedAt: dailyCandidates?.generatedAt ?? source.generatedAt,
     items,
     dailyScan: dailyCandidates
       ? {

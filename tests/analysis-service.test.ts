@@ -74,6 +74,78 @@ describe("analysis resolver", () => {
     expect(result.newsImpact).toHaveLength(1);
   });
 
+  it("uses today's candidate timestamp and score when available", async () => {
+    mocks.getAnalysis.mockResolvedValue({
+      generatedAt: "2026-03-09T08:00:00.000Z",
+      items: [
+        {
+          ticker: "263750",
+          company: "?꾩뼱鍮꾩뒪",
+          signalTone: "以묐┰",
+          score: 61.5,
+          headline: "existing",
+          invalidation: "49,203???꾨옒濡??대젮媛硫??ㅼ떆 遊낅땲??",
+          analysisSummary: [],
+          keyLevels: [],
+          technicalIndicators: {
+            sma20: null,
+            sma60: null,
+            ema20: null,
+            rsi14: null,
+            macd: null,
+            macdSignal: null,
+            macdHistogram: null,
+            bollingerUpper: null,
+            bollingerMiddle: null,
+            bollingerLower: null,
+            volumeRatio20: null
+          },
+          chartSeries: [],
+          decisionNotes: [],
+          scoreBreakdown: [],
+          scenarios: [],
+          riskChecklist: [],
+          newsImpact: [],
+          dataQuality: []
+        }
+      ]
+    });
+    mocks.getRecommendations.mockResolvedValue({
+      generatedAt: "2026-03-09T08:00:00.000Z",
+      items: [],
+      dailyScan: null
+    });
+    mocks.getDailyCandidates.mockResolvedValue({
+      generatedAt: "2026-03-09T09:10:00.000Z",
+      batchSize: 20,
+      totalTickers: 30,
+      totalBatches: 2,
+      succeededBatches: 2,
+      failedBatches: [],
+      topCandidates: [
+        {
+          batch: 1,
+          ticker: "263750",
+          company: "?꾩뼱鍮꾩뒪",
+          sector: "寃뚯엫",
+          signalTone: "以묐┰",
+          score: 69.1,
+          candidateScore: 119.9,
+          invalidation: "49,203???꾨옒濡??대젮媛硫??대쾲 ?먮쫫? ?ㅼ떆 遊먯빞 ?⑸땲??",
+          validationSummary: "寃利??쒕낯???꾩쭅 ?곸뼱 李멸퀬?⑹엯?덈떎.",
+          observationWindow: "3~10嫄곕옒??",
+          rationale: "理쒓렐 寃뚯엫 ?좎옉 ?댁뒋瑜??④퍡 蹂닿퀬 ?덉뒿?덈떎.",
+          eventCoverage: "?쒗븳??"
+        }
+      ]
+    });
+
+    const result = await resolveTickerAnalysis("263750");
+
+    expect(result?.generatedAt).toBe("2026-03-09T09:10:00.000Z");
+    expect(result?.item.score).toBe(69.1);
+  });
+
   it("builds a fallback analysis item from recommendations when analysis snapshot is missing", async () => {
     mocks.getAnalysis.mockResolvedValue({
       generatedAt: "2026-03-09T08:00:00.000Z",
@@ -134,7 +206,7 @@ describe("analysis resolver", () => {
 
     const result = await resolveTickerAnalysis("263750");
 
-    expect(result?.generatedAt).toBe("2026-03-09T09:00:00.000Z");
+    expect(result?.generatedAt).toBe("2026-03-09T09:10:00.000Z");
     expect(result?.item.ticker).toBe("263750");
     expect(result?.item.headline).toContain("조금 더 확인해볼 만함");
     expect(result?.item.keyLevels[0]?.price).toBe("49,203원");

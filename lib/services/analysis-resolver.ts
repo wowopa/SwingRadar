@@ -37,6 +37,17 @@ export interface ResolvedTickerAnalysis {
   item: TickerAnalysisDto;
 }
 
+function overlayDailyCandidateAnalysis(item: TickerAnalysisDto, dailyCandidate?: DailyCandidateDto): TickerAnalysisDto {
+  if (!dailyCandidate) {
+    return item;
+  }
+
+  return {
+    ...item,
+    score: dailyCandidate.score
+  };
+}
+
 function formatPercent(value: number) {
   return `${value > 0 ? "+" : ""}${value.toFixed(1)}%`;
 }
@@ -311,24 +322,39 @@ export async function resolveTickerAnalysis(ticker: string): Promise<ResolvedTic
   ]);
 
   const analysisItem = analysisSource?.items.find((entry) => entry.ticker === ticker);
+  const dailyCandidate = dailyCandidates?.topCandidates.find((entry) => entry.ticker === ticker);
   if (analysisSource && analysisItem) {
     return {
-      generatedAt: analysisSource.generatedAt,
-      item: {
-        ...analysisItem,
-        technicalIndicators: analysisItem.technicalIndicators ?? EMPTY_TECHNICAL_INDICATORS,
-        chartSeries: analysisItem.chartSeries ?? EMPTY_CHART_SERIES
-      }
+      generatedAt: dailyCandidate ? (dailyCandidates?.generatedAt ?? analysisSource.generatedAt) : analysisSource.generatedAt,
+      item: overlayDailyCandidateAnalysis(
+        {
+          ...analysisItem,
+          technicalIndicators: analysisItem.technicalIndicators ?? EMPTY_TECHNICAL_INDICATORS,
+          chartSeries: analysisItem.chartSeries ?? EMPTY_CHART_SERIES
+        },
+        dailyCandidate
+      )
     };
   }
 
   const recommendationItem = recommendationSource?.items.find((entry) => entry.ticker === ticker);
-  const dailyCandidate = dailyCandidates?.topCandidates.find((entry) => entry.ticker === ticker);
 
   if (recommendationItem) {
     return {
-      generatedAt: recommendationSource?.generatedAt ?? dailyCandidates?.generatedAt ?? new Date().toISOString(),
-      item: buildAnalysisFallback(recommendationItem, recommendationSource?.generatedAt ?? new Date().toISOString(), dailyCandidate)
+      generatedAt: dailyCandidate
+        ? (dailyCandidates?.generatedAt ?? recommendationSource?.generatedAt ?? new Date().toISOString())
+        : (recommendationSource?.generatedAt ?? dailyCandidates?.generatedAt ?? new Date().toISOString()),
+      item: overlayDailyCandidateAnalysis(
+        buildAnalysisFallback(
+          {
+            ...recommendationItem,
+            score: dailyCandidate?.score ?? recommendationItem.score
+          },
+          recommendationSource?.generatedAt ?? new Date().toISOString(),
+          dailyCandidate
+        ),
+        dailyCandidate
+      )
     };
   }
 

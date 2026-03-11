@@ -118,6 +118,12 @@ function getHistoryPath() {
     : path.join(projectRoot, "data", "universe", "daily-candidates-history.json");
 }
 
+function getLiveDataDir() {
+  return process.env.SWING_RADAR_DATA_DIR
+    ? path.resolve(process.env.SWING_RADAR_DATA_DIR)
+    : path.join(projectRoot, "data", "live");
+}
+
 async function readHistory() {
   try {
     return JSON.parse((await readFile(getHistoryPath(), "utf8")).replace(/^\uFEFF/, ""));
@@ -136,6 +142,59 @@ async function writeHistory(entry) {
   const historyPath = getHistoryPath();
   await mkdir(path.dirname(historyPath), { recursive: true });
   await writeFile(historyPath, `${JSON.stringify({ runs }, null, 2)}\n`, "utf8");
+}
+
+async function writeLiveSnapshots({ generatedAt, topCandidates, batchResults }) {
+  const liveDir = getLiveDataDir();
+  const recommendationsPath = path.join(liveDir, "recommendations.json");
+  const analysisPath = path.join(liveDir, "analysis.json");
+  const recommendationMap = new Map();
+  const analysisMap = new Map();
+
+  for (const result of batchResults) {
+    if (!result.ok) {
+      continue;
+    }
+
+    for (const item of result.recommendations.items ?? []) {
+      recommendationMap.set(item.ticker, item);
+    }
+    for (const item of result.analysis.items ?? []) {
+      analysisMap.set(item.ticker, item);
+    }
+  }
+
+  const rankedRecommendations = topCandidates.flatMap((candidate, index) => {
+    const recommendation = recommendationMap.get(candidate.ticker);
+    if (!recommendation) {
+      return [];
+    }
+
+    return [{
+      ...recommendation,
+      featuredRank: index + 1,
+      candidateScore: candidate.candidateScore,
+      eventCoverage: candidate.eventCoverage,
+      candidateBatch: candidate.batch
+    }];
+  });
+
+  const rankedAnalysis = topCandidates.flatMap((candidate) => {
+    const analysis = analysisMap.get(candidate.ticker);
+    return analysis ? [analysis] : [];
+  });
+
+  await mkdir(liveDir, { recursive: true });
+  await writeFile(
+    recommendationsPath,
+    `${JSON.stringify({ generatedAt, items: rankedRecommendations }, null, 2)}\n`,
+    "utf8"
+  );
+  await writeFile(
+    analysisPath,
+    `${JSON.stringify({ generatedAt, items: rankedAnalysis }, null, 2)}\n`,
+    "utf8"
+  );
 }
 
 function chunk(items, size) {
@@ -367,6 +426,8 @@ async function runBatch(batch, index, tempRoot, options) {
     generatedAt: recommendations.generatedAt,
     topTicker: [...candidates].sort((left, right) => right.candidateScore - left.candidateScore)[0]?.ticker ?? null,
     trackingRows: tracking.history.length,
+    recommendations,
+    analysis,
     candidates,
     errors
   };
@@ -459,6 +520,11 @@ async function main() {
       topCandidatesLimit: document.topCandidatesLimit,
       topCandidates: document.topCandidates
     });
+    await writeLiveSnapshots({
+      generatedAt: document.generatedAt,
+      topCandidates: document.topCandidates,
+      batchResults: results
+    });
 
     console.log("Universe batch scan completed.");
     console.log(`- watchlist: ${watchlistPath}`);
@@ -468,6 +534,7 @@ async function main() {
     console.log(`- failedBatches: ${failedBatches.length}`);
     console.log(`- topCandidates: ${document.topCandidates.length}`);
     console.log(`- output: ${outputPath}`);
+    console.log(`- live snapshots: ${getLiveDataDir()}`);
   } finally {
     await rm(tempRoot, { recursive: true, force: true });
   }

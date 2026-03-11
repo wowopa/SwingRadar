@@ -75,6 +75,7 @@ describe("listRecommendations", () => {
         {
           ticker: "BBB001",
           company: "Beta",
+          score: 77,
           candidateScore: 97,
           eventCoverage: 4,
           batch: 2
@@ -85,7 +86,14 @@ describe("listRecommendations", () => {
     const result = await listRecommendations({ sort: "score_desc" });
 
     expect(result.items.map((item) => item.ticker)).toEqual(["BBB001", "AAA001"]);
-    expect(result.items[0]).toMatchObject({ featuredRank: 1, candidateScore: 97, eventCoverage: 4, candidateBatch: 2 });
+    expect(result.generatedAt).toBe("2026-03-08T01:00:00.000Z");
+    expect(result.items[0]).toMatchObject({
+      score: 77,
+      featuredRank: 1,
+      candidateScore: 97,
+      eventCoverage: 4,
+      candidateBatch: 2
+    });
   });
 
   it("filters by signal tone and limit", async () => {
