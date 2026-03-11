@@ -108,6 +108,9 @@ export interface TechnicalIndicatorsDto {
 
 export interface AnalysisChartPointDto {
   label: string;
+  open: number | null;
+  high: number | null;
+  low: number | null;
   close: number;
   volume: number | null;
   sma20: number | null;

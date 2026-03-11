@@ -1,4 +1,5 @@
 import { jsonOk } from "@/lib/server/api-response";
+import { getCachedSymbolMetaSnapshot, setCachedSymbolMetaSnapshot } from "@/lib/server/symbol-meta-cache";
 import { buildResponseMeta, withRouteTelemetry } from "@/lib/server/telemetry";
 import { getDataProvider } from "@/lib/providers";
 import { getDailyCandidates } from "@/lib/repositories/daily-candidates";
@@ -8,28 +9,10 @@ import {
   symbolMaster
 } from "@/lib/symbols/master";
 
-const SYMBOL_META_CACHE_TTL_MS = 30_000;
-
-type SymbolMetaSnapshot = {
-  readyTickers: Set<string>;
-  featuredTickerOrder: string[];
-};
-
-let symbolMetaCache:
-  | {
-      expiresAt: number;
-      snapshot: SymbolMetaSnapshot;
-    }
-  | undefined;
-
-export function resetSymbolMetaCacheForTests() {
-  symbolMetaCache = undefined;
-}
-
 async function loadSymbolMetaSnapshot() {
-  const now = Date.now();
-  if (symbolMetaCache && symbolMetaCache.expiresAt > now) {
-    return symbolMetaCache.snapshot;
+  const cached = getCachedSymbolMetaSnapshot();
+  if (cached) {
+    return cached;
   }
 
   const provider = getDataProvider();
@@ -55,10 +38,7 @@ async function loadSymbolMetaSnapshot() {
   ];
 
   const snapshot = { readyTickers, featuredTickerOrder };
-  symbolMetaCache = {
-    expiresAt: now + SYMBOL_META_CACHE_TTL_MS,
-    snapshot
-  };
+  setCachedSymbolMetaSnapshot(snapshot);
 
   return snapshot;
 }

@@ -223,7 +223,8 @@ async function main() {
         eventRiskStatus: event.eventRiskStatus,
         heatStatus: item.heatStatus,
         closes: item.closes ?? [],
-        volumes: item.volumes ?? []
+        volumes: item.volumes ?? [],
+        history: item.history ?? []
       };
     })
   };

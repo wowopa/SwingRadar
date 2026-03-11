@@ -61,6 +61,9 @@ const analysisItemSchema = z.object({
   chartSeries: z.array(
     z.object({
       label: z.string(),
+      open: z.number().nullable(),
+      high: z.number().nullable(),
+      low: z.number().nullable(),
       close: z.number(),
       volume: z.number().nullable(),
       sma20: z.number().nullable(),

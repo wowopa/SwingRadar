@@ -2,7 +2,15 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ColorType, HistogramSeries, LineSeries, createChart, type IChartApi, type LineStyle } from "lightweight-charts";
+import {
+  CandlestickSeries,
+  ColorType,
+  HistogramSeries,
+  LineSeries,
+  createChart,
+  type IChartApi,
+  type LineStyle
+} from "lightweight-charts";
 import { ExternalLink } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -119,12 +127,31 @@ export function TradingViewChartCard({
     const turnoverChart = createBaseChart(turnoverContainerRef.current, 120);
     const macdChart = createBaseChart(macdContainerRef.current, 140);
 
-    const priceSeries = priceChart.addSeries(LineSeries, {
-      color: "#218069",
-      lineWidth: 3,
-      priceLineVisible: true,
-      lastValueVisible: true
-    });
+    const hasCandles = chartPoints.some(
+      (point) =>
+        point.open !== null &&
+        point.high !== null &&
+        point.low !== null &&
+        Number.isFinite(point.open) &&
+        Number.isFinite(point.high) &&
+        Number.isFinite(point.low)
+    );
+    const priceSeries = hasCandles
+      ? priceChart.addSeries(CandlestickSeries, {
+          upColor: "#218069",
+          downColor: "#e76f51",
+          borderVisible: false,
+          wickUpColor: "#218069",
+          wickDownColor: "#e76f51",
+          priceLineVisible: true,
+          lastValueVisible: true
+        })
+      : priceChart.addSeries(LineSeries, {
+          color: "#218069",
+          lineWidth: 3,
+          priceLineVisible: true,
+          lastValueVisible: true
+        });
     const sma20Series = priceChart.addSeries(LineSeries, {
       color: "#f59e0b",
       lineWidth: 2,
@@ -185,6 +212,9 @@ export function TradingViewChartCard({
 
     const seriesData = chartPoints.map((point, index) => ({
       time: buildSyntheticDate(index),
+      open: point.open,
+      high: point.high,
+      low: point.low,
       close: point.close,
       volume: point.volume ?? 0,
       sma20: toChartValue(point.sma20),
@@ -197,7 +227,26 @@ export function TradingViewChartCard({
       macdSignal: toChartValue(point.macdSignal)
     }));
 
-    priceSeries.setData(seriesData.map((point) => ({ time: point.time, value: point.close })));
+    if (hasCandles) {
+      priceSeries.setData(
+        seriesData.map((point, index) => {
+          const previousClose = index > 0 ? seriesData[index - 1]?.close ?? point.close : point.close;
+          const open = point.open ?? previousClose;
+          const high = point.high ?? Math.max(open, point.close);
+          const low = point.low ?? Math.min(open, point.close);
+
+          return {
+            time: point.time,
+            open,
+            high,
+            low,
+            close: point.close
+          };
+        })
+      );
+    } else {
+      priceSeries.setData(seriesData.map((point) => ({ time: point.time, value: point.close })));
+    }
     sma20Series.setData(seriesData.filter((point) => point.sma20 !== undefined).map((point) => ({ time: point.time, value: point.sma20! })));
     sma60Series.setData(seriesData.filter((point) => point.sma60 !== undefined).map((point) => ({ time: point.time, value: point.sma60! })));
     ema20Series.setData(seriesData.filter((point) => point.ema20 !== undefined).map((point) => ({ time: point.time, value: point.ema20! })));

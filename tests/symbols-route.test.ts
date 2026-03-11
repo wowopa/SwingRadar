@@ -17,7 +17,8 @@ vi.mock("@/lib/repositories/daily-candidates", () => ({
   getDailyCandidates: mocks.getDailyCandidates
 }));
 
-import { GET as getSymbolsRoute, resetSymbolMetaCacheForTests } from "@/app/api/symbols/route";
+import { GET as getSymbolsRoute } from "@/app/api/symbols/route";
+import { resetSymbolMetaCacheForTests } from "@/lib/server/symbol-meta-cache";
 
 describe("symbols route", () => {
   beforeEach(() => {

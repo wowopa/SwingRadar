@@ -673,14 +673,31 @@ function calculateTechnicalAdjustment(indicators, item) {
 }
 
 function buildChartSeries(item) {
-  const closes = item.closes ?? [];
-  const volumes = item.volumes ?? [];
-  if (!closes.length) {
+  const rawHistory = Array.isArray(item.history) ? item.history.filter((entry) => Number.isFinite(entry?.close)) : [];
+  const fallbackCloses = item.closes ?? [];
+  const fallbackVolumes = item.volumes ?? [];
+  const historySeries = rawHistory.length
+    ? rawHistory.slice(-120).map((entry) => ({
+        open: Number.isFinite(entry.open) ? Number(entry.open) : null,
+        high: Number.isFinite(entry.high) ? Number(entry.high) : null,
+        low: Number.isFinite(entry.low) ? Number(entry.low) : null,
+        close: Number(entry.close),
+        volume: Number.isFinite(entry.volume) ? Number(entry.volume) : null
+      }))
+    : fallbackCloses.slice(-120).map((close, index, series) => ({
+        open: index > 0 ? Math.round(series[index - 1]) : Math.round(close),
+        high: Math.round(close),
+        low: Math.round(close),
+        close: Math.round(close),
+        volume: fallbackVolumes.length >= fallbackCloses.length ? Math.round(fallbackVolumes.slice(-120)[index] ?? 0) : null
+      }));
+
+  if (!historySeries.length) {
     return [];
   }
 
-  return closes.slice(-120).map((close, index, series) => {
-    const history = series.slice(0, index + 1);
+  return historySeries.map((point, index, series) => {
+    const history = series.slice(0, index + 1).map((entry) => entry.close);
     const sma20 = history.length >= 20 ? average(history.slice(-20)) : null;
     const sma60 = history.length >= 60 ? average(history.slice(-60)) : null;
     const ema20 = calculateEMA(history, 20);
@@ -702,8 +719,11 @@ function buildChartSeries(item) {
 
     return {
       label: `-${series.length - index - 1}일`,
-      close: Math.round(close),
-      volume: volumes.length >= closes.length ? Math.round(volumes.slice(-120)[index] ?? 0) : null,
+      open: roundNumber(point.open, 0),
+      high: roundNumber(point.high, 0),
+      low: roundNumber(point.low, 0),
+      close: Math.round(point.close),
+      volume: point.volume !== null ? Math.round(point.volume) : null,
       sma20: roundNumber(sma20, 0),
       sma60: roundNumber(sma60, 0),
       ema20: roundNumber(ema20, 0),

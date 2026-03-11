@@ -129,6 +129,9 @@ async function fetchYahooItem(entry, range) {
   const pairedHistory = (quote.close ?? [])
     .map((close, index) => ({
       timestamp: timestamps[index],
+      open: quote.open?.[index],
+      high: quote.high?.[index],
+      low: quote.low?.[index],
       close,
       volume: quote.volume?.[index]
     }))
@@ -235,6 +238,9 @@ async function fetchYahooItem(entry, range) {
     volumes: volumes.slice(-90),
     history: pairedHistory.slice(-190).map((item) => ({
       date: Number.isFinite(item.timestamp) ? new Date(item.timestamp * 1000).toISOString().slice(0, 10) : null,
+      open: Number.isFinite(item.open) ? Math.round(item.open) : null,
+      high: Number.isFinite(item.high) ? Math.round(item.high) : null,
+      low: Number.isFinite(item.low) ? Math.round(item.low) : null,
       close: Math.round(item.close),
       volume: Math.round(item.volume)
     })).filter((item) => item.date)
