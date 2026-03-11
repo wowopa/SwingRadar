@@ -17,11 +17,12 @@ vi.mock("@/lib/repositories/daily-candidates", () => ({
   getDailyCandidates: mocks.getDailyCandidates
 }));
 
-import { GET as getSymbolsRoute } from "@/app/api/symbols/route";
+import { GET as getSymbolsRoute, resetSymbolMetaCacheForTests } from "@/app/api/symbols/route";
 
 describe("symbols route", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    resetSymbolMetaCacheForTests();
   });
 
   it("marks symbols as ready when live analysis exists", async () => {
@@ -75,6 +76,9 @@ describe("symbols route", () => {
     expect(response.status).toBe(200);
     expect(payload.items[0]?.ticker).toBe("000660");
     expect(payload.items[0]?.status).toBe("ready");
+    expect(mocks.getAnalysis).toHaveBeenCalledTimes(1);
+    expect(mocks.getRecommendations).toHaveBeenCalledTimes(1);
+    expect(mocks.getDailyCandidates).toHaveBeenCalledTimes(1);
   });
 
   it("uses live candidate priority for default featured results", async () => {
@@ -144,5 +148,25 @@ describe("symbols route", () => {
     expect(payload.limit).toBe(3);
     expect(payload.description).toContain("오늘 후보");
     expect(payload.items.map((item) => item.ticker)).toEqual(["000660", "068270", "005930"]);
+  });
+
+  it("reuses cached symbol metadata across nearby requests", async () => {
+    mocks.getAnalysis.mockResolvedValue({
+      generatedAt: "2026-03-09T09:00:00.000Z",
+      items: []
+    });
+    mocks.getRecommendations.mockResolvedValue({
+      generatedAt: "2026-03-09T09:00:00.000Z",
+      items: [],
+      dailyScan: null
+    });
+    mocks.getDailyCandidates.mockResolvedValue(null);
+
+    await getSymbolsRoute(new Request("http://localhost/api/symbols?q=000660&limit=5"));
+    await getSymbolsRoute(new Request("http://localhost/api/symbols?q=005930&limit=5"));
+
+    expect(mocks.getAnalysis).toHaveBeenCalledTimes(1);
+    expect(mocks.getRecommendations).toHaveBeenCalledTimes(1);
+    expect(mocks.getDailyCandidates).toHaveBeenCalledTimes(1);
   });
 });

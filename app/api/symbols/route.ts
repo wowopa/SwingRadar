@@ -8,7 +8,30 @@ import {
   symbolMaster
 } from "@/lib/symbols/master";
 
-async function getLiveReadyTickerSet() {
+const SYMBOL_META_CACHE_TTL_MS = 30_000;
+
+type SymbolMetaSnapshot = {
+  readyTickers: Set<string>;
+  featuredTickerOrder: string[];
+};
+
+let symbolMetaCache:
+  | {
+      expiresAt: number;
+      snapshot: SymbolMetaSnapshot;
+    }
+  | undefined;
+
+export function resetSymbolMetaCacheForTests() {
+  symbolMetaCache = undefined;
+}
+
+async function loadSymbolMetaSnapshot() {
+  const now = Date.now();
+  if (symbolMetaCache && symbolMetaCache.expiresAt > now) {
+    return symbolMetaCache.snapshot;
+  }
+
   const provider = getDataProvider();
 
   const [analysisSource, recommendationsSource, dailyCandidatesSource] = await Promise.all([
@@ -17,29 +40,27 @@ async function getLiveReadyTickerSet() {
     getDailyCandidates().catch(() => null)
   ]);
 
-  return new Set(
+  const readyTickers = new Set(
     [
       ...(analysisSource?.items.map((item) => item.ticker) ?? []),
       ...(recommendationsSource?.items.map((item) => item.ticker) ?? []),
       ...(dailyCandidatesSource?.topCandidates.map((item) => item.ticker) ?? [])
     ].filter(Boolean)
   );
-}
 
-async function getFeaturedTickerOrder() {
-  const provider = getDataProvider();
-
-  const [recommendationsSource, dailyCandidatesSource, analysisSource] = await Promise.all([
-    provider.getRecommendations().catch(() => null),
-    getDailyCandidates().catch(() => null),
-    provider.getAnalysis().catch(() => null)
-  ]);
-
-  return [
+  const featuredTickerOrder = [
     ...(recommendationsSource?.items.map((item) => item.ticker) ?? []),
     ...(dailyCandidatesSource?.topCandidates.map((item) => item.ticker) ?? []),
     ...(analysisSource?.items.map((item) => item.ticker) ?? [])
   ];
+
+  const snapshot = { readyTickers, featuredTickerOrder };
+  symbolMetaCache = {
+    expiresAt: now + SYMBOL_META_CACHE_TTL_MS,
+    snapshot
+  };
+
+  return snapshot;
 }
 
 export function GET(request: Request) {
@@ -47,12 +68,12 @@ export function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const query = searchParams.get("q") ?? "";
     const limit = Number(searchParams.get("limit") ?? "8");
-    const [readyTickers, featuredTickerOrder] = await Promise.all([getLiveReadyTickerSet(), getFeaturedTickerOrder()]);
+    const isSearchMode = Boolean(query.trim());
+    const { readyTickers, featuredTickerOrder } = await loadSymbolMetaSnapshot();
     const resolvedItems = symbolMaster.map((item) => ({
       ...item,
       status: readyTickers.has(item.ticker) ? "ready" : item.status
     }));
-    const isSearchMode = Boolean(query.trim());
     const items = isSearchMode
       ? searchSymbolItems(resolvedItems, query, limit)
       : getFeaturedSymbolItems(resolvedItems, limit, featuredTickerOrder);
