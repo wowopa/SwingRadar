@@ -23,24 +23,31 @@ function getToneClasses(freshness: PublicDataStatusSummary["freshness"]) {
 }
 
 export function PublicDataStatusBar({ summary }: { summary: PublicDataStatusSummary }) {
-  const tone = getToneClasses(summary.freshness);
+  return <PublicDataStatusBarGroup summaries={[summary]} />;
+}
 
+export function PublicDataStatusBarGroup({ summaries }: { summaries: PublicDataStatusSummary[] }) {
   return (
-    <div className={`mb-6 rounded-[28px] border px-5 py-4 ${tone.surface}`}>
+    <div className="mb-6 rounded-[28px] border border-border/70 bg-card/45 px-5 py-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="space-y-1.5">
-          <div className="flex flex-wrap items-center gap-2">
-            <p className="text-sm font-semibold text-foreground">{summary.summary}</p>
-            <span className={`inline-flex rounded-full border px-2.5 py-1 text-[11px] font-semibold ${tone.badge}`}>
-              {summary.badge}
-            </span>
-          </div>
-          <p className="text-sm leading-6 text-foreground/72">{summary.detail}</p>
+        <div>
+          <p className="text-sm font-semibold text-foreground">데이터 기준</p>
+          <p className="mt-2 text-sm leading-6 text-muted-foreground">
+            같은 화면 안에서도 관찰 종목, 추천 랭킹, 상세 분석이 서로 다른 스냅샷 시각을 쓸 수 있어 기준 시간을 함께 보여줍니다.
+          </p>
         </div>
-        <div className="min-w-[220px] rounded-[22px] border border-border/60 bg-white/80 px-4 py-3">
-          <p className="text-[11px] font-semibold tracking-[0.12em] text-muted-foreground">데이터 기준</p>
-          <p className="mt-2 text-sm font-semibold text-foreground">{summary.sourceLabel}</p>
-          <p className="mt-1 text-xs text-muted-foreground">기준 시각 {formatDateTimeShort(summary.generatedAt)}</p>
+        <div className="grid min-w-[280px] gap-3 md:grid-cols-2">
+          {summaries.map((item) => {
+            const tone = getToneClasses(item.freshness);
+
+            return (
+              <div key={`${item.label}-${item.generatedAt}`} className={`rounded-[22px] border px-4 py-3 ${tone.surface}`}>
+                <p className="text-[11px] font-semibold tracking-[0.12em] text-muted-foreground">{item.title}</p>
+                <p className="mt-2 text-sm font-semibold text-foreground">{item.sourceLabel}</p>
+                <p className="mt-1 text-xs text-muted-foreground">기준 시각 {formatDateTimeShort(item.generatedAt)}</p>
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>
