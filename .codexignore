@@ -1,1 +1,8 @@
 .git
+.next
+node_modules
+data/live
+data/live-snapshots
+data/raw
+tmp
+backups

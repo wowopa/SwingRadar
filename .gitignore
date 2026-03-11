@@ -3,3 +3,13 @@ node_modules
 .env.local
 .env*.local
 backups
+
+# Generated runtime artifacts
+data/live/
+data/live-snapshots/
+data/raw/
+data/ops/*.json
+data/tracking/service-tracking-state.json
+data/universe/daily-candidates.json
+data/universe/daily-candidates-history.json
+data/config/watchlist.universe.json

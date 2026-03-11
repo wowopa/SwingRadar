@@ -22,6 +22,15 @@ export function getLiveSnapshotRetentionDays() {
   return Math.floor(value);
 }
 
+export function getLiveSnapshotMaxCount() {
+  const value = Number(process.env.SWING_RADAR_LIVE_SNAPSHOT_MAX_COUNT ?? "2");
+  if (!Number.isFinite(value) || value < 1) {
+    return 2;
+  }
+
+  return Math.floor(value);
+}
+
 export async function writeLiveSnapshotManifest(projectRoot, currentDir) {
   const manifestPath = getLiveSnapshotManifestPath(projectRoot);
   await mkdir(path.dirname(manifestPath), { recursive: true });
@@ -44,6 +53,7 @@ export async function writeLiveSnapshotManifest(projectRoot, currentDir) {
 export async function pruneOldLiveSnapshots(projectRoot, currentDir) {
   const snapshotRoot = getLiveSnapshotRoot(projectRoot);
   const retentionDays = getLiveSnapshotRetentionDays();
+  const maxCount = getLiveSnapshotMaxCount();
   const currentPath = path.resolve(currentDir);
   const cutoff = Date.now() - retentionDays * 24 * 60 * 60 * 1000;
 
@@ -54,7 +64,7 @@ export async function pruneOldLiveSnapshots(projectRoot, currentDir) {
     return [];
   }
 
-  const removed = [];
+  const snapshots = [];
 
   for (const entry of entries) {
     if (!entry.isDirectory()) {
@@ -62,16 +72,35 @@ export async function pruneOldLiveSnapshots(projectRoot, currentDir) {
     }
 
     const snapshotDir = path.join(snapshotRoot, entry.name);
-    if (path.resolve(snapshotDir) === currentPath) {
+    try {
+      const snapshotStat = await stat(snapshotDir);
+      snapshots.push({
+        dir: snapshotDir,
+        resolvedDir: path.resolve(snapshotDir),
+        mtimeMs: snapshotStat.mtimeMs
+      });
+    } catch {
+      // Keep snapshot promotion resilient even if cleanup fails.
+    }
+  }
+
+  const removed = [];
+  const nonCurrentSnapshots = snapshots
+    .filter((snapshot) => snapshot.resolvedDir !== currentPath)
+    .sort((left, right) => right.mtimeMs - left.mtimeMs);
+  const retainedSnapshots = new Set(nonCurrentSnapshots.slice(0, Math.max(maxCount - 1, 0)).map((snapshot) => snapshot.resolvedDir));
+
+  for (const snapshot of nonCurrentSnapshots) {
+    const shouldRemoveByAge = snapshot.mtimeMs < cutoff;
+    const shouldRemoveByCount = !retainedSnapshots.has(snapshot.resolvedDir);
+
+    if (!shouldRemoveByAge && !shouldRemoveByCount) {
       continue;
     }
 
     try {
-      const snapshotStat = await stat(snapshotDir);
-      if (snapshotStat.mtimeMs < cutoff) {
-        await rm(snapshotDir, { recursive: true, force: true });
-        removed.push(snapshotDir);
-      }
+      await rm(snapshot.dir, { recursive: true, force: true });
+      removed.push(snapshot.dir);
     } catch {
       // Keep snapshot promotion resilient even if cleanup fails.
     }
