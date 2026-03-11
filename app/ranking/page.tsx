@@ -123,7 +123,10 @@ function buildSignalBadges(item: {
   if (typeof item.volumeRatio === "number" && Number.isFinite(item.volumeRatio)) {
     badges.push({
       label: item.volumeRatio >= 1.2 ? `거래량 증가 ${item.volumeRatio.toFixed(2)}배` : `거래량 안정 ${item.volumeRatio.toFixed(2)}배`,
-      className: item.volumeRatio >= 1.2 ? "bg-primary/12 text-primary" : "bg-secondary/80 text-foreground/75"
+      className:
+        item.volumeRatio >= 1.2
+          ? "border border-primary/20 bg-primary/12 text-primary"
+          : "border border-border/70 bg-secondary/80 text-foreground/75"
     });
   }
 
@@ -135,7 +138,7 @@ function buildSignalBadges(item: {
           : item.eventCoverage === "제한적"
             ? "이벤트 근거 제한"
             : "이벤트 근거 취약",
-      className: "bg-secondary/80 text-foreground/75"
+      className: "border border-border/70 bg-secondary/80 text-foreground/75"
     });
   }
 

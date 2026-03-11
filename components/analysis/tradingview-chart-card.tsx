@@ -6,7 +6,8 @@ import { ColorType, HistogramSeries, LineSeries, createChart, type IChartApi, ty
 import { ExternalLink } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import type { AnalysisChartPoint } from "@/types/analysis";
+import type { AnalysisChartPoint, TechnicalIndicators } from "@/types/analysis";
+import { cn } from "@/lib/utils";
 
 type RangeKey = "1M" | "3M" | "6M";
 
@@ -18,6 +19,15 @@ const RANGE_POINTS: Record<RangeKey, number> = {
 
 function formatPrice(value: number) {
   return `${Math.round(value).toLocaleString()}원`;
+}
+
+function formatAmount(value: number | null) {
+  if (value === null || !Number.isFinite(value)) {
+    return "계산 중";
+  }
+
+  const eok = value / 100_000_000;
+  return `${eok.toFixed(eok >= 100 ? 0 : 1)}억`;
 }
 
 function buildSyntheticDate(index: number) {
@@ -64,14 +74,16 @@ function createBaseChart(container: HTMLDivElement, height: number, leftScale = 
 export function TradingViewChartCard({
   symbol,
   company,
-  points
+  points,
+  indicators
 }: {
   symbol: string | null;
   company: string;
   points: AnalysisChartPoint[];
+  indicators: TechnicalIndicators;
 }) {
   const priceContainerRef = useRef<HTMLDivElement | null>(null);
-  const rsiContainerRef = useRef<HTMLDivElement | null>(null);
+  const turnoverContainerRef = useRef<HTMLDivElement | null>(null);
   const macdContainerRef = useRef<HTMLDivElement | null>(null);
   const chartsRef = useRef<IChartApi[]>([]);
   const [range, setRange] = useState<RangeKey>("3M");
@@ -96,7 +108,7 @@ export function TradingViewChartCard({
   }, [availableRanges, range]);
 
   useEffect(() => {
-    if (!priceContainerRef.current || !rsiContainerRef.current || !macdContainerRef.current || !chartPoints.length) {
+    if (!priceContainerRef.current || !turnoverContainerRef.current || !macdContainerRef.current || !chartPoints.length) {
       return;
     }
 
@@ -104,7 +116,7 @@ export function TradingViewChartCard({
     chartsRef.current = [];
 
     const priceChart = createBaseChart(priceContainerRef.current, 320, true);
-    const rsiChart = createBaseChart(rsiContainerRef.current, 120);
+    const turnoverChart = createBaseChart(turnoverContainerRef.current, 120);
     const macdChart = createBaseChart(macdContainerRef.current, 140);
 
     const priceSeries = priceChart.addSeries(LineSeries, {
@@ -151,11 +163,9 @@ export function TradingViewChartCard({
       priceFormat: { type: "volume" }
     });
 
-    const rsiSeries = rsiChart.addSeries(LineSeries, {
-      color: "#8b5cf6",
-      lineWidth: 2,
-      priceLineVisible: false,
-      lastValueVisible: false
+    const turnoverSeries = turnoverChart.addSeries(HistogramSeries, {
+      color: "rgba(180, 125, 41, 0.58)",
+      priceFormat: { type: "volume" }
     });
     const macdSeries = macdChart.addSeries(LineSeries, {
       color: "#1d4ed8",
@@ -182,7 +192,7 @@ export function TradingViewChartCard({
       ema20: toChartValue(point.ema20),
       bollingerUpper: toChartValue(point.bollingerUpper),
       bollingerLower: toChartValue(point.bollingerLower),
-      rsi14: toChartValue(point.rsi14),
+      turnover: point.volume ? Number((point.close * point.volume).toFixed(0)) : 0,
       macd: toChartValue(point.macd),
       macdSignal: toChartValue(point.macdSignal)
     }));
@@ -204,7 +214,16 @@ export function TradingViewChartCard({
       }))
     );
 
-    rsiSeries.setData(seriesData.filter((point) => point.rsi14 !== undefined).map((point) => ({ time: point.time, value: point.rsi14! })));
+    turnoverSeries.setData(
+      seriesData.map((point, index) => ({
+        time: point.time,
+        value: point.turnover,
+        color:
+          index > 0 && point.close < (seriesData[index - 1]?.close ?? point.close)
+            ? "rgba(251, 113, 133, 0.45)"
+            : "rgba(180, 125, 41, 0.58)"
+      }))
+    );
     macdSeries.setData(seriesData.filter((point) => point.macd !== undefined).map((point) => ({ time: point.time, value: point.macd! })));
     macdSignalSeries.setData(seriesData.filter((point) => point.macdSignal !== undefined).map((point) => ({ time: point.time, value: point.macdSignal! })));
     macdHistogramSeries.setData(
@@ -218,9 +237,9 @@ export function TradingViewChartCard({
     );
 
     priceChart.timeScale().fitContent();
-    rsiChart.timeScale().fitContent();
+    turnoverChart.timeScale().fitContent();
     macdChart.timeScale().fitContent();
-    chartsRef.current = [priceChart, rsiChart, macdChart];
+    chartsRef.current = [priceChart, turnoverChart, macdChart];
 
     const resizeObserver = new ResizeObserver((entries) => {
       const entry = entries[0];
@@ -242,6 +261,47 @@ export function TradingViewChartCard({
   }, [chartPoints]);
 
   const lastPoint = chartPoints.at(-1);
+  const lastTurnover = lastPoint?.volume ? Number((lastPoint.close * lastPoint.volume).toFixed(0)) : null;
+  const indicatorItems = [
+    {
+      label: "이동평균",
+      value:
+        indicators.sma20 !== null && indicators.sma60 !== null
+          ? `20일 ${formatPrice(indicators.sma20)} / 60일 ${formatPrice(indicators.sma60)}`
+          : "계산 중",
+      tone:
+        indicators.sma20 !== null && indicators.sma60 !== null && indicators.sma20 > indicators.sma60
+          ? "border-emerald-200 bg-emerald-50/80 text-emerald-800"
+          : "border-border/70 bg-background/50 text-foreground/85"
+    },
+    {
+      label: "거래량 배수",
+      value: indicators.volumeRatio20 !== null ? `${indicators.volumeRatio20.toFixed(2)}배` : "계산 중",
+      tone:
+        indicators.volumeRatio20 !== null && indicators.volumeRatio20 >= 1.2
+          ? "border-primary/20 bg-primary/8 text-primary"
+          : "border-border/70 bg-background/50 text-foreground/85"
+    },
+    {
+      label: "RSI(14)",
+      value: indicators.rsi14 !== null ? indicators.rsi14.toFixed(1) : "계산 중",
+      tone:
+        indicators.rsi14 !== null && indicators.rsi14 >= 45 && indicators.rsi14 <= 65
+          ? "border-emerald-200 bg-emerald-50/80 text-emerald-800"
+          : "border-border/70 bg-background/50 text-foreground/85"
+    },
+    {
+      label: "MACD",
+      value:
+        indicators.macd !== null && indicators.macdSignal !== null
+          ? `${indicators.macd.toFixed(1)} / ${indicators.macdSignal.toFixed(1)}`
+          : "계산 중",
+      tone:
+        indicators.macd !== null && indicators.macdSignal !== null && indicators.macd >= indicators.macdSignal
+          ? "border-emerald-200 bg-emerald-50/80 text-emerald-800"
+          : "border-border/70 bg-background/50 text-foreground/85"
+    }
+  ];
 
   return (
     <Card>
@@ -249,7 +309,7 @@ export function TradingViewChartCard({
         <div>
           <CardTitle>가격 차트</CardTitle>
           <p className="mt-2 text-sm text-muted-foreground">
-            가격, 이동평균선, 볼린저 밴드, 거래량과 함께 RSI와 MACD까지 같은 화면에서 확인합니다.
+            가격, 이동평균선, 거래량, 최근 거래금액과 핵심 보조지표를 한 흐름으로 확인합니다.
           </p>
         </div>
         {tradingViewUrl ? (
@@ -290,16 +350,24 @@ export function TradingViewChartCard({
                 <LegendDot color="#6366f1" label="60일선" />
                 <LegendDot color="#0ea5e9" label="20EMA" />
                 <LegendDot color="#fb7185" label="볼린저 밴드" />
-                <LegendDot color="#8b5cf6" label="RSI" />
+                <LegendDot color="#b47d29" label="거래금액" />
                 <LegendDot color="#1d4ed8" label="MACD" />
               </div>
+            </div>
+            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+              {indicatorItems.map((item) => (
+                <div key={item.label} className={cn("rounded-[20px] border px-4 py-3", item.tone)}>
+                  <p className="text-xs font-medium opacity-80">{item.label}</p>
+                  <p className="mt-2 text-sm font-semibold leading-6">{item.value}</p>
+                </div>
+              ))}
             </div>
             <div className="space-y-3 overflow-hidden rounded-[28px] border border-border/70 bg-white p-3">
               <div ref={priceContainerRef} className="h-[320px] w-full" />
               <div className="grid gap-3 md:grid-cols-[1fr_1fr]">
                 <div className="rounded-[20px] border border-border/60 bg-background/55 p-2">
-                  <p className="px-2 py-1 text-xs font-medium text-muted-foreground">RSI(14)</p>
-                  <div ref={rsiContainerRef} className="h-[120px] w-full" />
+                  <p className="px-2 py-1 text-xs font-medium text-muted-foreground">최근 거래금액</p>
+                  <div ref={turnoverContainerRef} className="h-[120px] w-full" />
                 </div>
                 <div className="rounded-[20px] border border-border/60 bg-background/55 p-2">
                   <p className="px-2 py-1 text-xs font-medium text-muted-foreground">MACD</p>
@@ -310,7 +378,7 @@ export function TradingViewChartCard({
             <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
               <MiniMetric label="최근 종가" value={lastPoint ? formatPrice(lastPoint.close) : "계산 중"} />
               <MiniMetric label="20일선" value={lastPoint?.sma20 ? formatPrice(lastPoint.sma20) : "계산 중"} />
-              <MiniMetric label="RSI(14)" value={lastPoint?.rsi14 ? lastPoint.rsi14.toFixed(1) : "계산 중"} />
+              <MiniMetric label="최근 거래금액" value={formatAmount(lastTurnover)} />
               <MiniMetric
                 label="최근 거래량"
                 value={lastPoint?.volume ? `${lastPoint.volume.toLocaleString()}주` : "계산 중"}

@@ -1,4 +1,5 @@
 import type { PublicDataStatusSummary } from "@/lib/server/public-data-status";
+import { cn } from "@/lib/utils";
 import { formatDateTimeShort } from "@/lib/utils";
 
 function getToneClasses(freshness: PublicDataStatusSummary["freshness"]) {
@@ -27,16 +28,18 @@ export function PublicDataStatusBar({ summary }: { summary: PublicDataStatusSumm
 }
 
 export function PublicDataStatusBarGroup({ summaries }: { summaries: PublicDataStatusSummary[] }) {
+  const hasSingleSummary = summaries.length === 1;
+
   return (
     <div className="mb-6 rounded-[28px] border border-border/70 bg-card/45 px-5 py-4">
-      <div className="flex flex-wrap items-start justify-between gap-3">
+      <div className={cn("flex gap-3", hasSingleSummary ? "flex-col" : "flex-wrap items-start justify-between")}>
         <div>
           <p className="text-sm font-semibold text-foreground">데이터 기준</p>
           <p className="mt-2 text-sm leading-6 text-muted-foreground">
             같은 화면 안에서도 관찰 종목, 추천 랭킹, 상세 분석이 서로 다른 스냅샷 시각을 쓸 수 있어 기준 시간을 함께 보여줍니다.
           </p>
         </div>
-        <div className="grid min-w-[280px] gap-3 md:grid-cols-2">
+        <div className={cn("grid gap-3", hasSingleSummary ? "w-full max-w-[320px]" : "min-w-[280px] md:grid-cols-2")}>
           {summaries.map((item) => {
             const tone = getToneClasses(item.freshness);
 

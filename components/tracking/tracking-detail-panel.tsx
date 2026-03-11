@@ -35,7 +35,7 @@ function formatStatusLabel(entry: SignalHistoryEntry) {
 }
 
 export function TrackingDetailPanel({ history, details }: TrackingDetailPanelProps) {
-  const [activeId, setActiveId] = useState(history[0]?.id ?? "");
+  const [activeId, setActiveId] = useState("");
   const [query, setQuery] = useState("");
   const [resultFilter, setResultFilter] = useState<ResultFilter>("all");
   const [sectorFilter, setSectorFilter] = useState("all");
@@ -72,28 +72,16 @@ export function TrackingDetailPanel({ history, details }: TrackingDetailPanelPro
   }, [favoriteFilter, favorites, history, query, resultFilter, sectorFilter]);
 
   useEffect(() => {
-    if (!filteredHistory.length) {
-      return;
-    }
-
-    if (!filteredHistory.some((item) => item.id === activeId)) {
-      setActiveId(filteredHistory[0].id);
+    if (activeId && !filteredHistory.some((item) => item.id === activeId)) {
+      setActiveId("");
     }
   }, [activeId, filteredHistory]);
 
-  const activeEntry = filteredHistory.find((item) => item.id === activeId) ?? filteredHistory[0];
+  const activeEntry = filteredHistory.find((item) => item.id === activeId);
   const activeDetail = activeEntry ? details[activeEntry.id] : undefined;
   const activeSymbol = activeEntry ? getSymbolByTicker(activeEntry.ticker) : undefined;
   const activeCompany = activeSymbol?.company ?? activeEntry?.company;
   const activeSector = activeSymbol?.sector ?? "기타";
-
-  if (!activeEntry || !activeDetail) {
-    return (
-      <Card>
-        <CardContent className="p-6 text-sm text-muted-foreground">조건에 맞는 공용 추적 기록이 아직 없습니다.</CardContent>
-      </Card>
-    );
-  }
 
   return (
     <TooltipProvider>
@@ -146,74 +134,88 @@ export function TrackingDetailPanel({ history, details }: TrackingDetailPanelPro
             <div className="text-sm text-muted-foreground">
               필터 결과 <span className="font-semibold text-foreground">{filteredHistory.length}</span>건
             </div>
-            <HistoryTable
-              items={filteredHistory}
-              activeId={activeEntry.id}
-              favoriteTickers={favorites}
-              onSelect={setActiveId}
-              onToggleFavorite={toggleFavorite}
-            />
+            {filteredHistory.length ? (
+              <HistoryTable
+                items={filteredHistory}
+                activeId={activeId}
+                favoriteTickers={favorites}
+                onSelect={setActiveId}
+                onToggleFavorite={toggleFavorite}
+              />
+            ) : (
+              <div className="rounded-2xl border border-border/70 bg-secondary/20 px-4 py-6 text-sm leading-6 text-muted-foreground">
+                조건에 맞는 공용 추적 기록이 아직 없습니다. 검색어나 상태, 업종 필터를 조금 넓혀 보세요.
+              </div>
+            )}
           </CardContent>
         </Card>
 
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <div className="flex items-center gap-2">
-                <CardTitle>
-                  {activeCompany} {activeEntry.ticker} 공용 추적 상세
-                </CardTitle>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button className="rounded-full p-1 text-muted-foreground transition hover:bg-accent hover:text-foreground" type="button">
-                      <Info className="h-4 w-4" />
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent>시작 상태, 가격 흐름, 이벤트, 점수 변화를 한 번에 확인합니다.</TooltipContent>
-                </Tooltip>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                {activeSector} · 시작일 {activeEntry.signalDate} · {favorites.includes(activeEntry.ticker) ? "즐겨찾기 등록 종목" : "공용 추적 종목"}
-              </p>
-            </CardHeader>
-            <CardContent className="grid gap-4 md:grid-cols-4">
-              <SummaryMetric label="현재 상태" value={formatStatusLabel(activeEntry)} />
-              <SummaryMetric label="최대 상승" value={formatPercent(activeEntry.mfe)} emphasis="text-positive" />
-              <SummaryMetric label="최대 하락" value={formatPercent(activeEntry.mae)} emphasis="text-caution" />
-              <SummaryMetric label="보유일" value={`${activeEntry.holdingDays}일`} />
-            </CardContent>
-            <CardContent className="grid gap-4 pt-0 md:grid-cols-3">
-              {activeDetail.metrics.map((metric) => (
-                <div key={metric.label} className="rounded-2xl border border-border/70 bg-secondary/35 p-4">
-                  <p className="text-xs text-muted-foreground">{metric.label}</p>
-                  <p className="mt-2 text-lg font-semibold text-foreground">{metric.value}</p>
-                  <p className="mt-2 text-sm leading-6 text-muted-foreground">{metric.note}</p>
+        {activeEntry && activeDetail ? (
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <CardTitle>
+                    {activeCompany} {activeEntry.ticker} 공용 추적 상세
+                  </CardTitle>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button className="rounded-full p-1 text-muted-foreground transition hover:bg-accent hover:text-foreground" type="button">
+                        <Info className="h-4 w-4" />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent>시작 상태, 가격 흐름, 이벤트, 점수 변화를 한 번에 확인합니다.</TooltipContent>
+                  </Tooltip>
                 </div>
-              ))}
+                <p className="text-sm text-muted-foreground">
+                  {activeSector} · 시작일 {activeEntry.signalDate} · {favorites.includes(activeEntry.ticker) ? "즐겨찾기 등록 종목" : "공용 추적 종목"}
+                </p>
+              </CardHeader>
+              <CardContent className="grid gap-4 md:grid-cols-4">
+                <SummaryMetric label="현재 상태" value={formatStatusLabel(activeEntry)} />
+                <SummaryMetric label="최대 상승" value={formatPercent(activeEntry.mfe)} emphasis="text-positive" />
+                <SummaryMetric label="최대 하락" value={formatPercent(activeEntry.mae)} emphasis="text-caution" />
+                <SummaryMetric label="보유일" value={`${activeEntry.holdingDays}일`} />
+              </CardContent>
+              <CardContent className="grid gap-4 pt-0 md:grid-cols-3">
+                {activeDetail.metrics.map((metric) => (
+                  <div key={metric.label} className="rounded-2xl border border-border/70 bg-secondary/35 p-4">
+                    <p className="text-xs text-muted-foreground">{metric.label}</p>
+                    <p className="mt-2 text-lg font-semibold text-foreground">{metric.value}</p>
+                    <p className="mt-2 text-sm leading-6 text-muted-foreground">{metric.note}</p>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+
+            <Tabs defaultValue="review" className="w-full">
+              <TabsList>
+                <TabsTrigger value="review">메모</TabsTrigger>
+                <TabsTrigger value="chart">가격 흐름</TabsTrigger>
+                <TabsTrigger value="news">이벤트</TabsTrigger>
+                <TabsTrigger value="log">점수 로그</TabsTrigger>
+              </TabsList>
+              <TabsContent value="review">
+                <TrackingReviewPanel detail={activeDetail} />
+              </TabsContent>
+              <TabsContent value="chart">
+                <ChartSnapshot points={activeDetail.chartSnapshot} />
+              </TabsContent>
+              <TabsContent value="news">
+                <NewsHistoryCards items={activeDetail.historicalNews} />
+              </TabsContent>
+              <TabsContent value="log">
+                <ScoreLogPanel items={activeDetail.scoreLog} />
+              </TabsContent>
+            </Tabs>
+          </div>
+        ) : filteredHistory.length ? (
+          <Card>
+            <CardContent className="p-6 text-sm leading-6 text-muted-foreground">
+              공용 워크스페이스에서는 목록을 먼저 훑고, 필요한 기록만 선택해 상세를 열어볼 수 있습니다.
             </CardContent>
           </Card>
-
-          <Tabs defaultValue="review" className="w-full">
-            <TabsList>
-              <TabsTrigger value="review">메모</TabsTrigger>
-              <TabsTrigger value="chart">가격 흐름</TabsTrigger>
-              <TabsTrigger value="news">이벤트</TabsTrigger>
-              <TabsTrigger value="log">점수 로그</TabsTrigger>
-            </TabsList>
-            <TabsContent value="review">
-              <TrackingReviewPanel detail={activeDetail} />
-            </TabsContent>
-            <TabsContent value="chart">
-              <ChartSnapshot points={activeDetail.chartSnapshot} />
-            </TabsContent>
-            <TabsContent value="news">
-              <NewsHistoryCards items={activeDetail.historicalNews} />
-            </TabsContent>
-            <TabsContent value="log">
-              <ScoreLogPanel items={activeDetail.scoreLog} />
-            </TabsContent>
-          </Tabs>
-        </div>
+        ) : null}
       </div>
     </TooltipProvider>
   );

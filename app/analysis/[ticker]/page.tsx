@@ -10,7 +10,6 @@ import { NewsImpactList } from "@/components/analysis/news-impact-list";
 import { RiskChecklist } from "@/components/analysis/risk-checklist";
 import { ScenarioPanel } from "@/components/analysis/scenario-panel";
 import { ScoreBreakdown } from "@/components/analysis/score-breakdown";
-import { TechnicalIndicatorsPanel } from "@/components/analysis/technical-indicators-panel";
 import { TradingViewChartCard } from "@/components/analysis/tradingview-chart-card";
 import { PageHeader } from "@/components/shared/page-header";
 import { PublicDataStatusBar } from "@/components/shared/public-data-status-bar";
@@ -222,16 +221,20 @@ export default async function AnalysisPage({ params }: { params: Promise<{ ticke
 
       <HistoricalValidationPanel history={historicalItems} details={historicalDetails} />
 
-      <TradingViewChartCard company={analysis.company} symbol={tradingViewSymbol} points={analysis.chartSeries ?? EMPTY_CHART_SERIES} />
+      <TradingViewChartCard
+        company={analysis.company}
+        symbol={tradingViewSymbol}
+        points={analysis.chartSeries ?? EMPTY_CHART_SERIES}
+        indicators={analysis.technicalIndicators ?? EMPTY_TECHNICAL_INDICATORS}
+      />
 
       <section className="grid gap-6 xl:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
         <AnalysisDecisionPanel levels={analysis.keyLevels} notes={analysis.decisionNotes} />
         <ScenarioPanel scenarios={analysis.scenarios} />
       </section>
 
-      <section className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+      <section>
         <ScoreBreakdown items={analysis.scoreBreakdown} />
-        <TechnicalIndicatorsPanel indicators={analysis.technicalIndicators ?? EMPTY_TECHNICAL_INDICATORS} />
       </section>
 
       <section className="grid gap-6 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
