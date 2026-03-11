@@ -7,6 +7,7 @@ import { promisify } from "node:util";
 import { fileURLToPath } from "node:url";
 
 import { loadLocalEnv } from "./load-env.mjs";
+import { getRuntimePaths } from "./lib/runtime-paths.mjs";
 
 const execFileAsync = promisify(execFile);
 const __filename = fileURLToPath(import.meta.url);
@@ -58,7 +59,12 @@ function parseArgs(argv) {
 }
 
 function resolvePath(envKey, fallback) {
-  return process.env[envKey] ? path.resolve(process.env[envKey]) : path.join(projectRoot, fallback);
+  if (process.env[envKey]) {
+    return path.resolve(process.env[envKey]);
+  }
+
+  const runtimePaths = getRuntimePaths(projectRoot);
+  return fallback === "raw" ? runtimePaths.rawDir : runtimePaths.liveDir;
 }
 
 function getWatchlistPath() {
@@ -68,11 +74,11 @@ function getWatchlistPath() {
 }
 
 function getRawDir() {
-  return resolvePath("SWING_RADAR_RAW_DATA_DIR", path.join("data", "raw"));
+  return resolvePath("SWING_RADAR_RAW_DATA_DIR", "raw");
 }
 
 function getLiveDir() {
-  return resolvePath("SWING_RADAR_DATA_DIR", path.join("data", "live"));
+  return resolvePath("SWING_RADAR_DATA_DIR", "live");
 }
 
 async function readJson(filePath) {

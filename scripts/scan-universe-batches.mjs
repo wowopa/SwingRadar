@@ -8,6 +8,7 @@ import { fileURLToPath } from "node:url";
 
 import { loadLocalEnv } from "./load-env.mjs";
 import { calculateCandidateScore, getLiquidityAdjustment } from "./lib/candidate-score-utils.mjs";
+import { getRuntimePaths } from "./lib/runtime-paths.mjs";
 
 const execFileAsync = promisify(execFile);
 const __filename = fileURLToPath(import.meta.url);
@@ -26,13 +27,14 @@ Usage:
 }
 
 function parseArgs(argv) {
+  const runtimePaths = getRuntimePaths(projectRoot);
   const options = {
-    watchlist: path.join(projectRoot, "data", "config", "watchlist.universe.json"),
+    watchlist: path.join(runtimePaths.runtimeConfigDir, "watchlist.universe.json"),
     batchSize: Number(process.env.SWING_RADAR_UNIVERSE_BATCH_SIZE ?? "20"),
     concurrency: Number(process.env.SWING_RADAR_UNIVERSE_CONCURRENCY ?? "1"),
     topCandidatesLimit: Number(process.env.SWING_RADAR_UNIVERSE_TOP_CANDIDATES ?? "100"),
     limit: 0,
-    output: path.join(projectRoot, "data", "universe", "daily-candidates.json"),
+    output: path.join(runtimePaths.universeDir, "daily-candidates.json"),
     skipIngest: false,
     newsProvider: process.env.SWING_RADAR_NEWS_PROVIDER,
     disclosureProvider: process.env.SWING_RADAR_DISCLOSURE_PROVIDER
@@ -115,13 +117,13 @@ function normalizePositiveNumber(value, fallback) {
 function getHistoryPath() {
   return process.env.SWING_RADAR_DAILY_CANDIDATES_HISTORY_FILE
     ? path.resolve(process.env.SWING_RADAR_DAILY_CANDIDATES_HISTORY_FILE)
-    : path.join(projectRoot, "data", "universe", "daily-candidates-history.json");
+    : path.join(getRuntimePaths(projectRoot).universeDir, "daily-candidates-history.json");
 }
 
 function getLiveDataDir() {
   return process.env.SWING_RADAR_DATA_DIR
     ? path.resolve(process.env.SWING_RADAR_DATA_DIR)
-    : path.join(projectRoot, "data", "live");
+    : getRuntimePaths(projectRoot).liveDir;
 }
 
 async function readHistory() {

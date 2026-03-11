@@ -10,6 +10,7 @@ import type {
 import { ApiError } from "@/lib/server/api-error";
 import { recordAuditLog } from "@/lib/server/audit-log";
 import { ingestSnapshotBundle, loadSnapshotBundleFromDisk } from "@/lib/server/postgres-ingest";
+import { getRuntimePaths } from "@/lib/server/runtime-paths";
 
 export interface EditorialDraftItem {
   ticker: string;
@@ -121,7 +122,7 @@ const LABELS: Record<string, string> = {
 function getAdminRoot() {
   return process.env.SWING_RADAR_EDITORIAL_DIR
     ? path.resolve(process.env.SWING_RADAR_EDITORIAL_DIR)
-    : path.resolve(process.cwd(), "data/admin");
+    : getRuntimePaths().adminDir;
 }
 
 function getDraftPath() {
@@ -135,7 +136,7 @@ function getPublishHistoryPath() {
 function getLiveDataDir() {
   return process.env.SWING_RADAR_DATA_DIR
     ? path.resolve(process.env.SWING_RADAR_DATA_DIR)
-    : path.resolve(process.cwd(), "data/live");
+    : getRuntimePaths().liveDir;
 }
 
 function toMultiline(value: string[]) {

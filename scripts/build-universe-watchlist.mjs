@@ -1,7 +1,8 @@
-import { readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
+import { getRuntimePaths } from "./lib/runtime-paths.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -17,9 +18,10 @@ Usage:
 }
 
 function parseArgs(argv) {
+  const runtimePaths = getRuntimePaths(projectRoot);
   const options = {
     input: path.join(projectRoot, "data", "config", "symbol-master.json"),
-    output: path.join(projectRoot, "data", "config", "watchlist.universe.json"),
+    output: path.join(runtimePaths.runtimeConfigDir, "watchlist.universe.json"),
     markets: ["KOSPI", "KOSDAQ"],
     limit: 0
   };
@@ -131,6 +133,7 @@ async function main() {
     tickers: sliced.map(buildEntry)
   };
 
+  await mkdir(path.dirname(outputPath), { recursive: true });
   await writeFile(outputPath, `${JSON.stringify(document, null, 2)}\n`, "utf8");
 
   console.log("Universe watchlist built.");

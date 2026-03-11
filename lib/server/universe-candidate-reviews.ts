@@ -1,5 +1,6 @@
-import { readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { getRuntimePaths } from "@/lib/server/runtime-paths";
 
 export type UniverseReviewStatus = "new" | "reviewing" | "hold" | "promoted" | "rejected";
 
@@ -18,7 +19,7 @@ type UniverseCandidateReviewDocument = {
 function getUniverseCandidateReviewPath() {
   return process.env.SWING_RADAR_UNIVERSE_REVIEW_FILE
     ? path.resolve(process.env.SWING_RADAR_UNIVERSE_REVIEW_FILE)
-    : path.resolve(process.cwd(), "data", "universe", "candidate-reviews.json");
+    : path.join(getRuntimePaths().universeDir, "candidate-reviews.json");
 }
 
 async function loadDocument(): Promise<UniverseCandidateReviewDocument> {
@@ -31,6 +32,7 @@ async function loadDocument(): Promise<UniverseCandidateReviewDocument> {
 }
 
 async function saveDocument(document: UniverseCandidateReviewDocument) {
+  await mkdir(path.dirname(getUniverseCandidateReviewPath()), { recursive: true });
   await writeFile(getUniverseCandidateReviewPath(), `${JSON.stringify(document, null, 2)}\n`, "utf8");
 }
 

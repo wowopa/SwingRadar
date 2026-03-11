@@ -13,6 +13,7 @@ import {
   matchesFilters,
   selectCuratedRssNews
 } from "./lib/news-providers.mjs";
+import { getRuntimePaths } from "./lib/runtime-paths.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -123,7 +124,7 @@ function resolveProviderOrder() {
 
 async function readDailyCandidates(paths) {
   try {
-    return await readJson(path.join(projectRoot, "data", "universe", "daily-candidates.json"));
+    return await readJson(path.join(getRuntimePaths(projectRoot).universeDir, "daily-candidates.json"));
   } catch {
     return null;
   }
@@ -177,7 +178,7 @@ async function runEntriesInParallel(entries, concurrency, action) {
 function getNewsFetchReportPath() {
   return process.env.SWING_RADAR_NEWS_FETCH_REPORT_PATH
     ? path.resolve(process.env.SWING_RADAR_NEWS_FETCH_REPORT_PATH)
-    : path.join(projectRoot, "data", "ops", "latest-news-fetch.json");
+    : path.join(getRuntimePaths(projectRoot).opsDir, "latest-news-fetch.json");
 }
 
 async function fetchFromProvider(provider, entry, maxItems, telemetry, options = {}, feedPool = []) {

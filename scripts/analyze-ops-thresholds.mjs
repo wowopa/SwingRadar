@@ -4,6 +4,7 @@ import process from "node:process";
 import { fileURLToPath } from "node:url";
 
 import { loadLocalEnv } from "./load-env.mjs";
+import { getRuntimePaths } from "./lib/runtime-paths.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -114,7 +115,7 @@ function buildRecommendations({ history, newsFetchReport, snapshotGenerationRepo
 }
 
 async function main() {
-  const opsDir = path.join(projectRoot, "data", "ops");
+  const opsDir = getRuntimePaths(projectRoot).opsDir;
   const historyPath = process.env.SWING_RADAR_POST_LAUNCH_HISTORY_PATH
     ? path.resolve(process.env.SWING_RADAR_POST_LAUNCH_HISTORY_PATH)
     : path.join(opsDir, "post-launch-history.json");

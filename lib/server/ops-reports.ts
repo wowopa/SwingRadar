@@ -1,5 +1,6 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
+import { getRuntimePaths } from "@/lib/server/runtime-paths";
 
 function resolveProjectRoot() {
   return process.cwd();
@@ -8,43 +9,43 @@ function resolveProjectRoot() {
 function getOpsHealthReportPath() {
   return process.env.SWING_RADAR_OPS_REPORT_PATH
     ? path.resolve(process.env.SWING_RADAR_OPS_REPORT_PATH)
-    : path.join(resolveProjectRoot(), "data", "ops", "latest-health-check.json");
+    : path.join(getRuntimePaths(resolveProjectRoot()).opsDir, "latest-health-check.json");
 }
 
 function getDailyCycleReportPath() {
   return process.env.SWING_RADAR_DAILY_CYCLE_REPORT_PATH
     ? path.resolve(process.env.SWING_RADAR_DAILY_CYCLE_REPORT_PATH)
-    : path.join(resolveProjectRoot(), "data", "ops", "latest-daily-cycle.json");
+    : path.join(getRuntimePaths(resolveProjectRoot()).opsDir, "latest-daily-cycle.json");
 }
 
 function getAutoHealReportPath() {
   return process.env.SWING_RADAR_AUTO_HEAL_REPORT_PATH
     ? path.resolve(process.env.SWING_RADAR_AUTO_HEAL_REPORT_PATH)
-    : path.join(resolveProjectRoot(), "data", "ops", "latest-auto-heal.json");
+    : path.join(getRuntimePaths(resolveProjectRoot()).opsDir, "latest-auto-heal.json");
 }
 
 function getNewsFetchReportPath() {
   return process.env.SWING_RADAR_NEWS_FETCH_REPORT_PATH
     ? path.resolve(process.env.SWING_RADAR_NEWS_FETCH_REPORT_PATH)
-    : path.join(resolveProjectRoot(), "data", "ops", "latest-news-fetch.json");
+    : path.join(getRuntimePaths(resolveProjectRoot()).opsDir, "latest-news-fetch.json");
 }
 
 function getSnapshotGenerationReportPath() {
   return process.env.SWING_RADAR_SNAPSHOT_GENERATION_REPORT_PATH
     ? path.resolve(process.env.SWING_RADAR_SNAPSHOT_GENERATION_REPORT_PATH)
-    : path.join(resolveProjectRoot(), "data", "ops", "latest-snapshot-generation.json");
+    : path.join(getRuntimePaths(resolveProjectRoot()).opsDir, "latest-snapshot-generation.json");
 }
 
 function getPostLaunchHistoryPath() {
   return process.env.SWING_RADAR_POST_LAUNCH_HISTORY_PATH
     ? path.resolve(process.env.SWING_RADAR_POST_LAUNCH_HISTORY_PATH)
-    : path.join(resolveProjectRoot(), "data", "ops", "post-launch-history.json");
+    : path.join(getRuntimePaths(resolveProjectRoot()).opsDir, "post-launch-history.json");
 }
 
 function getThresholdAdvicePath() {
   return process.env.SWING_RADAR_THRESHOLD_ADVICE_PATH
     ? path.resolve(process.env.SWING_RADAR_THRESHOLD_ADVICE_PATH)
-    : path.join(resolveProjectRoot(), "data", "ops", "latest-threshold-advice.json");
+    : path.join(getRuntimePaths(resolveProjectRoot()).opsDir, "latest-threshold-advice.json");
 }
 
 async function readJsonFile<T>(filePath: string): Promise<T | null> {

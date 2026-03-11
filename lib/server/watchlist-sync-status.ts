@@ -1,5 +1,6 @@
-import { readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { getRuntimePaths } from "@/lib/server/runtime-paths";
 
 export type WatchlistSyncState = "idle" | "syncing" | "ready" | "failed";
 
@@ -19,7 +20,7 @@ type WatchlistSyncStatusDocument = {
 function getWatchlistSyncStatusPath() {
   return process.env.SWING_RADAR_WATCHLIST_SYNC_STATUS_FILE
     ? path.resolve(process.env.SWING_RADAR_WATCHLIST_SYNC_STATUS_FILE)
-    : path.resolve(process.cwd(), "data", "ops", "watchlist-sync-status.json");
+    : path.join(getRuntimePaths().opsDir, "watchlist-sync-status.json");
 }
 
 async function loadDocument(): Promise<WatchlistSyncStatusDocument> {
@@ -32,6 +33,7 @@ async function loadDocument(): Promise<WatchlistSyncStatusDocument> {
 }
 
 async function saveDocument(document: WatchlistSyncStatusDocument) {
+  await mkdir(path.dirname(getWatchlistSyncStatusPath()), { recursive: true });
   await writeFile(getWatchlistSyncStatusPath(), `${JSON.stringify(document, null, 2)}\n`, "utf8");
 }
 

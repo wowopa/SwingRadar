@@ -6,6 +6,7 @@ import { promisify } from "node:util";
 import { fileURLToPath } from "node:url";
 
 import { loadLocalEnv } from "./load-env.mjs";
+import { getRuntimePaths } from "./lib/runtime-paths.mjs";
 
 const execFileAsync = promisify(execFile);
 const __filename = fileURLToPath(import.meta.url);
@@ -95,13 +96,13 @@ function parseArgs(argv) {
 }
 
 function getDailyCandidatesPath() {
-  return path.join(projectRoot, "data", "universe", "daily-candidates.json");
+  return path.join(getRuntimePaths(projectRoot).universeDir, "daily-candidates.json");
 }
 
 function getReportPath() {
   return process.env.SWING_RADAR_DAILY_CYCLE_REPORT_PATH
     ? path.resolve(process.env.SWING_RADAR_DAILY_CYCLE_REPORT_PATH)
-    : path.join(projectRoot, "data", "ops", "latest-daily-cycle.json");
+    : path.join(getRuntimePaths(projectRoot).opsDir, "latest-daily-cycle.json");
 }
 
 async function writeReport(report) {

@@ -6,6 +6,7 @@ import { promisify } from "node:util";
 import { fileURLToPath } from "node:url";
 
 import { loadLocalEnv } from "./load-env.mjs";
+import { getRuntimePaths } from "./lib/runtime-paths.mjs";
 
 const execFileAsync = promisify(execFile);
 const __filename = fileURLToPath(import.meta.url);
@@ -17,13 +18,13 @@ loadLocalEnv(projectRoot);
 function getDataDir() {
   return process.env.SWING_RADAR_DATA_DIR
     ? path.resolve(process.env.SWING_RADAR_DATA_DIR)
-    : path.join(projectRoot, "data", "live");
+    : getRuntimePaths(projectRoot).liveDir;
 }
 
 function getOpsReportPath() {
   return process.env.SWING_RADAR_OPS_REPORT_PATH
     ? path.resolve(process.env.SWING_RADAR_OPS_REPORT_PATH)
-    : path.join(projectRoot, "data", "ops", "latest-health-check.json");
+    : path.join(getRuntimePaths(projectRoot).opsDir, "latest-health-check.json");
 }
 
 function parsePositiveInt(value, fallback) {

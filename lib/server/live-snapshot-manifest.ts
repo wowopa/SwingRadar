@@ -1,5 +1,6 @@
 import { readFile, stat } from "fs/promises";
 import path from "path";
+import { getRuntimePaths } from "@/lib/server/runtime-paths";
 
 type LiveSnapshotManifest = {
   currentDir?: string;
@@ -9,13 +10,13 @@ type LiveSnapshotManifest = {
 export function getDefaultLiveDataDir() {
   return process.env.SWING_RADAR_DATA_DIR
     ? path.resolve(process.env.SWING_RADAR_DATA_DIR)
-    : path.resolve(process.cwd(), "data/live");
+    : getRuntimePaths().liveDir;
 }
 
 export function getLiveSnapshotManifestPath() {
   return process.env.SWING_RADAR_LIVE_MANIFEST_FILE
     ? path.resolve(process.env.SWING_RADAR_LIVE_MANIFEST_FILE)
-    : path.resolve(process.cwd(), "data/ops/live-snapshot-manifest.json");
+    : path.join(getRuntimePaths().opsDir, "live-snapshot-manifest.json");
 }
 
 export async function resolveLiveDataDir() {

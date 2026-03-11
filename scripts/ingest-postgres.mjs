@@ -6,6 +6,7 @@ import { fileURLToPath } from "node:url";
 import pg from "pg";
 
 import { loadLocalEnv } from "./load-env.mjs";
+import { getRuntimePaths } from "./lib/runtime-paths.mjs";
 
 const { Client } = pg;
 const __filename = fileURLToPath(import.meta.url);
@@ -33,7 +34,7 @@ function parseArgs(argv) {
     applySchema: false,
     dataDir: process.env.SWING_RADAR_DATA_DIR
       ? path.resolve(process.env.SWING_RADAR_DATA_DIR)
-      : path.resolve(projectRoot, "data/live")
+      : getRuntimePaths(projectRoot).liveDir
   };
 
   for (let index = 0; index < argv.length; index += 1) {

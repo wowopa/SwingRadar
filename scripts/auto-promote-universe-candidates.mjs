@@ -7,6 +7,7 @@ import { fileURLToPath } from "node:url";
 
 import { getAutoPromotionPolicy, buildPromotionMetrics, evaluateAutoPromotionCandidate } from "./lib/auto-promotion-utils.mjs";
 import { loadLocalEnv } from "./load-env.mjs";
+import { getRuntimePaths } from "./lib/runtime-paths.mjs";
 
 const execFileAsync = promisify(execFile);
 const __filename = fileURLToPath(import.meta.url);
@@ -36,9 +37,14 @@ function unique(values) {
 }
 
 function getPathFromEnv(envKey, fallbackSegments) {
+  const runtimePaths = getRuntimePaths(projectRoot);
+  const fallbackPath = path.join(...fallbackSegments);
+
   return process.env[envKey]
     ? path.resolve(process.env[envKey])
-    : path.resolve(projectRoot, ...fallbackSegments);
+    : fallbackPath.startsWith("data\\config")
+      ? path.resolve(projectRoot, ...fallbackSegments)
+      : path.resolve(runtimePaths.runtimeRoot, fallbackPath.replace(/^data[\\/]/, ""));
 }
 
 function getDailyCandidatesPath() {

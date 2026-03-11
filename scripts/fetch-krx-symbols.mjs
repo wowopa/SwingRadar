@@ -4,6 +4,7 @@ import process from "node:process";
 import { fileURLToPath } from "node:url";
 
 import { loadLocalEnv } from "./load-env.mjs";
+import { getRuntimePaths } from "./lib/runtime-paths.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -42,6 +43,7 @@ Environment:
 }
 
 function parseArgs(argv) {
+  const runtimePaths = getRuntimePaths(projectRoot);
   const options = {
     fetchMode: process.env.SWING_RADAR_KRX_FETCH_MODE,
     sourceUrl: process.env.SWING_RADAR_KRX_SOURCE_URL,
@@ -65,7 +67,7 @@ function parseArgs(argv) {
     apiMarketField: process.env.SWING_RADAR_KRX_API_FIELD_MARKET ?? "market",
     apiSectorField: process.env.SWING_RADAR_KRX_API_FIELD_SECTOR ?? "sector",
     apiDartField: process.env.SWING_RADAR_KRX_API_FIELD_DART ?? "dartCorpCode",
-    output: path.join(projectRoot, "data", "raw", "krx-symbols-source.csv"),
+    output: path.join(runtimePaths.rawDir, "krx-symbols-source.csv"),
     help: false
   };
 

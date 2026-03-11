@@ -1,16 +1,17 @@
 import { mkdir, readdir, rm, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { getRuntimePaths } from "./runtime-paths.mjs";
 
 export function getLiveSnapshotManifestPath(projectRoot) {
   return process.env.SWING_RADAR_LIVE_MANIFEST_FILE
     ? path.resolve(process.env.SWING_RADAR_LIVE_MANIFEST_FILE)
-    : path.join(projectRoot, "data", "ops", "live-snapshot-manifest.json");
+    : path.join(getRuntimePaths(projectRoot).opsDir, "live-snapshot-manifest.json");
 }
 
 export function getLiveSnapshotRoot(projectRoot) {
   return process.env.SWING_RADAR_LIVE_SNAPSHOT_ROOT
     ? path.resolve(process.env.SWING_RADAR_LIVE_SNAPSHOT_ROOT)
-    : path.join(projectRoot, "data", "live-snapshots");
+    : getRuntimePaths(projectRoot).liveSnapshotRoot;
 }
 
 export function getLiveSnapshotRetentionDays() {

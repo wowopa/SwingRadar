@@ -8,6 +8,7 @@ import type {
 } from "@/lib/api-contracts/swing-radar";
 import { ApiError } from "@/lib/server/api-error";
 import { getPostgresPool } from "@/lib/server/postgres";
+import { getRuntimePaths } from "@/lib/server/runtime-paths";
 
 export interface SnapshotBundle {
   recommendations: RecommendationsResponseDto;
@@ -18,7 +19,7 @@ export interface SnapshotBundle {
 function getDataDir() {
   return process.env.SWING_RADAR_DATA_DIR
     ? path.resolve(process.env.SWING_RADAR_DATA_DIR)
-    : path.resolve(process.cwd(), "data/live");
+    : getRuntimePaths().liveDir;
 }
 
 export async function loadSnapshotBundleFromDisk(dataDir = getDataDir()): Promise<SnapshotBundle> {

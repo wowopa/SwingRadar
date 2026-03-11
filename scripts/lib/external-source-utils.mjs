@@ -1,5 +1,6 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { getRuntimePaths } from "./runtime-paths.mjs";
 
 export function parseArgs(argv, defaults = {}) {
   const options = { ...defaults };
@@ -79,11 +80,18 @@ function resolveProjectPath(projectRoot, configuredPath, fallbackPath) {
 }
 
 export function getProjectPaths(projectRoot) {
+  const runtimePaths = getRuntimePaths(projectRoot);
+
   return {
-    rawDir: resolveProjectPath(projectRoot, process.env.SWING_RADAR_RAW_DATA_DIR, path.join(projectRoot, "data/raw")),
-    liveDir: resolveProjectPath(projectRoot, process.env.SWING_RADAR_DATA_DIR, path.join(projectRoot, "data/live")),
-    configDir: path.resolve(path.join(projectRoot, "data/config")),
-    universeDir: path.resolve(path.join(projectRoot, "data/universe"))
+    rawDir: resolveProjectPath(projectRoot, process.env.SWING_RADAR_RAW_DATA_DIR, runtimePaths.rawDir),
+    liveDir: resolveProjectPath(projectRoot, process.env.SWING_RADAR_DATA_DIR, runtimePaths.liveDir),
+    configDir: runtimePaths.configDir,
+    runtimeConfigDir: runtimePaths.runtimeConfigDir,
+    universeDir: runtimePaths.universeDir,
+    opsDir: runtimePaths.opsDir,
+    trackingDir: runtimePaths.trackingDir,
+    historyDir: runtimePaths.historyDir,
+    adminDir: runtimePaths.adminDir
   };
 }
 
@@ -145,11 +153,11 @@ function mergeUniqueEntries(targetMap, entries, reasonFactory) {
 }
 
 async function loadFocusedWatchlist(configDir) {
+  const projectPaths = getProjectPaths(path.dirname(path.dirname(configDir)));
   const manualWatchlistFile = path.join(configDir, "watchlist.json");
-  const universeWatchlistFile = path.join(configDir, "watchlist.universe.json");
-  const universeDir = path.join(path.dirname(configDir), "universe");
-  const dailyCandidatesFile = path.join(universeDir, "daily-candidates.json");
-  const dailyCandidateHistoryFile = path.join(universeDir, "daily-candidates-history.json");
+  const universeWatchlistFile = path.join(projectPaths.runtimeConfigDir, "watchlist.universe.json");
+  const dailyCandidatesFile = path.join(projectPaths.universeDir, "daily-candidates.json");
+  const dailyCandidateHistoryFile = path.join(projectPaths.universeDir, "daily-candidates-history.json");
 
   const topUniverseCount = normalizePositiveInteger(process.env.SWING_RADAR_FOCUSED_WATCHLIST_TOP_UNIVERSE ?? "80", 80);
   const recentCandidateCount = normalizePositiveInteger(process.env.SWING_RADAR_FOCUSED_WATCHLIST_RECENT_CANDIDATES ?? "40", 40);
@@ -226,7 +234,7 @@ async function loadFocusedWatchlist(configDir) {
 
 function getFocusedWatchlistReportPath(configDir) {
   const projectRoot = path.dirname(path.dirname(configDir));
-  return path.join(projectRoot, "data", "ops", "latest-focused-watchlist.json");
+  return path.join(getProjectPaths(projectRoot).opsDir, "latest-focused-watchlist.json");
 }
 
 async function writeFocusedWatchlistReport(configDir, entries) {
@@ -255,10 +263,11 @@ async function writeFocusedWatchlistReport(configDir, entries) {
 }
 
 export async function loadWatchlist(configDir) {
+  const projectPaths = getProjectPaths(path.dirname(path.dirname(configDir)));
   const watchlistFile = process.env.SWING_RADAR_WATCHLIST_FILE
     ? path.resolve(process.env.SWING_RADAR_WATCHLIST_FILE)
     : path.join(configDir, "watchlist.json");
-  const universeWatchlistFile = path.join(configDir, "watchlist.universe.json");
+  const universeWatchlistFile = path.join(projectPaths.runtimeConfigDir, "watchlist.universe.json");
   const replacementFile = path.join(configDir, "symbol-replacements.json");
   const focusedEnabled = process.env.SWING_RADAR_FOCUSED_WATCHLIST_ENABLED === "true";
 

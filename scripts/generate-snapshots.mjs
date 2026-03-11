@@ -6,6 +6,7 @@ import { fileURLToPath } from "node:url";
 import { loadLocalEnv } from "./load-env.mjs";
 import { getProjectPaths } from "./lib/external-source-utils.mjs";
 import { writeLiveSnapshotManifest } from "./lib/live-snapshot-manifest.mjs";
+import { getRuntimePaths } from "./lib/runtime-paths.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -36,7 +37,7 @@ Usage:
 function getSnapshotGenerationReportPath() {
   return process.env.SWING_RADAR_SNAPSHOT_GENERATION_REPORT_PATH
     ? path.resolve(process.env.SWING_RADAR_SNAPSHOT_GENERATION_REPORT_PATH)
-    : path.join(projectRoot, "data", "ops", "latest-snapshot-generation.json");
+    : path.join(getRuntimePaths(projectRoot).opsDir, "latest-snapshot-generation.json");
 }
 
 function parseArgs(argv) {
@@ -963,7 +964,7 @@ function buildScoreLog(item, recommendation) {
 }
 
 function getServiceTrackingStatePath() {
-  return path.join(projectRoot, "data", "tracking", "service-tracking-state.json");
+  return path.join(getRuntimePaths(projectRoot).trackingDir, "service-tracking-state.json");
 }
 
 function getTrackingEventsPath(rawDir) {
@@ -971,7 +972,7 @@ function getTrackingEventsPath(rawDir) {
 }
 
 function getDailyCandidatesPath() {
-  return path.join(projectRoot, "data", "universe", "daily-candidates.json");
+  return path.join(getRuntimePaths(projectRoot).universeDir, "daily-candidates.json");
 }
 
 function parseDateOnly(value) {
@@ -1430,9 +1431,9 @@ async function main() {
     readJson(options.rawDir, "news-snapshot.json"),
     readOptionalJson(options.rawDir, "validation-snapshot.json", { items: [] }),
     readOptionalJson(path.join(projectRoot, "data", "config"), "watchlist.json", { tickers: [] }),
-    readOptionalJson(path.join(projectRoot, "data", "universe"), "daily-candidates-history.json", { runs: [] }),
+    readOptionalJson(getRuntimePaths(projectRoot).universeDir, "daily-candidates-history.json", { runs: [] }),
     readOptionalJson(path.dirname(getDailyCandidatesPath()), path.basename(getDailyCandidatesPath()), { topCandidates: [] }),
-    readOptionalJson(path.join(projectRoot, "data", "tracking"), "service-tracking-state.json", { generatedAt: null, entries: [] })
+    readOptionalJson(getRuntimePaths(projectRoot).trackingDir, "service-tracking-state.json", { generatedAt: null, entries: [] })
   ]);
 
   const generatedAt = market.asOf;

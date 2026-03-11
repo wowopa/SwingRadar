@@ -8,6 +8,7 @@ import type {
   TrackingResponseDto
 } from "@/lib/api-contracts/swing-radar";
 import { recordAuditLog } from "@/lib/server/audit-log";
+import { getRuntimePaths } from "@/lib/server/runtime-paths";
 
 export interface CuratedNewsItem {
   id: string;
@@ -31,7 +32,7 @@ export interface NewsCurationDocument {
 function getAdminRoot() {
   return process.env.SWING_RADAR_EDITORIAL_DIR
     ? path.resolve(process.env.SWING_RADAR_EDITORIAL_DIR)
-    : path.resolve(process.cwd(), "data/admin");
+    : getRuntimePaths().adminDir;
 }
 
 function getNewsCurationPath() {

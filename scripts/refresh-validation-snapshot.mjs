@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 
 import { loadLocalEnv } from "./load-env.mjs";
 import { getProjectPaths, parseArgs, writeJson } from "./lib/external-source-utils.mjs";
+import { getRuntimePaths } from "./lib/runtime-paths.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -230,8 +231,8 @@ async function main() {
 
   const [existing, history, trackingState] = await Promise.all([
     readJson(path.join(defaults.rawDir, "validation-snapshot.json"), { items: [] }),
-    readJson(path.join(projectRoot, "data", "universe", "daily-candidates-history.json"), { runs: [] }),
-    readJson(path.join(projectRoot, "data", "tracking", "service-tracking-state.json"), { entries: [] })
+      readJson(path.join(getRuntimePaths(projectRoot).universeDir, "daily-candidates-history.json"), { runs: [] }),
+      readJson(path.join(getRuntimePaths(projectRoot).trackingDir, "service-tracking-state.json"), { entries: [] })
   ]);
 
   const itemsByTicker = new Map();

@@ -8,6 +8,7 @@ import { fileURLToPath } from "node:url";
 
 import { loadLocalEnv } from "./load-env.mjs";
 import { getProjectPaths, loadWatchlist } from "./lib/external-source-utils.mjs";
+import { getRuntimePaths } from "./lib/runtime-paths.mjs";
 
 const execFileAsync = promisify(execFile);
 const __filename = fileURLToPath(import.meta.url);
@@ -19,13 +20,13 @@ loadLocalEnv(projectRoot);
 function getMarketHistoryPath() {
   return process.env.SWING_RADAR_FOCUSED_HISTORY_FILE
     ? path.resolve(process.env.SWING_RADAR_FOCUSED_HISTORY_FILE)
-    : path.join(projectRoot, "data", "history", "focused-watchlist-history.json");
+    : path.join(getRuntimePaths(projectRoot).historyDir, "focused-watchlist-history.json");
 }
 
 function getSignalLogPath() {
   return process.env.SWING_RADAR_FOCUSED_SIGNAL_LOG_FILE
     ? path.resolve(process.env.SWING_RADAR_FOCUSED_SIGNAL_LOG_FILE)
-    : path.join(projectRoot, "data", "history", "focused-signal-log.json");
+    : path.join(getRuntimePaths(projectRoot).historyDir, "focused-signal-log.json");
 }
 
 async function readOptionalJson(filePath, fallback) {
@@ -203,8 +204,8 @@ async function main() {
       readOptionalJson(getMarketHistoryPath(), { items: {} }),
       readOptionalJson(getSignalLogPath(), { entries: [] }),
       readOptionalJson(path.join(paths.liveDir, "recommendations.json"), { generatedAt: new Date().toISOString(), items: [] }),
-      readOptionalJson(path.join(projectRoot, "data", "universe", "daily-candidates.json"), { topCandidates: [] }),
-      readOptionalJson(path.join(projectRoot, "data", "tracking", "service-tracking-state.json"), { entries: [] })
+      readOptionalJson(path.join(getRuntimePaths(projectRoot).universeDir, "daily-candidates.json"), { topCandidates: [] }),
+      readOptionalJson(path.join(getRuntimePaths(projectRoot).trackingDir, "service-tracking-state.json"), { entries: [] })
     ]);
 
     const mergedHistory = mergeTickerHistory(existingHistory.items, marketPayload.items, watchlistMetadata);

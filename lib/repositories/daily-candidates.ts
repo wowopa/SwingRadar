@@ -1,5 +1,6 @@
 ﻿import { readFile } from "node:fs/promises";
 import path from "node:path";
+import { getRuntimePaths } from "@/lib/server/runtime-paths";
 
 export type DailyCandidate = {
   batch: number;
@@ -64,13 +65,13 @@ export type DailyCandidateHistoryDocument = {
 function getDailyCandidatesPath() {
   return process.env.SWING_RADAR_DAILY_CANDIDATES_FILE
     ? path.resolve(process.env.SWING_RADAR_DAILY_CANDIDATES_FILE)
-    : path.resolve(process.cwd(), "data", "universe", "daily-candidates.json");
+    : path.join(getRuntimePaths().universeDir, "daily-candidates.json");
 }
 
 function getDailyCandidatesHistoryPath() {
   return process.env.SWING_RADAR_DAILY_CANDIDATES_HISTORY_FILE
     ? path.resolve(process.env.SWING_RADAR_DAILY_CANDIDATES_HISTORY_FILE)
-    : path.resolve(process.cwd(), "data", "universe", "daily-candidates-history.json");
+    : path.join(getRuntimePaths().universeDir, "daily-candidates-history.json");
 }
 
 export async function getDailyCandidates(): Promise<DailyCandidatesDocument | null> {
