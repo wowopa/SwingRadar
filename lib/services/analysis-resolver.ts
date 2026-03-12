@@ -323,6 +323,7 @@ export async function resolveTickerAnalysis(ticker: string): Promise<ResolvedTic
     provider.getRecommendations().catch(() => null),
     getDailyCandidates().catch(() => null)
   ]);
+  const fallbackNews = await getLatestAnalysisNewsByTicker(ticker);
 
   const analysisItem = analysisSource?.items.find((entry) => entry.ticker === ticker);
   const dailyCandidate = dailyCandidates?.topCandidates.find((entry) => entry.ticker === ticker);
@@ -332,6 +333,7 @@ export async function resolveTickerAnalysis(ticker: string): Promise<ResolvedTic
       item: overlayDailyCandidateAnalysis(
         {
           ...analysisItem,
+          newsImpact: analysisItem.newsImpact.length > 0 ? analysisItem.newsImpact : fallbackNews,
           technicalIndicators: analysisItem.technicalIndicators ?? EMPTY_TECHNICAL_INDICATORS,
           chartSeries: analysisItem.chartSeries ?? EMPTY_CHART_SERIES
         },
@@ -341,7 +343,6 @@ export async function resolveTickerAnalysis(ticker: string): Promise<ResolvedTic
   }
 
   const recommendationItem = recommendationSource?.items.find((entry) => entry.ticker === ticker);
-  const fallbackNews = await getLatestAnalysisNewsByTicker(ticker);
 
   if (recommendationItem) {
     return {
