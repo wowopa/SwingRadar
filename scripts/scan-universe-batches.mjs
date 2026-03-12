@@ -5,11 +5,13 @@ import process from "node:process";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { fileURLToPath } from "node:url";
+import pg from "pg";
 
 import { loadLocalEnv } from "./load-env.mjs";
 import { calculateCandidateScore, getLiquidityAdjustment } from "./lib/candidate-score-utils.mjs";
 import { getRuntimePaths } from "./lib/runtime-paths.mjs";
 
+const { Client } = pg;
 const execFileAsync = promisify(execFile);
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -144,6 +146,8 @@ async function writeHistory(entry) {
   const historyPath = getHistoryPath();
   await mkdir(path.dirname(historyPath), { recursive: true });
   await writeFile(historyPath, `${JSON.stringify({ runs }, null, 2)}\n`, "utf8");
+
+  return { runs };
 }
 
 async function writeLiveSnapshots({ generatedAt, topCandidates, batchResults }) {
@@ -353,6 +357,49 @@ async function readJsonWithRetry(filePath) {
   throw lastError ?? new Error(`Failed to read JSON: ${filePath}`);
 }
 
+async function persistRuntimeDocuments(documents, { skipIngest }) {
+  if (skipIngest || !process.env.SWING_RADAR_DATABASE_URL) {
+    return;
+  }
+
+  const client = new Client({
+    connectionString: process.env.SWING_RADAR_DATABASE_URL,
+    ssl: process.env.SWING_RADAR_DATABASE_SSL === "true" ? { rejectUnauthorized: false } : undefined
+  });
+
+  await client.connect();
+
+  try {
+    await client.query(`
+      create table if not exists runtime_documents (
+        name text primary key,
+        payload jsonb not null,
+        updated_at timestamptz not null default now()
+      )
+    `);
+    await client.query("begin");
+
+    for (const [name, payload] of Object.entries(documents)) {
+      await client.query(
+        `
+        insert into runtime_documents (name, payload, updated_at)
+        values ($1, $2::jsonb, now())
+        on conflict (name)
+        do update set payload = excluded.payload, updated_at = now()
+        `,
+        [name, JSON.stringify(payload)]
+      );
+    }
+
+    await client.query("commit");
+  } catch (error) {
+    await client.query("rollback");
+    throw error;
+  } finally {
+    await client.end();
+  }
+}
+
 async function runBatch(batch, index, tempRoot, options) {
   const batchDir = path.join(tempRoot, `batch-${String(index + 1).padStart(3, "0")}`);
   const rawDir = path.join(batchDir, "raw");
@@ -513,7 +560,7 @@ async function main() {
     const outputPath = path.resolve(options.output);
     await mkdir(path.dirname(outputPath), { recursive: true });
     await writeFile(outputPath, `${JSON.stringify(document, null, 2)}\n`, "utf8");
-    await writeHistory({
+    const historyDocument = await writeHistory({
       generatedAt: document.generatedAt,
       totalTickers: document.totalTickers,
       totalBatches: document.totalBatches,
@@ -527,6 +574,13 @@ async function main() {
       topCandidates: document.topCandidates,
       batchResults: results
     });
+    await persistRuntimeDocuments(
+      {
+        "daily-candidates": document,
+        "daily-candidates-history": historyDocument
+      },
+      { skipIngest: options.skipIngest }
+    );
 
     console.log("Universe batch scan completed.");
     console.log(`- watchlist: ${watchlistPath}`);

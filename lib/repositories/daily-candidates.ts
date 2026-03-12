@@ -1,5 +1,6 @@
 ﻿import { readFile } from "node:fs/promises";
 import path from "node:path";
+import { getPostgresPool } from "@/lib/server/postgres";
 import { getRuntimePaths } from "@/lib/server/runtime-paths";
 
 export type DailyCandidate = {
@@ -74,12 +75,22 @@ function getDailyCandidatesHistoryPath() {
     : path.join(getRuntimePaths().universeDir, "daily-candidates-history.json");
 }
 
+async function readRuntimeDocument<T>(name: string): Promise<T | null> {
+  try {
+    const pool = getPostgresPool();
+    const result = await pool.query<{ payload: T }>("select payload from runtime_documents where name = $1", [name]);
+    return result.rows[0]?.payload ?? null;
+  } catch {
+    return null;
+  }
+}
+
 export async function getDailyCandidates(): Promise<DailyCandidatesDocument | null> {
   try {
     const content = await readFile(getDailyCandidatesPath(), "utf8");
     return JSON.parse(content.replace(/^\uFEFF/, "")) as DailyCandidatesDocument;
   } catch {
-    return null;
+    return await readRuntimeDocument<DailyCandidatesDocument>("daily-candidates");
   }
 }
 
@@ -88,6 +99,6 @@ export async function getDailyCandidatesHistory(): Promise<DailyCandidateHistory
     const content = await readFile(getDailyCandidatesHistoryPath(), "utf8");
     return JSON.parse(content.replace(/^\uFEFF/, "")) as DailyCandidateHistoryDocument;
   } catch {
-    return null;
+    return await readRuntimeDocument<DailyCandidateHistoryDocument>("daily-candidates-history");
   }
 }

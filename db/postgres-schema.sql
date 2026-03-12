@@ -56,3 +56,9 @@ create index if not exists audit_logs_created_at_idx
 
 create index if not exists audit_logs_event_type_idx
   on audit_logs (event_type);
+
+create table if not exists runtime_documents (
+  name text primary key,
+  payload jsonb not null,
+  updated_at timestamptz not null default now()
+);
