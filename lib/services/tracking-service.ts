@@ -1,5 +1,6 @@
 import type { TrackingResponseDto } from "@/lib/api-contracts/swing-radar";
 import { getDataProvider } from "@/lib/providers";
+import { getLatestTrackingNewsByTicker } from "@/lib/server/latest-news";
 import type { TrackingQuery } from "@/lib/server/query-schemas";
 import { resolveTicker } from "@/lib/symbols/master";
 
@@ -37,7 +38,32 @@ export async function getTrackingSnapshot(query: TrackingQuery): Promise<Trackin
   }
 
   const detailIds = new Set(history.map((item) => item.id));
-  const details = Object.fromEntries(Object.entries(source.details).filter(([key]) => detailIds.has(key)));
+  const details = Object.fromEntries(
+    await Promise.all(
+      Object.entries(source.details)
+        .filter(([key]) => detailIds.has(key))
+        .map(async ([key, detail]) => {
+          if (detail.historicalNews.length > 0) {
+            return [key, detail] as const;
+          }
+
+          const historyEntry = history.find((item) => item.id === key);
+          if (!historyEntry) {
+            return [key, detail] as const;
+          }
+
+          const fallbackNews = await getLatestTrackingNewsByTicker(historyEntry.ticker);
+
+          return [
+            key,
+            {
+              ...detail,
+              historicalNews: fallbackNews
+            }
+          ] as const;
+        })
+    )
+  );
 
   return {
     generatedAt: source.generatedAt,
