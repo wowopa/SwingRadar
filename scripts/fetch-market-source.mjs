@@ -28,9 +28,58 @@ Usage:
   node scripts/fetch-market-source.mjs [--out-file <path>]
 
 Environment:
-  SWING_RADAR_MARKET_PROVIDER=yahoo
+  SWING_RADAR_MARKET_PROVIDER=yahoo | krx-api
   SWING_RADAR_MARKET_LOOKBACK_RANGE=6mo
 `);
+}
+
+function formatDate(date) {
+  const year = date.getFullYear();
+  const month = `${date.getMonth() + 1}`.padStart(2, "0");
+  const day = `${date.getDate()}`.padStart(2, "0");
+  return `${year}${month}${day}`;
+}
+
+function resolveBusinessDates(range) {
+  const businessDaysByRange = {
+    "1mo": 25,
+    "3mo": 70,
+    "6mo": 140,
+    "1y": 260
+  };
+  const targetDays = businessDaysByRange[range] ?? 140;
+  const dates = [];
+  const cursor = new Date();
+
+  while (dates.length < targetDays) {
+    cursor.setDate(cursor.getDate() - 1);
+    const weekday = cursor.getDay();
+    if (weekday === 0 || weekday === 6) {
+      continue;
+    }
+
+    dates.push(formatDate(cursor));
+  }
+
+  return dates;
+}
+
+function parseKrxNumber(value) {
+  if (typeof value === "number") {
+    return Number.isFinite(value) ? value : null;
+  }
+
+  if (typeof value !== "string") {
+    return null;
+  }
+
+  const normalized = value.replace(/,/g, "").trim();
+  if (!normalized || normalized === "-") {
+    return null;
+  }
+
+  const parsed = Number(normalized);
+  return Number.isFinite(parsed) ? parsed : null;
 }
 
 function mapRiskStatus(distancePercent, currentPrice, ma20, ma60, momentumPercent) {
@@ -247,6 +296,191 @@ async function fetchYahooItem(entry, range) {
   };
 }
 
+async function fetchKrxDailyRows(endpoint, basDd, apiKey) {
+  const baseUrl = process.env.SWING_RADAR_KRX_API_BASE_URL ?? "https://data-dbg.krx.co.kr/svc/apis";
+  const authHeader = process.env.SWING_RADAR_KRX_API_AUTH_HEADER ?? "AUTH_KEY";
+  const url = new URL(`${baseUrl.replace(/\/$/, "")}/${endpoint}`);
+  url.searchParams.set("basDd", basDd);
+
+  const response = await fetch(url, {
+    headers: {
+      [authHeader]: apiKey,
+      "User-Agent": "SWING-RADAR/0.1"
+    }
+  });
+
+  if (!response.ok) {
+    throw new Error(`KRX daily trade request failed: ${response.status} ${response.statusText} (${endpoint}, ${basDd})`);
+  }
+
+  const payload = await response.json();
+  return Array.isArray(payload?.OutBlock_1) ? payload.OutBlock_1 : [];
+}
+
+async function fetchKrxHistoryByTicker(watchlist, range) {
+  const apiKey = process.env.SWING_RADAR_KRX_API_KEY;
+  if (!apiKey) {
+    throw new Error("SWING_RADAR_KRX_API_KEY is not configured");
+  }
+
+  const dates = resolveBusinessDates(range);
+  const tickersByMarket = {
+    KOSPI: new Set(watchlist.filter((item) => item.market === "KOSPI").map((item) => item.ticker)),
+    KOSDAQ: new Set(watchlist.filter((item) => item.market === "KOSDAQ").map((item) => item.ticker))
+  };
+  const historyByTicker = new Map(watchlist.map((item) => [item.ticker, []]));
+  const endpointByMarket = {
+    KOSPI: "sto/stk_bydd_trd",
+    KOSDAQ: "sto/ksq_bydd_trd"
+  };
+
+  for (const basDd of dates) {
+    const responses = await Promise.all(
+      Object.entries(endpointByMarket).map(async ([market, endpoint]) => ({
+        market,
+        rows: await fetchKrxDailyRows(endpoint, basDd, apiKey)
+      }))
+    );
+
+    for (const response of responses) {
+      const tickerSet = tickersByMarket[response.market];
+
+      for (const row of response.rows) {
+        const ticker = row.ISU_CD?.trim();
+        if (!tickerSet.has(ticker)) {
+          continue;
+        }
+
+        historyByTicker.get(ticker)?.push({
+          date: `${basDd.slice(0, 4)}-${basDd.slice(4, 6)}-${basDd.slice(6, 8)}`,
+          open: parseKrxNumber(row.TDD_OPNPRC),
+          high: parseKrxNumber(row.TDD_HGPRC),
+          low: parseKrxNumber(row.TDD_LWPRC),
+          close: parseKrxNumber(row.TDD_CLSPRC),
+          volume: parseKrxNumber(row.ACC_TRDVOL),
+          turnover: parseKrxNumber(row.ACC_TRDVAL)
+        });
+      }
+    }
+  }
+
+  return historyByTicker;
+}
+
+function buildMarketItemFromHistory(entry, points) {
+  const pairedHistory = points
+    .filter((item) => Number.isFinite(item.close) && Number.isFinite(item.volume) && item.volume > 0)
+    .sort((left, right) => left.date.localeCompare(right.date));
+  const closes = pairedHistory.map((item) => item.close);
+  const volumes = pairedHistory.map((item) => item.volume);
+  const turnovers = pairedHistory.map((item) => item.turnover ?? item.close * item.volume);
+
+  const currentPrice = lastValid(closes);
+  const latestVolume = lastValid(volumes);
+  const latestTurnover = lastValid(turnovers);
+
+  if (!currentPrice || !latestVolume || !latestTurnover || closes.length < 60) {
+    throw new Error(`Not enough KRX market history for ${entry.ticker}`);
+  }
+
+  const last20 = closes.slice(-20);
+  const last60 = closes.slice(-60);
+  const ma20 = average(last20);
+  const ma60 = average(last60.length ? last60 : closes);
+  const avg20Volume = average(volumes.slice(-20));
+  const avg20Turnover = average(turnovers.slice(-20));
+  const volumeRatio = avg20Volume > 0 ? latestVolume / avg20Volume : 1;
+  const turnoverRatio = avg20Turnover > 0 ? latestTurnover / avg20Turnover : 1;
+  const recentCloses7 = closes.slice(-7);
+  const recentCloses10 = closes.slice(-10);
+  const low7 = Math.min(...recentCloses7);
+  const high10 = Math.max(...recentCloses10);
+  const distanceFromRecentHigh = ((high10 - currentPrice) / currentPrice) * 100;
+  const momentumPercent = ((currentPrice - ma20) / ma20) * 100;
+  const recentReturns = closes.slice(-21).flatMap((close, index, array) => {
+    if (index === 0 || !Number.isFinite(array[index - 1]) || array[index - 1] === 0) {
+      return [];
+    }
+
+    return [((close - array[index - 1]) / array[index - 1]) * 100];
+  });
+  const averageAbsMove = average(recentReturns.map((value) => Math.abs(value)));
+  const returnVolatility = standardDeviation(recentReturns);
+  const recentSupport = Math.max(low7 * 0.995, ma20 * 0.98, ma60 * 0.96);
+  const rawInvalidationDistance = ((currentPrice - recentSupport) / currentPrice) * 100;
+  const recentSwingRangePercent = ((high10 - low7) / currentPrice) * 100;
+  const supportGapPercent = Math.abs(((ma20 - ma60) / currentPrice) * 100);
+  const trendCompression = Math.max(0, momentumPercent - 6) * 0.12;
+  const breakoutCompression = Math.max(0, 5 - distanceFromRecentHigh) * 0.18;
+  const invalidationFloor = clamp(
+    Math.max(2.8, averageAbsMove * 0.82, returnVolatility * 0.5),
+    2.8,
+    5.4
+  );
+  const invalidationCeilingBase =
+    averageAbsMove * 1.25 +
+    returnVolatility * 0.22 +
+    supportGapPercent * 0.1 +
+    recentSwingRangePercent * 0.04 -
+    trendCompression -
+    breakoutCompression;
+  const invalidationCeiling = clamp(
+    invalidationCeilingBase,
+    currentPrice >= ma20 && ma20 >= ma60 ? 4.4 : 5.2,
+    currentPrice >= ma20 && ma20 >= ma60 ? 12.5 : 14.5
+  );
+  const invalidationDistancePercent = clamp(
+    rawInvalidationDistance,
+    invalidationFloor,
+    invalidationCeiling
+  );
+  const invalidationPrice = Math.round(currentPrice * (1 - invalidationDistancePercent / 100));
+  const confirmationPrice =
+    distanceFromRecentHigh <= 8 && currentPrice >= ma20
+      ? Math.round(Math.max(currentPrice * 1.018, high10 * 1.002))
+      : Math.round(Math.max(currentPrice * 1.04, ma20 * 1.025, ma60 * 1.04));
+  const rewardDistance = Math.max(confirmationPrice - invalidationPrice, currentPrice * 0.05);
+  const expansionPrice = Math.round(confirmationPrice + rewardDistance * 1.4);
+  const riskDistance = ((invalidationPrice - currentPrice) / currentPrice) * 100;
+
+  return {
+    ticker: entry.ticker,
+    company: entry.company,
+    sector: entry.sector,
+    market: entry.market,
+    watchlistSourceTags: entry.watchlistSourceTags ?? [],
+    watchlistSourceDetails: entry.watchlistSourceDetails ?? [],
+    sourceSymbol: entry.marketSymbol,
+    currentPrice: Math.round(currentPrice),
+    invalidationPrice,
+    confirmationPrice,
+    expansionPrice,
+    entryPrice: Math.round(ma20),
+    signalDate: pairedHistory.at(-1)?.date ?? new Date().toISOString().slice(0, 10),
+    trendScore: scoreTrend(currentPrice, ma20, ma60),
+    flowScore: scoreFlow(latestVolume, avg20Volume),
+    volatilityScore: scoreVolatility(currentPrice, invalidationPrice),
+    qualityScore: calculateQualityScore(closes.length, avg20Turnover, volumeRatio, turnoverRatio),
+    averageVolume20: Math.round(avg20Volume),
+    latestVolume: Math.round(latestVolume),
+    averageTurnover20: Math.round(avg20Turnover),
+    latestTurnover: Math.round(latestTurnover),
+    momentumPercent: Number(momentumPercent.toFixed(1)),
+    riskStatus: mapRiskStatus(riskDistance, currentPrice, ma20, ma60, momentumPercent),
+    heatStatus: mapHeatStatus(momentumPercent, volumeRatio, turnoverRatio),
+    closes: closes.slice(-90),
+    volumes: volumes.slice(-90),
+    history: pairedHistory.slice(-190).map((item) => ({
+      date: item.date,
+      open: Number.isFinite(item.open) ? Math.round(item.open) : null,
+      high: Number.isFinite(item.high) ? Math.round(item.high) : null,
+      low: Number.isFinite(item.low) ? Math.round(item.low) : null,
+      close: Math.round(item.close),
+      volume: Math.round(item.volume)
+    }))
+  };
+}
+
 async function main() {
   const paths = getProjectPaths(projectRoot);
   const args = parseArgs(process.argv.slice(2), {
@@ -260,32 +494,53 @@ async function main() {
 
   const watchlist = await loadWatchlist(paths.configDir);
   const range = process.env.SWING_RADAR_MARKET_LOOKBACK_RANGE ?? "6mo";
+  const provider = process.env.SWING_RADAR_MARKET_PROVIDER ?? "yahoo";
   const items = [];
   const skipped = [];
 
-  for (const entry of watchlist) {
-    try {
-      items.push(await fetchYahooItem(entry, range));
-    } catch (error) {
-      skipped.push({
-        ticker: entry.ticker,
-        company: entry.company,
-        watchlistSourceTags: entry.watchlistSourceTags ?? [],
-        watchlistSourceDetails: entry.watchlistSourceDetails ?? [],
-        message: error instanceof Error ? error.message : String(error)
-      });
-      console.warn(`Market fetch skipped for ${entry.ticker}: ${error instanceof Error ? error.message : error}`);
+  if (provider === "krx-api") {
+    const historyByTicker = await fetchKrxHistoryByTicker(watchlist, range);
+
+    for (const entry of watchlist) {
+      try {
+        items.push(buildMarketItemFromHistory(entry, historyByTicker.get(entry.ticker) ?? []));
+      } catch (error) {
+        skipped.push({
+          ticker: entry.ticker,
+          company: entry.company,
+          watchlistSourceTags: entry.watchlistSourceTags ?? [],
+          watchlistSourceDetails: entry.watchlistSourceDetails ?? [],
+          message: error instanceof Error ? error.message : String(error)
+        });
+        console.warn(`Market fetch skipped for ${entry.ticker}: ${error instanceof Error ? error.message : error}`);
+      }
+    }
+  } else {
+    for (const entry of watchlist) {
+      try {
+        items.push(await fetchYahooItem(entry, range));
+      } catch (error) {
+        skipped.push({
+          ticker: entry.ticker,
+          company: entry.company,
+          watchlistSourceTags: entry.watchlistSourceTags ?? [],
+          watchlistSourceDetails: entry.watchlistSourceDetails ?? [],
+          message: error instanceof Error ? error.message : String(error)
+        });
+        console.warn(`Market fetch skipped for ${entry.ticker}: ${error instanceof Error ? error.message : error}`);
+      }
     }
   }
 
   await writeJson(path.resolve(args.outFile), {
     asOf: new Date().toISOString(),
-    provider: "yahoo",
+    provider,
     items,
     skipped
   });
 
   console.log("External market fetch completed.");
+  console.log(`- provider: ${provider}`);
   console.log(`- items: ${items.length}`);
   console.log(`- skipped: ${skipped.length}`);
   console.log(`- output: ${path.resolve(args.outFile)}`);
