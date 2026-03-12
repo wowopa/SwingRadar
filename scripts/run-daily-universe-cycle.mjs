@@ -7,6 +7,7 @@ import { fileURLToPath } from "node:url";
 
 import { loadLocalEnv } from "./load-env.mjs";
 import { getRuntimePaths } from "./lib/runtime-paths.mjs";
+import { getRuntimeStorageReportPath, writeRuntimeStorageReport } from "./lib/runtime-storage-report.mjs";
 
 const execFileAsync = promisify(execFile);
 const __filename = fileURLToPath(import.meta.url);
@@ -231,11 +232,17 @@ async function main() {
     report.completedAt = new Date().toISOString();
 
     await writeReport(report);
+    const storageReport = await writeRuntimeStorageReport(projectRoot, {
+      pipeline: "daily-universe-cycle",
+      status: report.status,
+      generatedAt: report.summary.generatedAt
+    });
 
     console.log(
       `[daily-cycle] completed: candidates ${report.summary.topCandidateCount}, succeeded batches ${report.summary.succeededBatches}/${report.summary.totalBatches}, failed batches ${report.summary.failedBatchCount}`
     );
     console.log(`[daily-cycle] report: ${getReportPath()}`);
+    console.log(`[daily-cycle] runtimeStorage: ${getRuntimeStorageReportPath(projectRoot)} (${storageReport.totalSizeLabel})`);
 
     if (report.summary.failedBatchCount > 0) {
       process.exitCode = 1;
@@ -245,8 +252,14 @@ async function main() {
     report.error = error instanceof Error ? error.message : String(error);
     report.completedAt = new Date().toISOString();
     await writeReport(report);
+    const storageReport = await writeRuntimeStorageReport(projectRoot, {
+      pipeline: "daily-universe-cycle",
+      status: report.status,
+      error: report.error
+    });
     console.error("[daily-cycle] failed", report.error);
     console.error(`[daily-cycle] report: ${getReportPath()}`);
+    console.error(`[daily-cycle] runtimeStorage: ${getRuntimeStorageReportPath(projectRoot)} (${storageReport.totalSizeLabel})`);
     process.exitCode = 1;
   }
 }

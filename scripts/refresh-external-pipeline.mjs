@@ -10,6 +10,7 @@ import {
   pruneOldLiveSnapshots,
   writeLiveSnapshotManifest
 } from "./lib/live-snapshot-manifest.mjs";
+import { getRuntimeStorageReportPath, writeRuntimeStorageReport } from "./lib/runtime-storage-report.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -90,11 +91,26 @@ async function main() {
   if (!useDirectLive) {
     const manifestPath = await writeLiveSnapshotManifest(projectRoot, targetOutDir);
     const removedSnapshots = await pruneOldLiveSnapshots(projectRoot, targetOutDir);
+    const storageReport = await writeRuntimeStorageReport(projectRoot, {
+      pipeline: "external-refresh",
+      mode: "snapshot-promotion",
+      targetOutDir,
+      removedSnapshots
+    });
     console.log(`Live snapshot promoted.`);
     console.log(`- snapshotDir: ${targetOutDir}`);
     console.log(`- manifest: ${manifestPath}`);
     console.log(`- removedSnapshots: ${removedSnapshots.length}`);
+    console.log(`- runtimeStorage: ${getRuntimeStorageReportPath(projectRoot)} (${storageReport.totalSizeLabel})`);
+    return;
   }
+
+  const storageReport = await writeRuntimeStorageReport(projectRoot, {
+    pipeline: "external-refresh",
+    mode: "direct-live",
+    targetOutDir
+  });
+  console.log(`- runtimeStorage: ${getRuntimeStorageReportPath(projectRoot)} (${storageReport.totalSizeLabel})`);
 }
 
 main().catch((error) => {

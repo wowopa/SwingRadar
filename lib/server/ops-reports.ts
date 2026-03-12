@@ -48,6 +48,12 @@ function getThresholdAdvicePath() {
     : path.join(getRuntimePaths(resolveProjectRoot()).opsDir, "latest-threshold-advice.json");
 }
 
+function getRuntimeStorageReportPath() {
+  return process.env.SWING_RADAR_RUNTIME_STORAGE_REPORT_PATH
+    ? path.resolve(process.env.SWING_RADAR_RUNTIME_STORAGE_REPORT_PATH)
+    : path.join(getRuntimePaths(resolveProjectRoot()).opsDir, "latest-runtime-storage.json");
+}
+
 async function readJsonFile<T>(filePath: string): Promise<T | null> {
   try {
     const content = await readFile(filePath, "utf8");
@@ -203,6 +209,26 @@ export type ThresholdAdviceReport = {
   }>;
 };
 
+export type RuntimeStorageSection = {
+  path: string;
+  exists: boolean;
+  fileCount: number;
+  dirCount: number;
+  sizeBytes: number;
+  sizeLabel: string;
+  newestMtime: string | null;
+};
+
+export type RuntimeStorageReport = {
+  generatedAt: string;
+  runtimeRoot: string;
+  totalSizeBytes: number;
+  totalSizeLabel: string;
+  totalFiles: number;
+  sections: Record<string, RuntimeStorageSection>;
+  metadata?: Record<string, unknown>;
+};
+
 export async function loadOpsHealthCheckReport() {
   return readJsonFile<OpsHealthCheckReport>(getOpsHealthReportPath());
 }
@@ -235,4 +261,8 @@ export async function loadPostLaunchHistory() {
 
 export async function loadThresholdAdviceReport() {
   return readJsonFile<ThresholdAdviceReport>(getThresholdAdvicePath());
+}
+
+export async function loadRuntimeStorageReport() {
+  return readJsonFile<RuntimeStorageReport>(getRuntimeStorageReportPath());
 }
