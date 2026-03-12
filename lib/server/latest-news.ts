@@ -2,6 +2,7 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 
 import type { AnalysisEventDto, TrackingEventDto } from "@/lib/api-contracts/swing-radar";
+import { getPostgresPool } from "@/lib/server/postgres";
 import { getRuntimePaths } from "@/lib/server/runtime-paths";
 
 interface NewsSnapshotItem {
@@ -28,11 +29,20 @@ async function loadNewsSnapshot() {
     const payload = JSON.parse(content) as NewsSnapshotDocument;
     return payload.items ?? [];
   } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === "ENOENT") {
-      return [];
+    if ((error as NodeJS.ErrnoException).code !== "ENOENT") {
+      throw error;
     }
+  }
 
-    throw error;
+  try {
+    const pool = getPostgresPool();
+    const result = await pool.query<{ payload: NewsSnapshotDocument }>(
+      "select payload from runtime_documents where name = $1",
+      ["news-snapshot"]
+    );
+    return result.rows[0]?.payload?.items ?? [];
+  } catch {
+    return [];
   }
 }
 
