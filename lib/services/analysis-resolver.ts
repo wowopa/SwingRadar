@@ -1,10 +1,12 @@
 import type {
+  AnalysisEventDto,
   DailyCandidateDto,
   RecommendationListItemDto,
   TickerAnalysisDto
 } from "@/lib/api-contracts/swing-radar";
 import { getDataProvider } from "@/lib/providers";
 import { getDailyCandidates } from "@/lib/repositories/daily-candidates";
+import { getLatestAnalysisNewsByTicker } from "@/lib/server/latest-news";
 import type { AnalysisQuery } from "@/lib/server/query-schemas";
 
 const KO = {
@@ -247,7 +249,8 @@ function buildDataQuality(recommendation: RecommendationListItemDto, coverage: s
 function buildAnalysisFallback(
   recommendation: RecommendationListItemDto,
   generatedAt: string,
-  dailyCandidate?: DailyCandidateDto
+  dailyCandidate?: DailyCandidateDto,
+  newsImpact: AnalysisEventDto[] = []
 ): TickerAnalysisDto {
   const coverage = dailyCandidate?.eventCoverage ?? recommendation.eventCoverage ?? "제한적";
   const scoreBreakdown = buildScoreBreakdown(Math.round(recommendation.score));
@@ -268,7 +271,7 @@ function buildAnalysisFallback(
     scoreBreakdown,
     scenarios: buildScenarios(keyLevels, Math.round(recommendation.score)),
     riskChecklist: buildRiskChecklist(recommendation, coverage),
-    newsImpact: [],
+    newsImpact,
     dataQuality: buildDataQuality(recommendation, coverage, generatedAt)
   };
 }
@@ -338,6 +341,7 @@ export async function resolveTickerAnalysis(ticker: string): Promise<ResolvedTic
   }
 
   const recommendationItem = recommendationSource?.items.find((entry) => entry.ticker === ticker);
+  const fallbackNews = await getLatestAnalysisNewsByTicker(ticker);
 
   if (recommendationItem) {
     return {
@@ -351,7 +355,8 @@ export async function resolveTickerAnalysis(ticker: string): Promise<ResolvedTic
             score: dailyCandidate?.score ?? recommendationItem.score
           },
           recommendationSource?.generatedAt ?? new Date().toISOString(),
-          dailyCandidate
+          dailyCandidate,
+          fallbackNews
         ),
         dailyCandidate
       )
@@ -366,7 +371,12 @@ export async function resolveTickerAnalysis(ticker: string): Promise<ResolvedTic
 
     return {
       generatedAt: dailyCandidates?.generatedAt ?? new Date().toISOString(),
-      item: buildAnalysisFallback(recommendationFallback, dailyCandidates?.generatedAt ?? new Date().toISOString(), dailyCandidate)
+      item: buildAnalysisFallback(
+        recommendationFallback,
+        dailyCandidates?.generatedAt ?? new Date().toISOString(),
+        dailyCandidate,
+        fallbackNews
+      )
     };
   }
 
