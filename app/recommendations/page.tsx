@@ -5,6 +5,8 @@ import { PublicDataStatusBarGroup } from "@/components/shared/public-data-status
 import { getRecommendations } from "@/lib/repositories/recommendations";
 import { buildPublicDataStatusSummary } from "@/lib/server/public-data-status";
 
+export const dynamic = "force-dynamic";
+
 export default async function RecommendationsPage() {
   const response = await getRecommendations();
   const statusSummaries = [

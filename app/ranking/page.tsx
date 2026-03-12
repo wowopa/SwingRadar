@@ -9,6 +9,8 @@ import { getRecommendations } from "@/lib/repositories/recommendations";
 import { buildPublicDataStatusSummary } from "@/lib/server/public-data-status";
 import { cn, formatDateTimeShort, formatPercent, formatPrice } from "@/lib/utils";
 
+export const dynamic = "force-dynamic";
+
 function formatTurnover(value?: number | null) {
   if (!value || value <= 0) {
     return "-";

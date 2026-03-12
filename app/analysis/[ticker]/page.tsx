@@ -21,6 +21,8 @@ import { buildPublicDataStatusSummary } from "@/lib/server/public-data-status";
 import { buildTradingViewSymbol, getAdjacentReadySymbols, getSymbolByTicker, resolveTicker } from "@/lib/symbols/master";
 import { describeSignalScore, formatScore } from "@/lib/utils";
 
+export const dynamic = "force-dynamic";
+
 const EMPTY_TECHNICAL_INDICATORS = {
   sma20: null,
   sma60: null,

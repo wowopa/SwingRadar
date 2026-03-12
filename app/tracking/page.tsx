@@ -4,6 +4,8 @@ import { TrackingDetailPanel } from "@/components/tracking/tracking-detail-panel
 import { getTrackingPayload } from "@/lib/repositories/tracking";
 import { buildPublicDataStatusSummary } from "@/lib/server/public-data-status";
 
+export const dynamic = "force-dynamic";
+
 export default async function TrackingPage() {
   const tracking = await getTrackingPayload();
   const statusSummary = buildPublicDataStatusSummary("tracking", tracking.generatedAt);
