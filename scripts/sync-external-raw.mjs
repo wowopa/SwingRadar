@@ -2,12 +2,15 @@ import path from "node:path";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
 
+import pg from "pg";
+
 import { loadLocalEnv } from "./load-env.mjs";
 import { clamp, getProjectPaths, parseArgs, readJson, writeJson } from "./lib/external-source-utils.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const projectRoot = path.resolve(__dirname, "..");
+const { Client } = pg;
 
 loadLocalEnv(projectRoot);
 
@@ -156,6 +159,43 @@ function buildDisclosureNewsItems(payload) {
   }));
 }
 
+async function persistRuntimeDocuments(documents) {
+  if (!process.env.SWING_RADAR_DATABASE_URL) {
+    return;
+  }
+
+  const client = new Client({
+    connectionString: process.env.SWING_RADAR_DATABASE_URL,
+    ssl: process.env.SWING_RADAR_DATABASE_SSL === "true" ? { rejectUnauthorized: false } : undefined
+  });
+
+  await client.connect();
+
+  try {
+    await client.query(`
+      create table if not exists runtime_documents (
+        name text primary key,
+        payload jsonb not null,
+        updated_at timestamptz not null default now()
+      )
+    `);
+
+    for (const [name, payload] of Object.entries(documents)) {
+      await client.query(
+        `
+        insert into runtime_documents (name, payload, updated_at)
+        values ($1, $2::jsonb, now())
+        on conflict (name)
+        do update set payload = excluded.payload, updated_at = now()
+        `,
+        [name, JSON.stringify(payload)]
+      );
+    }
+  } finally {
+    await client.end();
+  }
+}
+
 async function main() {
   const paths = getProjectPaths(projectRoot);
   const args = parseArgs(process.argv.slice(2), {
@@ -245,6 +285,9 @@ async function main() {
 
   await writeJson(path.join(paths.rawDir, "market-snapshot.json"), marketSnapshot);
   await writeJson(path.join(paths.rawDir, "news-snapshot.json"), newsSnapshot);
+  await persistRuntimeDocuments({
+    "news-snapshot": newsSnapshot
+  });
 
   console.log("External raw sync completed.");
   console.log(`- market items: ${marketSnapshot.items.length}`);
