@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ArrowUpRight, ChartNoAxesCombined, ShieldCheck, Sparkles } from "lucide-react";
 
 import { GlobalSymbolSearch } from "@/components/layout/global-symbol-search";
+import { ScrollToTopButton } from "@/components/layout/scroll-to-top-button";
 import { cn } from "@/lib/utils";
 
 const navItems = [
@@ -78,6 +79,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </header>
         {children}
       </div>
+      <ScrollToTopButton />
     </div>
   );
 }

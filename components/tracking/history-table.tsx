@@ -1,6 +1,5 @@
 import { FavoriteTickerButton } from "@/components/shared/favorite-ticker-button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { getSymbolByTicker } from "@/lib/symbols/master";
 import { formatPercent } from "@/lib/utils";
 import type { SignalHistoryEntry } from "@/types/tracking";
@@ -20,7 +19,7 @@ export function HistoryTable({ items, activeId, favoriteTickers, onSelect, onTog
         <CardTitle>공용 추적 이력</CardTitle>
       </CardHeader>
       <CardContent>
-        <ScrollArea className="w-full">
+        <div className="w-full overflow-x-auto overscroll-x-contain pb-2 [webkit-overflow-scrolling:touch]">
           <table className="min-w-[900px] w-full table-fixed text-left text-sm">
             <thead className="text-xs text-muted-foreground">
               <tr className="border-b border-border">
@@ -80,7 +79,7 @@ export function HistoryTable({ items, activeId, favoriteTickers, onSelect, onTog
               })}
             </tbody>
           </table>
-        </ScrollArea>
+        </div>
       </CardContent>
     </Card>
   );
