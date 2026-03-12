@@ -34,11 +34,11 @@ export function PublicDataStatusBarGroup({ summaries }: { summaries: PublicDataS
     <div className="mb-6 rounded-[28px] border border-border/70 bg-card/45 px-5 py-4">
       <div
         className={cn(
-          "flex gap-3",
-          hasSingleSummary ? "items-start justify-between gap-4" : "flex-wrap items-start justify-between"
+          "flex flex-col gap-3 md:flex-row",
+          hasSingleSummary ? "items-start justify-between gap-4" : "items-start justify-between md:flex-wrap"
         )}
       >
-        <div className={cn(hasSingleSummary ? "min-w-0 flex-1" : "")}>
+        <div className={cn("min-w-0", hasSingleSummary ? "flex-1" : "w-full md:flex-1")}>
           <p className="text-sm font-semibold text-foreground">데이터 기준</p>
           <p className="mt-2 text-sm leading-6 text-muted-foreground">
             같은 화면 안에서도 관찰 종목, 추천 랭킹, 상세 분석이 서로 다른 스냅샷 시각을 쓸 수 있어 기준 시간을 함께 보여줍니다.
@@ -46,8 +46,8 @@ export function PublicDataStatusBarGroup({ summaries }: { summaries: PublicDataS
         </div>
         <div
           className={cn(
-            "grid gap-3",
-            hasSingleSummary ? "w-full max-w-[320px] shrink-0 self-start" : "min-w-[280px] md:grid-cols-2"
+            "grid w-full gap-3",
+            hasSingleSummary ? "self-start md:max-w-[320px] md:shrink-0" : "md:min-w-[280px] md:grid-cols-2"
           )}
         >
           {summaries.map((item) => {

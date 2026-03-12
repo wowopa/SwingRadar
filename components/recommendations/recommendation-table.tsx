@@ -35,21 +35,21 @@ export function RecommendationTable({
       </CardHeader>
       <CardContent>
         <ScrollArea className="w-full">
-          <table className="min-w-full text-left text-sm">
+          <table className="min-w-[980px] w-full table-fixed text-left text-sm">
             <thead className="text-xs uppercase tracking-[0.22em] text-muted-foreground">
               <tr className="border-b border-border">
-                <th className="pb-3 pr-6">후보</th>
-                <th className="pb-3 pr-6">즐겨찾기</th>
-                <th className="pb-3 pr-6">종목</th>
-                <th className="pb-3 pr-6">톤</th>
-                <th className="pb-3 pr-6">점수</th>
-                <th className="pb-3 pr-6">신호 메모</th>
-                <th className="pb-3 pr-6">표본 수</th>
-                <th className="pb-3 pr-6">검증 근거</th>
-                <th className="pb-3 pr-6">적중률</th>
-                <th className="pb-3 pr-6">평균 수익</th>
-                <th className="pb-3 pr-6">무효화 거리</th>
-                <th className="pb-3 pr-6">상세</th>
+                <th className="w-[72px] whitespace-nowrap pb-3 pr-6">후보</th>
+                <th className="w-[88px] whitespace-nowrap pb-3 pr-6">즐겨찾기</th>
+                <th className="w-[150px] whitespace-nowrap pb-3 pr-6">종목</th>
+                <th className="w-[88px] whitespace-nowrap pb-3 pr-6">톤</th>
+                <th className="w-[72px] whitespace-nowrap pb-3 pr-6">점수</th>
+                <th className="w-[180px] whitespace-nowrap pb-3 pr-6">신호 메모</th>
+                <th className="w-[72px] whitespace-nowrap pb-3 pr-6">표본 수</th>
+                <th className="w-[92px] whitespace-nowrap pb-3 pr-6">검증 근거</th>
+                <th className="w-[72px] whitespace-nowrap pb-3 pr-6">적중률</th>
+                <th className="w-[96px] whitespace-nowrap pb-3 pr-6">평균 수익</th>
+                <th className="w-[104px] whitespace-nowrap pb-3 pr-6">무효화 거리</th>
+                <th className="w-[92px] whitespace-nowrap pb-3 pr-6">상세</th>
               </tr>
             </thead>
             <tbody>
@@ -75,7 +75,7 @@ export function RecommendationTable({
                     <td className="py-4 pr-6"><SignalToneBadge tone={item.signalTone} /></td>
                     <td className="py-4 pr-6">{item.score}</td>
                     <td className="py-4 pr-6">
-                      <div className="text-foreground">{item.signalLabel}</div>
+                      <div className="min-w-[140px] break-keep text-foreground">{item.signalLabel}</div>
                       <div className="text-xs text-muted-foreground">{item.observationWindow}</div>
                     </td>
                     <td className="py-4 pr-6">{item.validation.sampleSize}</td>

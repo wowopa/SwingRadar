@@ -21,18 +21,18 @@ export function HistoryTable({ items, activeId, favoriteTickers, onSelect, onTog
       </CardHeader>
       <CardContent>
         <ScrollArea className="w-full">
-          <table className="min-w-full text-left text-sm">
+          <table className="min-w-[900px] w-full table-fixed text-left text-sm">
             <thead className="text-xs text-muted-foreground">
               <tr className="border-b border-border">
-                <th className="pb-3 pr-5">즐겨찾기</th>
-                <th className="pb-3 pr-5">종목</th>
-                <th className="pb-3 pr-5">시작일</th>
-                <th className="pb-3 pr-5">톤</th>
-                <th className="pb-3 pr-5">상태</th>
-                <th className="pb-3 pr-5">최대 상승</th>
-                <th className="pb-3 pr-5">최대 하락</th>
-                <th className="pb-3 pr-5">보유일</th>
-                <th className="pb-3">상세</th>
+                <th className="whitespace-nowrap pb-3 pr-5">즐겨찾기</th>
+                <th className="whitespace-nowrap pb-3 pr-5">종목</th>
+                <th className="whitespace-nowrap pb-3 pr-5">시작일</th>
+                <th className="whitespace-nowrap pb-3 pr-5">톤</th>
+                <th className="whitespace-nowrap pb-3 pr-5">상태</th>
+                <th className="whitespace-nowrap pb-3 pr-5">최대상승</th>
+                <th className="whitespace-nowrap pb-3 pr-5">최대하락</th>
+                <th className="whitespace-nowrap pb-3 pr-5">보유일</th>
+                <th className="whitespace-nowrap pb-3">상세</th>
               </tr>
             </thead>
             <tbody>
