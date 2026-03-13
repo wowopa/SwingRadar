@@ -369,6 +369,22 @@ async function readRuntimeDocument(name) {
   }
 }
 
+function normalizeMarkets(value) {
+  if (!value) {
+    return "";
+  }
+
+  if (Array.isArray(value)) {
+    return value.map((item) => String(item).trim()).filter(Boolean).join(",");
+  }
+
+  return String(value)
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean)
+    .join(",");
+}
+
 async function writeJsonFile(filePath, payload) {
   await mkdir(path.dirname(filePath), { recursive: true });
   await writeFile(filePath, `${JSON.stringify(payload, null, 2)}\n`, "utf8");
@@ -411,6 +427,42 @@ async function materializePrefetchedRaw(batch, prefetchedRawDir, rawDir) {
     ...validationSnapshot,
     items: filterSnapshotItemsByTickers(validationSnapshot.items, tickerSet)
   });
+}
+
+async function validatePrefetchManifest(entries) {
+  const manifest = await readRuntimeDocument("prefetch-manifest");
+  if (!manifest) {
+    throw new Error("Prefetch manifest is unavailable.");
+  }
+
+  const expectedMarkets = normalizeMarkets(process.env.SWING_RADAR_UNIVERSE_MARKETS ?? "KOSPI,KOSDAQ");
+  const manifestMarkets = normalizeMarkets(manifest.markets);
+  const expectedLimit = String(process.env.SWING_RADAR_UNIVERSE_LIMIT ?? "0");
+  const generatedAt = Date.parse(String(manifest.generatedAt ?? ""));
+
+  if (!Number.isFinite(generatedAt)) {
+    throw new Error("Prefetch manifest timestamp is unavailable.");
+  }
+
+  const manifestAgeMs = Date.now() - generatedAt;
+  const maxManifestAgeMs = 18 * 60 * 60 * 1000;
+  if (manifestAgeMs < 0 || manifestAgeMs > maxManifestAgeMs) {
+    throw new Error(`Prefetch manifest is stale: generated at ${manifest.generatedAt}.`);
+  }
+
+  if (Number(manifest.watchlistCount ?? 0) !== entries.length) {
+    throw new Error(
+      `Prefetch manifest count mismatch: expected ${entries.length}, received ${manifest.watchlistCount ?? "unknown"}.`
+    );
+  }
+
+  if (manifestMarkets && expectedMarkets && manifestMarkets !== expectedMarkets) {
+    throw new Error(`Prefetch manifest markets mismatch: expected ${expectedMarkets}, received ${manifestMarkets}.`);
+  }
+
+  if (String(manifest.limit ?? "0") !== expectedLimit) {
+    throw new Error(`Prefetch manifest limit mismatch: expected ${expectedLimit}, received ${manifest.limit ?? "unknown"}.`);
+  }
 }
 
 async function readJsonWithRetry(filePath) {
@@ -606,6 +658,9 @@ async function main() {
   const watchlistPath = path.resolve(options.watchlist);
   const payload = JSON.parse((await readFile(watchlistPath, "utf8")).replace(/^\uFEFF/, ""));
   const entries = options.limit > 0 ? payload.tickers.slice(0, options.limit) : payload.tickers;
+  if (options.prefetchedRawDir) {
+    await validatePrefetchManifest(entries);
+  }
   const batches = chunk(entries, Math.max(options.batchSize, 1));
   const allCandidates = [];
   const batchSummaries = [];

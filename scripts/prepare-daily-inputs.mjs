@@ -1,8 +1,10 @@
 import { execFile } from "node:child_process";
+import { readFile } from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
 import { promisify } from "node:util";
 import { fileURLToPath } from "node:url";
+import pg from "pg";
 
 import { loadLocalEnv } from "./load-env.mjs";
 import { getProjectPaths, parseArgs } from "./lib/external-source-utils.mjs";
@@ -11,6 +13,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const projectRoot = path.resolve(__dirname, "..");
 const execFileAsync = promisify(execFile);
+const { Client } = pg;
 
 loadLocalEnv(projectRoot);
 
@@ -41,6 +44,40 @@ async function runScriptWithArgs(scriptName, args) {
 
   if (stderr.trim()) {
     process.stderr.write(stderr);
+  }
+}
+
+async function persistRuntimeDocument(name, payload) {
+  if (!process.env.SWING_RADAR_DATABASE_URL) {
+    return;
+  }
+
+  const client = new Client({
+    connectionString: process.env.SWING_RADAR_DATABASE_URL,
+    ssl: process.env.SWING_RADAR_DATABASE_SSL === "true" ? { rejectUnauthorized: false } : undefined
+  });
+
+  await client.connect();
+
+  try {
+    await client.query(`
+      create table if not exists runtime_documents (
+        name text primary key,
+        payload jsonb not null,
+        updated_at timestamptz not null default now()
+      )
+    `);
+    await client.query(
+      `
+      insert into runtime_documents (name, payload, updated_at)
+      values ($1, $2::jsonb, now())
+      on conflict (name)
+      do update set payload = excluded.payload, updated_at = now()
+      `,
+      [name, JSON.stringify(payload)]
+    );
+  } finally {
+    await client.end();
   }
 }
 
@@ -86,6 +123,17 @@ async function main() {
   await runScript("fetch-disclosures-source.mjs");
   await runScript("sync-external-raw.mjs");
   await runScript("refresh-validation-snapshot.mjs");
+
+  const watchlistDocument = JSON.parse((await readFile(universeWatchlistPath, "utf8")).replace(/^\uFEFF/, ""));
+  const manifest = {
+    generatedAt: new Date().toISOString(),
+    watchlistGeneratedAt: watchlistDocument.generatedAt ?? null,
+    watchlistPath: universeWatchlistPath,
+    watchlistCount: Array.isArray(watchlistDocument.tickers) ? watchlistDocument.tickers.length : 0,
+    markets,
+    limit
+  };
+  await persistRuntimeDocument("prefetch-manifest", manifest);
 
   console.log("Daily inputs prepared.");
   console.log(`- rawDir: ${rawDir}`);
