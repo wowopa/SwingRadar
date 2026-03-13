@@ -40,6 +40,12 @@ function formatDate(date) {
   return `${year}${month}${day}`;
 }
 
+function wait(delayMs) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, delayMs);
+  });
+}
+
 function resolveBusinessDates(range) {
   const businessDaysByRange = {
     "1mo": 25,
@@ -299,26 +305,42 @@ async function fetchYahooItem(entry, range) {
 async function fetchKrxDailyRows(endpoint, basDd, apiKey) {
   const baseUrl = process.env.SWING_RADAR_KRX_API_BASE_URL ?? "https://data-dbg.krx.co.kr/svc/apis";
   const authHeader = process.env.SWING_RADAR_KRX_API_AUTH_HEADER ?? "AUTH_KEY";
+  const retryLimit = Math.max(0, Number.parseInt(process.env.SWING_RADAR_KRX_API_RETRY_LIMIT ?? "4", 10));
+  const baseDelayMs = Math.max(0, Number.parseInt(process.env.SWING_RADAR_KRX_API_RETRY_DELAY_MS ?? "1500", 10));
   const url = new URL(`${baseUrl.replace(/\/$/, "")}/${endpoint}`);
   url.searchParams.set("basDd", basDd);
 
-  const response = await fetch(url, {
-    headers: {
-      [authHeader]: apiKey,
-      "User-Agent": "SWING-RADAR/0.1"
-    }
-  });
+  for (let attempt = 0; attempt <= retryLimit; attempt += 1) {
+    const response = await fetch(url, {
+      headers: {
+        [authHeader]: apiKey,
+        "User-Agent": "SWING-RADAR/0.1"
+      }
+    });
 
-  if (!response.ok) {
-    throw new Error(`KRX daily trade request failed: ${response.status} ${response.statusText} (${endpoint}, ${basDd})`);
+    if (response.ok) {
+      const payload = await response.json();
+      return Array.isArray(payload?.OutBlock_1) ? payload.OutBlock_1 : [];
+    }
+
+    const shouldRetry = response.status === 429 || response.status === 408 || response.status >= 500;
+    if (!shouldRetry || attempt === retryLimit) {
+      throw new Error(`KRX daily trade request failed: ${response.status} ${response.statusText} (${endpoint}, ${basDd})`);
+    }
+
+    const retryAfterSeconds = Number.parseInt(response.headers.get("retry-after") ?? "", 10);
+    const delayMs = Number.isFinite(retryAfterSeconds) && retryAfterSeconds > 0
+      ? retryAfterSeconds * 1000
+      : Math.min(baseDelayMs * 2 ** attempt, 15000);
+    await wait(delayMs);
   }
 
-  const payload = await response.json();
-  return Array.isArray(payload?.OutBlock_1) ? payload.OutBlock_1 : [];
+  throw new Error(`KRX daily trade request failed after retries (${endpoint}, ${basDd})`);
 }
 
 async function fetchKrxHistoryByTicker(watchlist, range) {
   const apiKey = process.env.SWING_RADAR_KRX_API_KEY;
+  const requestDelayMs = Math.max(0, Number.parseInt(process.env.SWING_RADAR_KRX_API_REQUEST_DELAY_MS ?? "250", 10));
   if (!apiKey) {
     throw new Error("SWING_RADAR_KRX_API_KEY is not configured");
   }
@@ -335,12 +357,16 @@ async function fetchKrxHistoryByTicker(watchlist, range) {
   };
 
   for (const basDd of dates) {
-    const responses = await Promise.all(
-      Object.entries(endpointByMarket).map(async ([market, endpoint]) => ({
-        market,
-        rows: await fetchKrxDailyRows(endpoint, basDd, apiKey)
-      }))
-    );
+    const responses = [];
+
+    for (const [market, endpoint] of Object.entries(endpointByMarket)) {
+      const rows = await fetchKrxDailyRows(endpoint, basDd, apiKey);
+      responses.push({ market, rows });
+
+      if (requestDelayMs > 0) {
+        await wait(requestDelayMs);
+      }
+    }
 
     for (const response of responses) {
       const tickerSet = tickersByMarket[response.market];
