@@ -33,6 +33,7 @@
     "symbols:sync": "node scripts/sync-symbol-master.mjs",
     "watchlist:auto-promote": "node scripts/auto-promote-universe-candidates.mjs --apply",
     "watchlist:refresh:entry": "node scripts/refresh-watchlist-entry.mjs",
+    "universe:prefetch": "node scripts/prepare-daily-inputs.mjs",
     "universe:watchlist": "node scripts/build-universe-watchlist.mjs",
     "universe:scan": "node scripts/scan-universe-batches.mjs",
     "universe:daily": "node scripts/run-daily-universe-cycle.mjs"
