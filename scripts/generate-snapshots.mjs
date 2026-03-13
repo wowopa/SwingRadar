@@ -69,15 +69,6 @@ function parseArgs(argv) {
   return options;
 }
 
-function getRecommendationTopLimit() {
-  const raw = Number(process.env.SWING_RADAR_RECOMMENDATION_TOP_LIMIT ?? "36");
-  if (!Number.isFinite(raw) || raw < 1) {
-    return 36;
-  }
-
-  return Math.floor(raw);
-}
-
 async function readJson(dir, filename) {
   const filePath = path.join(dir, filename);
   let lastError = null;
@@ -1467,17 +1458,6 @@ async function main() {
     previousState: previousTrackingState,
     rankingStats: buildRankingStats(candidateHistoryDocument.runs ?? [])
   });
-  const recommendationTopLimit = getRecommendationTopLimit();
-  const recommendationUniverse = new Set([
-    ...(watchlistDocument.tickers ?? []).map((entry) => entry?.ticker).filter(Boolean),
-    ...(currentDailyCandidatesDocument.topCandidates ?? [])
-      .slice(0, recommendationTopLimit)
-      .map((entry) => entry?.ticker)
-      .filter(Boolean),
-    ...trackingState.entries
-      .filter((entry) => entry.status === "watch" || entry.status === "active")
-      .map((entry) => entry.ticker)
-  ]);
   const trackingEvents = buildTrackingEventsFromState(trackingState);
   const validationByTicker = new Map(validation.items.map((item) => [item.ticker, buildMeasuredValidationItem(item)]));
   const validationProfiles = buildValidationProfiles(validation.items, trackingEvents.items, marketByTicker);
@@ -1525,31 +1505,29 @@ async function main() {
     const quality = buildQualityValue(item, coverage, validationItem);
     const marketQuality = buildMarketDataQuality(item);
 
-    if (recommendationUniverse.has(item.ticker)) {
-      recommendations.push({
-        ticker: item.ticker,
-        company: item.company,
-        sector: item.sector,
-        signalTone,
-        score,
-        signalLabel: label,
-        rationale: buildRationale(item, topNews, coverage),
-        invalidation: buildInvalidation(item),
-        invalidationDistance,
-        riskRewardRatio: score >= 22 ? "1 : 2.2" : score >= 14 ? "1 : 1.5" : "1 : 0.9",
-        validationSummary: validationItem.validationSummary,
-        validationBasis: validationItem.basis,
-        checkpoints: buildCheckpoints(item),
-        validation: {
-          hitRate: validationItem.hitRate,
-          avgReturn: validationItem.avgReturn,
-          sampleSize: validationItem.sampleSize,
-          maxDrawdown: validationItem.maxDrawdown
-        },
-        observationWindow: validationItem.observationWindow,
-        updatedAt: generatedAt.replace("T", " ").slice(0, 16)
-      });
-    }
+    recommendations.push({
+      ticker: item.ticker,
+      company: item.company,
+      sector: item.sector,
+      signalTone,
+      score,
+      signalLabel: label,
+      rationale: buildRationale(item, topNews, coverage),
+      invalidation: buildInvalidation(item),
+      invalidationDistance,
+      riskRewardRatio: score >= 22 ? "1 : 2.2" : score >= 14 ? "1 : 1.5" : "1 : 0.9",
+      validationSummary: validationItem.validationSummary,
+      validationBasis: validationItem.basis,
+      checkpoints: buildCheckpoints(item),
+      validation: {
+        hitRate: validationItem.hitRate,
+        avgReturn: validationItem.avgReturn,
+        sampleSize: validationItem.sampleSize,
+        maxDrawdown: validationItem.maxDrawdown
+      },
+      observationWindow: validationItem.observationWindow,
+      updatedAt: generatedAt.replace("T", " ").slice(0, 16)
+    });
 
     analysisItems.push({
       ticker: item.ticker,
