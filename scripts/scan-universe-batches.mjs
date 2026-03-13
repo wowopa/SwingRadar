@@ -349,6 +349,26 @@ async function readOptionalJsonFile(filePath, fallback = null) {
   }
 }
 
+async function readRuntimeDocument(name) {
+  if (!process.env.SWING_RADAR_DATABASE_URL) {
+    return null;
+  }
+
+  const client = new Client({
+    connectionString: process.env.SWING_RADAR_DATABASE_URL,
+    ssl: process.env.SWING_RADAR_DATABASE_SSL === "true" ? { rejectUnauthorized: false } : undefined
+  });
+
+  await client.connect();
+
+  try {
+    const result = await client.query("select payload from runtime_documents where name = $1", [name]);
+    return result.rows[0]?.payload ?? null;
+  } finally {
+    await client.end();
+  }
+}
+
 async function writeJsonFile(filePath, payload) {
   await mkdir(path.dirname(filePath), { recursive: true });
   await writeFile(filePath, `${JSON.stringify(payload, null, 2)}\n`, "utf8");
@@ -360,9 +380,24 @@ function filterSnapshotItemsByTickers(items, tickerSet) {
 
 async function materializePrefetchedRaw(batch, prefetchedRawDir, rawDir) {
   const tickerSet = new Set(batch.map((item) => item.ticker));
-  const marketSnapshot = await readJsonWithRetry(path.join(prefetchedRawDir, "market-snapshot.json"));
-  const newsSnapshot = await readJsonWithRetry(path.join(prefetchedRawDir, "news-snapshot.json"));
-  const validationSnapshot = await readOptionalJsonFile(path.join(prefetchedRawDir, "validation-snapshot.json"), { items: [] });
+  const marketSnapshot =
+    await readOptionalJsonFile(path.join(prefetchedRawDir, "market-snapshot.json")) ??
+    await readRuntimeDocument("market-snapshot");
+  const newsSnapshot =
+    await readOptionalJsonFile(path.join(prefetchedRawDir, "news-snapshot.json")) ??
+    await readRuntimeDocument("news-snapshot");
+  const validationSnapshot =
+    await readOptionalJsonFile(path.join(prefetchedRawDir, "validation-snapshot.json")) ??
+    await readRuntimeDocument("validation-snapshot") ??
+    { items: [] };
+
+  if (!marketSnapshot?.items?.length) {
+    throw new Error("Prefetched market snapshot is unavailable.");
+  }
+
+  if (!newsSnapshot?.items) {
+    throw new Error("Prefetched news snapshot is unavailable.");
+  }
 
   await writeJsonFile(path.join(rawDir, "market-snapshot.json"), {
     ...marketSnapshot,

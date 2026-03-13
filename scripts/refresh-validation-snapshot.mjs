@@ -2,6 +2,8 @@ import path from "node:path";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
 
+import pg from "pg";
+
 import { loadLocalEnv } from "./load-env.mjs";
 import { getProjectPaths, parseArgs, writeJson } from "./lib/external-source-utils.mjs";
 import { getRuntimePaths } from "./lib/runtime-paths.mjs";
@@ -9,6 +11,7 @@ import { getRuntimePaths } from "./lib/runtime-paths.mjs";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const projectRoot = path.resolve(__dirname, "..");
+const { Client } = pg;
 
 loadLocalEnv(projectRoot);
 
@@ -212,6 +215,40 @@ function buildTrackingValidation(entry) {
   };
 }
 
+async function persistValidationSnapshot(document) {
+  if (!process.env.SWING_RADAR_DATABASE_URL) {
+    return;
+  }
+
+  const client = new Client({
+    connectionString: process.env.SWING_RADAR_DATABASE_URL,
+    ssl: process.env.SWING_RADAR_DATABASE_SSL === "true" ? { rejectUnauthorized: false } : undefined
+  });
+
+  await client.connect();
+
+  try {
+    await client.query(`
+      create table if not exists runtime_documents (
+        name text primary key,
+        payload jsonb not null,
+        updated_at timestamptz not null default now()
+      )
+    `);
+    await client.query(
+      `
+      insert into runtime_documents (name, payload, updated_at)
+      values ($1, $2::jsonb, now())
+      on conflict (name)
+      do update set payload = excluded.payload, updated_at = now()
+      `,
+      ["validation-snapshot", JSON.stringify(document)]
+    );
+  } finally {
+    await client.end();
+  }
+}
+
 async function main() {
   const defaults = getProjectPaths(projectRoot);
   const options = parseArgs(process.argv.slice(2), {
@@ -285,11 +322,14 @@ async function main() {
 
   const items = Array.from(itemsByTicker.values()).sort((left, right) => left.ticker.localeCompare(right.ticker, "en"));
 
-  await writeJson(outFile, {
+  const document = {
     asOf: new Date().toISOString(),
     lookbackRuns,
     items
-  });
+  };
+
+  await writeJson(outFile, document);
+  await persistValidationSnapshot(document);
 
   console.log("Validation snapshot refresh completed.");
   console.log(`- items: ${items.length}`);

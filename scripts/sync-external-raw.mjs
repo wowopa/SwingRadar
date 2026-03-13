@@ -286,6 +286,7 @@ async function main() {
   await writeJson(path.join(paths.rawDir, "market-snapshot.json"), marketSnapshot);
   await writeJson(path.join(paths.rawDir, "news-snapshot.json"), newsSnapshot);
   await persistRuntimeDocuments({
+    "market-snapshot": marketSnapshot,
     "news-snapshot": newsSnapshot
   });
 
