@@ -1,5 +1,7 @@
+import { execFile } from "node:child_process";
 import path from "node:path";
 import process from "node:process";
+import { promisify } from "node:util";
 import { fileURLToPath } from "node:url";
 
 import { loadLocalEnv } from "./load-env.mjs";
@@ -8,12 +10,38 @@ import { getProjectPaths, parseArgs } from "./lib/external-source-utils.mjs";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const projectRoot = path.resolve(__dirname, "..");
+const execFileAsync = promisify(execFile);
 
 loadLocalEnv(projectRoot);
 
 async function runScript(scriptName) {
-  const scriptUrl = new URL(`./${scriptName}`, import.meta.url);
-  await import(scriptUrl);
+  const { stdout, stderr } = await execFileAsync(process.execPath, [path.join(projectRoot, "scripts", scriptName)], {
+    cwd: projectRoot,
+    env: process.env
+  });
+
+  if (stdout.trim()) {
+    process.stdout.write(stdout);
+  }
+
+  if (stderr.trim()) {
+    process.stderr.write(stderr);
+  }
+}
+
+async function runScriptWithArgs(scriptName, args) {
+  const { stdout, stderr } = await execFileAsync(process.execPath, [path.join(projectRoot, "scripts", scriptName), ...args], {
+    cwd: projectRoot,
+    env: process.env
+  });
+
+  if (stdout.trim()) {
+    process.stdout.write(stdout);
+  }
+
+  if (stderr.trim()) {
+    process.stderr.write(stderr);
+  }
 }
 
 function printHelp() {
@@ -37,21 +65,31 @@ async function main() {
   }
 
   const rawDir = path.resolve(options.rawDir);
-  process.env.SWING_RADAR_RAW_DATA_DIR = rawDir;
+  const universeWatchlistPath = path.join(defaults.runtimeConfigDir, "watchlist.universe.json");
+  const markets = process.env.SWING_RADAR_UNIVERSE_MARKETS ?? "KOSPI,KOSDAQ";
+  const limit = process.env.SWING_RADAR_UNIVERSE_LIMIT ?? "0";
 
-  process.argv = [process.argv[0], process.argv[1]];
+  process.env.SWING_RADAR_RAW_DATA_DIR = rawDir;
+  process.env.SWING_RADAR_WATCHLIST_FILE = universeWatchlistPath;
+
+  await runScriptWithArgs("build-universe-watchlist.mjs", [
+    "--output",
+    universeWatchlistPath,
+    "--markets",
+    markets,
+    "--limit",
+    limit
+  ]);
+
   await runScript("fetch-market-source.mjs");
-  process.argv = [process.argv[0], process.argv[1]];
   await runScript("fetch-news-source.mjs");
-  process.argv = [process.argv[0], process.argv[1]];
   await runScript("fetch-disclosures-source.mjs");
-  process.argv = [process.argv[0], process.argv[1]];
   await runScript("sync-external-raw.mjs");
-  process.argv = [process.argv[0], process.argv[1]];
   await runScript("refresh-validation-snapshot.mjs");
 
   console.log("Daily inputs prepared.");
   console.log(`- rawDir: ${rawDir}`);
+  console.log(`- watchlist: ${universeWatchlistPath}`);
 }
 
 main().catch((error) => {
