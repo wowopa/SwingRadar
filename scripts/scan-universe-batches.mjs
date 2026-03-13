@@ -24,7 +24,7 @@ function printHelp() {
 SWING-RADAR universe batch scan
 
 Usage:
-  node scripts/scan-universe-batches.mjs [--watchlist <path>] [--batch-size <number>] [--concurrency <number>] [--top-candidates <number>] [--limit <number>] [--output <path>] [--skip-ingest] [--news-provider <naver|gnews|file>] [--disclosure-provider <dart|file>]
+  node scripts/scan-universe-batches.mjs [--watchlist <path>] [--batch-size <number>] [--concurrency <number>] [--top-candidates <number>] [--limit <number>] [--output <path>] [--skip-ingest] [--prefetched-raw-dir <path>] [--news-provider <naver|gnews|file>] [--disclosure-provider <dart|file>]
 `);
 }
 
@@ -38,6 +38,7 @@ function parseArgs(argv) {
     limit: 0,
     output: path.join(runtimePaths.universeDir, "daily-candidates.json"),
     skipIngest: false,
+    prefetchedRawDir: null,
     newsProvider: process.env.SWING_RADAR_NEWS_PROVIDER,
     disclosureProvider: process.env.SWING_RADAR_DISCLOSURE_PROVIDER
   };
@@ -75,6 +76,11 @@ function parseArgs(argv) {
     }
     if (arg === "--output") {
       options.output = argv[index + 1];
+      index += 1;
+      continue;
+    }
+    if (arg === "--prefetched-raw-dir") {
+      options.prefetchedRawDir = argv[index + 1];
       index += 1;
       continue;
     }
@@ -332,6 +338,46 @@ async function fileExists(filePath) {
   }
 }
 
+async function readOptionalJsonFile(filePath, fallback = null) {
+  try {
+    return await readJsonWithRetry(filePath);
+  } catch (error) {
+    if (error && typeof error === "object" && "code" in error && error.code === "ENOENT") {
+      return fallback;
+    }
+    throw error;
+  }
+}
+
+async function writeJsonFile(filePath, payload) {
+  await mkdir(path.dirname(filePath), { recursive: true });
+  await writeFile(filePath, `${JSON.stringify(payload, null, 2)}\n`, "utf8");
+}
+
+function filterSnapshotItemsByTickers(items, tickerSet) {
+  return (items ?? []).filter((item) => item?.ticker && tickerSet.has(item.ticker));
+}
+
+async function materializePrefetchedRaw(batch, prefetchedRawDir, rawDir) {
+  const tickerSet = new Set(batch.map((item) => item.ticker));
+  const marketSnapshot = await readJsonWithRetry(path.join(prefetchedRawDir, "market-snapshot.json"));
+  const newsSnapshot = await readJsonWithRetry(path.join(prefetchedRawDir, "news-snapshot.json"));
+  const validationSnapshot = await readOptionalJsonFile(path.join(prefetchedRawDir, "validation-snapshot.json"), { items: [] });
+
+  await writeJsonFile(path.join(rawDir, "market-snapshot.json"), {
+    ...marketSnapshot,
+    items: filterSnapshotItemsByTickers(marketSnapshot.items, tickerSet)
+  });
+  await writeJsonFile(path.join(rawDir, "news-snapshot.json"), {
+    ...newsSnapshot,
+    items: filterSnapshotItemsByTickers(newsSnapshot.items, tickerSet)
+  });
+  await writeJsonFile(path.join(rawDir, "validation-snapshot.json"), {
+    ...validationSnapshot,
+    items: filterSnapshotItemsByTickers(validationSnapshot.items, tickerSet)
+  });
+}
+
 async function readJsonWithRetry(filePath) {
   let lastError = null;
 
@@ -413,19 +459,28 @@ async function runBatch(batch, index, tempRoot, options) {
   const env = buildBatchEnv(process.env, batchWatchlistPath, rawDir, liveDir, options);
   const errors = [];
 
-  for (const scriptName of [
-    "fetch-market-source.mjs",
-    "fetch-news-source.mjs",
-    "fetch-disclosures-source.mjs",
-    "sync-external-raw.mjs",
-    "generate-snapshots.mjs"
-  ]) {
+  if (options.prefetchedRawDir) {
     try {
-      await runNodeScript(scriptName, [], env);
+      await materializePrefetchedRaw(batch, path.resolve(options.prefetchedRawDir), rawDir);
+      await runNodeScript("generate-snapshots.mjs", ["--raw-dir", rawDir, "--out-dir", liveDir], env);
     } catch (error) {
-      errors.push(`${scriptName}: ${error instanceof Error ? error.message : error}`);
-      if (scriptName === "fetch-market-source.mjs" || scriptName === "sync-external-raw.mjs" || scriptName === "generate-snapshots.mjs") {
-        break;
+      errors.push(`prefetched-generate: ${error instanceof Error ? error.message : error}`);
+    }
+  } else {
+    for (const scriptName of [
+      "fetch-market-source.mjs",
+      "fetch-news-source.mjs",
+      "fetch-disclosures-source.mjs",
+      "sync-external-raw.mjs",
+      "generate-snapshots.mjs"
+    ]) {
+      try {
+        await runNodeScript(scriptName, [], env);
+      } catch (error) {
+        errors.push(`${scriptName}: ${error instanceof Error ? error.message : error}`);
+        if (scriptName === "fetch-market-source.mjs" || scriptName === "sync-external-raw.mjs" || scriptName === "generate-snapshots.mjs") {
+          break;
+        }
       }
     }
   }

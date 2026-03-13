@@ -21,7 +21,7 @@ function printHelp() {
 SWING-RADAR daily universe refresh
 
 Usage:
-  node scripts/run-daily-universe-cycle.mjs [--markets <KOSPI,KOSDAQ>] [--limit <number>] [--batch-size <number>] [--concurrency <number>] [--top-candidates <number>] [--skip-ingest] [--sync-symbols] [--auto-promote]
+  node scripts/run-daily-universe-cycle.mjs [--markets <KOSPI,KOSDAQ>] [--limit <number>] [--batch-size <number>] [--concurrency <number>] [--top-candidates <number>] [--skip-ingest] [--skip-prefetch] [--sync-symbols] [--auto-promote]
 
 Environment:
   SWING_RADAR_UNIVERSE_MARKETS
@@ -42,6 +42,7 @@ function parseArgs(argv) {
     concurrency: process.env.SWING_RADAR_UNIVERSE_CONCURRENCY ?? "1",
     topCandidates: process.env.SWING_RADAR_UNIVERSE_TOP_CANDIDATES ?? "100",
     skipIngest: false,
+    skipPrefetch: false,
     syncSymbols: process.env.SWING_RADAR_SYMBOL_SYNC_ENABLED === "true",
     autoPromote: process.env.SWING_RADAR_AUTO_PROMOTION_ENABLED === "true",
     help: false
@@ -80,6 +81,10 @@ function parseArgs(argv) {
     }
     if (arg === "--skip-ingest") {
       options.skipIngest = true;
+      continue;
+    }
+    if (arg === "--skip-prefetch") {
+      options.skipPrefetch = true;
       continue;
     }
     if (arg === "--sync-symbols") {
@@ -208,13 +213,27 @@ async function main() {
       watchlistArgs.push("--limit", options.limit);
     }
 
-    const scanArgs = ["--batch-size", options.batchSize, "--concurrency", options.concurrency, "--top-candidates", options.topCandidates];
+    const scanArgs = [
+      "--batch-size",
+      options.batchSize,
+      "--concurrency",
+      options.concurrency,
+      "--top-candidates",
+      options.topCandidates,
+      "--prefetched-raw-dir",
+      getRuntimePaths(projectRoot).rawDir
+    ];
     if (options.skipIngest) {
       scanArgs.push("--skip-ingest");
     }
 
     console.log("[daily-cycle] start: universe watchlist build");
     await runStep(report, "watchlist-build", () => runScript("build-universe-watchlist.mjs", watchlistArgs));
+
+    if (!options.skipPrefetch) {
+      console.log("[daily-cycle] start: input prefetch");
+      await runStep(report, "input-prefetch", () => runScript("prepare-daily-inputs.mjs", ["--raw-dir", getRuntimePaths(projectRoot).rawDir]));
+    }
 
     console.log("[daily-cycle] start: universe batch scan");
     await runStep(report, "universe-scan", () => runScript("scan-universe-batches.mjs", scanArgs));
