@@ -243,6 +243,40 @@ function shouldExcludeCandidate(currentPrice, averageTurnover20, thresholds) {
   return false;
 }
 
+function meetsCandidateGate({ item, detail, market, candidateScore, thresholds, eventCoverage }) {
+  const validation = item.validation ?? {};
+  const hitRate = Number(validation.hitRate ?? 0);
+  const sampleSize = Number(validation.sampleSize ?? 0);
+  const validationBasis = String(item.validationBasis ?? "");
+  const marketQualityScore = Number(market?.qualityScore ?? 0);
+
+  if (Number(item.score ?? 0) < thresholds.minScore) {
+    return false;
+  }
+
+  if (candidateScore < thresholds.minCandidateScore) {
+    return false;
+  }
+
+  if (item.signalTone === "주의") {
+    return false;
+  }
+
+  if (hitRate < thresholds.minValidationHitRate) {
+    return false;
+  }
+
+  if (sampleSize < thresholds.minValidationSampleSize && validationBasis === "보수 계산") {
+    return false;
+  }
+
+  if (eventCoverage === "취약" && marketQualityScore < thresholds.minQualityScore) {
+    return false;
+  }
+
+  return true;
+}
+
 function scoreCandidates(recommendations, analysis, marketItemsByTicker, batchIndex, thresholds) {
   const analysisByTicker = new Map(analysis.items.map((item) => [item.ticker, item]));
   return recommendations.items.flatMap((item) => {
@@ -271,6 +305,10 @@ function scoreCandidates(recommendations, analysis, marketItemsByTicker, batchIn
       volumeRatio,
       signalTone: item.signalTone
     });
+
+    if (!meetsCandidateGate({ item, detail, market, candidateScore, thresholds, eventCoverage })) {
+      return [];
+    }
 
     return [{
       batch: batchIndex + 1,
@@ -602,11 +640,16 @@ async function runBatch(batch, index, tempRoot, options) {
   }
 
   const thresholds = {
-    minPrice: normalizePositiveNumber(process.env.SWING_RADAR_RANKING_MIN_PRICE ?? "2000", 2000),
+    minPrice: normalizePositiveNumber(process.env.SWING_RADAR_RANKING_MIN_PRICE ?? "3000", 3000),
     minAverageTurnover20: normalizePositiveNumber(
-      process.env.SWING_RADAR_RANKING_MIN_AVG_TURNOVER20 ?? "1500000000",
-      1_500_000_000
-    )
+      process.env.SWING_RADAR_RANKING_MIN_AVG_TURNOVER20 ?? "5000000000",
+      5_000_000_000
+    ),
+    minScore: normalizePositiveNumber(process.env.SWING_RADAR_CANDIDATE_MIN_SCORE ?? "18", 18),
+    minCandidateScore: normalizePositiveNumber(process.env.SWING_RADAR_CANDIDATE_MIN_CANDIDATE_SCORE ?? "24", 24),
+    minValidationHitRate: normalizePositiveNumber(process.env.SWING_RADAR_CANDIDATE_MIN_HIT_RATE ?? "48", 48),
+    minValidationSampleSize: normalizePositiveNumber(process.env.SWING_RADAR_CANDIDATE_MIN_SAMPLE_SIZE ?? "8", 8),
+    minQualityScore: normalizePositiveNumber(process.env.SWING_RADAR_CANDIDATE_MIN_QUALITY_SCORE ?? "10", 10)
   };
   const candidates = scoreCandidates(recommendations, analysis, marketItemsByTicker, index, thresholds);
 
