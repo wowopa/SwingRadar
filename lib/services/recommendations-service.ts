@@ -5,6 +5,7 @@ import type { RecommendationsQuery } from "@/lib/server/query-schemas";
 
 export async function listRecommendations(query: RecommendationsQuery): Promise<RecommendationsResponseDto> {
   const [source, dailyCandidates] = await Promise.all([getDataProvider().getRecommendations(), getDailyCandidates()]);
+  const sourceByTicker = new Map(source.items.map((item) => [item.ticker, item]));
 
   const featuredCandidateMap = new Map(
     (dailyCandidates?.topCandidates ?? []).map((candidate, index) => [
@@ -18,19 +19,35 @@ export async function listRecommendations(query: RecommendationsQuery): Promise<
     ])
   );
 
-  let items = source.items.map((item) => {
-    const candidate = featuredCandidateMap.get(item.ticker);
-    return candidate
-      ? {
+  let items = dailyCandidates
+    ? dailyCandidates.topCandidates.flatMap((candidate, index) => {
+        const item = sourceByTicker.get(candidate.ticker);
+        if (!item) {
+          return [];
+        }
+
+        return [{
           ...item,
-          score: dailyCandidates?.topCandidates.find((entry) => entry.ticker === item.ticker)?.score ?? item.score,
-          featuredRank: candidate.rank,
+          score: candidate.score ?? item.score,
+          featuredRank: index + 1,
           candidateScore: candidate.candidateScore,
           eventCoverage: candidate.eventCoverage,
           candidateBatch: candidate.batch
-        }
-      : item;
-  });
+        }];
+      })
+    : source.items.map((item) => {
+        const candidate = featuredCandidateMap.get(item.ticker);
+        return candidate
+          ? {
+              ...item,
+              score: item.score,
+              featuredRank: candidate.rank,
+              candidateScore: candidate.candidateScore,
+              eventCoverage: candidate.eventCoverage,
+              candidateBatch: candidate.batch
+            }
+          : item;
+      });
 
   if (query.signalTone) {
     items = items.filter((item) => item.signalTone === query.signalTone);
