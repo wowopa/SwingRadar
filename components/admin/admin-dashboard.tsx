@@ -124,7 +124,18 @@ export function AdminDashboard() {
 
   async function fetchJson<T>(input: RequestInfo, init?: RequestInit) {
     const response = await fetch(input, { ...init, cache: "no-store" });
-    const json = (await response.json().catch(() => ({}))) as T & { error?: { message?: string } };
+    const json = (await response.json().catch(() => ({}))) as T & {
+      error?: { message?: string };
+      message?: string;
+      code?: string;
+      requestId?: string;
+    };
+
+    if (!response.ok) {
+      const message = json?.error?.message ?? json?.message ?? `요청이 실패했습니다. (${response.status})`;
+      const withCode = json?.code ? `${message} [${json.code}]` : message;
+      throw new Error(json?.requestId ? `${withCode} (request: ${json.requestId})` : withCode);
+    }
 
     if (!response.ok) {
       throw new Error(json?.error?.message ?? `요청이 실패했습니다. (${response.status})`);
