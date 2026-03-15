@@ -81,7 +81,7 @@ describe("promoteUniverseCandidate", () => {
         ticker: "UNKNOWN",
         updatedBy: "admin-editor"
       })
-    ).rejects.toMatchObject<ApiError>({
+    ).rejects.toMatchObject({
       code: "UNIVERSE_CANDIDATE_NOT_FOUND",
       status: 404
     });

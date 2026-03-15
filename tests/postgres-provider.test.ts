@@ -72,7 +72,7 @@ describe("postgresDataProvider", () => {
       query: vi.fn().mockResolvedValue({ rows: [] })
     });
 
-    await expect(postgresDataProvider.getRecommendations()).rejects.toMatchObject<ApiError>({
+    await expect(postgresDataProvider.getRecommendations()).rejects.toMatchObject({
       code: "RECOMMENDATIONS_EMPTY",
       status: 404
     });
