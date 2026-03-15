@@ -836,6 +836,94 @@ function buildTrackingNews(newsItems) {
   }));
 }
 
+function formatTrackingAmount(value) {
+  if (!Number.isFinite(value) || value <= 0) {
+    return "정보 부족";
+  }
+
+  if (value >= 1000000000000) {
+    return `${roundNumber(value / 1000000000000, 1) ?? 0}조원`;
+  }
+
+  return `${roundNumber(value / 100000000, 1) ?? 0}억원`;
+}
+
+function formatTrackingPrice(value) {
+  if (!Number.isFinite(value) || value <= 0) {
+    return "정보 부족";
+  }
+
+  return `${Math.round(value).toLocaleString("ko-KR")}원`;
+}
+
+function resolveTrackingSelectionStage(entry) {
+  if (!entry) {
+    return "공용 추적";
+  }
+
+  if (entry.status === "active" || entry.startedAt) {
+    return "진입 추적";
+  }
+
+  return "감시 편입";
+}
+
+function buildTrackingSelectionContext({ recommendation, marketItem, stateEntry, config }) {
+  const stage = resolveTrackingSelectionStage(stateEntry);
+  const company = recommendation?.company ?? marketItem?.company ?? stateEntry?.company ?? stateEntry?.ticker ?? "해당 종목";
+  const appearances = stateEntry?.appearances ?? 0;
+  const latestRank = stateEntry?.latestRank ?? null;
+  const activationScore = roundNumber(Number(stateEntry?.activationScore ?? 0), 1) ?? 0;
+  const activationThreshold = stage === "진입 추적" ? config.minEntryActivationScore : config.minWatchActivationScore;
+  const averageTurnover20 = marketItem ? getAverageTurnover20(marketItem) : 0;
+  const signalTone = recommendation?.signalTone ?? KO.neutral;
+  const rankLabel = latestRank ? `${latestRank}위` : "순위 기록 없음";
+  const appearanceLabel = appearances > 0 ? `${appearances}회` : "첫 편입";
+  const turnoverLabel = formatTrackingAmount(averageTurnover20);
+  const currentPrice = Number(marketItem?.currentPrice ?? stateEntry?.currentPrice ?? 0);
+  const invalidationPrice = Number(stateEntry?.invalidationPrice ?? marketItem?.invalidationPrice ?? 0);
+  const structureNote =
+    currentPrice > 0 && invalidationPrice > 0
+      ? currentPrice > invalidationPrice
+        ? `현재 가격 ${formatTrackingPrice(currentPrice)}이(가) 무효화 기준 ${formatTrackingPrice(invalidationPrice)} 위에 있어 구조를 유지하고 있습니다.`
+        : `현재 가격이 무효화 기준 ${formatTrackingPrice(invalidationPrice)}에 가까워 추가 확인이 필요합니다.`
+      : "가격 구조 확인 데이터는 계속 보강 중입니다.";
+  const toneNote =
+    signalTone === KO.neutral
+      ? "현재 추천 톤은 중립이지만, 공용 추적은 즉시 매수 신호보다 반복 등장, 유동성, 가격 구조 확인을 우선해 편입합니다."
+      : signalTone === KO.positive
+        ? "현재 추천 톤도 긍정 구간이라 추적 우선순위가 높은 편입니다."
+        : "현재 추천 톤은 주의지만, 공용 추적은 경계 구간의 구조 회복 여부를 다시 보는 감시 단계로도 활용합니다.";
+
+  const selectionReason =
+    stage === "진입 추적"
+      ? `${company}는 최근 상위 후보에 ${appearanceLabel} 등장했고 최신 순위는 ${rankLabel}입니다. 20일 평균 거래대금 ${turnoverLabel}, 활성화 점수 ${activationScore}점으로 진입 추적 기준 ${activationThreshold}점을 충족해 공용 추적 진행 대상으로 승격했습니다. ${toneNote} ${structureNote}`
+      : `${company}는 최근 상위 후보에 ${appearanceLabel} 등장했고 최신 순위는 ${rankLabel}입니다. 20일 평균 거래대금 ${turnoverLabel}, 활성화 점수 ${activationScore}점으로 감시 편입 기준 ${activationThreshold}점을 충족해 공용 추적 대상에 편입했습니다. ${toneNote} ${structureNote}`;
+
+  const selectionHighlights = [
+    `최근 상위 후보 ${appearanceLabel}, 최신 순위 ${rankLabel}`,
+    `활성화 점수 ${activationScore}점 / ${stage === "진입 추적" ? "진입" : "감시"} 기준 ${activationThreshold}점`,
+    `20일 평균 거래대금 ${turnoverLabel}`,
+    signalTone === KO.neutral
+      ? "현재 톤은 중립이지만, 공용 추적은 톤보다 반복 등장과 유동성, 가격 구조를 우선합니다."
+      : signalTone === KO.positive
+        ? "현재 톤이 긍정이라 추적 우선순위를 더 높게 봅니다."
+        : "현재 톤은 주의지만, 감시 단계에서 구조 회복 여부를 다시 확인합니다."
+  ];
+
+  if (stage === "진입 추적" && Number(stateEntry?.entryPrice ?? 0) > 0 && Number(stateEntry?.invalidationPrice ?? 0) > 0) {
+    selectionHighlights.push(
+      `진입 기준 ${formatTrackingPrice(Number(stateEntry.entryPrice))}, 무효화 기준 ${formatTrackingPrice(Number(stateEntry.invalidationPrice))}`
+    );
+  }
+
+  return {
+    selectionStage: stage,
+    selectionReason,
+    selectionHighlights
+  };
+}
+
 function buildTrackingSummary(item, recommendation, validationItem) {
   const company = recommendation?.company ?? item.ticker;
   const hitRate = validationItem?.hitRate ?? 0;
@@ -1367,12 +1455,15 @@ function buildTrackingEventsFromState(state) {
           status: entry.status,
           mfe: 0,
           mae: 0,
+          currentReturn: 0,
           holdingDays: entry.holdingDays
         };
       }
 
       const mfe = entry.entryPrice > 0 ? roundNumber(((entry.highestPrice - entry.entryPrice) / entry.entryPrice) * 100, 1) ?? 0 : 0;
       const mae = entry.entryPrice > 0 ? roundNumber(((entry.lowestPrice - entry.entryPrice) / entry.entryPrice) * 100, 1) ?? 0 : 0;
+      const currentReturn =
+        entry.entryPrice > 0 ? roundNumber(((entry.currentPrice - entry.entryPrice) / entry.entryPrice) * 100, 1) ?? 0 : 0;
 
       return {
         historyId: entry.id,
@@ -1383,6 +1474,7 @@ function buildTrackingEventsFromState(state) {
         status: entry.status,
         mfe,
         mae,
+        currentReturn,
         holdingDays: entry.holdingDays
       };
     })
@@ -1596,6 +1688,7 @@ async function main() {
     return left.company.localeCompare(right.company, "ko");
   });
 
+  const trackingConfig = getTrackingConfig();
   const recommendationByTicker = new Map(recommendations.map((item) => [item.ticker, item]));
 
   const trackingStateById = new Map(trackingState.entries.map((entry) => [entry.id, entry]));
@@ -1604,6 +1697,12 @@ async function main() {
     const marketItem = marketByTicker.get(item.ticker);
     const recommendation = recommendationByTicker.get(item.ticker);
     const stateEntry = trackingStateById.get(item.historyId);
+    const selection = buildTrackingSelectionContext({
+      recommendation,
+      marketItem,
+      stateEntry,
+      config: trackingConfig
+    });
 
     return {
       id: item.historyId,
@@ -1618,7 +1717,10 @@ async function main() {
       result: mapTrackingStateToResult(stateEntry?.status),
       mfe: item.mfe,
       mae: item.mae,
-      holdingDays: item.holdingDays
+      currentReturn: item.currentReturn ?? 0,
+      holdingDays: item.holdingDays,
+      selectionStage: selection.selectionStage,
+      selectionReason: selection.selectionReason
     };
   });
 
@@ -1630,12 +1732,22 @@ async function main() {
       const tickerNews = newsByTicker.get(item.ticker) ?? [];
       const coverage = summarizeEventCoverage(tickerNews);
       const stateEntry = trackingStateById.get(item.historyId);
+      const marketItem = marketByTicker.get(item.ticker);
       const basePrice = stateEntry?.entryPrice ?? marketByTicker.get(item.ticker)?.currentPrice ?? 100000;
+      const selection = buildTrackingSelectionContext({
+        recommendation,
+        marketItem,
+        stateEntry,
+        config: trackingConfig
+      });
 
       return [
         item.historyId,
         {
           historyId: item.historyId,
+          selectionStage: selection.selectionStage,
+          selectionReason: selection.selectionReason,
+          selectionHighlights: selection.selectionHighlights,
           summary: buildTrackingSummary(history, recommendation, validationItem),
           invalidationReview: buildInvalidationReview(history, recommendation),
           afterActionReview: buildAfterActionReview(history, validationItem),

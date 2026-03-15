@@ -13,7 +13,10 @@ export interface SignalHistoryEntry {
   result: "감시중" | "진행중" | "성공" | "실패" | "무효화";
   mfe: number;
   mae: number;
+  currentReturn?: number;
   holdingDays: number;
+  selectionStage?: string;
+  selectionReason?: string;
 }
 
 export interface HistoricalSnapshotPoint {
@@ -47,6 +50,9 @@ export interface TrackingMetric {
 
 export interface TrackingDetail {
   historyId: string;
+  selectionStage?: string;
+  selectionReason?: string;
+  selectionHighlights?: string[];
   summary: string;
   invalidationReview: string;
   afterActionReview: string;

@@ -2,17 +2,52 @@ import { FavoriteTickerButton } from "@/components/shared/favorite-ticker-button
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getSymbolByTicker } from "@/lib/symbols/master";
 import { formatPercent } from "@/lib/utils";
-import type { SignalHistoryEntry } from "@/types/tracking";
+import type { SignalHistoryEntry, TrackingDetail } from "@/types/tracking";
 
 interface HistoryTableProps {
   items: SignalHistoryEntry[];
+  details: Record<string, TrackingDetail>;
   activeId: string;
   favoriteTickers: string[];
   onSelect: (id: string) => void;
   onToggleFavorite: (ticker: string) => void;
 }
 
-export function HistoryTable({ items, activeId, favoriteTickers, onSelect, onToggleFavorite }: HistoryTableProps) {
+function resolveCurrentReturn(item: SignalHistoryEntry, detail?: TrackingDetail) {
+  if (typeof item.currentReturn === "number") {
+    return item.currentReturn;
+  }
+
+  const firstPoint = detail?.chartSnapshot?.[0]?.price;
+  const lastPoint = detail?.chartSnapshot?.at(-1)?.price;
+  if (!firstPoint || !lastPoint) {
+    return null;
+  }
+
+  return ((lastPoint - firstPoint) / firstPoint) * 100;
+}
+
+function getReturnTone(currentReturn: number | null) {
+  if (currentReturn === null) {
+    return "text-foreground/60";
+  }
+  if (currentReturn > 0) {
+    return "text-positive";
+  }
+  if (currentReturn < 0) {
+    return "text-caution";
+  }
+  return "text-foreground/80";
+}
+
+export function HistoryTable({
+  items,
+  details,
+  activeId,
+  favoriteTickers,
+  onSelect,
+  onToggleFavorite
+}: HistoryTableProps) {
   return (
     <Card>
       <CardHeader>
@@ -20,7 +55,7 @@ export function HistoryTable({ items, activeId, favoriteTickers, onSelect, onTog
       </CardHeader>
       <CardContent>
         <div className="w-full overflow-x-auto overscroll-x-contain pb-2 [webkit-overflow-scrolling:touch]">
-          <table className="min-w-[900px] w-full table-fixed text-left text-sm">
+          <table className="min-w-[1160px] w-full table-fixed text-left text-sm">
             <thead className="text-xs text-muted-foreground">
               <tr className="border-b border-border">
                 <th className="whitespace-nowrap pb-3 pr-5">즐겨찾기</th>
@@ -28,9 +63,10 @@ export function HistoryTable({ items, activeId, favoriteTickers, onSelect, onTog
                 <th className="whitespace-nowrap pb-3 pr-5">시작일</th>
                 <th className="whitespace-nowrap pb-3 pr-5">톤</th>
                 <th className="whitespace-nowrap pb-3 pr-5">상태</th>
-                <th className="whitespace-nowrap pb-3 pr-5">최대상승</th>
-                <th className="whitespace-nowrap pb-3 pr-5">최대하락</th>
+                <th className="whitespace-nowrap pb-3 pr-5">최대 상승</th>
+                <th className="whitespace-nowrap pb-3 pr-5">최대 하락</th>
                 <th className="whitespace-nowrap pb-3 pr-5">보유일</th>
+                <th className="whitespace-nowrap pb-3 pr-5">현재 수익률</th>
                 <th className="whitespace-nowrap pb-3">상세</th>
               </tr>
             </thead>
@@ -38,6 +74,9 @@ export function HistoryTable({ items, activeId, favoriteTickers, onSelect, onTog
               {items.map((item) => {
                 const resolved = getSymbolByTicker(item.ticker);
                 const company = resolved?.company ?? item.company;
+                const currentReturn = resolveCurrentReturn(item, details[item.id]);
+                const selectionReason = item.selectionReason ?? details[item.id]?.selectionReason;
+                const selectionStage = item.selectionStage ?? details[item.id]?.selectionStage;
 
                 return (
                   <tr
@@ -54,6 +93,12 @@ export function HistoryTable({ items, activeId, favoriteTickers, onSelect, onTog
                     <td className="py-4 pr-5">
                       <div className="font-medium text-foreground">{company}</div>
                       <div className="text-xs text-muted-foreground">{item.ticker}</div>
+                      {selectionReason ? (
+                        <p className="mt-2 line-clamp-2 text-xs leading-5 text-muted-foreground">
+                          {selectionStage ? `${selectionStage}: ` : ""}
+                          {selectionReason}
+                        </p>
+                      ) : null}
                     </td>
                     <td className="py-4 pr-5 text-foreground/80">{item.signalDate}</td>
                     <td className="py-4 pr-5">
@@ -65,6 +110,9 @@ export function HistoryTable({ items, activeId, favoriteTickers, onSelect, onTog
                     <td className="py-4 pr-5 text-positive">{formatPercent(item.mfe)}</td>
                     <td className="py-4 pr-5 text-caution">{formatPercent(item.mae)}</td>
                     <td className="py-4 pr-5 text-foreground/80">{item.holdingDays}일</td>
+                    <td className={`py-4 pr-5 ${getReturnTone(currentReturn)}`}>
+                      {currentReturn === null ? "-" : formatPercent(currentReturn)}
+                    </td>
                     <td className="py-4">
                       <button
                         className="rounded-lg border border-border px-3 py-1.5 text-sm text-primary transition hover:border-primary/30 hover:bg-accent"
