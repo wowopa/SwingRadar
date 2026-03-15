@@ -34,6 +34,33 @@ function formatStatusLabel(entry: SignalHistoryEntry) {
   return `${entry.result} · ${entry.closedReason}`;
 }
 
+function resolveCurrentReturn(entry: SignalHistoryEntry, detail?: TrackingDetail) {
+  if (typeof entry.currentReturn === "number") {
+    return entry.currentReturn;
+  }
+
+  const firstPoint = detail?.chartSnapshot?.[0]?.price;
+  const lastPoint = detail?.chartSnapshot?.at(-1)?.price;
+  if (!firstPoint || !lastPoint) {
+    return null;
+  }
+
+  return ((lastPoint - firstPoint) / firstPoint) * 100;
+}
+
+function getCurrentReturnTone(currentReturn: number | null) {
+  if (currentReturn === null) {
+    return undefined;
+  }
+  if (currentReturn > 0) {
+    return "text-positive";
+  }
+  if (currentReturn < 0) {
+    return "text-caution";
+  }
+  return undefined;
+}
+
 export function TrackingDetailPanel({ history, details }: TrackingDetailPanelProps) {
   const [activeId, setActiveId] = useState("");
   const [query, setQuery] = useState("");
@@ -82,6 +109,7 @@ export function TrackingDetailPanel({ history, details }: TrackingDetailPanelPro
   const activeSymbol = activeEntry ? getSymbolByTicker(activeEntry.ticker) : undefined;
   const activeCompany = activeSymbol?.company ?? activeEntry?.company;
   const activeSector = activeSymbol?.sector ?? "기타";
+  const activeCurrentReturn = activeEntry ? resolveCurrentReturn(activeEntry, activeDetail) : null;
 
   return (
     <TooltipProvider>
@@ -92,7 +120,9 @@ export function TrackingDetailPanel({ history, details }: TrackingDetailPanelPro
           <CardHeader className="flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div>
               <CardTitle>공용 추적 기록 찾기</CardTitle>
-              <p className="mt-2 text-sm text-muted-foreground">종목, 상태, 업종, 즐겨찾기 기준으로 공용 추적 기록을 빠르게 고를 수 있습니다.</p>
+              <p className="mt-2 text-sm text-muted-foreground">
+                종목, 상태, 업종, 즐겨찾기 기준으로 공용 추적 기록을 빠르게 고를 수 있습니다.
+              </p>
             </div>
             <div className="grid w-full gap-3 lg:max-w-5xl lg:grid-cols-[1fr_180px_180px_180px]">
               <Input placeholder="종목명, 티커, 업종 검색" value={query} onChange={(event) => setQuery(event.target.value)} />
@@ -137,6 +167,7 @@ export function TrackingDetailPanel({ history, details }: TrackingDetailPanelPro
             {filteredHistory.length ? (
               <HistoryTable
                 items={filteredHistory}
+                details={details}
                 activeId={activeId}
                 favoriteTickers={favorites}
                 onSelect={setActiveId}
@@ -144,7 +175,7 @@ export function TrackingDetailPanel({ history, details }: TrackingDetailPanelPro
               />
             ) : (
               <div className="rounded-2xl border border-border/70 bg-secondary/20 px-4 py-6 text-sm leading-6 text-muted-foreground">
-                조건에 맞는 공용 추적 기록이 아직 없습니다. 검색어나 상태, 업종 필터를 조금 넓혀 보세요.
+                조건에 맞는 공용 추적 기록이 아직 없습니다. 검색어와 상태, 업종 필터를 조금 넓혀 보세요.
               </div>
             )}
           </CardContent>
@@ -171,10 +202,15 @@ export function TrackingDetailPanel({ history, details }: TrackingDetailPanelPro
                   {activeSector} · 시작일 {activeEntry.signalDate} · {favorites.includes(activeEntry.ticker) ? "즐겨찾기 등록 종목" : "공용 추적 종목"}
                 </p>
               </CardHeader>
-              <CardContent className="grid gap-4 md:grid-cols-4">
+              <CardContent className="grid gap-4 md:grid-cols-5">
                 <SummaryMetric label="현재 상태" value={formatStatusLabel(activeEntry)} />
                 <SummaryMetric label="최대 상승" value={formatPercent(activeEntry.mfe)} emphasis="text-positive" />
                 <SummaryMetric label="최대 하락" value={formatPercent(activeEntry.mae)} emphasis="text-caution" />
+                <SummaryMetric
+                  label="현재 수익률"
+                  value={activeCurrentReturn === null ? "-" : formatPercent(activeCurrentReturn)}
+                  emphasis={getCurrentReturnTone(activeCurrentReturn)}
+                />
                 <SummaryMetric label="보유일" value={`${activeEntry.holdingDays}일`} />
               </CardContent>
               <CardContent className="grid gap-4 pt-0 md:grid-cols-3">
@@ -212,7 +248,7 @@ export function TrackingDetailPanel({ history, details }: TrackingDetailPanelPro
         ) : filteredHistory.length ? (
           <Card>
             <CardContent className="p-6 text-sm leading-6 text-muted-foreground">
-              공용 워크스페이스에서는 목록을 먼저 훑고, 필요한 기록만 선택해 상세를 열어볼 수 있습니다.
+              공용 워크스페이스에서는 목록을 먼저 훑고, 필요한 기록만 선택해 상세를 읽어보면 됩니다.
             </CardContent>
           </Card>
         ) : null}

@@ -13,6 +13,7 @@ export interface SignalHistoryEntry {
   result: "감시중" | "진행중" | "성공" | "실패" | "무효화";
   mfe: number;
   mae: number;
+  currentReturn?: number;
   holdingDays: number;
 }
 

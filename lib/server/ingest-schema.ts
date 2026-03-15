@@ -97,6 +97,7 @@ const trackingResponseSchema = z.object({
       result: resultStatus,
       mfe: z.number(),
       mae: z.number(),
+      currentReturn: z.number().optional(),
       holdingDays: z.number()
     })
   ),

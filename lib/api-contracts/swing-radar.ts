@@ -170,6 +170,7 @@ export interface SignalHistoryEntryDto {
   result: TrackingResultDto;
   mfe: number;
   mae: number;
+  currentReturn?: number;
   holdingDays: number;
 }
 

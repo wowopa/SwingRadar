@@ -1367,12 +1367,15 @@ function buildTrackingEventsFromState(state) {
           status: entry.status,
           mfe: 0,
           mae: 0,
+          currentReturn: 0,
           holdingDays: entry.holdingDays
         };
       }
 
       const mfe = entry.entryPrice > 0 ? roundNumber(((entry.highestPrice - entry.entryPrice) / entry.entryPrice) * 100, 1) ?? 0 : 0;
       const mae = entry.entryPrice > 0 ? roundNumber(((entry.lowestPrice - entry.entryPrice) / entry.entryPrice) * 100, 1) ?? 0 : 0;
+      const currentReturn =
+        entry.entryPrice > 0 ? roundNumber(((entry.currentPrice - entry.entryPrice) / entry.entryPrice) * 100, 1) ?? 0 : 0;
 
       return {
         historyId: entry.id,
@@ -1383,6 +1386,7 @@ function buildTrackingEventsFromState(state) {
         status: entry.status,
         mfe,
         mae,
+        currentReturn,
         holdingDays: entry.holdingDays
       };
     })
@@ -1618,6 +1622,7 @@ async function main() {
       result: mapTrackingStateToResult(stateEntry?.status),
       mfe: item.mfe,
       mae: item.mae,
+      currentReturn: item.currentReturn ?? 0,
       holdingDays: item.holdingDays
     };
   });
