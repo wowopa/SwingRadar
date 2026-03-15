@@ -336,15 +336,15 @@ function shouldExcludeArticleByQuality(article, entry, options = {}) {
   const ageDays = ageDaysOf(article);
 
   if (priorityBand === "top20") {
-    if (lowerQuality) return true;
-    if (ageDays !== null && ageDays > 7) return true;
-    if (!(trusted || preferredDomain || koreanDomain)) return true;
+    if (lowerQuality && !(trusted || preferredDomain)) return true;
+    if (ageDays !== null && ageDays > 10) return true;
+    if (!(trusted || preferredDomain || koreanDomain) && ageDays !== null && ageDays > 5) return true;
   }
 
   if (priorityBand === "top100") {
-    if (lowerQuality) return true;
-    if (ageDays !== null && ageDays > 14) return true;
-    if (!(trusted || preferredDomain || koreanDomain)) return true;
+    if (lowerQuality && !(trusted || preferredDomain)) return true;
+    if (ageDays !== null && ageDays > 21) return true;
+    if (!(trusted || preferredDomain || koreanDomain) && ageDays !== null && ageDays > 10) return true;
   }
 
   return false;
@@ -448,14 +448,16 @@ function parseStandardRss(xml) {
 }
 
 function rankArticles(items, entry, maxItems, options = {}) {
-  const minScore = entry.minArticleScore ?? 10;
+  const priorityBand = getPriorityBand(options.priorityRank ?? null);
+  const minScore =
+    entry.minArticleScore ??
+    (priorityBand === "top20" ? 8 : priorityBand === "top100" ? 7 : 8);
   const sourceDiversityLimit =
     options.sourceDiversityLimit ??
     (() => {
       const configured = Math.max(1, Number.parseInt(process.env.SWING_RADAR_NEWS_SOURCE_DIVERSITY_LIMIT ?? "2", 10));
-      const priorityBand = getPriorityBand(options.priorityRank ?? null);
-      if (priorityBand === "top20") return 1;
-      if (priorityBand === "top100") return Math.min(configured, 2);
+      if (priorityBand === "top20") return Math.min(Math.max(configured, 2), 2);
+      if (priorityBand === "top100") return Math.min(Math.max(configured, 3), 3);
       return configured;
     })();
 
