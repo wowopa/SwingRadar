@@ -154,6 +154,17 @@ function normalizePositiveInteger(value, fallback) {
   return Math.floor(parsed);
 }
 
+function resolveEffectiveMaxItems(maxItems, priorityRank) {
+  if (priorityRank && priorityRank <= 20) {
+    return Math.max(maxItems, 8);
+  }
+  if (priorityRank && priorityRank <= 100) {
+    return Math.max(maxItems, 6);
+  }
+
+  return maxItems;
+}
+
 async function runEntriesInParallel(entries, concurrency, action) {
   const results = new Array(entries.length);
   let nextIndex = 0;
@@ -247,7 +258,7 @@ async function main() {
   const cache = await readOptionalJson(path.resolve(args.cacheFile));
   const prioritizedWatchlist = prioritizeWatchlist(watchlist, dailyCandidates);
   const items = [];
-  let providerUsed = "file";
+  const successfulProviders = new Set();
   let anyLiveFetch = false;
   const priorityWindow = normalizePositiveInteger(process.env.SWING_RADAR_NEWS_PRIORITY_WINDOW ?? "100", 100);
   const feedFailures = [];
@@ -300,11 +311,12 @@ async function main() {
     const useLiveFetch = index < liveFetchTickerLimit;
     const priorityRank = index < priorityWindow ? index + 1 : null;
     const rankedProviderOrder = filterProviderOrderForRank(providerOrder, priorityRank);
+    const effectiveMaxItems = resolveEffectiveMaxItems(maxItems, priorityRank);
 
     if (useLiveFetch) {
       for (const provider of rankedProviderOrder) {
         try {
-          fetched = await fetchFromProvider(provider, entry, maxItems, {
+          const providerItems = await fetchFromProvider(provider, entry, effectiveMaxItems, {
             onRetry: ({ status, delayMs, attempt, url }) => {
               report.retryCount += 1;
               report.providerFailures.push({
@@ -321,14 +333,9 @@ async function main() {
             priorityRank
           }, curatedFeedPool);
 
-          if (fetched.length) {
-            providerUsed = provider;
-            anyLiveFetch = true;
-            report.liveFetchTickers += 1;
-            if (priorityRank) {
-              report.liveFetchPriorityTickers += 1;
-            }
-            break;
+          if (providerItems.length) {
+            fetched.push(...providerItems);
+            successfulProviders.add(provider);
           }
         } catch (error) {
           report.providerFailures.push({
@@ -344,10 +351,19 @@ async function main() {
           console.warn(`News fetch failed for ${entry.ticker} via ${provider}: ${error instanceof Error ? error.message : error}`);
         }
       }
+
+      fetched = dedupeArticles(fetched).slice(0, effectiveMaxItems);
+      if (fetched.length) {
+        anyLiveFetch = true;
+        report.liveFetchTickers += 1;
+        if (priorityRank) {
+          report.liveFetchPriorityTickers += 1;
+        }
+      }
     }
 
     if (!fetched.length) {
-      fetched = loadCacheNews(cache, entry, maxItems);
+      fetched = loadCacheNews(cache, entry, effectiveMaxItems);
       if (fetched.length) {
         report.cacheFallbackTickers += 1;
         if (priorityRank) {
@@ -357,37 +373,41 @@ async function main() {
     }
 
     if (!fetched.length) {
-      fetched = await loadFileNews(paths, entry, maxItems);
+      fetched = await loadFileNews(paths, entry, effectiveMaxItems);
       if (fetched.length) {
         report.fileFallbackTickers += 1;
       }
-      providerUsed = providerUsed === "file" ? "file" : providerUsed;
     }
 
-    items.push(...fetched.slice(0, maxItems));
+    items.push(...fetched.slice(0, effectiveMaxItems));
   });
 
   const normalizedItems = dedupeArticles(items);
   report.totalItems = normalizedItems.length;
   report.completedAt = new Date().toISOString();
+  const providerLabel = anyLiveFetch
+    ? successfulProviders.size === 1
+      ? Array.from(successfulProviders)[0]
+      : "mixed"
+    : "file";
 
   if (anyLiveFetch) {
     await writeJson(path.resolve(args.cacheFile), {
       asOf: new Date().toISOString(),
-      provider: `${providerUsed}-cache`,
+      provider: `${providerLabel}-cache`,
       items: normalizedItems
     });
   }
 
   await writeJson(path.resolve(args.outFile), {
     asOf: new Date().toISOString(),
-    provider: anyLiveFetch ? providerUsed : "file",
+    provider: providerLabel,
     items: normalizedItems
   });
   await writeJson(getNewsFetchReportPath(), report);
 
   console.log("External news fetch completed.");
-  console.log(`- provider: ${anyLiveFetch ? providerUsed : "file"}`);
+  console.log(`- provider: ${providerLabel}`);
   console.log(`- items: ${normalizedItems.length}`);
   console.log(`- outFile: ${path.resolve(args.outFile)}`);
   console.log(`- report: ${getNewsFetchReportPath()}`);
