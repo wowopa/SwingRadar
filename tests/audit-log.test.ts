@@ -115,7 +115,7 @@ describe("audit log store", () => {
       query: vi.fn().mockRejectedValue(new Error("db down"))
     });
 
-    await expect(listAuditLogs()).rejects.toMatchObject<ApiError>({
+    await expect(listAuditLogs()).rejects.toMatchObject({
       code: "AUDIT_QUERY_FAILED",
       status: 500
     });
