@@ -42,6 +42,43 @@ export async function applyPostgresSchema() {
   await pool.query(sql);
 }
 
+function getRetentionDays(name: string, fallback: number) {
+  const parsed = Number(process.env[name] ?? fallback);
+  return Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : fallback;
+}
+
+async function pruneExpiredSnapshots(client: { query: (sql: string, values?: unknown[]) => Promise<unknown> }) {
+  const retentionPolicies = [
+    {
+      table: "recommendation_snapshots",
+      column: "generated_at",
+      days: getRetentionDays("SWING_RADAR_RECOMMENDATION_RETENTION_DAYS", 60)
+    },
+    {
+      table: "analysis_snapshots",
+      column: "generated_at",
+      days: getRetentionDays("SWING_RADAR_ANALYSIS_RETENTION_DAYS", 30)
+    },
+    {
+      table: "tracking_snapshots",
+      column: "generated_at",
+      days: getRetentionDays("SWING_RADAR_TRACKING_RETENTION_DAYS", 60)
+    },
+    {
+      table: "audit_logs",
+      column: "created_at",
+      days: getRetentionDays("SWING_RADAR_AUDIT_LOG_RETENTION_DAYS", 90)
+    }
+  ];
+
+  for (const policy of retentionPolicies) {
+    await client.query(
+      `delete from ${policy.table} where ${policy.column} < now() - make_interval(days => $1::int)`,
+      [policy.days]
+    );
+  }
+}
+
 export async function ingestSnapshotBundle(
   bundle: SnapshotBundle,
   options?: { applySchema?: boolean; requestId?: string; actor?: string }
@@ -120,6 +157,8 @@ export async function ingestSnapshotBundle(
         ]
       );
     }
+
+    await pruneExpiredSnapshots(client);
 
     await client.query("commit");
     return result;
