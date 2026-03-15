@@ -55,7 +55,7 @@ export function HistoryTable({
       </CardHeader>
       <CardContent>
         <div className="w-full overflow-x-auto overscroll-x-contain pb-2 [webkit-overflow-scrolling:touch]">
-          <table className="min-w-[1020px] w-full table-fixed text-left text-sm">
+          <table className="min-w-[1160px] w-full table-fixed text-left text-sm">
             <thead className="text-xs text-muted-foreground">
               <tr className="border-b border-border">
                 <th className="whitespace-nowrap pb-3 pr-5">즐겨찾기</th>
@@ -75,6 +75,8 @@ export function HistoryTable({
                 const resolved = getSymbolByTicker(item.ticker);
                 const company = resolved?.company ?? item.company;
                 const currentReturn = resolveCurrentReturn(item, details[item.id]);
+                const selectionReason = item.selectionReason ?? details[item.id]?.selectionReason;
+                const selectionStage = item.selectionStage ?? details[item.id]?.selectionStage;
 
                 return (
                   <tr
@@ -91,6 +93,12 @@ export function HistoryTable({
                     <td className="py-4 pr-5">
                       <div className="font-medium text-foreground">{company}</div>
                       <div className="text-xs text-muted-foreground">{item.ticker}</div>
+                      {selectionReason ? (
+                        <p className="mt-2 line-clamp-2 text-xs leading-5 text-muted-foreground">
+                          {selectionStage ? `${selectionStage}: ` : ""}
+                          {selectionReason}
+                        </p>
+                      ) : null}
                     </td>
                     <td className="py-4 pr-5 text-foreground/80">{item.signalDate}</td>
                     <td className="py-4 pr-5">

@@ -15,6 +15,8 @@ export interface SignalHistoryEntry {
   mae: number;
   currentReturn?: number;
   holdingDays: number;
+  selectionStage?: string;
+  selectionReason?: string;
 }
 
 export interface HistoricalSnapshotPoint {
@@ -48,6 +50,9 @@ export interface TrackingMetric {
 
 export interface TrackingDetail {
   historyId: string;
+  selectionStage?: string;
+  selectionReason?: string;
+  selectionHighlights?: string[];
   summary: string;
   invalidationReview: string;
   afterActionReview: string;

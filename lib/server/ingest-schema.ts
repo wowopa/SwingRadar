@@ -98,13 +98,18 @@ const trackingResponseSchema = z.object({
       mfe: z.number(),
       mae: z.number(),
       currentReturn: z.number().optional(),
-      holdingDays: z.number()
+      holdingDays: z.number(),
+      selectionStage: z.string().optional(),
+      selectionReason: z.string().optional()
     })
   ),
   details: z.record(
     z.string(),
     z.object({
       historyId: z.string(),
+      selectionStage: z.string().optional(),
+      selectionReason: z.string().optional(),
+      selectionHighlights: z.array(z.string()).optional(),
       summary: z.string(),
       invalidationReview: z.string(),
       afterActionReview: z.string(),

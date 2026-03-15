@@ -172,6 +172,8 @@ export interface SignalHistoryEntryDto {
   mae: number;
   currentReturn?: number;
   holdingDays: number;
+  selectionStage?: string;
+  selectionReason?: string;
 }
 
 export interface TrackingMetricDto {
@@ -193,6 +195,9 @@ export interface TrackingEventDto {
 
 export interface TrackingDetailDto {
   historyId: string;
+  selectionStage?: string;
+  selectionReason?: string;
+  selectionHighlights?: string[];
   summary: string;
   invalidationReview: string;
   afterActionReview: string;
