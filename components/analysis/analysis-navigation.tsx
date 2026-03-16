@@ -18,7 +18,7 @@ type CompanyOverview = {
   market: string;
   region: string;
   status: "ready" | "pending";
-  summary: string;
+  summaryLines: string[];
 };
 
 type AnalysisNavigationProps = {
@@ -68,7 +68,13 @@ export function AnalysisNavigation({ currentTicker, readyItems, overview }: Anal
             <p className="mt-3 text-lg font-semibold text-foreground">
               {overview.company} ({overview.ticker})
             </p>
-            <p className="mt-3 text-sm leading-7 text-foreground/80">{overview.summary}</p>
+            <div className="mt-3 space-y-2">
+              {overview.summaryLines.map((line) => (
+                <p key={line} className="text-sm leading-7 text-foreground/80">
+                  - {line}
+                </p>
+              ))}
+            </div>
             <div className="mt-4 flex flex-wrap gap-2 text-xs">
               <span className="rounded-full border border-border/70 bg-background/80 px-3 py-1 text-foreground/80">
                 상장 시장 {overview.market}
