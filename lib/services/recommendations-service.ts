@@ -22,7 +22,8 @@ function formatRiskRewardRatio(entryPrice?: number | null, targetPrice?: number 
     return null;
   }
 
-  return `1 : ${Math.max(0.1, rewardDistance / riskDistance).toFixed(1)}`;
+  const ratio = parseFloat(Math.max(0.1, rewardDistance / riskDistance).toFixed(2));
+  return `1 : ${ratio}`;
 }
 
 export async function listRecommendations(query: RecommendationsQuery): Promise<RecommendationsResponseDto> {

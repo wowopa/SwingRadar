@@ -937,7 +937,8 @@ function formatRiskRewardRatio(entryPrice, targetPrice, invalidationPrice) {
     return "재산정 필요";
   }
 
-  return `1 : ${Math.max(0.1, rewardDistance / riskDistance).toFixed(1)}`;
+  const ratio = parseFloat(Math.max(0.1, rewardDistance / riskDistance).toFixed(2));
+  return `1 : ${ratio}`;
 }
 
 function buildDecisionNotes(item, validationItem, indicators) {

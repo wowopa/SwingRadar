@@ -29,7 +29,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <BrandSignature />
 
                 <div className="max-w-[960px] border-b border-border/70 pb-5">
-                  <h1 className="text-3xl font-semibold leading-[1.04] tracking-[-0.05em] text-foreground sm:text-4xl lg:text-[3rem]">
+                  <h1 className="text-2xl font-semibold leading-[1.06] tracking-[-0.05em] text-foreground sm:text-3xl lg:text-[2.4rem]">
                     국내 스윙 후보를 구조화하고 검증합니다
                   </h1>
                   <p className="mt-3 text-sm leading-7 text-muted-foreground sm:text-base">
