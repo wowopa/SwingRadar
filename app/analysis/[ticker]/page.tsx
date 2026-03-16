@@ -100,10 +100,10 @@ function getCoverageRead(newsImpact: NewsImpactItem[], riskChecklist: RiskCheckl
   const coverageSummary = summarizeCoverage(newsImpact);
 
   if (!coverageSummary.total) {
-    return "이벤트 근거가 비어 있어 차트와 무효화 기준을 더 보수적으로 읽어야 합니다.";
+    return "서비스 안에서 외부 뉴스를 직접 큐레이팅하지 않으므로, 차트와 무효화 기준을 우선 보고 필요할 때 뉴스 검색 링크로 추가 확인해 주세요.";
   }
 
-  return `${coverageRisk?.note ?? "이벤트 커버리지를 함께 해석합니다."} 현재 공시 ${coverageSummary.disclosure}건, 큐레이션 ${coverageSummary.curated}건, 외부 기사 ${coverageSummary.external}건입니다.`;
+  return `${coverageRisk?.note ?? "이벤트 커버리지는 참고 신호로만 봅니다."} 외부 뉴스는 화면 하단의 검색 링크로 직접 확인하는 흐름을 권장합니다.`;
 }
 
 export default async function AnalysisPage({ params }: { params: Promise<{ ticker: string }> }) {
@@ -245,7 +245,7 @@ export default async function AnalysisPage({ params }: { params: Promise<{ ticke
       </section>
 
       <section className="grid gap-6 xl:items-start xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
-        <EventCoveragePanel items={analysis.newsImpact} />
+        <EventCoveragePanel ticker={analysis.ticker} company={analysis.company} />
         <DataQualityPanel items={analysis.dataQuality} />
       </section>
     </main>
