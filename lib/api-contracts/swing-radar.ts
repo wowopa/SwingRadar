@@ -160,7 +160,7 @@ export interface TickerAnalysisDto {
   technicalIndicators: TechnicalIndicatorsDto;
   chartSeries: AnalysisChartPointDto[];
   decisionNotes: string[];
-  scoreBreakdown: Array<{ label: string; score: number; description: string }>;
+  scoreBreakdown: Array<{ label: string; score: number; maxScore?: number; description: string }>;
   scenarios: Array<{ label: ScenarioLabelDto; probability: number; expectation: string; trigger: string }>;
   riskChecklist: Array<{ label: string; status: RiskStatusDto; note: string }>;
   newsImpact: AnalysisEventDto[];

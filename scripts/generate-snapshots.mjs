@@ -2094,11 +2094,11 @@ async function main() {
       chartSeries: buildChartSeries(item),
       decisionNotes: buildDecisionNotes(item, validationItem, technicalIndicators),
       scoreBreakdown: [
-        { label: "추세", score: item.trendScore, description: "중기 추세 구조 점검" },
-        { label: "수급", score: item.flowScore, description: "거래량 / 회전 흐름" },
-        { label: "변동성", score: item.volatilityScore, description: "무효화 거리 기준" },
-        { label: "품질", score: item.qualityScore, description: "데이터 정합성" },
-        { label: "기술", score: technicalAdjustment, description: "이동평균 / ADX / RSI / MACD / 거래량 반영" }
+        { label: "추세", score: item.trendScore, maxScore: 25, description: "중기 추세 구조 점검" },
+        { label: "수급", score: item.flowScore, maxScore: 25, description: "거래량 / 회전 흐름" },
+        { label: "변동성", score: item.volatilityScore, maxScore: 20, description: "무효화 거리 기준" },
+        { label: "품질", score: item.qualityScore, maxScore: 15, description: "데이터 정합성" },
+        { label: "기술", score: technicalAdjustment, maxScore: 12, description: "이동평균 / ADX / RSI / MACD / 거래량 반영" }
       ],
       scenarios: buildScenarios(item),
       riskChecklist: [
