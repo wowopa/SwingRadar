@@ -46,6 +46,9 @@ export interface DailyCandidateDto {
   score: number;
   candidateScore: number;
   currentPrice?: number | null;
+  confirmationPrice?: number | null;
+  expansionPrice?: number | null;
+  invalidationPrice?: number | null;
   averageTurnover20?: number | null;
   liquidityRating?: string;
   invalidation: string;

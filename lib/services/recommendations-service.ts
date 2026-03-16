@@ -3,6 +3,28 @@ import { getDailyCandidates } from "@/lib/repositories/daily-candidates";
 import { getDataProvider } from "@/lib/providers";
 import type { RecommendationsQuery } from "@/lib/server/query-schemas";
 
+function toNullableNumber(value: unknown): number | null {
+  return typeof value === "number" && Number.isFinite(value) ? value : null;
+}
+
+function formatRiskRewardRatio(entryPrice?: number | null, targetPrice?: number | null, invalidationPrice?: number | null) {
+  const entry = Number(entryPrice ?? 0);
+  const target = Number(targetPrice ?? 0);
+  const invalidation = Number(invalidationPrice ?? 0);
+
+  if (!Number.isFinite(entry) || !Number.isFinite(target) || !Number.isFinite(invalidation)) {
+    return null;
+  }
+
+  const riskDistance = entry - invalidation;
+  const rewardDistance = target - entry;
+  if (riskDistance <= 0 || rewardDistance <= 0) {
+    return null;
+  }
+
+  return `1 : ${Math.max(0.1, rewardDistance / riskDistance).toFixed(1)}`;
+}
+
 export async function listRecommendations(query: RecommendationsQuery): Promise<RecommendationsResponseDto> {
   const [source, dailyCandidates] = await Promise.all([getDataProvider().getRecommendations(), getDailyCandidates()]);
   const sourceByTicker = new Map(source.items.map((item) => [item.ticker, item]));
@@ -14,7 +36,12 @@ export async function listRecommendations(query: RecommendationsQuery): Promise<
         rank: index + 1,
         candidateScore: candidate.candidateScore,
         eventCoverage: candidate.eventCoverage,
-        batch: candidate.batch
+        batch: candidate.batch,
+        riskRewardRatio: formatRiskRewardRatio(
+          toNullableNumber(candidate.confirmationPrice),
+          toNullableNumber(candidate.expansionPrice),
+          toNullableNumber(candidate.invalidationPrice)
+        )
       }
     ])
   );
@@ -29,6 +56,13 @@ export async function listRecommendations(query: RecommendationsQuery): Promise<
         return [{
           ...item,
           score: candidate.score ?? item.score,
+          riskRewardRatio:
+            formatRiskRewardRatio(
+              toNullableNumber(candidate.confirmationPrice),
+              toNullableNumber(candidate.expansionPrice),
+              toNullableNumber(candidate.invalidationPrice)
+            ) ??
+            item.riskRewardRatio,
           featuredRank: index + 1,
           candidateScore: candidate.candidateScore,
           eventCoverage: candidate.eventCoverage,
@@ -41,6 +75,7 @@ export async function listRecommendations(query: RecommendationsQuery): Promise<
           ? {
               ...item,
               score: item.score,
+              riskRewardRatio: candidate.riskRewardRatio ?? item.riskRewardRatio,
               featuredRank: candidate.rank,
               candidateScore: candidate.candidateScore,
               eventCoverage: candidate.eventCoverage,

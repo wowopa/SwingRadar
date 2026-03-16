@@ -12,6 +12,9 @@ export type DailyCandidate = {
   score: number;
   candidateScore: number;
   currentPrice?: number | null;
+  confirmationPrice?: number | null;
+  expansionPrice?: number | null;
+  invalidationPrice?: number | null;
   averageTurnover20?: number | null;
   volumeRatio?: number | null;
   liquidityRating?: string;
