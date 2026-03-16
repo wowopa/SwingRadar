@@ -64,7 +64,10 @@ const analysisItemSchema = z.object({
     minusDi14: z.number().nullable(),
     stochasticK: z.number().nullable(),
     stochasticD: z.number().nullable(),
-    mfi14: z.number().nullable()
+    mfi14: z.number().nullable(),
+    roc20: z.number().nullable(),
+    cci20: z.number().nullable(),
+    cmf20: z.number().nullable()
   }),
   chartSeries: z.array(
     z.object({

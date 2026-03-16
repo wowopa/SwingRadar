@@ -12,9 +12,10 @@ import {
   type IChartApi,
   type LineStyle
 } from "lightweight-charts";
-import { ExternalLink } from "lucide-react";
+import { CircleHelp, ExternalLink } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import type { AnalysisChartPoint, KeyLevel, TechnicalIndicators } from "@/types/analysis";
 import { cn } from "@/lib/utils";
 
@@ -25,6 +26,13 @@ const RANGE_POINTS: Record<RangeKey, number> = {
   "3M": 60,
   "6M": 120
 };
+
+interface IndicatorCardItem {
+  label: string;
+  value: string;
+  tone: string;
+  description: string;
+}
 
 function formatPrice(value: number) {
   return `${Math.round(value).toLocaleString()}원`;
@@ -445,7 +453,7 @@ export function TradingViewChartCard({
 
   const lastPoint = chartPoints.at(-1);
   const lastTurnover = lastPoint?.volume ? Number((lastPoint.close * lastPoint.volume).toFixed(0)) : null;
-  const indicatorItems = [
+  const indicatorItems: IndicatorCardItem[] = [
     {
       label: "이동평균",
       value:
@@ -455,7 +463,9 @@ export function TradingViewChartCard({
       tone:
         indicators.sma20 !== null && indicators.sma60 !== null && indicators.sma20 > indicators.sma60
           ? "border-emerald-200 bg-emerald-50/80 text-emerald-800"
-          : "border-border/70 bg-background/50 text-foreground/85"
+          : "border-border/70 bg-background/50 text-foreground/85",
+      description:
+        "20일선과 60일선의 위치 관계로 중기 추세 방향을 봅니다. 20일선이 60일선 위에 있으면 상승 흐름이 유지되는지 확인하는 데 도움이 됩니다."
     },
     {
       label: "추세 강도",
@@ -470,7 +480,9 @@ export function TradingViewChartCard({
         indicators.adx14 >= 25 &&
         indicators.plusDi14 > indicators.minusDi14
           ? "border-emerald-200 bg-emerald-50/80 text-emerald-800"
-          : "border-border/70 bg-background/50 text-foreground/85"
+          : "border-border/70 bg-background/50 text-foreground/85",
+      description:
+        "ADX는 추세의 힘을, +DI와 -DI는 상승과 하락 중 어느 쪽이 우세한지를 보여줍니다. ADX가 높고 +DI가 우위면 상승 추세 신뢰도가 높아집니다."
     },
     {
       label: "거래량 배수",
@@ -478,7 +490,9 @@ export function TradingViewChartCard({
       tone:
         indicators.volumeRatio20 !== null && indicators.volumeRatio20 >= 1.2
           ? "border-primary/20 bg-primary/8 text-primary"
-          : "border-border/70 bg-background/50 text-foreground/85"
+          : "border-border/70 bg-background/50 text-foreground/85",
+      description:
+        "최근 거래량이 20일 평균 거래량보다 몇 배 늘었는지 보여줍니다. 돌파 시도나 추세 강화 구간에서 거래량이 동반되는지 확인할 수 있습니다."
     },
     {
       label: "RSI(14)",
@@ -486,7 +500,9 @@ export function TradingViewChartCard({
       tone:
         indicators.rsi14 !== null && indicators.rsi14 >= 45 && indicators.rsi14 <= 65
           ? "border-emerald-200 bg-emerald-50/80 text-emerald-800"
-          : "border-border/70 bg-background/50 text-foreground/85"
+          : "border-border/70 bg-background/50 text-foreground/85",
+      description:
+        "상승 압력과 하락 압력의 균형을 보는 모멘텀 지표입니다. 보통 70 이상은 과열, 30 이하는 과매도로 해석합니다."
     },
     {
       label: "Stochastic",
@@ -501,7 +517,9 @@ export function TradingViewChartCard({
         indicators.stochasticK >= 55 &&
         indicators.stochasticK <= 82
           ? "border-emerald-200 bg-emerald-50/80 text-emerald-800"
-          : "border-border/70 bg-background/50 text-foreground/85"
+          : "border-border/70 bg-background/50 text-foreground/85",
+      description:
+        "최근 고가와 저가 범위 안에서 현재 종가가 어디쯤 있는지 보여줍니다. %K가 %D를 상향 돌파하면 단기 모멘텀 개선 신호로 볼 수 있습니다."
     },
     {
       label: "MACD",
@@ -512,7 +530,9 @@ export function TradingViewChartCard({
       tone:
         indicators.macd !== null && indicators.macdSignal !== null && indicators.macd >= indicators.macdSignal
           ? "border-emerald-200 bg-emerald-50/80 text-emerald-800"
-          : "border-border/70 bg-background/50 text-foreground/85"
+          : "border-border/70 bg-background/50 text-foreground/85",
+      description:
+        "단기 EMA와 중기 EMA의 차이를 이용해 추세 전환과 모멘텀 변화를 보는 지표입니다. MACD가 시그널 위에 있으면 상승 모멘텀이 우세한 편입니다."
     },
     {
       label: "MFI(14)",
@@ -520,12 +540,16 @@ export function TradingViewChartCard({
       tone:
         indicators.mfi14 !== null && indicators.mfi14 >= 55 && indicators.mfi14 <= 78
           ? "border-emerald-200 bg-emerald-50/80 text-emerald-800"
-          : "border-border/70 bg-background/50 text-foreground/85"
+          : "border-border/70 bg-background/50 text-foreground/85",
+      description:
+        "가격과 거래량을 함께 반영한 자금 유입 지표입니다. 가격이 오르면서 자금까지 유입되는지 확인할 때 유용합니다."
     },
     {
       label: "ATR(14)",
       value: indicators.atr14 !== null ? formatPrice(indicators.atr14) : "계산 중",
-      tone: "border-border/70 bg-background/50 text-foreground/85"
+      tone: "border-border/70 bg-background/50 text-foreground/85",
+      description:
+        "최근 14일 동안 하루 평균 진폭이 얼마인지 보여줍니다. 손절 폭과 분할 진입 간격을 잡을 때 기준이 됩니다."
     },
     {
       label: "NATR(14)",
@@ -533,7 +557,39 @@ export function TradingViewChartCard({
       tone:
         indicators.natr14 !== null && indicators.natr14 <= 5.5
           ? "border-emerald-200 bg-emerald-50/80 text-emerald-800"
-          : "border-border/70 bg-background/50 text-foreground/85"
+          : "border-border/70 bg-background/50 text-foreground/85",
+      description:
+        "ATR을 현재가 대비 퍼센트로 환산한 값입니다. 종목 가격대가 달라도 변동성 크기를 같은 기준으로 비교할 수 있습니다."
+    },
+    {
+      label: "ROC(20)",
+      value: indicators.roc20 !== null ? formatSignedPercent(indicators.roc20) : "계산 중",
+      tone:
+        indicators.roc20 !== null && indicators.roc20 >= 4 && indicators.roc20 <= 18
+          ? "border-emerald-200 bg-emerald-50/80 text-emerald-800"
+          : "border-border/70 bg-background/50 text-foreground/85",
+      description:
+        "20거래일 전 대비 현재 가격 상승률입니다. 추세가 붙은 종목인지, 아니면 이미 과도하게 급등했는지 가늠하는 데 도움이 됩니다."
+    },
+    {
+      label: "CCI(20)",
+      value: indicators.cci20 !== null ? indicators.cci20.toFixed(1) : "계산 중",
+      tone:
+        indicators.cci20 !== null && indicators.cci20 >= 20 && indicators.cci20 <= 140
+          ? "border-emerald-200 bg-emerald-50/80 text-emerald-800"
+          : "border-border/70 bg-background/50 text-foreground/85",
+      description:
+        "평균 가격에서 현재 가격이 얼마나 이격됐는지를 보는 지표입니다. 추세 초입의 탄력은 살리면서 과열 구간은 피하는 데 유용합니다."
+    },
+    {
+      label: "CMF(20)",
+      value: indicators.cmf20 !== null ? indicators.cmf20.toFixed(2) : "계산 중",
+      tone:
+        indicators.cmf20 !== null && indicators.cmf20 >= 0.05
+          ? "border-emerald-200 bg-emerald-50/80 text-emerald-800"
+          : "border-border/70 bg-background/50 text-foreground/85",
+      description:
+        "종가 위치와 거래량을 함께 반영해 자금 유입과 유출을 측정합니다. 0 위에서 유지되면 수급이 상대적으로 우호적이라고 볼 수 있습니다."
     }
   ];
 
@@ -591,14 +647,30 @@ export function TradingViewChartCard({
                 <LegendDot color="#ef4444" label="위험 가격" />
               </div>
             </div>
-            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-              {indicatorItems.map((item) => (
-                <div key={item.label} className={cn("rounded-[20px] border px-4 py-3", item.tone)}>
-                  <p className="text-xs font-medium opacity-80">{item.label}</p>
-                  <p className="mt-2 text-sm font-semibold leading-6">{item.value}</p>
-                </div>
-              ))}
-            </div>
+            <TooltipProvider delayDuration={120}>
+              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                {indicatorItems.map((item) => (
+                  <div key={item.label} className={cn("rounded-[20px] border px-4 py-3", item.tone)}>
+                    <div className="flex items-start justify-between gap-3">
+                      <p className="text-xs font-medium opacity-80">{item.label}</p>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button
+                            type="button"
+                            aria-label={`${item.label} 설명`}
+                            className="rounded-full text-muted-foreground/70 transition hover:text-foreground"
+                          >
+                            <CircleHelp className="h-3.5 w-3.5" />
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-[220px] leading-5">{item.description}</TooltipContent>
+                      </Tooltip>
+                    </div>
+                    <p className="mt-2 text-sm font-semibold leading-6">{item.value}</p>
+                  </div>
+                ))}
+              </div>
+            </TooltipProvider>
             {levelItems.length ? (
               <div className="grid gap-3 md:grid-cols-3">
                 {levelItems.map((item) => (

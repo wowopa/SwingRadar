@@ -67,6 +67,9 @@ export interface TechnicalIndicators {
   stochasticK: number | null;
   stochasticD: number | null;
   mfi14: number | null;
+  roc20: number | null;
+  cci20: number | null;
+  cmf20: number | null;
 }
 
 export interface AnalysisChartPoint {
