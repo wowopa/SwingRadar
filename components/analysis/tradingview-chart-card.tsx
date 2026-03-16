@@ -39,8 +39,19 @@ function formatAmount(value: number | null) {
   return `${eok.toFixed(eok >= 100 ? 0 : 1)}억`;
 }
 
-function buildSyntheticDate(index: number, anchorDate?: string | null) {
-  const anchor = anchorDate ? new Date(`${anchorDate}T00:00:00Z`) : new Date();
+function getLatestCompletedTradingDay(anchor?: string | null) {
+  const parsed = anchor ? new Date(anchor) : new Date();
+  const baseDate = Number.isNaN(parsed.getTime()) ? new Date() : parsed;
+  const date = new Date(Date.UTC(baseDate.getUTCFullYear(), baseDate.getUTCMonth(), baseDate.getUTCDate()));
+  const weekday = date.getUTCDay();
+  const offset = weekday === 1 ? 3 : weekday === 0 ? 2 : weekday === 6 ? 1 : 1;
+  date.setUTCDate(date.getUTCDate() - offset);
+  return date.toISOString().slice(0, 10);
+}
+
+function buildSyntheticDate(index: number, anchorDate?: string | null, snapshotGeneratedAt?: string | null) {
+  const resolvedAnchorDate = anchorDate ?? getLatestCompletedTradingDay(snapshotGeneratedAt);
+  const anchor = new Date(`${resolvedAnchorDate}T00:00:00Z`);
   const date = new Date(anchor);
   date.setUTCDate(anchor.getUTCDate() - index);
   return date.toISOString().slice(0, 10);
@@ -60,12 +71,17 @@ function toBusinessDay(value: string): BusinessDay | null {
   };
 }
 
-function resolveChartDate(point: AnalysisChartPoint, indexFromEnd: number, anchorDate?: string | null): BusinessDay {
+function resolveChartDate(
+  point: AnalysisChartPoint,
+  indexFromEnd: number,
+  anchorDate?: string | null,
+  snapshotGeneratedAt?: string | null
+): BusinessDay {
   if (typeof point.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(point.date)) {
-    return toBusinessDay(point.date) ?? toBusinessDay(buildSyntheticDate(indexFromEnd, anchorDate))!;
+    return toBusinessDay(point.date) ?? toBusinessDay(buildSyntheticDate(indexFromEnd, anchorDate, snapshotGeneratedAt))!;
   }
 
-  return toBusinessDay(buildSyntheticDate(indexFromEnd, anchorDate))!;
+  return toBusinessDay(buildSyntheticDate(indexFromEnd, anchorDate, snapshotGeneratedAt))!;
 }
 
 function toChartValue(value: number | null) {
@@ -148,13 +164,15 @@ export function TradingViewChartCard({
   company,
   points,
   indicators,
-  levels
+  levels,
+  snapshotGeneratedAt
 }: {
   symbol: string | null;
   company: string;
   points: AnalysisChartPoint[];
   indicators: TechnicalIndicators;
   levels: KeyLevel[];
+  snapshotGeneratedAt?: string | null;
 }) {
   const priceContainerRef = useRef<HTMLDivElement | null>(null);
   const turnoverContainerRef = useRef<HTMLDivElement | null>(null);
@@ -324,7 +342,7 @@ export function TradingViewChartCard({
       }));
 
     const seriesData = chartPoints.map((point, index) => ({
-      time: resolveChartDate(point, chartPoints.length - index - 1, latestChartDate),
+      time: resolveChartDate(point, chartPoints.length - index - 1, latestChartDate, snapshotGeneratedAt),
       open: point.open,
       high: point.high,
       low: point.low,
@@ -423,7 +441,7 @@ export function TradingViewChartCard({
       chartsRef.current.forEach((chart) => chart.remove());
       chartsRef.current = [];
     };
-  }, [chartPoints, levelItems]);
+  }, [chartPoints, levelItems, snapshotGeneratedAt]);
 
   const lastPoint = chartPoints.at(-1);
   const lastTurnover = lastPoint?.volume ? Number((lastPoint.close * lastPoint.volume).toFixed(0)) : null;
