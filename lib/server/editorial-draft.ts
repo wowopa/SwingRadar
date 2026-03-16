@@ -230,11 +230,17 @@ async function loadPublishHistory(): Promise<PublishHistoryEntry[]> {
     const content = await readFile(getPublishHistoryPath(), "utf8");
     return JSON.parse(content) as PublishHistoryEntry[];
   } catch (error) {
-    if ((error as NodeJS.ErrnoException).code !== "ENOENT") {
-      throw error;
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+      return [];
     }
 
-    return [];
+    if (error instanceof SyntaxError) {
+      throw new ApiError(500, "EDITORIAL_HISTORY_INVALID", "Publish history document is not valid JSON", {
+        path: getPublishHistoryPath()
+      });
+    }
+
+    throw error;
   }
 }
 
@@ -258,11 +264,15 @@ export async function loadEditorialDraft(): Promise<EditorialDraftPayload> {
     const content = await readFile(getDraftPath(), "utf8");
     draft = JSON.parse(content) as EditorialDraftDocument;
   } catch (error) {
-    if ((error as NodeJS.ErrnoException).code !== "ENOENT") {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+      draft = createDefaultDraft(bundle);
+    } else if (error instanceof SyntaxError) {
+      throw new ApiError(500, "EDITORIAL_DRAFT_INVALID", "Editorial draft document is not valid JSON", {
+        path: getDraftPath()
+      });
+    } else {
       throw error;
     }
-
-    draft = createDefaultDraft(bundle);
   }
 
   const publishHistory = await loadPublishHistory();

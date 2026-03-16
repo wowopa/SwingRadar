@@ -3,6 +3,7 @@ import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { promisify } from "node:util";
 
+import { ApiError } from "@/lib/server/api-error";
 import { saveWatchlistSyncStatus } from "@/lib/server/watchlist-sync-status";
 import { buildMarketSymbol, buildSymbolSuggestion, type SymbolMasterItem } from "@/lib/symbols/master";
 
@@ -66,7 +67,21 @@ function buildWatchlistEntry(symbol: SymbolMasterItem): WatchlistEntry {
 }
 
 async function loadWatchlistDocument() {
-  return JSON.parse(await readFile(getWatchlistPath(), "utf8")) as WatchlistDocument;
+  try {
+    return JSON.parse(await readFile(getWatchlistPath(), "utf8")) as WatchlistDocument;
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+      return { tickers: [] } satisfies WatchlistDocument;
+    }
+
+    if (error instanceof SyntaxError) {
+      throw new ApiError(500, "WATCHLIST_DOCUMENT_INVALID", "Watchlist document is not valid JSON", {
+        path: getWatchlistPath()
+      });
+    }
+
+    throw error;
+  }
 }
 
 async function saveWatchlistDocument(document: WatchlistDocument) {
