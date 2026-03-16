@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
+  type BusinessDay,
   CandlestickSeries,
   ColorType,
   HistogramSeries,
@@ -39,18 +40,32 @@ function formatAmount(value: number | null) {
 }
 
 function buildSyntheticDate(index: number, anchorDate?: string | null) {
-  const anchor = anchorDate ? new Date(`${anchorDate}T00:00:00Z`) : new Date(Date.UTC(2026, 0, 1));
+  const anchor = anchorDate ? new Date(`${anchorDate}T00:00:00Z`) : new Date();
   const date = new Date(anchor);
   date.setUTCDate(anchor.getUTCDate() - index);
   return date.toISOString().slice(0, 10);
 }
 
-function resolveChartDate(point: AnalysisChartPoint, indexFromEnd: number, anchorDate?: string | null) {
-  if (typeof point.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(point.date)) {
-    return point.date;
+function toBusinessDay(value: string): BusinessDay | null {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+  if (!match) {
+    return null;
   }
 
-  return buildSyntheticDate(indexFromEnd, anchorDate);
+  const [, year, month, day] = match;
+  return {
+    year: Number(year),
+    month: Number(month),
+    day: Number(day)
+  };
+}
+
+function resolveChartDate(point: AnalysisChartPoint, indexFromEnd: number, anchorDate?: string | null): BusinessDay {
+  if (typeof point.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(point.date)) {
+    return toBusinessDay(point.date) ?? toBusinessDay(buildSyntheticDate(indexFromEnd, anchorDate))!;
+  }
+
+  return toBusinessDay(buildSyntheticDate(indexFromEnd, anchorDate))!;
 }
 
 function toChartValue(value: number | null) {
