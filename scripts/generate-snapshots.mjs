@@ -824,9 +824,9 @@ function buildAnalysisSummary(item, qualityLabel, indicators) {
 
 function buildKeyLevels(item) {
   return [
-    { label: "다시 볼 가격", price: `${item.invalidationPrice.toLocaleString()}원`, meaning: "이 가격 아래면 흐름을 다시 점검" },
-    { label: "확인 가격", price: `${item.confirmationPrice.toLocaleString()}원`, meaning: "힘이 붙는지 확인하는 구간" },
-    { label: "다음 목표", price: `${item.expansionPrice.toLocaleString()}원`, meaning: "상승이 이어질 때 보는 구간" }
+    { label: "진입 기준", price: `${item.confirmationPrice.toLocaleString()}원`, meaning: "이 가격 위에서 버티면 진입을 검토할 수 있는 구간" },
+    { label: "목표 가격", price: `${item.expansionPrice.toLocaleString()}원`, meaning: "상승이 이어질 때 분할 매도를 검토하는 구간" },
+    { label: "위험 가격", price: `${item.invalidationPrice.toLocaleString()}원`, meaning: "이 가격 아래면 흐름이 약해졌다고 보고 다시 점검" }
   ];
 }
 
