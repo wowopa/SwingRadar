@@ -53,8 +53,8 @@ function buildWhyNow(item: Recommendation) {
   if (item.invalidationDistance <= -8) {
     reasons.push(`무효화 여유가 ${formatPercent(item.invalidationDistance)}로 너무 타이트하지 않습니다.`);
   }
-  if (item.eventCoverage && item.eventCoverage !== "취약") {
-    reasons.push(`이벤트 근거는 ${item.eventCoverage} 수준입니다.`);
+  if (item.candidateScore) {
+    reasons.push(`오늘 후보 점수는 ${item.candidateScore}점입니다.`);
   }
 
   if (!reasons.length) {
@@ -79,8 +79,8 @@ function buildWatchouts(item: Recommendation, validationBasis: ValidationBasis) 
   if (item.invalidationDistance > -5) {
     watchouts.push("무효화 기준이 가까워 손절 관리가 더 타이트해질 수 있습니다.");
   }
-  if (item.eventCoverage === "취약" || !item.eventCoverage) {
-    watchouts.push("뉴스나 이벤트 근거가 약해 차트와 거래 흐름 비중이 더 큽니다.");
+  if (item.validation.sampleSize < 10) {
+    watchouts.push("검증 표본이 아직 적어 차트 구조와 거래 흐름을 함께 보는 편이 좋습니다.");
   }
 
   if (!watchouts.length) {
@@ -206,13 +206,13 @@ export function RecommendationCard({
           </div>
         </section>
 
-        {(item.checkpoints.length || item.eventCoverage || item.candidateScore) && (
+        {(item.checkpoints.length || item.validationBasis || item.candidateScore) && (
           <section className="rounded-2xl border border-border/70 bg-secondary/20 p-4">
             <p className="text-sm font-semibold text-foreground">판단 메모</p>
             <div className="mt-3 flex flex-wrap gap-2">
-              {item.eventCoverage ? (
+              {item.validationBasis ? (
                 <span className="rounded-full border border-border/70 bg-background/80 px-3 py-1 text-xs text-foreground/80">
-                  이벤트 커버리지 {item.eventCoverage}
+                  검증 기준 {item.validationBasis}
                 </span>
               ) : null}
               {item.candidateScore ? (

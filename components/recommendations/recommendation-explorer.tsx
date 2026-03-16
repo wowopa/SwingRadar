@@ -62,8 +62,8 @@ function buildReasons(item: Recommendation) {
   if (item.invalidationDistance <= -8) {
     reasons.push(`무효화 여유 ${formatPercent(item.invalidationDistance)}`);
   }
-  if (item.eventCoverage && item.eventCoverage !== "취약") {
-    reasons.push(`이벤트 근거 ${item.eventCoverage}`);
+  if (item.validation.sampleSize >= 12) {
+    reasons.push(`검증 표본 ${item.validation.sampleSize}건`);
   }
 
   return reasons.slice(0, 3);

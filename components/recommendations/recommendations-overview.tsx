@@ -41,7 +41,7 @@ export function RecommendationsOverview({
         value={topCandidate ? topCandidate.company : bestAverageReturn.company}
         detail={
           topCandidate
-            ? `후보 점수 ${topCandidate.candidateScore}, 커버리지 ${topCandidate.eventCoverage}`
+            ? `후보 점수 ${topCandidate.candidateScore}, 유동성 ${topCandidate.liquidityRating ?? "확인 필요"}`
             : `평균 수익 ${formatPercent(bestAverageReturn.validation.avgReturn)}, 타이트 무효화 ${tightInvalidationCount}개`
         }
       />
