@@ -82,6 +82,10 @@ function parseLevelPrice(price: string) {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
+function formatSignedPercent(value: number) {
+  return `${value > 0 ? "+" : ""}${value.toFixed(1)}%`;
+}
+
 function getLevelKind(label: string) {
   if (label.includes("진입") || label.includes("확인")) {
     return "entry" as const;
@@ -172,17 +176,25 @@ export function TradingViewChartCard({
   }, [points, range]);
   const latestChartDate = chartPoints.at(-1)?.date ?? null;
   const levelItems = useMemo(
-    () =>
-      levels.map((level) => {
+    () => {
+      const entryLevel = levels.find((level) => getLevelKind(level.label) === "entry");
+      const entryPrice = entryLevel ? parseLevelPrice(entryLevel.price) : null;
+
+      return levels.map((level) => {
         const numericPrice = parseLevelPrice(level.price);
         const kind = getLevelKind(level.label);
         const isEntry = kind === "entry";
         const isTarget = kind === "target";
         const isRisk = kind === "risk";
+        const displayPrice =
+          !isEntry && entryPrice && numericPrice && !level.price.includes("%")
+            ? `${level.price} (${formatSignedPercent(((numericPrice - entryPrice) / entryPrice) * 100)})`
+            : level.price;
 
         return {
           ...level,
           displayLabel: getDisplayLabel(level.label),
+          displayPrice,
           numericPrice,
           chartColor: isEntry ? "#0ea5e9" : isTarget ? "#f59e0b" : "#ef4444",
           tone: isEntry
@@ -192,7 +204,8 @@ export function TradingViewChartCard({
               : "border-rose-200 bg-rose-50/80 text-rose-900",
           lineStyle: (isRisk ? 2 : isTarget ? 1 : 0) as LineStyle
         };
-      }),
+      });
+    },
     [levels]
   );
 
@@ -573,7 +586,7 @@ export function TradingViewChartCard({
                 {levelItems.map((item) => (
                   <div key={`${item.displayLabel}-${item.price}`} className={cn("rounded-[20px] border px-4 py-4", item.tone)}>
                     <p className="text-xs font-medium opacity-80">{item.displayLabel}</p>
-                    <p className="mt-2 text-base font-semibold">{item.price}</p>
+                    <p className="mt-2 text-base font-semibold">{item.displayPrice}</p>
                     <p className="mt-2 text-xs leading-5 opacity-80">{item.meaning}</p>
                   </div>
                 ))}

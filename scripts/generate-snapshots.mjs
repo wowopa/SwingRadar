@@ -823,10 +823,31 @@ function buildAnalysisSummary(item, qualityLabel, indicators) {
 }
 
 function buildKeyLevels(item) {
+  const formatSignedPercent = (value) => `${value > 0 ? "+" : ""}${value.toFixed(1)}%`;
+  const confirmationPrice = Number(item.confirmationPrice ?? 0);
+  const targetReturn =
+    confirmationPrice > 0 ? ((Number(item.expansionPrice ?? 0) - confirmationPrice) / confirmationPrice) * 100 : null;
+  const riskReturn =
+    confirmationPrice > 0 ? ((Number(item.invalidationPrice ?? 0) - confirmationPrice) / confirmationPrice) * 100 : null;
+
   return [
     { label: "진입 기준", price: `${item.confirmationPrice.toLocaleString()}원`, meaning: "이 가격 위에서 버티면 진입을 검토할 수 있는 구간" },
-    { label: "목표 가격", price: `${item.expansionPrice.toLocaleString()}원`, meaning: "상승이 이어질 때 분할 매도를 검토하는 구간" },
-    { label: "위험 가격", price: `${item.invalidationPrice.toLocaleString()}원`, meaning: "이 가격 아래면 흐름이 약해졌다고 보고 다시 점검" }
+    {
+      label: "목표 가격",
+      price:
+        targetReturn === null
+          ? `${item.expansionPrice.toLocaleString()}원`
+          : `${item.expansionPrice.toLocaleString()}원 (${formatSignedPercent(targetReturn)})`,
+      meaning: "상승이 이어질 때 분할 매도를 검토하는 구간"
+    },
+    {
+      label: "위험 가격",
+      price:
+        riskReturn === null
+          ? `${item.invalidationPrice.toLocaleString()}원`
+          : `${item.invalidationPrice.toLocaleString()}원 (${formatSignedPercent(riskReturn)})`,
+      meaning: "이 가격 아래면 흐름이 약해졌다고 보고 다시 점검"
+    }
   ];
 }
 

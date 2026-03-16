@@ -13,7 +13,24 @@ function getDisplayLabel(label: string) {
   return "위험 가격";
 }
 
+function parseLevelPrice(price: string) {
+  const normalized = price.replace(/[^0-9.-]/g, "");
+  if (!normalized) {
+    return null;
+  }
+
+  const parsed = Number(normalized);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function formatSignedPercent(value: number) {
+  return `${value > 0 ? "+" : ""}${value.toFixed(1)}%`;
+}
+
 export function AnalysisDecisionPanel({ levels, notes }: { levels: KeyLevel[]; notes: string[] }) {
+  const entryLevel = levels.find((level) => labelIncludesEntry(level.label));
+  const entryPrice = entryLevel ? parseLevelPrice(entryLevel.price) : null;
+
   return (
     <section className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
       <Card>
@@ -25,7 +42,7 @@ export function AnalysisDecisionPanel({ levels, notes }: { levels: KeyLevel[]; n
             <div key={`${level.label}-${level.price}`} className="rounded-[28px] border border-border/70 bg-secondary/35 p-5">
               <div className="flex items-center justify-between gap-4">
                 <p className="font-medium text-foreground">{getDisplayLabel(level.label)}</p>
-                <p className="text-sm font-semibold text-primary">{level.price}</p>
+                <p className="text-sm font-semibold text-primary">{getLevelDisplayPrice(level, entryPrice)}</p>
               </div>
               <p className="mt-2 text-sm leading-6 text-muted-foreground">{level.meaning}</p>
             </div>
@@ -46,4 +63,35 @@ export function AnalysisDecisionPanel({ levels, notes }: { levels: KeyLevel[]; n
       </Card>
     </section>
   );
+}
+
+function labelIncludesEntry(label: string) {
+  return label.includes("진입") || label.includes("확인");
+}
+
+function labelIncludesTarget(label: string) {
+  return label.includes("목표") || label.includes("다음");
+}
+
+function getLevelDisplayPrice(level: KeyLevel, entryPrice: number | null) {
+  if (!entryPrice || level.price.includes("%")) {
+    return level.price;
+  }
+
+  const levelPrice = parseLevelPrice(level.price);
+  if (!levelPrice) {
+    return level.price;
+  }
+
+  if (labelIncludesTarget(level.label) || (!labelIncludesEntry(level.label) && !level.label.includes("위험") && !level.label.includes("이탈"))) {
+    const change = ((levelPrice - entryPrice) / entryPrice) * 100;
+    return `${level.price} (${formatSignedPercent(change)})`;
+  }
+
+  if (level.label.includes("위험") || level.label.includes("이탈")) {
+    const change = ((levelPrice - entryPrice) / entryPrice) * 100;
+    return `${level.price} (${formatSignedPercent(change)})`;
+  }
+
+  return level.price;
 }
