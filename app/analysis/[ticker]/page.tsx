@@ -268,7 +268,7 @@ export default async function AnalysisPage({ params }: { params: Promise<{ ticke
         snapshotGeneratedAt={analysisPayload.generatedAt}
       />
 
-      <section className="grid gap-6 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
+      <section className="grid gap-6 xl:grid-cols-2">
         <AnalysisDecisionPanel notes={analysis.decisionNotes} />
         <ScenarioPanel scenarios={analysis.scenarios} />
       </section>

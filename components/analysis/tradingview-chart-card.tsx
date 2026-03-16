@@ -316,6 +316,19 @@ export function TradingViewChartCard({
       priceLineVisible: false,
       lastValueVisible: false
     });
+    const turnoverOverlaySeries = priceChart.addSeries(HistogramSeries, {
+      color: "rgba(180, 125, 41, 0.28)",
+      priceFormat: { type: "volume" },
+      priceLineVisible: false,
+      lastValueVisible: false,
+      priceScaleId: "turnover-overlay"
+    });
+    turnoverOverlaySeries.priceScale().applyOptions({
+      scaleMargins: {
+        top: 0.78,
+        bottom: 0
+      }
+    });
 
     const turnoverSeries = turnoverChart.addSeries(HistogramSeries, {
       color: "rgba(180, 125, 41, 0.58)",
@@ -363,6 +376,7 @@ export function TradingViewChartCard({
       bollingerUpper: toChartValue(point.bollingerUpper),
       bollingerLower: toChartValue(point.bollingerLower),
       turnover: point.volume ?? 0,
+      turnoverAmount: point.volume ? Number((point.close * point.volume).toFixed(0)) : 0,
       macd: toChartValue(point.macd),
       macdSignal: toChartValue(point.macdSignal)
     }));
@@ -392,6 +406,16 @@ export function TradingViewChartCard({
     ema20Series.setData(seriesData.filter((point) => point.ema20 !== undefined).map((point) => ({ time: point.time, value: point.ema20! })));
     upperBandSeries.setData(seriesData.filter((point) => point.bollingerUpper !== undefined).map((point) => ({ time: point.time, value: point.bollingerUpper! })));
     lowerBandSeries.setData(seriesData.filter((point) => point.bollingerLower !== undefined).map((point) => ({ time: point.time, value: point.bollingerLower! })));
+    turnoverOverlaySeries.setData(
+      seriesData.map((point, index) => ({
+        time: point.time,
+        value: point.turnoverAmount,
+        color:
+          index > 0 && point.close < (seriesData[index - 1]?.close ?? point.close)
+            ? "rgba(251, 113, 133, 0.28)"
+            : "rgba(180, 125, 41, 0.28)"
+      }))
+    );
     turnoverSeries.setData(
       seriesData.map((point, index) => ({
         time: point.time,
@@ -630,6 +654,7 @@ export function TradingViewChartCard({
                 <LegendDot color="#6366f1" label="60일선" />
                 <LegendDot color="#0ea5e9" label="20EMA" />
                 <LegendDot color="#fb7185" label="볼린저 밴드" />
+                <LegendDot color="rgba(180, 125, 41, 0.6)" label="거래대금" />
                 <LegendDot color="#1d4ed8" label="MACD" />
                 <LegendDot color="#0ea5e9" label="진입 기준" />
                 <LegendDot color="#f59e0b" label="목표 가격" />
