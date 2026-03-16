@@ -246,6 +246,7 @@ export default async function AnalysisPage({ params }: { params: Promise<{ ticke
         points={analysis.chartSeries ?? EMPTY_CHART_SERIES}
         indicators={analysis.technicalIndicators ?? EMPTY_TECHNICAL_INDICATORS}
         levels={analysis.keyLevels}
+        snapshotGeneratedAt={analysisPayload.generatedAt}
       />
 
       <section className="grid gap-6 xl:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
