@@ -1,3 +1,4 @@
+import { BrandSignature } from "@/components/layout/brand-signature";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 
 interface PageLoadingProps {
@@ -10,7 +11,8 @@ interface PageLoadingProps {
 export function PageLoading({ eyebrow, title, description, cards = 3 }: PageLoadingProps) {
   return (
     <main className="space-y-6">
-      <div className="space-y-3">
+      <div className="space-y-4">
+        <BrandSignature compact />
         <div className="h-3 w-28 animate-pulse rounded-full bg-secondary" />
         <div className="h-10 w-80 animate-pulse rounded-xl bg-secondary" />
         <div className="h-5 w-full max-w-3xl animate-pulse rounded-lg bg-secondary/80" />
@@ -46,7 +48,9 @@ export function PageLoading({ eyebrow, title, description, cards = 3 }: PageLoad
           </Card>
         ))}
       </section>
-      <p className="text-sm text-muted-foreground">{eyebrow} · {description}</p>
+      <p className="text-sm text-muted-foreground">
+        {eyebrow} / {description}
+      </p>
     </main>
   );
 }

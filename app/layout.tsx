@@ -12,8 +12,8 @@ const bodyFont = Noto_Sans_KR({
 });
 
 export const metadata: Metadata = {
-  title: "SwingRadar",
-  description: "스윙 후보 선정, 무효화 기준, 히스토릭 검증을 한곳에서 보는 스윙 트레이딩 워크벤치"
+  title: "SWING-RADAR",
+  description: "국내 스윙 후보 선정, 무효화 기준, 히스토리 검증을 한 화면에서 읽는 기술 중심 스윙 시그널 워크스페이스"
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

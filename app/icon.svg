@@ -1,0 +1,30 @@
+<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="iconBg" x1="6" y1="5" x2="58" y2="59" gradientUnits="userSpaceOnUse">
+      <stop stop-color="hsl(39 47% 34%)" />
+      <stop offset="0.55" stop-color="hsl(31 33% 24%)" />
+      <stop offset="1" stop-color="hsl(210 20% 15%)" />
+    </linearGradient>
+  </defs>
+  <rect x="1" y="1" width="62" height="62" rx="20" fill="url(#iconBg)" />
+  <circle cx="32" cy="32" r="17" fill="none" stroke="rgba(250,246,239,0.16)" stroke-width="1.4" />
+  <circle cx="32" cy="32" r="11" fill="none" stroke="rgba(250,246,239,0.14)" stroke-width="1.4" />
+  <path
+    d="M14 38.5C19 38 20.2 29.8 24.8 29.8C29.5 29.8 29.8 39.7 34.5 39.7C38.8 39.7 39.8 24.8 47 24.8"
+    fill="none"
+    stroke="rgba(250,246,239,0.96)"
+    stroke-width="3.2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+  <path
+    d="M42 21.4L47.4 24.7L43.6 29.8"
+    fill="none"
+    stroke="rgba(250,246,239,0.96)"
+    stroke-width="2.8"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+  <circle cx="24.8" cy="29.8" r="2.2" fill="rgba(255,221,157,0.95)" />
+  <circle cx="34.5" cy="39.7" r="2.2" fill="rgba(134,232,186,0.95)" />
+</svg>
