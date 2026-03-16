@@ -33,11 +33,39 @@ Environment:
 `);
 }
 
+const SEOUL_TIME_ZONE = "Asia/Seoul";
+
 function formatDate(date) {
-  const year = date.getFullYear();
-  const month = `${date.getMonth() + 1}`.padStart(2, "0");
-  const day = `${date.getDate()}`.padStart(2, "0");
+  const year = date.getUTCFullYear();
+  const month = `${date.getUTCMonth() + 1}`.padStart(2, "0");
+  const day = `${date.getUTCDate()}`.padStart(2, "0");
   return `${year}${month}${day}`;
+}
+
+function getSeoulDateParts(value = new Date()) {
+  const formatter = new Intl.DateTimeFormat("en-CA", {
+    timeZone: SEOUL_TIME_ZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit"
+  });
+  const values = Object.fromEntries(
+    formatter
+      .formatToParts(value)
+      .filter((part) => part.type !== "literal")
+      .map((part) => [part.type, part.value])
+  );
+
+  return {
+    year: Number(values.year),
+    month: Number(values.month),
+    day: Number(values.day)
+  };
+}
+
+function getSeoulDateString(value = new Date()) {
+  const { year, month, day } = getSeoulDateParts(value);
+  return `${year}-${`${month}`.padStart(2, "0")}-${`${day}`.padStart(2, "0")}`;
 }
 
 function wait(delayMs) {
@@ -55,11 +83,12 @@ function resolveBusinessDates(range) {
   };
   const targetDays = businessDaysByRange[range] ?? 140;
   const dates = [];
-  const cursor = new Date();
+  const { year, month, day } = getSeoulDateParts();
+  const cursor = new Date(Date.UTC(year, month - 1, day));
 
   while (dates.length < targetDays) {
-    cursor.setDate(cursor.getDate() - 1);
-    const weekday = cursor.getDay();
+    cursor.setUTCDate(cursor.getUTCDate() - 1);
+    const weekday = cursor.getUTCDay();
     if (weekday === 0 || weekday === 6) {
       continue;
     }
@@ -277,7 +306,7 @@ async function fetchYahooItem(entry, range) {
     confirmationPrice,
     expansionPrice,
     entryPrice: Math.round(ma20),
-    signalDate: new Date().toISOString().slice(0, 10),
+    signalDate: getSeoulDateString(),
     trendScore: scoreTrend(currentPrice, ma20, ma60),
     flowScore: scoreFlow(latestVolume, avg20Volume),
     volatilityScore: scoreVolatility(currentPrice, invalidationPrice),
@@ -482,7 +511,7 @@ function buildMarketItemFromHistory(entry, points) {
     confirmationPrice,
     expansionPrice,
     entryPrice: Math.round(ma20),
-    signalDate: pairedHistory.at(-1)?.date ?? new Date().toISOString().slice(0, 10),
+    signalDate: pairedHistory.at(-1)?.date ?? getSeoulDateString(),
     trendScore: scoreTrend(currentPrice, ma20, ma60),
     flowScore: scoreFlow(latestVolume, avg20Volume),
     volatilityScore: scoreVolatility(currentPrice, invalidationPrice),
