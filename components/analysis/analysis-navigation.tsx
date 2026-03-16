@@ -1,12 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { ArrowLeft, ArrowRight, ChevronDown, History, Search } from "lucide-react";
+import { ArrowLeft, ArrowRight, History } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 
 type ReadySymbol = {
   ticker: string;
@@ -14,23 +12,29 @@ type ReadySymbol = {
   sector: string;
 };
 
+type CompanyOverview = {
+  company: string;
+  ticker: string;
+  sector: string;
+  market: string;
+  region: string;
+  status: "ready" | "pending";
+  summary: string;
+};
+
 type AnalysisNavigationProps = {
   currentTicker: string;
   previous?: ReadySymbol;
   next?: ReadySymbol;
   readyItems: ReadySymbol[];
+  overview: CompanyOverview;
 };
 
 const STORAGE_KEY = "swing-radar.recent-analysis";
 const MAX_RECENT_ITEMS = 5;
 
-export function AnalysisNavigation({ currentTicker, previous, next, readyItems }: AnalysisNavigationProps) {
+export function AnalysisNavigation({ currentTicker, previous, next, readyItems, overview }: AnalysisNavigationProps) {
   const [recentTickers, setRecentTickers] = useState<string[]>([]);
-  const [searchInput, setSearchInput] = useState("");
-  const [searchQuery, setSearchQuery] = useState("");
-  const [pickerFocused, setPickerFocused] = useState(false);
-  const [isComposing, setIsComposing] = useState(false);
-  const router = useRouter();
 
   useEffect(() => {
     const parsed = readRecentTickers();
@@ -47,36 +51,43 @@ export function AnalysisNavigation({ currentTicker, previous, next, readyItems }
       .filter((item): item is ReadySymbol => Boolean(item));
   }, [currentTicker, readyItems, recentTickers]);
 
-  const filteredItems = useMemo(() => {
-    const normalized = searchQuery.trim().toLowerCase();
-
-    return readyItems
-      .filter((item) => {
-        if (!normalized) {
-          return true;
-        }
-
-        return (
-          item.company.toLowerCase().includes(normalized) ||
-          item.ticker.toLowerCase().includes(normalized) ||
-          item.sector.toLowerCase().includes(normalized)
-        );
-      })
-      .slice(0, 12);
-  }, [readyItems, searchQuery]);
-
   return (
     <section className="relative z-20 mb-6 grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
       <Card className="relative z-20">
         <CardHeader>
-          <CardTitle className="text-base text-foreground">분석 이동</CardTitle>
+          <CardTitle className="text-base text-foreground">기업 개요</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
+          <div className="rounded-[24px] border border-border/70 bg-secondary/20 p-5">
+            <div className="flex flex-wrap items-center gap-2 text-xs uppercase tracking-[0.2em] text-muted-foreground">
+              <span>{overview.market}</span>
+              <span>쨌</span>
+              <span>{overview.region}</span>
+              <span>쨌</span>
+              <span>{overview.sector}</span>
+            </div>
+            <p className="mt-3 text-lg font-semibold text-foreground">
+              {overview.company} ({overview.ticker})
+            </p>
+            <p className="mt-3 text-sm leading-7 text-foreground/80">{overview.summary}</p>
+            <div className="mt-4 flex flex-wrap gap-2 text-xs">
+              <span className="rounded-full border border-border/70 bg-background/80 px-3 py-1 text-foreground/80">
+                상장 시장 {overview.market}
+              </span>
+              <span className="rounded-full border border-border/70 bg-background/80 px-3 py-1 text-foreground/80">
+                업종 {overview.sector}
+              </span>
+              <span className="rounded-full border border-border/70 bg-background/80 px-3 py-1 text-foreground/80">
+                분석 상태 {overview.status === "ready" ? "분석 가능" : "준비 중"}
+              </span>
+            </div>
+          </div>
+
           <div className="grid gap-3 sm:grid-cols-2">
             <NavigationLink
               href={previous ? `/analysis/${previous.ticker}` : undefined}
               title="이전 종목"
-              label={previous ? `${previous.company} · ${previous.ticker}` : "이전 분석 종목이 없습니다."}
+              label={previous ? `${previous.company} 쨌 ${previous.ticker}` : "이전 분석 종목이 없습니다."}
               note={previous?.sector ?? "현재 감시 종목 중 첫 번째 분석입니다."}
               icon={<ArrowLeft className="h-4 w-4" />}
               disabled={!previous}
@@ -84,7 +95,7 @@ export function AnalysisNavigation({ currentTicker, previous, next, readyItems }
             <NavigationLink
               href={next ? `/analysis/${next.ticker}` : undefined}
               title="다음 종목"
-              label={next ? `${next.company} · ${next.ticker}` : "다음 분석 종목이 없습니다."}
+              label={next ? `${next.company} 쨌 ${next.ticker}` : "다음 분석 종목이 없습니다."}
               note={next?.sector ?? "현재 감시 종목 중 마지막 분석입니다."}
               icon={<ArrowRight className="h-4 w-4" />}
               align="right"
@@ -93,80 +104,11 @@ export function AnalysisNavigation({ currentTicker, previous, next, readyItems }
           </div>
 
           <div className="rounded-2xl border border-border/70 bg-secondary/20 px-4 py-4">
-            <div className="flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-muted-foreground">
-              <ChevronDown className="h-4 w-4" />
-              종목 선택
-            </div>
-            <div className="relative mt-3">
-              <div className="flex items-center gap-3 rounded-2xl border border-border bg-background px-4">
-                <Search className="h-4 w-4 text-muted-foreground" />
-                <Input
-                  value={searchInput}
-                  onChange={(event) => {
-                    const nextValue = event.target.value;
-                    setSearchInput(nextValue);
-                    if (!isComposing) {
-                      setSearchQuery(nextValue);
-                    }
-                    setPickerFocused(true);
-                  }}
-                  onCompositionStart={() => setIsComposing(true)}
-                  onCompositionEnd={(event) => {
-                    setIsComposing(false);
-                    const nextValue = event.currentTarget.value;
-                    setSearchInput(nextValue);
-                    setSearchQuery(nextValue);
-                    setPickerFocused(true);
-                  }}
-                  onFocus={() => setPickerFocused(true)}
-                  onBlur={() => setTimeout(() => setPickerFocused(false), 120)}
-                  placeholder={`${readyItems.find((item) => item.ticker === currentTicker)?.company ?? ""} (${currentTicker}) 검색`}
-                  className="h-12 border-0 bg-transparent px-0 text-sm shadow-none focus-visible:ring-0"
-                />
-              </div>
-
-              {(pickerFocused || searchQuery.trim().length > 0) && !isComposing && (
-                <div className="absolute left-0 right-0 top-[calc(100%+0.75rem)] z-[280] rounded-2xl border border-border/80 bg-white p-2 shadow-[0_24px_48px_rgba(66,50,34,0.14)]">
-                  <div className="flex items-center justify-between px-3 py-2">
-                    <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">검색 결과</p>
-                    <p className="text-xs text-muted-foreground">{filteredItems.length}개</p>
-                  </div>
-                  {filteredItems.length ? (
-                    <div className="space-y-1">
-                      {filteredItems.map((item) => (
-                        <button
-                          key={item.ticker}
-                          type="button"
-                          onClick={() => {
-                            setSearchInput("");
-                            setSearchQuery("");
-                            setPickerFocused(false);
-                            if (item.ticker !== currentTicker) {
-                              router.push(`/analysis/${item.ticker}`);
-                            }
-                          }}
-                          className={`flex w-full items-center justify-between rounded-[18px] px-4 py-3 text-left transition ${
-                            item.ticker === currentTicker ? "bg-primary/8 text-primary" : "hover:bg-secondary/60"
-                          }`}
-                        >
-                          <div className="min-w-0">
-                            <p className="truncate text-sm font-medium">{item.company}</p>
-                            <p className="mt-1 text-xs text-muted-foreground">
-                              {item.ticker} · {item.sector}
-                            </p>
-                          </div>
-                          <span className="ml-4 shrink-0 text-xs text-muted-foreground">
-                            {item.ticker === currentTicker ? "현재" : "이동"}
-                          </span>
-                        </button>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="px-4 py-5 text-sm text-muted-foreground">일치하는 분석 종목이 없습니다.</div>
-                  )}
-                </div>
-              )}
-            </div>
+            <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">분석 내 이동 안내</p>
+            <p className="mt-3 text-sm leading-7 text-muted-foreground">
+              전체 종목 검색은 페이지 상단 공용 검색 바에서 바로 찾을 수 있고, 이 영역에서는 현재 분석 흐름을 끊지 않도록
+              이전/다음 종목 이동만 남겨두었습니다.
+            </p>
           </div>
         </CardContent>
       </Card>
@@ -188,7 +130,7 @@ export function AnalysisNavigation({ currentTicker, previous, next, readyItems }
                 <div>
                   <p className="text-sm font-medium text-foreground">{item.company}</p>
                   <p className="text-xs text-muted-foreground">
-                    {item.ticker} · {item.sector}
+                    {item.ticker} 쨌 {item.sector}
                   </p>
                 </div>
                 <span className="text-xs text-primary">다시 보기</span>

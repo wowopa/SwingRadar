@@ -117,6 +117,30 @@ function getCoverageRead(newsImpact: NewsImpactItem[], riskChecklist: RiskCheckl
   return `${coverageRisk?.note ?? "이벤트 커버리지는 참고 신호로만 봅니다."} 외부 뉴스는 화면 하단의 검색 링크로 직접 확인하는 흐름을 권장합니다.`;
 }
 
+function buildCompanyOverview({
+  company,
+  ticker,
+  sector,
+  market,
+  region,
+  status
+}: {
+  company: string;
+  ticker: string;
+  sector: string;
+  market: string;
+  region: string;
+  status: "ready" | "pending";
+}) {
+  const regionLabel = region === "KR" ? "국내" : "해외";
+  const statusLabel =
+    status === "ready"
+      ? "현재 SwingRadar에서 차트와 기술 지표 기준으로 바로 분석 가능한 상태입니다."
+      : "아직 일부 분석 준비가 진행 중이지만 시장 구조와 가격 흐름은 함께 확인할 수 있습니다.";
+
+  return `${company}(${ticker})는 ${market}에 상장된 ${regionLabel} ${sector} 종목입니다. 이 화면에서는 ${sector} 업종 안에서 추세, 거래대금, 변동성, 보조지표 구조를 중심으로 스윙 관점의 진입 기준과 무효화 기준을 해석합니다. ${statusLabel}`;
+}
+
 export default async function AnalysisPage({ params }: { params: Promise<{ ticker: string }> }) {
   const { ticker } = await params;
   const resolvedTicker = resolveTicker(ticker);
@@ -153,6 +177,22 @@ export default async function AnalysisPage({ params }: { params: Promise<{ ticke
     typeof featuredRank === "number" && featuredRank >= 0
       ? `${analysis.company} (${analysis.ticker}) - 오늘 후보 #${featuredRank + 1}`
       : `${analysis.company} (${analysis.ticker})`;
+  const overview = {
+    company: analysis.company,
+    ticker: analysis.ticker,
+    sector: symbol?.sector ?? "기타",
+    market: symbol?.market ?? "KRX",
+    region: symbol?.region ?? "KR",
+    status: symbol?.status ?? "ready",
+    summary: buildCompanyOverview({
+      company: analysis.company,
+      ticker: analysis.ticker,
+      sector: symbol?.sector ?? "기타",
+      market: symbol?.market ?? "KRX",
+      region: symbol?.region ?? "KR",
+      status: symbol?.status ?? "ready"
+    })
+  };
 
   return (
     <main className="space-y-6">
@@ -171,6 +211,7 @@ export default async function AnalysisPage({ params }: { params: Promise<{ ticke
           company: item.company,
           sector: item.sector
         }))}
+        overview={overview}
       />
 
       <section className="grid gap-6 xl:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)]">
