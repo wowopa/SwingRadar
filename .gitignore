@@ -13,3 +13,4 @@ data/tracking/service-tracking-state.json
 data/universe/daily-candidates.json
 data/universe/daily-candidates-history.json
 data/config/watchlist.universe.json
+public/maintenance-mode.json
