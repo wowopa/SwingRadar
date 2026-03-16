@@ -38,9 +38,19 @@ function formatAmount(value: number | null) {
   return `${eok.toFixed(eok >= 100 ? 0 : 1)}억`;
 }
 
-function buildSyntheticDate(index: number) {
-  const date = new Date(Date.UTC(2026, 0, 1 + index));
+function buildSyntheticDate(index: number, anchorDate?: string | null) {
+  const anchor = anchorDate ? new Date(`${anchorDate}T00:00:00Z`) : new Date(Date.UTC(2026, 0, 1));
+  const date = new Date(anchor);
+  date.setUTCDate(anchor.getUTCDate() - index);
   return date.toISOString().slice(0, 10);
+}
+
+function resolveChartDate(point: AnalysisChartPoint, indexFromEnd: number, anchorDate?: string | null) {
+  if (typeof point.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(point.date)) {
+    return point.date;
+  }
+
+  return buildSyntheticDate(indexFromEnd, anchorDate);
 }
 
 function toChartValue(value: number | null) {
@@ -108,6 +118,7 @@ export function TradingViewChartCard({
     const count = RANGE_POINTS[range];
     return points.slice(-count);
   }, [points, range]);
+  const latestChartDate = chartPoints.at(-1)?.date ?? null;
 
   useEffect(() => {
     if (!availableRanges.includes(range)) {
@@ -211,7 +222,7 @@ export function TradingViewChartCard({
     });
 
     const seriesData = chartPoints.map((point, index) => ({
-      time: buildSyntheticDate(index),
+      time: resolveChartDate(point, chartPoints.length - index - 1, latestChartDate),
       open: point.open,
       high: point.high,
       low: point.low,
