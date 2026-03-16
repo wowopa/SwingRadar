@@ -14,7 +14,7 @@ import {
 import { ExternalLink } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import type { AnalysisChartPoint, TechnicalIndicators } from "@/types/analysis";
+import type { AnalysisChartPoint, KeyLevel, TechnicalIndicators } from "@/types/analysis";
 import { cn } from "@/lib/utils";
 
 type RangeKey = "1M" | "3M" | "6M";
@@ -57,6 +57,16 @@ function toChartValue(value: number | null) {
   return value === null ? undefined : value;
 }
 
+function parseLevelPrice(price: string) {
+  const normalized = price.replace(/[^0-9.-]/g, "");
+  if (!normalized) {
+    return null;
+  }
+
+  const parsed = Number(normalized);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
 function createBaseChart(container: HTMLDivElement, height: number, leftScale = false) {
   return createChart(container, {
     width: container.clientWidth,
@@ -93,12 +103,14 @@ export function TradingViewChartCard({
   symbol,
   company,
   points,
-  indicators
+  indicators,
+  levels
 }: {
   symbol: string | null;
   company: string;
   points: AnalysisChartPoint[];
   indicators: TechnicalIndicators;
+  levels: KeyLevel[];
 }) {
   const priceContainerRef = useRef<HTMLDivElement | null>(null);
   const turnoverContainerRef = useRef<HTMLDivElement | null>(null);
@@ -119,6 +131,28 @@ export function TradingViewChartCard({
     return points.slice(-count);
   }, [points, range]);
   const latestChartDate = chartPoints.at(-1)?.date ?? null;
+  const levelItems = useMemo(
+    () =>
+      levels.map((level) => {
+        const numericPrice = parseLevelPrice(level.price);
+        const isEntry = level.label.includes("진입");
+        const isTarget = level.label.includes("목표");
+        const isRisk = level.label.includes("위험");
+
+        return {
+          ...level,
+          numericPrice,
+          chartColor: isEntry ? "#0ea5e9" : isTarget ? "#f59e0b" : "#ef4444",
+          tone: isEntry
+            ? "border-sky-200 bg-sky-50/80 text-sky-900"
+            : isTarget
+              ? "border-amber-200 bg-amber-50/80 text-amber-900"
+              : "border-rose-200 bg-rose-50/80 text-rose-900",
+          lineStyle: (isRisk ? 2 : isTarget ? 1 : 0) as LineStyle
+        };
+      }),
+    [levels]
+  );
 
   useEffect(() => {
     if (!availableRanges.includes(range)) {
@@ -220,6 +254,19 @@ export function TradingViewChartCard({
     const macdHistogramSeries = macdChart.addSeries(HistogramSeries, {
       color: "rgba(33, 128, 105, 0.35)"
     });
+    const levelSeries = levelItems
+      .filter((item) => item.numericPrice !== null)
+      .map((item) => ({
+        item,
+        series: priceChart.addSeries(LineSeries, {
+          color: item.chartColor,
+          lineWidth: 2,
+          lineStyle: item.lineStyle,
+          priceLineVisible: false,
+          lastValueVisible: false,
+          crosshairMarkerVisible: false
+        })
+      }));
 
     const seriesData = chartPoints.map((point, index) => ({
       time: resolveChartDate(point, chartPoints.length - index - 1, latestChartDate),
@@ -295,6 +342,9 @@ export function TradingViewChartCard({
           color: (point.macd ?? 0) >= (point.macdSignal ?? 0) ? "rgba(33, 128, 105, 0.35)" : "rgba(251, 113, 133, 0.45)"
         }))
     );
+    levelSeries.forEach(({ item, series }) => {
+      series.setData(seriesData.map((point) => ({ time: point.time, value: item.numericPrice! })));
+    });
 
     priceChart.timeScale().fitContent();
     turnoverChart.timeScale().fitContent();
@@ -318,7 +368,7 @@ export function TradingViewChartCard({
       chartsRef.current.forEach((chart) => chart.remove());
       chartsRef.current = [];
     };
-  }, [chartPoints]);
+  }, [chartPoints, levelItems]);
 
   const lastPoint = chartPoints.at(-1);
   const lastTurnover = lastPoint?.volume ? Number((lastPoint.close * lastPoint.volume).toFixed(0)) : null;
@@ -463,6 +513,9 @@ export function TradingViewChartCard({
                 <LegendDot color="#fb7185" label="볼린저 밴드" />
                 <LegendDot color="#b47d29" label="거래금액" />
                 <LegendDot color="#1d4ed8" label="MACD" />
+                <LegendDot color="#0ea5e9" label="진입 기준" />
+                <LegendDot color="#f59e0b" label="목표 가격" />
+                <LegendDot color="#ef4444" label="위험 가격" />
               </div>
             </div>
             <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
@@ -473,6 +526,17 @@ export function TradingViewChartCard({
                 </div>
               ))}
             </div>
+            {levelItems.length ? (
+              <div className="grid gap-3 md:grid-cols-3">
+                {levelItems.map((item) => (
+                  <div key={item.label} className={cn("rounded-[20px] border px-4 py-4", item.tone)}>
+                    <p className="text-xs font-medium opacity-80">{item.label}</p>
+                    <p className="mt-2 text-base font-semibold">{item.price}</p>
+                    <p className="mt-2 text-xs leading-5 opacity-80">{item.meaning}</p>
+                  </div>
+                ))}
+              </div>
+            ) : null}
             <div className="space-y-3 overflow-hidden rounded-[28px] border border-border/70 bg-white p-3">
               <div ref={priceContainerRef} className="h-[320px] w-full" />
               <div className="grid gap-3 md:grid-cols-[1fr_1fr]">
