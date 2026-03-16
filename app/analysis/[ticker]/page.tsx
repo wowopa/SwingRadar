@@ -18,7 +18,7 @@ import { getAnalysisByTicker } from "@/lib/repositories/analysis";
 import { getDailyCandidates } from "@/lib/repositories/daily-candidates";
 import { getTrackingPayload } from "@/lib/repositories/tracking";
 import { buildPublicDataStatusSummary } from "@/lib/server/public-data-status";
-import { buildTradingViewSymbol, getAdjacentReadySymbols, getSymbolByTicker, resolveTicker } from "@/lib/symbols/master";
+import { buildTradingViewSymbol, getReadySymbols, getSymbolByTicker, resolveTicker } from "@/lib/symbols/master";
 import { describeSignalScore, formatScore } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -120,14 +120,12 @@ function getCoverageRead(newsImpact: NewsImpactItem[], riskChecklist: RiskCheckl
 function buildCompanyOverview({
   company,
   ticker,
-  sector,
   market,
   region,
   status
 }: {
   company: string;
   ticker: string;
-  sector: string;
   market: string;
   region: string;
   status: "ready" | "pending";
@@ -135,10 +133,10 @@ function buildCompanyOverview({
   const regionLabel = region === "KR" ? "국내" : "해외";
   const statusLabel =
     status === "ready"
-      ? "현재 SwingRadar에서 차트와 기술 지표 기준으로 바로 분석 가능한 상태입니다."
-      : "아직 일부 분석 준비가 진행 중이지만 시장 구조와 가격 흐름은 함께 확인할 수 있습니다.";
+      ? "현재 SwingRadar 분석 데이터는 바로 확인할 수 있습니다."
+      : "일부 분석 데이터는 아직 준비 중입니다.";
 
-  return `${company}(${ticker})는 ${market}에 상장된 ${regionLabel} ${sector} 종목입니다. 이 화면에서는 ${sector} 업종 안에서 추세, 거래대금, 변동성, 보조지표 구조를 중심으로 스윙 관점의 진입 기준과 무효화 기준을 해석합니다. ${statusLabel}`;
+  return `${company} (${ticker})는 ${market}에 상장된 ${regionLabel} 기업입니다. 현재 프로젝트 데이터에는 회사의 실제 사업 소개 원문이 연결되어 있지 않아 상세 기업 설명은 준비 중입니다. ${statusLabel}`;
 }
 
 export default async function AnalysisPage({ params }: { params: Promise<{ ticker: string }> }) {
@@ -159,7 +157,7 @@ export default async function AnalysisPage({ params }: { params: Promise<{ ticke
 
   const analysis = analysisPayload.item;
   const statusSummary = buildPublicDataStatusSummary("analysis", analysisPayload.generatedAt);
-  const { previous, next, readyItems } = getAdjacentReadySymbols(resolvedTicker);
+  const readyItems = getReadySymbols();
   const symbol = getSymbolByTicker(resolvedTicker);
   const tradingViewSymbol = symbol ? buildTradingViewSymbol(symbol.ticker, symbol.market) : null;
   const topReasons = buildTopReasons(analysis);
@@ -180,14 +178,12 @@ export default async function AnalysisPage({ params }: { params: Promise<{ ticke
   const overview = {
     company: analysis.company,
     ticker: analysis.ticker,
-    sector: symbol?.sector ?? "기타",
     market: symbol?.market ?? "KRX",
     region: symbol?.region ?? "KR",
     status: symbol?.status ?? "ready",
     summary: buildCompanyOverview({
       company: analysis.company,
       ticker: analysis.ticker,
-      sector: symbol?.sector ?? "기타",
       market: symbol?.market ?? "KRX",
       region: symbol?.region ?? "KR",
       status: symbol?.status ?? "ready"
@@ -204,8 +200,6 @@ export default async function AnalysisPage({ params }: { params: Promise<{ ticke
       <PublicDataStatusBar summary={statusSummary} />
       <AnalysisNavigation
         currentTicker={analysis.ticker}
-        previous={previous}
-        next={next}
         readyItems={readyItems.map((item) => ({
           ticker: item.ticker,
           company: item.company,
