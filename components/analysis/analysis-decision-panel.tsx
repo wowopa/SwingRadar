@@ -1,6 +1,18 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { KeyLevel } from "@/types/analysis";
 
+function getDisplayLabel(label: string) {
+  if (label.includes("진입") || label.includes("확인")) {
+    return "진입 기준";
+  }
+
+  if (label.includes("목표") || label.includes("다음")) {
+    return "목표 가격";
+  }
+
+  return "위험 가격";
+}
+
 export function AnalysisDecisionPanel({ levels, notes }: { levels: KeyLevel[]; notes: string[] }) {
   return (
     <section className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
@@ -10,9 +22,9 @@ export function AnalysisDecisionPanel({ levels, notes }: { levels: KeyLevel[]; n
         </CardHeader>
         <CardContent className="space-y-4">
           {levels.map((level) => (
-            <div key={level.label} className="rounded-[28px] border border-border/70 bg-secondary/35 p-5">
+            <div key={`${level.label}-${level.price}`} className="rounded-[28px] border border-border/70 bg-secondary/35 p-5">
               <div className="flex items-center justify-between gap-4">
-                <p className="font-medium text-foreground">{level.label}</p>
+                <p className="font-medium text-foreground">{getDisplayLabel(level.label)}</p>
                 <p className="text-sm font-semibold text-primary">{level.price}</p>
               </div>
               <p className="mt-2 text-sm leading-6 text-muted-foreground">{level.meaning}</p>
