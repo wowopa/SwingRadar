@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { ArrowUpRight, Search, Sparkles } from "lucide-react";
+import { ArrowUpRight, History, Search, Sparkles } from "lucide-react";
 
 import { Input } from "@/components/ui/input";
 
@@ -22,6 +22,24 @@ type SearchResponse = {
   limit: number;
 };
 
+const RECENT_SEARCH_STORAGE_KEY = "swing-radar.recent-symbol-searches";
+const MAX_RECENT_SEARCHES = 6;
+
+function isSearchItem(value: unknown): value is SearchItem {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+
+  const candidate = value as Partial<SearchItem>;
+  return (
+    typeof candidate.ticker === "string" &&
+    typeof candidate.company === "string" &&
+    typeof candidate.sector === "string" &&
+    typeof candidate.market === "string" &&
+    typeof candidate.status === "string"
+  );
+}
+
 function StatusBadge({ status }: { status: SearchItem["status"] }) {
   if (status === "ready") {
     return (
@@ -38,28 +56,59 @@ function StatusBadge({ status }: { status: SearchItem["status"] }) {
   );
 }
 
+function readRecentSearches() {
+  try {
+    const raw = window.localStorage.getItem(RECENT_SEARCH_STORAGE_KEY);
+    if (!raw) {
+      return [];
+    }
+
+    const parsed: unknown = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed.filter(isSearchItem) : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeRecentSearches(items: SearchItem[]) {
+  window.localStorage.setItem(RECENT_SEARCH_STORAGE_KEY, JSON.stringify(items.slice(0, MAX_RECENT_SEARCHES)));
+}
+
 export function GlobalSymbolSearch() {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [inputValue, setInputValue] = useState("");
   const [query, setQuery] = useState("");
   const [items, setItems] = useState<SearchItem[]>([]);
-  const [description, setDescription] = useState("");
-  const [mode, setMode] = useState<SearchResponse["mode"]>("featured");
+  const [recentItems, setRecentItems] = useState<SearchItem[]>([]);
+  const [description, setDescription] = useState("최근에 확인한 종목을 다시 열어볼 수 있습니다.");
+  const [mode, setMode] = useState<"search" | "recent">("recent");
   const [focused, setFocused] = useState(false);
   const [isComposing, setIsComposing] = useState(false);
+
+  useEffect(() => {
+    setRecentItems(readRecentSearches());
+  }, []);
 
   useEffect(() => {
     let ignore = false;
     const search = query.trim();
 
-    if (search) {
-      setMode("search");
-      setDescription("티커, 종목명, 별칭, 섹터 일치도를 기준으로 최대 12개를 보여줍니다.");
+    if (!search) {
+      setItems([]);
+      setMode("recent");
+      setDescription(
+        recentItems.length ? "최근에 살펴본 종목입니다. 다시 열어보거나 새 검색어를 입력해 종목을 찾을 수 있습니다." : "검색어를 입력해 종목을 찾을 수 있습니다."
+      );
+      return () => {
+        ignore = true;
+      };
     }
 
+    setMode("search");
+    setDescription("티커, 종목명, 별칭, 섹터 일치어를 기준으로 최대 12개를 보여줍니다.");
+
     async function load() {
-      const url = search ? `/api/symbols?q=${encodeURIComponent(search)}&limit=12` : "/api/symbols?limit=12";
-      const response = await fetch(url, { cache: "no-store" });
+      const response = await fetch(`/api/symbols?q=${encodeURIComponent(search)}&limit=12`, { cache: "no-store" });
       if (!response.ok) {
         return;
       }
@@ -68,7 +117,6 @@ export function GlobalSymbolSearch() {
       if (!ignore) {
         setItems(payload.items);
         setDescription(payload.description);
-        setMode(payload.mode);
       }
     }
 
@@ -77,7 +125,7 @@ export function GlobalSymbolSearch() {
     return () => {
       ignore = true;
     };
-  }, [query]);
+  }, [query, recentItems.length]);
 
   useEffect(() => {
     function handlePointerDown(event: MouseEvent) {
@@ -101,7 +149,14 @@ export function GlobalSymbolSearch() {
     };
   }, []);
 
-  const showDropdown = focused && !isComposing;
+  const displayedItems = query.trim() ? items : recentItems;
+  const showDropdown = focused && !isComposing && (Boolean(query.trim()) || recentItems.length > 0);
+
+  function rememberItem(item: SearchItem) {
+    const nextRecentItems = [item, ...recentItems.filter((recent) => recent.ticker !== item.ticker)].slice(0, MAX_RECENT_SEARCHES);
+    setRecentItems(nextRecentItems);
+    writeRecentSearches(nextRecentItems);
+  }
 
   return (
     <div ref={containerRef} className="relative z-[120] w-full">
@@ -120,7 +175,7 @@ export function GlobalSymbolSearch() {
                 if (!isComposing) {
                   setQuery(nextValue);
                 }
-                setFocused(Boolean(nextValue.trim()));
+                setFocused(true);
               }}
               onCompositionStart={() => setIsComposing(true)}
               onCompositionEnd={(event) => {
@@ -128,7 +183,7 @@ export function GlobalSymbolSearch() {
                 const nextValue = event.currentTarget.value;
                 setInputValue(nextValue);
                 setQuery(nextValue);
-                setFocused(Boolean(nextValue.trim()));
+                setFocused(true);
               }}
               onFocus={() => setFocused(true)}
               placeholder="티커, 종목명, 별칭, 섹터로 검색"
@@ -145,21 +200,22 @@ export function GlobalSymbolSearch() {
         <div className="absolute left-0 right-0 top-[calc(100%+0.75rem)] z-[240] rounded-[28px] border border-border/80 bg-white p-2 shadow-[0_28px_60px_rgba(66,50,34,0.18)]">
           <div className="flex items-center justify-between px-3 py-2">
             <div className="flex items-center gap-2 text-xs uppercase tracking-[0.24em] text-muted-foreground">
-              <Sparkles className="h-3.5 w-3.5" />
-              {mode === "featured" ? "기본 검색 결과" : "검색 결과"}
+              {mode === "recent" ? <History className="h-3.5 w-3.5" /> : <Sparkles className="h-3.5 w-3.5" />}
+              {mode === "recent" ? "최근 검색" : "검색 결과"}
             </div>
-            <p className="text-xs text-muted-foreground">{items.length}개</p>
+            <p className="text-xs text-muted-foreground">{displayedItems.length}개</p>
           </div>
           <p className="px-3 pb-2 text-xs leading-5 text-muted-foreground">{description}</p>
 
-          {items.length ? (
-            items.map((item) =>
+          {displayedItems.length ? (
+            displayedItems.map((item) =>
               item.status === "ready" ? (
                 <Link
                   key={item.ticker}
                   href={`/analysis/${item.ticker}`}
                   className="block rounded-[22px] px-4 py-3 transition hover:bg-secondary/72"
                   onClick={() => {
+                    rememberItem(item);
                     setInputValue("");
                     setQuery("");
                   }}
@@ -168,7 +224,7 @@ export function GlobalSymbolSearch() {
                     <div className="min-w-0">
                       <p className="truncate text-sm font-semibold text-foreground">{item.company}</p>
                       <p className="mt-1 text-xs text-muted-foreground">
-                        {item.ticker} · {item.market} · {item.sector}
+                        {item.ticker} 쨌 {item.market} 쨌 {item.sector}
                       </p>
                     </div>
                     <div className="flex shrink-0 items-center gap-2">
@@ -186,6 +242,7 @@ export function GlobalSymbolSearch() {
                   href={`/admin?tab=watchlist&q=${encodeURIComponent(item.ticker)}&returnTo=${encodeURIComponent(`/analysis/${item.ticker}`)}`}
                   className="block rounded-[22px] px-4 py-3 transition hover:bg-secondary/72"
                   onClick={() => {
+                    rememberItem(item);
                     setInputValue("");
                     setQuery("");
                   }}
@@ -194,7 +251,7 @@ export function GlobalSymbolSearch() {
                     <div className="min-w-0">
                       <p className="truncate text-sm font-semibold text-foreground">{item.company}</p>
                       <p className="mt-1 text-xs text-muted-foreground">
-                        {item.ticker} · {item.market} · {item.sector}
+                        {item.ticker} 쨌 {item.market} 쨌 {item.sector}
                       </p>
                     </div>
                     <div className="flex shrink-0 items-center gap-2">
