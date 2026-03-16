@@ -89,7 +89,14 @@ const analysisItemSchema = z.object({
     })
   ),
   decisionNotes: z.array(z.string()),
-  scoreBreakdown: z.array(z.object({ label: z.string(), score: z.number(), description: z.string() })),
+  scoreBreakdown: z.array(
+    z.object({
+      label: z.string(),
+      score: z.number(),
+      maxScore: z.number().optional(),
+      description: z.string()
+    })
+  ),
   scenarios: z.array(z.object({ label: scenarioLabel, probability: z.number(), expectation: z.string(), trigger: z.string() })),
   riskChecklist: z.array(z.object({ label: z.string(), status: riskStatus, note: z.string() })),
   newsImpact: z.array(z.object({ headline: z.string(), impact: signalTone, summary: z.string() })),

@@ -3,7 +3,6 @@ import { notFound, redirect } from "next/navigation";
 import { AnalysisDecisionPanel } from "@/components/analysis/analysis-decision-panel";
 import { AnalysisNavigation } from "@/components/analysis/analysis-navigation";
 import { DataQualityPanel } from "@/components/analysis/data-quality-panel";
-import { EventCoveragePanel } from "@/components/analysis/event-coverage-panel";
 import { HistoricalValidationPanel } from "@/components/analysis/historical-validation-panel";
 import { RiskChecklist } from "@/components/analysis/risk-checklist";
 import { ScenarioPanel } from "@/components/analysis/scenario-panel";
@@ -13,7 +12,7 @@ import { PageHeader } from "@/components/shared/page-header";
 import { PublicDataStatusBar } from "@/components/shared/public-data-status-bar";
 import { SignalToneBadge } from "@/components/shared/signal-tone-badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import type { DataQualityItem, NewsImpactItem, RiskChecklistItem, TickerAnalysis } from "@/types/analysis";
+import type { DataQualityItem, RiskChecklistItem, TickerAnalysis } from "@/types/analysis";
 import { getAnalysisByTicker } from "@/lib/repositories/analysis";
 import { getDailyCandidates } from "@/lib/repositories/daily-candidates";
 import { getTrackingPayload } from "@/lib/repositories/tracking";
@@ -51,32 +50,6 @@ const EMPTY_TECHNICAL_INDICATORS = {
 
 const EMPTY_CHART_SERIES = [] as const;
 
-function summarizeCoverage(items: NewsImpactItem[]) {
-  const disclosure = items.filter((item) =>
-    item.source === "dart" ||
-    [
-      "earnings",
-      "treasury-stock",
-      "contract",
-      "clinical-approval",
-      "capital-raise",
-      "risk",
-      "inquiry",
-      "governance",
-      "general-disclosure"
-    ].includes(item.eventType)
-  ).length;
-  const curated = items.filter((item) => item.eventType === "curated-news").length;
-  const external = Math.max(items.length - disclosure - curated, 0);
-
-  return {
-    total: items.length,
-    disclosure,
-    curated,
-    external
-  };
-}
-
 function pickActionTitle(signalTone: TickerAnalysis["signalTone"]) {
   if (signalTone === "긍정") {
     return "지금은 우선 관찰하고 눌림 기회를 볼 만한 후보입니다.";
@@ -84,38 +57,32 @@ function pickActionTitle(signalTone: TickerAnalysis["signalTone"]) {
   if (signalTone === "주의") {
     return "좋아 보이는 부분은 있지만 진입 전 확인이 더 필요한 후보입니다.";
   }
-  return "바로 추격하기보다 조건을 더 확인하며 지켜볼 후보입니다.";
+  return "바로 추격하기보다 조건을 더 확인하며 지켜볼 만한 후보입니다.";
 }
 
 function buildTopReasons(analysis: TickerAnalysis) {
-  return analysis.analysisSummary
-    .slice(0, 3)
-    .map((item) => `${item.label}: ${item.value} (${item.note})`);
+  return analysis.analysisSummary.slice(0, 3).map((item) => `${item.label}: ${item.value} (${item.note})`);
 }
 
-function buildWatchouts(analysis: TickerAnalysis) {
-  const warnings = analysis.riskChecklist.filter((item) => item.status !== "양호");
+function buildWatchouts(notes: string[], riskChecklist: RiskChecklistItem[]) {
+  const warnings = riskChecklist.filter((item) => item.status !== "양호");
 
   if (warnings.length) {
     return warnings.slice(0, 3).map((item) => `${item.label}: ${item.note}`);
   }
 
-  return analysis.decisionNotes.slice(0, 2);
+  return notes.slice(0, 2);
 }
 
 function getHistoricalRead(dataQuality: DataQualityItem[]) {
-  return dataQuality.find((item) => item.label === "검증")?.note ?? "히스토릭 검증 메모가 아직 충분하지 않습니다.";
+  return (
+    dataQuality.find((item) => item.label === "검증")?.note ??
+    "히스토리 검증 메모가 아직 충분히 쌓이지 않아 기본 검증 기준으로 읽고 있습니다."
+  );
 }
 
-function getCoverageRead(newsImpact: NewsImpactItem[], riskChecklist: RiskChecklistItem[]) {
-  const coverageRisk = riskChecklist.find((item) => item.label.includes("커버리지"));
-  const coverageSummary = summarizeCoverage(newsImpact);
-
-  if (!coverageSummary.total) {
-    return "서비스 안에서 외부 뉴스를 직접 큐레이팅하지 않으므로, 차트와 무효화 기준을 우선 보고 필요할 때 뉴스 검색 링크로 추가 확인해 주세요.";
-  }
-
-  return `${coverageRisk?.note ?? "이벤트 커버리지는 참고 신호로만 봅니다."} 외부 뉴스는 화면 하단의 검색 링크로 직접 확인하는 흐름을 권장합니다.`;
+function getMethodRead() {
+  return "이 분석은 뉴스보다 가격 구조, 거래량 흐름, 과거 검증, 보조지표 정합성을 중심으로 읽습니다. 리스크 체크리스트와 차트의 진입 기준 / 목표 가격 / 위험 가격을 함께 확인해 주세요.";
 }
 
 function buildFallbackOverview({
@@ -135,11 +102,11 @@ function buildFallbackOverview({
   const statusLabel =
     status === "ready"
       ? "현재 SwingRadar 분석 데이터는 바로 확인할 수 있습니다."
-      : "일부 분석 데이터는 아직 준비 중입니다.";
+      : "아직 분석 데이터 준비 중인 종목입니다.";
 
   return [
-    `${company} (${ticker})는 ${market}에 상장된 ${regionLabel} 기업입니다.`,
-    `현재 프로젝트에서 확인할 수 있는 분석 상태는 ${statusLabel}`
+    `${company} (${ticker})은 ${market}에 상장된 ${regionLabel} 기업입니다.`,
+    `현재 프로젝트에서 확인되는 분석 상태는 다음과 같습니다. ${statusLabel}`
   ];
 }
 
@@ -164,16 +131,23 @@ export default async function AnalysisPage({ params }: { params: Promise<{ ticke
   const readyItems = getReadySymbols();
   const symbol = getSymbolByTicker(resolvedTicker);
   const tradingViewSymbol = symbol ? buildTradingViewSymbol(symbol.ticker, symbol.market) : null;
+  const visibleRiskChecklist = analysis.riskChecklist.filter((item) => item.label !== "이벤트 리스크");
   const topReasons = buildTopReasons(analysis);
-  const watchouts = buildWatchouts(analysis);
+  const watchouts = buildWatchouts(analysis.decisionNotes, visibleRiskChecklist);
   const historicalRead = getHistoricalRead(analysis.dataQuality);
-  const coverageRead = getCoverageRead(analysis.newsImpact, analysis.riskChecklist);
+  const methodRead = getMethodRead();
   const signalScoreLabel = describeSignalScore(analysis.score);
   const featuredRank = dailyCandidates?.topCandidates.findIndex((item) => item.ticker === resolvedTicker);
   const historicalItems =
-    trackingPayload?.history.filter((item) => resolveTicker(item.ticker) === resolvedTicker).sort((left, right) => right.signalDate.localeCompare(left.signalDate)) ?? [];
+    trackingPayload?.history
+      .filter((item) => resolveTicker(item.ticker) === resolvedTicker)
+      .sort((left, right) => right.signalDate.localeCompare(left.signalDate)) ?? [];
   const historicalDetails = Object.fromEntries(
-    historicalItems.map((item) => [item.id, trackingPayload?.details[item.id]]).filter((entry): entry is [string, NonNullable<typeof trackingPayload>["details"][string]] => Boolean(entry[1]))
+    historicalItems
+      .map((item) => [item.id, trackingPayload?.details[item.id]])
+      .filter(
+        (entry): entry is [string, NonNullable<typeof trackingPayload>["details"][string]] => Boolean(entry[1])
+      )
   );
   const headerTitle =
     typeof featuredRank === "number" && featuredRank >= 0
@@ -202,7 +176,7 @@ export default async function AnalysisPage({ params }: { params: Promise<{ ticke
       <PageHeader
         eyebrow="Analysis"
         title={headerTitle}
-        description="지금 스윙 관점에서 무엇을 보고 무엇을 조심해야 하는지, 과거 검증과 함께 읽는 화면입니다."
+        description="지금 관찰 포인트를 무엇으로 보고, 무엇을 경계해야 하는지 가격 구조와 검증 이력 중심으로 정리한 화면입니다."
       />
       <PublicDataStatusBar summary={statusSummary} />
       <AnalysisNavigation
@@ -222,7 +196,7 @@ export default async function AnalysisPage({ params }: { params: Promise<{ ticke
               <div>
                 <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">현재 판단</p>
                 <CardTitle className="mt-2 text-3xl text-foreground sm:text-[2.2rem]">{signalScoreLabel}</CardTitle>
-                <p className="mt-2 text-sm text-muted-foreground">기본 신호 {formatScore(analysis.score)}점</p>
+                <p className="mt-2 text-sm text-muted-foreground">기본 신호 {formatScore(analysis.score)} / 100점</p>
               </div>
               <SignalToneBadge tone={analysis.signalTone} />
             </div>
@@ -235,7 +209,7 @@ export default async function AnalysisPage({ params }: { params: Promise<{ ticke
 
             <div className="grid gap-4 md:grid-cols-2">
               <div className="rounded-[28px] border border-border/70 bg-secondary/25 p-5">
-                <p className="text-sm font-semibold text-foreground">왜 지금 볼까</p>
+                <p className="text-sm font-semibold text-foreground">왜 지금 보는가</p>
                 <div className="mt-3 space-y-2">
                   {topReasons.map((reason) => (
                     <p key={reason} className="text-sm leading-7 text-foreground/80">
@@ -245,7 +219,7 @@ export default async function AnalysisPage({ params }: { params: Promise<{ ticke
                 </div>
               </div>
               <div className="rounded-[28px] border border-border/70 bg-secondary/25 p-5">
-                <p className="text-sm font-semibold text-foreground">무엇을 먼저 조심할까</p>
+                <p className="text-sm font-semibold text-foreground">무엇을 조심할까</p>
                 <div className="mt-3 space-y-2">
                   {watchouts.map((item) => (
                     <p key={item} className="text-sm leading-7 text-foreground/78">
@@ -264,7 +238,7 @@ export default async function AnalysisPage({ params }: { params: Promise<{ ticke
         </Card>
 
         <div className="space-y-6">
-          <RiskChecklist items={analysis.riskChecklist} />
+          <RiskChecklist items={visibleRiskChecklist} />
           <Card>
             <CardHeader>
               <CardTitle>과거 검증 해석</CardTitle>
@@ -272,7 +246,7 @@ export default async function AnalysisPage({ params }: { params: Promise<{ ticke
             <CardContent className="space-y-4">
               <p className="text-sm leading-7 text-foreground/80">{historicalRead}</p>
               <div className="rounded-2xl border border-border/70 bg-secondary/35 p-4 text-sm leading-7 text-muted-foreground">
-                {coverageRead}
+                {methodRead}
               </div>
             </CardContent>
           </Card>
@@ -299,8 +273,7 @@ export default async function AnalysisPage({ params }: { params: Promise<{ ticke
         <ScenarioPanel scenarios={analysis.scenarios} />
       </section>
 
-      <section className="grid gap-6 xl:items-start xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
-        <EventCoveragePanel ticker={analysis.ticker} company={analysis.company} />
+      <section className="grid gap-6 xl:items-start">
         <DataQualityPanel items={analysis.dataQuality} />
       </section>
     </main>

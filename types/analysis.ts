@@ -3,6 +3,7 @@ import type { SignalTone } from "@/types/recommendation";
 export interface ScoreBreakdownItem {
   label: string;
   score: number;
+  maxScore?: number;
   description: string;
 }
 
