@@ -182,11 +182,202 @@ function calculateStdDev(values) {
   return Math.sqrt(variance);
 }
 
-function calculateTechnicalIndicators(item) {
-  const closes = item.closes ?? [];
-  const volumes = item.volumes ?? [];
+function buildPriceHistorySeries(item) {
+  const rawHistory = Array.isArray(item.history) ? item.history.filter((entry) => Number.isFinite(entry?.close)) : [];
 
-  if (!closes.length) {
+  if (rawHistory.length) {
+    return rawHistory.map((entry, index, series) => {
+      const close = Number(entry.close);
+      const previousClose = index > 0 ? Number(series[index - 1]?.close ?? close) : close;
+      const open = Number.isFinite(entry.open) ? Number(entry.open) : previousClose;
+      const high = Number.isFinite(entry.high) ? Number(entry.high) : Math.max(open, close);
+      const low = Number.isFinite(entry.low) ? Number(entry.low) : Math.min(open, close);
+
+      return {
+        open,
+        high,
+        low,
+        close,
+        volume: Number.isFinite(entry.volume) ? Number(entry.volume) : null
+      };
+    });
+  }
+
+  const closes = (item.closes ?? []).map((value) => Number(value)).filter(Number.isFinite);
+  const volumes = Array.isArray(item.volumes) ? item.volumes : [];
+
+  return closes.map((close, index) => {
+    const previousClose = index > 0 ? closes[index - 1] : close;
+    return {
+      open: previousClose,
+      high: Math.max(previousClose, close),
+      low: Math.min(previousClose, close),
+      close,
+      volume: Number.isFinite(volumes[index]) ? Number(volumes[index]) : null
+    };
+  });
+}
+
+function calculateATR(series, period = 14) {
+  if (series.length < period + 1) {
+    return null;
+  }
+
+  const trueRanges = series.map((point, index) => {
+    const previousClose = index > 0 ? series[index - 1]?.close ?? point.close : point.close;
+    return Math.max(point.high - point.low, Math.abs(point.high - previousClose), Math.abs(point.low - previousClose));
+  });
+
+  let atr = average(trueRanges.slice(0, period));
+  for (let index = period; index < trueRanges.length; index += 1) {
+    atr = ((atr * (period - 1)) + trueRanges[index]) / period;
+  }
+
+  return atr;
+}
+
+function calculateDirectionalIndicators(series, period = 14) {
+  if (series.length < period * 2) {
+    return {
+      adx14: null,
+      plusDi14: null,
+      minusDi14: null
+    };
+  }
+
+  const trueRanges = [0];
+  const plusDm = [0];
+  const minusDm = [0];
+
+  for (let index = 1; index < series.length; index += 1) {
+    const current = series[index];
+    const previous = series[index - 1];
+    const upMove = current.high - previous.high;
+    const downMove = previous.low - current.low;
+
+    plusDm.push(upMove > downMove && upMove > 0 ? upMove : 0);
+    minusDm.push(downMove > upMove && downMove > 0 ? downMove : 0);
+    trueRanges.push(
+      Math.max(
+        current.high - current.low,
+        Math.abs(current.high - previous.close),
+        Math.abs(current.low - previous.close)
+      )
+    );
+  }
+
+  let smoothedTr = trueRanges.slice(1, period + 1).reduce((sum, value) => sum + value, 0);
+  let smoothedPlusDm = plusDm.slice(1, period + 1).reduce((sum, value) => sum + value, 0);
+  let smoothedMinusDm = minusDm.slice(1, period + 1).reduce((sum, value) => sum + value, 0);
+
+  let plusDi = smoothedTr > 0 ? (smoothedPlusDm / smoothedTr) * 100 : 0;
+  let minusDi = smoothedTr > 0 ? (smoothedMinusDm / smoothedTr) * 100 : 0;
+  let dx = plusDi + minusDi > 0 ? (Math.abs(plusDi - minusDi) / (plusDi + minusDi)) * 100 : 0;
+  const dxSeries = [dx];
+
+  for (let index = period + 1; index < series.length; index += 1) {
+    smoothedTr = smoothedTr - smoothedTr / period + trueRanges[index];
+    smoothedPlusDm = smoothedPlusDm - smoothedPlusDm / period + plusDm[index];
+    smoothedMinusDm = smoothedMinusDm - smoothedMinusDm / period + minusDm[index];
+
+    plusDi = smoothedTr > 0 ? (smoothedPlusDm / smoothedTr) * 100 : 0;
+    minusDi = smoothedTr > 0 ? (smoothedMinusDm / smoothedTr) * 100 : 0;
+    dx = plusDi + minusDi > 0 ? (Math.abs(plusDi - minusDi) / (plusDi + minusDi)) * 100 : 0;
+    dxSeries.push(dx);
+  }
+
+  if (dxSeries.length < period) {
+    return {
+      adx14: null,
+      plusDi14: roundNumber(plusDi, 1),
+      minusDi14: roundNumber(minusDi, 1)
+    };
+  }
+
+  let adx = average(dxSeries.slice(0, period));
+  for (let index = period; index < dxSeries.length; index += 1) {
+    adx = ((adx * (period - 1)) + dxSeries[index]) / period;
+  }
+
+  return {
+    adx14: roundNumber(adx, 1),
+    plusDi14: roundNumber(plusDi, 1),
+    minusDi14: roundNumber(minusDi, 1)
+  };
+}
+
+function calculateStochastic(series, period = 14, signalPeriod = 3) {
+  if (series.length < period) {
+    return {
+      stochasticK: null,
+      stochasticD: null
+    };
+  }
+
+  const kSeries = [];
+  for (let index = period - 1; index < series.length; index += 1) {
+    const window = series.slice(index - period + 1, index + 1);
+    const highestHigh = Math.max(...window.map((point) => point.high));
+    const lowestLow = Math.min(...window.map((point) => point.low));
+    const currentClose = series[index]?.close ?? 0;
+    const denominator = highestHigh - lowestLow;
+    const stochasticK = denominator > 0 ? ((currentClose - lowestLow) / denominator) * 100 : 50;
+    kSeries.push(stochasticK);
+  }
+
+  const stochasticK = kSeries.at(-1) ?? null;
+  const stochasticD = kSeries.length >= signalPeriod ? average(kSeries.slice(-signalPeriod)) : null;
+
+  return {
+    stochasticK: roundNumber(stochasticK, 1),
+    stochasticD: roundNumber(stochasticD, 1)
+  };
+}
+
+function calculateMFI(series, period = 14) {
+  if (series.length < period + 1) {
+    return null;
+  }
+
+  let positiveFlow = 0;
+  let negativeFlow = 0;
+
+  for (let index = series.length - period; index < series.length; index += 1) {
+    const current = series[index];
+    const previous = series[index - 1];
+    if (!current || !previous || !Number.isFinite(current.volume) || !Number.isFinite(previous.volume)) {
+      continue;
+    }
+
+    const currentTypicalPrice = (current.high + current.low + current.close) / 3;
+    const previousTypicalPrice = (previous.high + previous.low + previous.close) / 3;
+    const moneyFlow = currentTypicalPrice * Math.max(current.volume ?? 0, 0);
+
+    if (currentTypicalPrice > previousTypicalPrice) {
+      positiveFlow += moneyFlow;
+    } else if (currentTypicalPrice < previousTypicalPrice) {
+      negativeFlow += moneyFlow;
+    }
+  }
+
+  if (positiveFlow === 0 && negativeFlow === 0) {
+    return null;
+  }
+
+  if (negativeFlow === 0) {
+    return 100;
+  }
+
+  const moneyRatio = positiveFlow / negativeFlow;
+  return 100 - 100 / (1 + moneyRatio);
+}
+
+function calculateTechnicalIndicators(item) {
+  const series = buildPriceHistorySeries(item);
+  const closes = series.map((point) => point.close);
+  const volumes = series.map((point) => point.volume ?? 0);
+
+  if (!series.length) {
     return {
       sma20: null,
       sma60: null,
@@ -198,7 +389,15 @@ function calculateTechnicalIndicators(item) {
       bollingerUpper: null,
       bollingerMiddle: null,
       bollingerLower: null,
-      volumeRatio20: null
+      volumeRatio20: null,
+      atr14: null,
+      natr14: null,
+      adx14: null,
+      plusDi14: null,
+      minusDi14: null,
+      stochasticK: null,
+      stochasticD: null,
+      mfi14: null
     };
   }
 
@@ -229,6 +428,11 @@ function calculateTechnicalIndicators(item) {
   const avg20Volume = volumes.length >= 20 ? average(volumes.slice(-20)) : null;
   const latestVolume = volumes.length ? volumes.at(-1) : null;
   const volumeRatio20 = avg20Volume && latestVolume ? latestVolume / avg20Volume : null;
+  const atr14 = calculateATR(series, 14);
+  const natr14 = atr14 !== null && item.currentPrice ? (atr14 / item.currentPrice) * 100 : null;
+  const { adx14, plusDi14, minusDi14 } = calculateDirectionalIndicators(series, 14);
+  const { stochasticK, stochasticD } = calculateStochastic(series, 14, 3);
+  const mfi14 = calculateMFI(series, 14);
 
   return {
     sma20: roundNumber(sma20, 0),
@@ -241,7 +445,15 @@ function calculateTechnicalIndicators(item) {
     bollingerUpper: roundNumber(bollingerUpper, 0),
     bollingerMiddle: roundNumber(bollingerMiddle, 0),
     bollingerLower: roundNumber(bollingerLower, 0),
-    volumeRatio20: roundNumber(volumeRatio20, 2)
+    volumeRatio20: roundNumber(volumeRatio20, 2),
+    atr14: roundNumber(atr14, 1),
+    natr14: roundNumber(natr14, 2),
+    adx14,
+    plusDi14,
+    minusDi14,
+    stochasticK,
+    stochasticD,
+    mfi14: roundNumber(mfi14, 1)
   };
 }
 
@@ -269,13 +481,12 @@ function getScoreBand(score) {
 
 function getSwingBaseScore(item) {
   const weighted =
-    item.trendScore * 1.35 +
-    item.flowScore * 1.15 +
-    item.volatilityScore * 1.05 +
-    item.eventScore * 0.7 +
-    item.qualityScore * 1.15;
+    item.trendScore * 1.45 +
+    item.flowScore * 1.2 +
+    item.volatilityScore * 1.1 +
+    item.qualityScore * 1.25;
 
-  return roundNumber(weighted / 5.4, 1) ?? 0;
+  return roundNumber(weighted / 5, 1) ?? 0;
 }
 
 function getMarketScore(item) {
@@ -536,24 +747,78 @@ function buildCheckpoints(item) {
   ];
 }
 
-function buildRationale(item, topNews, coverage) {
-  const newsText = topNews
-    ? `최근에는 '${topNews.headline}' 같은 이슈가 함께 반영되고 있습니다.`
-    : "최근 참고할 만한 기사나 공시는 많지 않습니다.";
-  const coverageText = `뉴스 신뢰도는 ${coverage.confidence} 수준입니다.`;
-  return `${item.company}는 가격 흐름 ${item.trendScore}점, 거래 흐름 ${item.flowScore}점, 흔들림 관리 ${item.volatilityScore}점을 기준으로 살펴보고 있습니다. ${newsText} ${coverageText}`;
+function buildMomentumRead(indicators) {
+  const parts = [];
+
+  if (indicators.rsi14 !== null) {
+    if (indicators.rsi14 >= 68) parts.push(`RSI ${indicators.rsi14}로 단기 과열에 가깝습니다.`);
+    else if (indicators.rsi14 >= 52) parts.push(`RSI ${indicators.rsi14}로 매수 우위 구간입니다.`);
+    else if (indicators.rsi14 <= 38) parts.push(`RSI ${indicators.rsi14}로 반등 확인이 더 필요합니다.`);
+    else parts.push(`RSI ${indicators.rsi14}로 중립권입니다.`);
+  }
+
+  if (indicators.stochasticK !== null && indicators.stochasticD !== null) {
+    if (indicators.stochasticK >= indicators.stochasticD && indicators.stochasticK >= 55) {
+      parts.push(`스토캐스틱이 ${indicators.stochasticK}/${indicators.stochasticD}로 상방 모멘텀을 유지합니다.`);
+    } else if (indicators.stochasticK < indicators.stochasticD) {
+      parts.push(`스토캐스틱이 ${indicators.stochasticK}/${indicators.stochasticD}로 아직 힘이 약합니다.`);
+    }
+  }
+
+  return parts[0] ?? "모멘텀은 가격 확인을 더 필요로 하는 중립 구간입니다.";
+}
+
+function buildTrendStrengthRead(indicators) {
+  if (indicators.adx14 === null || indicators.plusDi14 === null || indicators.minusDi14 === null) {
+    return "추세 강도는 이동평균과 가격 위치를 먼저 확인하는 편이 좋습니다.";
+  }
+
+  if (indicators.adx14 >= 25 && indicators.plusDi14 > indicators.minusDi14) {
+    return `ADX ${indicators.adx14}와 +DI 우위로 추세 힘이 비교적 또렷합니다.`;
+  }
+
+  if (indicators.adx14 >= 20) {
+    return `ADX ${indicators.adx14} 수준으로 방향성은 있지만 추가 확인이 필요합니다.`;
+  }
+
+  return `ADX ${indicators.adx14} 수준으로 아직 박스권 성격이 남아 있습니다.`;
+}
+
+function buildFlowRead(indicators) {
+  if (indicators.volumeRatio20 === null && indicators.mfi14 === null) {
+    return "거래량과 자금 흐름은 최근 평균 수준으로 보는 편이 좋습니다.";
+  }
+
+  const parts = [];
+  if (indicators.volumeRatio20 !== null) {
+    if (indicators.volumeRatio20 >= 1.2) parts.push(`거래량은 20일 평균의 ${indicators.volumeRatio20}배입니다.`);
+    else if (indicators.volumeRatio20 <= 0.8) parts.push(`거래량은 20일 평균의 ${indicators.volumeRatio20}배로 가볍습니다.`);
+    else parts.push(`거래량은 20일 평균의 ${indicators.volumeRatio20}배입니다.`);
+  }
+
+  if (indicators.mfi14 !== null) {
+    if (indicators.mfi14 >= 70) parts.push(`MFI ${indicators.mfi14}로 자금 유입이 강한 편입니다.`);
+    else if (indicators.mfi14 <= 35) parts.push(`MFI ${indicators.mfi14}로 자금 유입이 아직 약합니다.`);
+    else parts.push(`MFI ${indicators.mfi14}로 자금 흐름은 중립권입니다.`);
+  }
+
+  return parts.join(" ");
+}
+
+function buildRationale(item, indicators) {
+  return `${item.company}는 가격 흐름 ${item.trendScore}점, 거래 흐름 ${item.flowScore}점, 흔들림 관리 ${item.volatilityScore}점을 기준으로 살펴보고 있습니다. ${buildTrendStrengthRead(indicators)} ${buildMomentumRead(indicators)}`;
 }
 
 function buildInvalidation(item) {
   return `${item.invalidationPrice.toLocaleString()}원 아래로 내려가면 이번 흐름은 다시 봐야 합니다.`;
 }
 
-function buildAnalysisSummary(item, qualityLabel) {
+function buildAnalysisSummary(item, qualityLabel, indicators) {
   return [
-    { label: "추세", value: `${item.trendScore}점`, note: "중기 구조 흐름" },
-    { label: "수급", value: `${item.flowScore}점`, note: "거래대금 / 회전 흐름" },
-    { label: "변동성", value: `${item.volatilityScore}점`, note: "무효화 거리 기준" },
-    { label: "데이터 품질", value: qualityLabel, note: "시세 / 뉴스 정합성" }
+    { label: "추세", value: `${item.trendScore}점`, note: buildTrendStrengthRead(indicators) },
+    { label: "수급", value: `${item.flowScore}점`, note: buildFlowRead(indicators) },
+    { label: "모멘텀", value: `${roundNumber(item.trendScore * 0.55 + item.flowScore * 0.45, 1) ?? 0}점`, note: buildMomentumRead(indicators) },
+    { label: "데이터 품질", value: qualityLabel, note: "시세 / 검증 정합성" }
   ];
 }
 
@@ -565,12 +830,14 @@ function buildKeyLevels(item) {
   ];
 }
 
-function buildDecisionNotes(item, validationItem, topNews, coverage) {
+function buildDecisionNotes(item, validationItem, indicators) {
+  const technicalNotes = buildTechnicalNotes(indicators);
+
   return [
     `비슷한 흐름의 성공률은 ${validationItem.hitRate}%이고 평균 움직임은 ${formatPercent(validationItem.avgReturn)}였습니다.`,
     `${item.invalidationPrice.toLocaleString()}원 아래로 가면 흐름이 약해졌다고 보는 기준입니다.`,
-    topNews ? `가장 먼저 볼 이슈: ${topNews.headline}` : "참고할 이슈가 많지 않아 가격 흐름을 더 중요하게 봅니다.",
-    `참고 자료: 공시 ${coverage.disclosure}건, 운영 메모 ${coverage.curated}건, 기사 ${coverage.externalNews}건`
+    technicalNotes[0] ?? "이동평균과 거래량 구조가 동시에 버티는지 먼저 보는 편이 좋습니다.",
+    technicalNotes[1] ?? "과도한 뉴스보다 가격 구조와 보조지표 합을 더 중요하게 봅니다."
   ];
 }
 
@@ -592,6 +859,37 @@ function buildTechnicalNotes(indicators) {
     if (indicators.volumeRatio20 >= 1.3) notes.push("거래량은 최근 20일 평균보다 강합니다.");
     else if (indicators.volumeRatio20 <= 0.8) notes.push("거래량은 최근 평균보다 가볍습니다.");
     else notes.push("거래량은 최근 평균 수준입니다.");
+  }
+
+  if (indicators.adx14 !== null && indicators.plusDi14 !== null && indicators.minusDi14 !== null) {
+    if (indicators.adx14 >= 25 && indicators.plusDi14 > indicators.minusDi14) {
+      notes.push("ADX와 DI 구조는 추세 지속에 우호적입니다.");
+    } else if (indicators.adx14 < 20) {
+      notes.push("ADX가 낮아 아직 추세 강도가 선명하지 않습니다.");
+    } else {
+      notes.push("ADX는 방향성은 있으나 추세 지속 확인이 더 필요합니다.");
+    }
+  }
+
+  if (indicators.stochasticK !== null && indicators.stochasticD !== null) {
+    if (indicators.stochasticK >= 80 && indicators.stochasticD >= 80) {
+      notes.push("스토캐스틱은 단기 과열권이라 추격 매수는 조심하는 편이 좋습니다.");
+    } else if (indicators.stochasticK >= indicators.stochasticD && indicators.stochasticK >= 50) {
+      notes.push("스토캐스틱은 상방 모멘텀을 유지하는 구간입니다.");
+    } else {
+      notes.push("스토캐스틱은 아직 방향 확인이 더 필요합니다.");
+    }
+  }
+
+  if (indicators.mfi14 !== null) {
+    if (indicators.mfi14 >= 70) notes.push("MFI는 자금 유입이 강한 편입니다.");
+    else if (indicators.mfi14 <= 35) notes.push("MFI는 자금 유입이 약해 추가 확인이 필요합니다.");
+    else notes.push("MFI는 자금 흐름이 무난한 수준입니다.");
+  }
+
+  if (indicators.natr14 !== null) {
+    if (indicators.natr14 >= 9) notes.push("NATR이 높아 흔들림이 큰 종목으로 관리가 중요합니다.");
+    else if (indicators.natr14 <= 4.5) notes.push("NATR이 낮아 무효화 관리가 비교적 쉬운 편입니다.");
   }
 
   return notes;
@@ -661,28 +959,59 @@ function calculateTechnicalAdjustment(indicators, item) {
     }
   }
 
-  return roundNumber(clamp(adjustment, -8, 8), 1) ?? 0;
+  if (indicators.adx14 !== null && indicators.plusDi14 !== null && indicators.minusDi14 !== null) {
+    if (indicators.adx14 >= 25 && indicators.plusDi14 > indicators.minusDi14) {
+      adjustment += 2.2;
+    } else if (indicators.adx14 >= 20 && indicators.plusDi14 > indicators.minusDi14) {
+      adjustment += 1.1;
+    } else if (indicators.adx14 >= 20 && indicators.plusDi14 <= indicators.minusDi14) {
+      adjustment -= 1.4;
+    } else if (indicators.adx14 < 16) {
+      adjustment -= 0.8;
+    }
+  }
+
+  if (indicators.stochasticK !== null && indicators.stochasticD !== null) {
+    if (indicators.stochasticK >= indicators.stochasticD && indicators.stochasticK >= 55 && indicators.stochasticK <= 82) {
+      adjustment += 1.6;
+    } else if (indicators.stochasticK < indicators.stochasticD && indicators.stochasticK <= 45) {
+      adjustment -= 1.3;
+    } else if (indicators.stochasticK > 90) {
+      adjustment -= 1.2;
+    }
+  }
+
+  if (indicators.mfi14 !== null) {
+    if (indicators.mfi14 >= 55 && indicators.mfi14 <= 78) {
+      adjustment += 1.2;
+    } else if (indicators.mfi14 < 35) {
+      adjustment -= 1.2;
+    } else if (indicators.mfi14 > 85) {
+      adjustment -= 1;
+    }
+  }
+
+  if (indicators.natr14 !== null) {
+    if (indicators.natr14 <= 5.5) {
+      adjustment += 0.9;
+    } else if (indicators.natr14 >= 9.5) {
+      adjustment -= 1.8;
+    } else if (indicators.natr14 >= 7.5) {
+      adjustment -= 0.8;
+    }
+  }
+
+  return roundNumber(clamp(adjustment, -12, 12), 1) ?? 0;
 }
 
 function buildChartSeries(item) {
-  const rawHistory = Array.isArray(item.history) ? item.history.filter((entry) => Number.isFinite(entry?.close)) : [];
-  const fallbackCloses = item.closes ?? [];
-  const fallbackVolumes = item.volumes ?? [];
-  const historySeries = rawHistory.length
-    ? rawHistory.slice(-120).map((entry) => ({
-        open: Number.isFinite(entry.open) ? Number(entry.open) : null,
-        high: Number.isFinite(entry.high) ? Number(entry.high) : null,
-        low: Number.isFinite(entry.low) ? Number(entry.low) : null,
-        close: Number(entry.close),
-        volume: Number.isFinite(entry.volume) ? Number(entry.volume) : null
-      }))
-    : fallbackCloses.slice(-120).map((close, index, series) => ({
-        open: index > 0 ? Math.round(series[index - 1]) : Math.round(close),
-        high: Math.round(close),
-        low: Math.round(close),
-        close: Math.round(close),
-        volume: fallbackVolumes.length >= fallbackCloses.length ? Math.round(fallbackVolumes.slice(-120)[index] ?? 0) : null
-      }));
+  const historySeries = buildPriceHistorySeries(item).slice(-120).map((point) => ({
+    open: Number.isFinite(point.open) ? Number(point.open) : null,
+    high: Number.isFinite(point.high) ? Number(point.high) : null,
+    low: Number.isFinite(point.low) ? Number(point.low) : null,
+    close: Number(point.close),
+    volume: Number.isFinite(point.volume) ? Number(point.volume) : null
+  }));
 
   if (!historySeries.length) {
     return [];
@@ -757,21 +1086,23 @@ function qualityLabel(item) {
   return "주의";
 }
 
-function buildQualityValue(item, coverage, validationItem) {
+function buildQualityValue(item, validationItem) {
   let score = item.qualityScore;
+  const closeCount = Array.isArray(item.closes) ? item.closes.length : 0;
+  const averageTurnover20 = Number(item.averageTurnover20 ?? 0);
 
   if (validationItem.basis === "실측 기반") score += 2;
   else if (validationItem.basis === "유사 업종 참고") score += 0.5;
   else if (validationItem.basis === "보수 계산") score -= 2.5;
   else score -= 1;
 
-  if (coverage.confidence === "보강됨") score += 1.5;
-  else if (coverage.confidence === "제한적") score -= 0.5;
-  else if (coverage.confidence === "취약") score -= 1.5;
+  if (closeCount >= 120) score += 1;
+  else if (closeCount >= 90) score += 0.5;
+  else if (closeCount < 70) score -= 1.5;
 
-  if (item.eventRiskStatus === "양호") score += 0.5;
-  else if (item.eventRiskStatus === "확인 필요") score -= 0.5;
-  else if (item.eventRiskStatus === "주의") score -= 1;
+  if (averageTurnover20 >= 30000000000) score += 1;
+  else if (averageTurnover20 >= 10000000000) score += 0.5;
+  else if (averageTurnover20 < 5000000000) score -= 1;
 
   if (item.heatStatus === "확인 필요") score -= 0.5;
   else if (item.heatStatus === "주의") score -= 1.5;
@@ -811,7 +1142,7 @@ function buildQualityDataNote(item) {
   const parts = [
     `품질 점수 ${item.qualityScore}점`,
     `가격 리스크 ${item.riskStatus}`,
-    `이벤트 리스크 ${item.eventRiskStatus}`,
+    `거래 이력 ${Array.isArray(item.closes) ? item.closes.length : 0}일`,
     `과열 상태 ${item.heatStatus}`
   ];
 
@@ -1121,13 +1452,14 @@ function buildActivationScore(item, rankingStat) {
   const rankBonus = rankingStat?.latestRank ? Math.max(0, 24 - rankingStat.latestRank) * 0.9 : 0;
   const liquidityBonus = getAverageTurnover20(item) >= 10000000000 ? 4 : getAverageTurnover20(item) >= 5000000000 ? 2 : 0;
   const structureBonus = item.currentPrice > item.invalidationPrice ? 6 : -8;
+  const technicalAdjustment = calculateTechnicalAdjustment(calculateTechnicalIndicators(item), item);
 
   return (
     item.trendScore * 1.1 +
     item.flowScore * 1.05 +
     item.qualityScore +
-    item.eventScore * 0.75 +
-    item.volatilityScore * 0.35 +
+    item.volatilityScore * 0.45 +
+    technicalAdjustment * 1.05 +
     historyBonus +
     rankBonus +
     liquidityBonus +
@@ -1585,7 +1917,6 @@ async function main() {
     }
 
     const tickerNews = newsByTicker.get(item.ticker) ?? [];
-    const topNews = tickerNews[0];
     const coverage = summarizeEventCoverage(tickerNews);
     const technicalIndicators = calculateTechnicalIndicators(item);
     const technicalAdjustment = calculateTechnicalAdjustment(technicalIndicators, item);
@@ -1594,8 +1925,9 @@ async function main() {
     const invalidationDistance = Number((((item.invalidationPrice - item.currentPrice) / item.currentPrice) * 100).toFixed(1));
     const signalTone = resolveSignalTone(score, invalidationDistance, validationItem.hitRate);
     const label = resolveSignalLabel(score, signalTone);
-    const quality = buildQualityValue(item, coverage, validationItem);
+    const quality = buildQualityValue(item, validationItem);
     const marketQuality = buildMarketDataQuality(item);
+    const technicalNotes = buildTechnicalNotes(technicalIndicators);
 
     recommendations.push({
       ticker: item.ticker,
@@ -1604,7 +1936,7 @@ async function main() {
       signalTone,
       score,
       signalLabel: label,
-      rationale: buildRationale(item, topNews, coverage),
+      rationale: buildRationale(item, technicalIndicators),
       invalidation: buildInvalidation(item),
       invalidationDistance,
       riskRewardRatio: score >= 22 ? "1 : 2.2" : score >= 14 ? "1 : 1.5" : "1 : 0.9",
@@ -1628,18 +1960,17 @@ async function main() {
       score,
       headline: `${item.company} 관찰 신호는 ${label} 관점에서 해석합니다.`,
       invalidation: buildInvalidation(item),
-      analysisSummary: buildAnalysisSummary(item, quality),
+      analysisSummary: buildAnalysisSummary(item, quality, technicalIndicators),
       keyLevels: buildKeyLevels(item),
       technicalIndicators,
       chartSeries: buildChartSeries(item),
-      decisionNotes: buildDecisionNotes(item, validationItem, topNews, coverage),
+      decisionNotes: buildDecisionNotes(item, validationItem, technicalIndicators),
       scoreBreakdown: [
         { label: "추세", score: item.trendScore, description: "중기 추세 구조 점검" },
         { label: "수급", score: item.flowScore, description: "거래량 / 회전 흐름" },
         { label: "변동성", score: item.volatilityScore, description: "무효화 거리 기준" },
-        { label: "이벤트", score: item.eventScore, description: "기사 / 공시 / 큐레이션 반영" },
         { label: "품질", score: item.qualityScore, description: "데이터 정합성" },
-        { label: "기술", score: technicalAdjustment, description: "이동평균 / RSI / MACD / 거래량 반영" }
+        { label: "기술", score: technicalAdjustment, description: "이동평균 / ADX / RSI / MACD / 거래량 반영" }
       ],
       scenarios: buildScenarios(item),
       riskChecklist: [
@@ -1658,8 +1989,21 @@ async function main() {
       })),
       dataQuality: [
         { label: "시세", value: marketQuality.value, note: marketQuality.note },
-        { label: "이벤트", value: `${tickerNews.length}건`, note: topNews ? topNews.headline : "해당 없음" },
-        { label: "커버리지", value: coverage.confidence, note: coverage.note },
+        {
+          label: "추세 강도",
+          value: technicalIndicators.adx14 !== null ? `ADX ${technicalIndicators.adx14}` : "계산 중",
+          note: buildTrendStrengthRead(technicalIndicators)
+        },
+        {
+          label: "모멘텀",
+          value:
+            technicalIndicators.rsi14 !== null && technicalIndicators.stochasticK !== null
+              ? `RSI ${technicalIndicators.rsi14} / STO ${technicalIndicators.stochasticK}`
+              : technicalIndicators.rsi14 !== null
+                ? `RSI ${technicalIndicators.rsi14}`
+                : "계산 중",
+          note: buildMomentumRead(technicalIndicators)
+        },
         {
           label: "검증",
           value: validationItem.basis,
@@ -1671,8 +2015,8 @@ async function main() {
         { label: "품질", value: quality, note: buildQualityDataNote(item) },
         {
           label: "보조지표",
-          value: technicalIndicators.rsi14 !== null ? `RSI ${technicalIndicators.rsi14}` : "계산 중",
-          note: buildTechnicalNotes(technicalIndicators).join(" ") || "가격 이력 기반 계산"
+          value: technicalIndicators.natr14 !== null ? `NATR ${technicalIndicators.natr14}%` : "계산 중",
+          note: technicalNotes.join(" ") || "가격 이력 기반 계산"
         }
       ]
     });

@@ -243,7 +243,7 @@ function shouldExcludeCandidate(currentPrice, averageTurnover20, thresholds) {
   return false;
 }
 
-function meetsCandidateGate({ item, detail, market, candidateScore, thresholds, eventCoverage }) {
+function meetsCandidateGate({ item, market, candidateScore, thresholds }) {
   const validation = item.validation ?? {};
   const hitRate = Number(validation.hitRate ?? 0);
   const sampleSize = Number(validation.sampleSize ?? 0);
@@ -270,7 +270,7 @@ function meetsCandidateGate({ item, detail, market, candidateScore, thresholds, 
     return false;
   }
 
-  if (eventCoverage === "취약" && marketQualityScore < thresholds.minQualityScore) {
+  if (marketQualityScore < thresholds.minQualityScore) {
     return false;
   }
 
@@ -299,14 +299,13 @@ function scoreCandidates(recommendations, analysis, marketItemsByTicker, batchIn
       score: item.score,
       validation: item.validation,
       validationBasis: item.validationBasis,
-      eventCoverage,
       averageTurnover20,
       currentPrice,
       volumeRatio,
       signalTone: item.signalTone
     });
 
-    if (!meetsCandidateGate({ item, detail, market, candidateScore, thresholds, eventCoverage })) {
+    if (!meetsCandidateGate({ item, market, candidateScore, thresholds })) {
       return [];
     }
 
