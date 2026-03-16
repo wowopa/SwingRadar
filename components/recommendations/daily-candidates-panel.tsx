@@ -15,6 +15,15 @@ function formatGeneratedAt(value: string) {
   }).format(date);
 }
 
+function formatTurnover(value?: number | null) {
+  if (!value || value <= 0) {
+    return "확인 필요";
+  }
+
+  const eok = value / 100_000_000;
+  return `${eok.toFixed(eok >= 100 ? 0 : 1)}억`;
+}
+
 export function DailyCandidatesPanel({ dailyScan }: { dailyScan: DailyScanSummaryDto | null }) {
   if (!dailyScan) {
     return (
@@ -69,8 +78,8 @@ export function DailyCandidatesPanel({ dailyScan }: { dailyScan: DailyScanSummar
                       <p className="mt-1 font-semibold text-foreground">{item.candidateScore}</p>
                     </div>
                     <div className="rounded-xl border border-border/70 px-3 py-2">
-                      <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">커버리지</p>
-                      <p className="mt-1 font-semibold text-foreground">{item.eventCoverage}</p>
+                      <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">유동성</p>
+                      <p className="mt-1 font-semibold text-foreground">{item.liquidityRating ?? formatTurnover(item.averageTurnover20)}</p>
                     </div>
                   </div>
                   <p className="mt-4 text-sm leading-6 text-muted-foreground line-clamp-3">{item.rationale}</p>

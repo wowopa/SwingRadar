@@ -362,7 +362,7 @@ export function TradingViewChartCard({
       ema20: toChartValue(point.ema20),
       bollingerUpper: toChartValue(point.bollingerUpper),
       bollingerLower: toChartValue(point.bollingerLower),
-      turnover: point.volume ? Number((point.close * point.volume).toFixed(0)) : 0,
+      turnover: point.volume ?? 0,
       macd: toChartValue(point.macd),
       macdSignal: toChartValue(point.macdSignal)
     }));
@@ -640,7 +640,7 @@ export function TradingViewChartCard({
               <div ref={priceContainerRef} className="h-[320px] w-full" />
               <div className="grid gap-3 md:grid-cols-[1fr_1fr]">
                 <div className="rounded-[20px] border border-border/60 bg-background/55 p-2">
-                  <p className="px-2 py-1 text-xs font-medium text-muted-foreground">최근 거래금액</p>
+                  <p className="px-2 py-1 text-xs font-medium text-muted-foreground">거래량</p>
                   <div ref={turnoverContainerRef} className="h-[120px] w-full" />
                 </div>
                 <div className="rounded-[20px] border border-border/60 bg-background/55 p-2">

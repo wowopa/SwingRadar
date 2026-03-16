@@ -112,8 +112,8 @@ function getLiquidityMeaning(value?: string) {
 
 function buildSignalBadges(item: {
   liquidityRating?: string;
-  volumeRatio?: number | null;
-  eventCoverage?: string;
+  observationWindow?: string;
+  validationBasis?: string;
 }) {
   const badges = [
     {
@@ -122,24 +122,16 @@ function buildSignalBadges(item: {
     }
   ];
 
-  if (typeof item.volumeRatio === "number" && Number.isFinite(item.volumeRatio)) {
+  if (item.observationWindow) {
     badges.push({
-      label: item.volumeRatio >= 1.2 ? `거래량 증가 ${item.volumeRatio.toFixed(2)}배` : `거래량 안정 ${item.volumeRatio.toFixed(2)}배`,
-      className:
-        item.volumeRatio >= 1.2
-          ? "border border-primary/20 bg-primary/12 text-primary"
-          : "border border-border/70 bg-secondary/80 text-foreground/75"
+      label: `관찰 기간 ${item.observationWindow}`,
+      className: "border border-border/70 bg-secondary/80 text-foreground/75"
     });
   }
 
-  if (item.eventCoverage) {
+  if (item.validationBasis) {
     badges.push({
-      label:
-        item.eventCoverage === "보강됨"
-          ? "이벤트 근거 보강"
-          : item.eventCoverage === "제한적"
-            ? "이벤트 근거 제한"
-            : "이벤트 근거 취약",
+      label: `검증 기준 ${item.validationBasis}`,
       className: "border border-border/70 bg-secondary/80 text-foreground/75"
     });
   }
@@ -230,7 +222,7 @@ export default async function RankingPage() {
             <div className="rounded-[22px] border border-border/70 bg-secondary/35 px-4 py-4">
               <p className="text-sm font-semibold text-foreground">후보 점수는 이렇게 읽습니다.</p>
               <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                기본 점수에 검증 적중률, 평균 수익, 표본 수, 거래대금, 거래량 흐름, 이벤트 커버리지를 더해 오늘 먼저 볼 만한 후보를 추립니다.
+                기본 점수에 검증 적중률, 평균 수익, 표본 수, 거래대금, 거래량 흐름, 가격 구조를 더해 오늘 먼저 볼 만한 후보를 추립니다.
                 즉 기본 점수만 높다고 바로 상위에 오르지 않고, 실제로 스윙 관점에서 확인할 만한지까지 함께 반영합니다.
               </p>
             </div>
@@ -249,7 +241,7 @@ export default async function RankingPage() {
               시장 전체를 스캔한 뒤 오늘 먼저 볼 만한 후보를 점수순으로 정리한 표입니다. 실제 관찰 종목이나 자동 추적 종목은 이 후보 중 더 엄격한 기준을 통과한 일부만 이어집니다.
             </p>
             <p className="text-xs leading-5 text-muted-foreground">
-              랭킹 점수는 기본 신호 점수에 검증 품질, 유동성, 거래량 상태, 이벤트 커버리지를 더해 다시 정렬한 값입니다.
+              랭킹 점수는 기본 신호 점수에 검증 품질, 유동성, 거래량 상태, 가격 구조를 더해 다시 정렬한 값입니다.
             </p>
           </CardHeader>
           <CardContent className="overflow-x-auto">
@@ -272,7 +264,11 @@ export default async function RankingPage() {
                   </thead>
                   <tbody>
                     {todayRanking.map((item) => {
-                      const badges = buildSignalBadges(item);
+                      const badges = buildSignalBadges({
+                        liquidityRating: item.liquidityRating,
+                        observationWindow: item.observationWindow,
+                        validationBasis: item.recommendation?.validationBasis
+                      });
 
                       return (
                         <tr key={item.ticker} className="border-b border-border/60 align-top text-foreground/84 last:border-0">
@@ -350,7 +346,11 @@ export default async function RankingPage() {
             </CardHeader>
             <CardContent className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
               {historySummary.map((item) => (
-                <div key={item.ticker} className="rounded-[24px] border border-border/70 bg-secondary/35 px-4 py-4">
+                <Link
+                  key={item.ticker}
+                  href={`/analysis/${item.ticker}`}
+                  className="rounded-[24px] border border-border/70 bg-secondary/35 px-4 py-4 transition hover:border-primary/35 hover:bg-secondary/50"
+                >
                   <p className="font-semibold text-foreground">{item.company}</p>
                   <p className="mt-1 text-xs text-muted-foreground">{item.ticker}</p>
                   <div className="mt-4 grid grid-cols-3 gap-3 text-sm">
@@ -367,7 +367,7 @@ export default async function RankingPage() {
                       <p className="mt-1 font-semibold text-foreground">#{item.latestRank}</p>
                     </div>
                   </div>
-                </div>
+                </Link>
               ))}
             </CardContent>
           </Card>
