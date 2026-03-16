@@ -922,6 +922,24 @@ function buildKeyLevels(item) {
   ];
 }
 
+function formatRiskRewardRatio(entryPrice, targetPrice, invalidationPrice) {
+  const entry = Number(entryPrice ?? 0);
+  const target = Number(targetPrice ?? 0);
+  const invalidation = Number(invalidationPrice ?? 0);
+
+  if (!Number.isFinite(entry) || !Number.isFinite(target) || !Number.isFinite(invalidation)) {
+    return "재산정 필요";
+  }
+
+  const riskDistance = entry - invalidation;
+  const rewardDistance = target - entry;
+  if (riskDistance <= 0 || rewardDistance <= 0) {
+    return "재산정 필요";
+  }
+
+  return `1 : ${Math.max(0.1, rewardDistance / riskDistance).toFixed(1)}`;
+}
+
 function buildDecisionNotes(item, validationItem, indicators) {
   const technicalNotes = buildTechnicalNotes(indicators);
 
@@ -2049,7 +2067,7 @@ async function main() {
       rationale: buildRationale(item, technicalIndicators),
       invalidation: buildInvalidation(item),
       invalidationDistance,
-      riskRewardRatio: score >= 22 ? "1 : 2.2" : score >= 14 ? "1 : 1.5" : "1 : 0.9",
+      riskRewardRatio: formatRiskRewardRatio(item.confirmationPrice, item.expansionPrice, item.invalidationPrice),
       validationSummary: validationItem.validationSummary,
       validationBasis: validationItem.basis,
       checkpoints: buildCheckpoints(item),
