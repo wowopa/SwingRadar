@@ -1005,13 +1005,30 @@ function calculateTechnicalAdjustment(indicators, item) {
 }
 
 function buildChartSeries(item) {
-  const historySeries = buildPriceHistorySeries(item).slice(-120).map((point) => ({
-    open: Number.isFinite(point.open) ? Number(point.open) : null,
-    high: Number.isFinite(point.high) ? Number(point.high) : null,
-    low: Number.isFinite(point.low) ? Number(point.low) : null,
-    close: Number(point.close),
-    volume: Number.isFinite(point.volume) ? Number(point.volume) : null
-  }));
+  const rawHistory = Array.isArray(item.history) ? item.history.filter((entry) => Number.isFinite(entry?.close)) : [];
+  const historySeries = rawHistory.length
+    ? rawHistory.slice(-120).map((point) => ({
+        date: typeof point.date === "string" ? point.date : null,
+        open: Number.isFinite(point.open) ? Number(point.open) : null,
+        high: Number.isFinite(point.high) ? Number(point.high) : null,
+        low: Number.isFinite(point.low) ? Number(point.low) : null,
+        close: Number(point.close),
+        volume: Number.isFinite(point.volume) ? Number(point.volume) : null
+      }))
+    : buildPriceHistorySeries(item).slice(-120).map((point, index, series) => {
+        const latestDate = typeof item.signalDate === "string" && item.signalDate ? new Date(`${item.signalDate}T00:00:00Z`) : new Date();
+        const date = new Date(latestDate);
+        date.setUTCDate(latestDate.getUTCDate() - (series.length - index - 1));
+
+        return {
+          date: date.toISOString().slice(0, 10),
+          open: Number.isFinite(point.open) ? Number(point.open) : null,
+          high: Number.isFinite(point.high) ? Number(point.high) : null,
+          low: Number.isFinite(point.low) ? Number(point.low) : null,
+          close: Number(point.close),
+          volume: Number.isFinite(point.volume) ? Number(point.volume) : null
+        };
+      });
 
   if (!historySeries.length) {
     return [];
@@ -1040,6 +1057,7 @@ function buildChartSeries(item) {
 
     return {
       label: `-${series.length - index - 1}일`,
+      date: point.date ?? null,
       open: roundNumber(point.open, 0),
       high: roundNumber(point.high, 0),
       low: roundNumber(point.low, 0),

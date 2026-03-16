@@ -71,6 +71,7 @@ export interface TechnicalIndicators {
 
 export interface AnalysisChartPoint {
   label: string;
+  date?: string | null;
   open: number | null;
   high: number | null;
   low: number | null;
