@@ -2,6 +2,7 @@ import type { Route } from "next";
 import Link from "next/link";
 import { ArrowUpRight, ChartNoAxesCombined, ShieldCheck, Sparkles } from "lucide-react";
 
+import { BrandSignature } from "@/components/layout/brand-signature";
 import { GlobalSymbolSearch } from "@/components/layout/global-symbol-search";
 import { ScrollToTopButton } from "@/components/layout/scroll-to-top-button";
 import { cn } from "@/lib/utils";
@@ -25,22 +26,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <div className="relative flex flex-col gap-8">
             <div className="flex flex-col gap-7 xl:flex-row xl:items-end xl:justify-between">
               <div className="max-w-4xl space-y-5">
-                <div className="flex flex-wrap items-center gap-3">
-                  <div className="brand-mark flex h-12 w-12 items-center justify-center rounded-2xl text-sm font-semibold tracking-[0.18em] text-primary-foreground">
-                    SR
-                  </div>
-                  <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.32em] text-muted-foreground">KRX Swing Research</p>
-                    <p className="mt-1 text-2xl font-semibold tracking-[-0.03em] text-foreground sm:text-3xl">SwingRadar</p>
-                  </div>
-                </div>
+                <BrandSignature />
 
                 <div className="max-w-[960px] border-b border-border/70 pb-5">
                   <h1 className="text-3xl font-semibold leading-[1.04] tracking-[-0.05em] text-foreground sm:text-4xl lg:text-[3rem]">
-                    국내 스윙 후보를 선별하고 검증합니다
+                    국내 스윙 후보를 구조화하고 검증합니다
                   </h1>
                   <p className="mt-3 text-sm leading-7 text-muted-foreground sm:text-base">
-                    당일 후보, 무효화 기준, 검증 이력을 한 화면에서 점검하는 KRX 스윙 리서치 워크스페이스입니다.
+                    관찰 후보, 무효화 기준, 검증 이력까지 한 화면에서 읽어내는 KRX 스윙 시그널 워크스페이스입니다.
                   </p>
                 </div>
               </div>
@@ -71,7 +64,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
               <div className="grid gap-3 sm:grid-cols-3">
                 <MetricCard label="Universe" value="KRX Daily" />
-                <MetricCard label="Focus" value="Candidate Validation" />
+                <MetricCard label="Focus" value="Technical Swing" />
                 <MetricCard label="Method" value="Signal with History" />
               </div>
             </div>
