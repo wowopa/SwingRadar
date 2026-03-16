@@ -636,6 +636,28 @@ export function TradingViewChartCard({
                 <LegendDot color="#ef4444" label="위험 가격" />
               </div>
             </div>
+            <div className="space-y-3 overflow-hidden rounded-[28px] border border-border/70 bg-white p-3">
+              <div ref={priceContainerRef} className="h-[320px] w-full" />
+              <div className="grid gap-3 md:grid-cols-[1fr_1fr]">
+                <div className="rounded-[20px] border border-border/60 bg-background/55 p-2">
+                  <p className="px-2 py-1 text-xs font-medium text-muted-foreground">최근 거래금액</p>
+                  <div ref={turnoverContainerRef} className="h-[120px] w-full" />
+                </div>
+                <div className="rounded-[20px] border border-border/60 bg-background/55 p-2">
+                  <p className="px-2 py-1 text-xs font-medium text-muted-foreground">MACD</p>
+                  <div ref={macdContainerRef} className="h-[140px] w-full" />
+                </div>
+              </div>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              <MiniMetric label="최근 종가" value={lastPoint ? formatPrice(lastPoint.close) : "계산 중"} />
+              <MiniMetric label="20일선" value={lastPoint?.sma20 ? formatPrice(lastPoint.sma20) : "계산 중"} />
+              <MiniMetric label="최근 거래금액" value={formatAmount(lastTurnover)} />
+              <MiniMetric
+                label="최근 거래량"
+                value={lastPoint?.volume ? `${lastPoint.volume.toLocaleString()}주` : "계산 중"}
+              />
+            </div>
             <TooltipProvider delayDuration={120}>
               <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
                 {indicatorItems.map((item) => (
@@ -671,28 +693,6 @@ export function TradingViewChartCard({
                 ))}
               </div>
             ) : null}
-            <div className="space-y-3 overflow-hidden rounded-[28px] border border-border/70 bg-white p-3">
-              <div ref={priceContainerRef} className="h-[320px] w-full" />
-              <div className="grid gap-3 md:grid-cols-[1fr_1fr]">
-                <div className="rounded-[20px] border border-border/60 bg-background/55 p-2">
-                  <p className="px-2 py-1 text-xs font-medium text-muted-foreground">최근 거래금액</p>
-                  <div ref={turnoverContainerRef} className="h-[120px] w-full" />
-                </div>
-                <div className="rounded-[20px] border border-border/60 bg-background/55 p-2">
-                  <p className="px-2 py-1 text-xs font-medium text-muted-foreground">MACD</p>
-                  <div ref={macdContainerRef} className="h-[140px] w-full" />
-                </div>
-              </div>
-            </div>
-            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-              <MiniMetric label="최근 종가" value={lastPoint ? formatPrice(lastPoint.close) : "계산 중"} />
-              <MiniMetric label="20일선" value={lastPoint?.sma20 ? formatPrice(lastPoint.sma20) : "계산 중"} />
-              <MiniMetric label="최근 거래금액" value={formatAmount(lastTurnover)} />
-              <MiniMetric
-                label="최근 거래량"
-                value={lastPoint?.volume ? `${lastPoint.volume.toLocaleString()}주` : "계산 중"}
-              />
-            </div>
           </>
         ) : (
           <div className="rounded-[28px] border border-border/70 bg-secondary/35 p-6 text-sm leading-7 text-muted-foreground">
