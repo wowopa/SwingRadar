@@ -97,12 +97,12 @@ function toChartValue(value: number | null) {
 }
 
 function parseLevelPrice(price: string) {
-  const normalized = price.replace(/[^0-9.-]/g, "");
-  if (!normalized) {
+  const match = price.match(/-?\d[\d,]*(?:\.\d+)?/);
+  if (!match) {
     return null;
   }
 
-  const parsed = Number(normalized);
+  const parsed = Number(match[0].replace(/,/g, ""));
   return Number.isFinite(parsed) ? parsed : null;
 }
 
