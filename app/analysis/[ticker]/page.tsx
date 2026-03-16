@@ -17,6 +17,7 @@ import type { DataQualityItem, NewsImpactItem, RiskChecklistItem, TickerAnalysis
 import { getAnalysisByTicker } from "@/lib/repositories/analysis";
 import { getDailyCandidates } from "@/lib/repositories/daily-candidates";
 import { getTrackingPayload } from "@/lib/repositories/tracking";
+import { getCompanyOverviewLines } from "@/lib/server/company-overview";
 import { buildPublicDataStatusSummary } from "@/lib/server/public-data-status";
 import { buildTradingViewSymbol, getReadySymbols, getSymbolByTicker, resolveTicker } from "@/lib/symbols/master";
 import { describeSignalScore, formatScore } from "@/lib/utils";
@@ -117,7 +118,7 @@ function getCoverageRead(newsImpact: NewsImpactItem[], riskChecklist: RiskCheckl
   return `${coverageRisk?.note ?? "이벤트 커버리지는 참고 신호로만 봅니다."} 외부 뉴스는 화면 하단의 검색 링크로 직접 확인하는 흐름을 권장합니다.`;
 }
 
-function buildCompanyOverview({
+function buildFallbackOverview({
   company,
   ticker,
   market,
@@ -136,7 +137,10 @@ function buildCompanyOverview({
       ? "현재 SwingRadar 분석 데이터는 바로 확인할 수 있습니다."
       : "일부 분석 데이터는 아직 준비 중입니다.";
 
-  return `${company} (${ticker})는 ${market}에 상장된 ${regionLabel} 기업입니다. 현재 프로젝트 데이터에는 회사의 실제 사업 소개 원문이 연결되어 있지 않아 상세 기업 설명은 준비 중입니다. ${statusLabel}`;
+  return [
+    `${company} (${ticker})는 ${market}에 상장된 ${regionLabel} 기업입니다.`,
+    `현재 프로젝트에서 확인할 수 있는 분석 상태는 ${statusLabel}`
+  ];
 }
 
 export default async function AnalysisPage({ params }: { params: Promise<{ ticker: string }> }) {
@@ -175,19 +179,22 @@ export default async function AnalysisPage({ params }: { params: Promise<{ ticke
     typeof featuredRank === "number" && featuredRank >= 0
       ? `${analysis.company} (${analysis.ticker}) - 오늘 후보 #${featuredRank + 1}`
       : `${analysis.company} (${analysis.ticker})`;
+  const fetchedOverviewLines = (await getCompanyOverviewLines(analysis.ticker)).slice(0, 3);
   const overview = {
     company: analysis.company,
     ticker: analysis.ticker,
     market: symbol?.market ?? "KRX",
     region: symbol?.region ?? "KR",
     status: symbol?.status ?? "ready",
-    summary: buildCompanyOverview({
-      company: analysis.company,
-      ticker: analysis.ticker,
-      market: symbol?.market ?? "KRX",
-      region: symbol?.region ?? "KR",
-      status: symbol?.status ?? "ready"
-    })
+    summaryLines: fetchedOverviewLines.length
+      ? fetchedOverviewLines
+      : buildFallbackOverview({
+          company: analysis.company,
+          ticker: analysis.ticker,
+          market: symbol?.market ?? "KRX",
+          region: symbol?.region ?? "KR",
+          status: symbol?.status ?? "ready"
+        })
   };
 
   return (
