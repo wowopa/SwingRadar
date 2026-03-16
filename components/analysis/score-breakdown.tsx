@@ -15,7 +15,8 @@ function getScoreStatus(score: number, maxScore: number) {
     return {
       label: "주의",
       description: "현재 구조에서 감점이 발생한 항목입니다.",
-      tone: "bg-rose-100 text-rose-700"
+      badgeTone: "bg-rose-100 text-rose-700",
+      panelTone: "border-rose-200 bg-rose-50/85"
     };
   }
 
@@ -25,7 +26,8 @@ function getScoreStatus(score: number, maxScore: number) {
     return {
       label: "높음",
       description: "현재 구조에서 비교적 강하게 유지되는 항목입니다.",
-      tone: "bg-emerald-100 text-emerald-700"
+      badgeTone: "bg-emerald-100 text-emerald-700",
+      panelTone: "border-emerald-200 bg-emerald-50/85"
     };
   }
 
@@ -33,14 +35,16 @@ function getScoreStatus(score: number, maxScore: number) {
     return {
       label: "보통",
       description: "좋고 아쉬운 점이 함께 있어 추가 확인이 필요한 항목입니다.",
-      tone: "bg-amber-100 text-amber-700"
+      badgeTone: "bg-amber-100 text-amber-700",
+      panelTone: "border-amber-200 bg-amber-50/85"
     };
   }
 
   return {
     label: "주의",
     description: "현재 점수만 보면 강한 근거로 보기 어려운 항목입니다.",
-    tone: "bg-rose-100 text-rose-700"
+    badgeTone: "bg-rose-100 text-rose-700",
+    panelTone: "border-rose-200 bg-rose-50/85"
   };
 }
 
@@ -60,19 +64,21 @@ export function ScoreBreakdown({ items }: { items: ScoreBreakdownItem[] }) {
           const status = getScoreStatus(item.score, maxScore);
 
           return (
-            <div key={item.label} className="rounded-[24px] border border-border/70 bg-secondary/35 p-4">
+            <div key={item.label} className={cn("rounded-[24px] border p-4", status.panelTone)}>
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <p className="font-medium text-foreground">{item.label}</p>
-                  <p className="mt-1 text-sm leading-6 text-muted-foreground">{item.description}</p>
+                  <p className="mt-1 text-sm leading-6 text-foreground/72">{item.description}</p>
                 </div>
                 <p className="shrink-0 text-right text-lg font-semibold text-foreground">
                   {formatScore(item.score)} / {formatScore(maxScore)}
                 </p>
               </div>
               <div className="mt-4 flex items-center gap-2">
-                <span className={cn("rounded-full px-3 py-1 text-xs font-medium whitespace-nowrap", status.tone)}>{status.label}</span>
-                <p className="text-xs leading-5 text-foreground/70">{status.description}</p>
+                <span className={cn("rounded-full px-3 py-1 text-xs font-medium whitespace-nowrap", status.badgeTone)}>
+                  {status.label}
+                </span>
+                <p className="text-xs leading-5 text-foreground/72">{status.description}</p>
               </div>
             </div>
           );
