@@ -18,7 +18,6 @@ vi.mock("@/lib/server/universe-candidate-reviews", () => ({
   saveUniverseCandidateReview: mocks.saveUniverseCandidateReview
 }));
 
-import { ApiError } from "@/lib/server/api-error";
 import { promoteUniverseCandidate } from "@/lib/server/universe-promotion";
 
 describe("promoteUniverseCandidate", () => {
