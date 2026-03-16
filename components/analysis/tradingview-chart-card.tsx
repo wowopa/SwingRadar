@@ -110,6 +110,10 @@ function formatSignedPercent(value: number) {
   return `${value > 0 ? "+" : ""}${value.toFixed(1)}%`;
 }
 
+function hasNumber(value: number | null | undefined): value is number {
+  return typeof value === "number" && Number.isFinite(value);
+}
+
 function getLevelKind(label: string) {
   if (label.includes("진입") || label.includes("확인")) {
     return "entry" as const;
@@ -457,11 +461,11 @@ export function TradingViewChartCard({
     {
       label: "이동평균",
       value:
-        indicators.sma20 !== null && indicators.sma60 !== null
+        hasNumber(indicators.sma20) && hasNumber(indicators.sma60)
           ? `20일 ${formatPrice(indicators.sma20)} / 60일 ${formatPrice(indicators.sma60)}`
           : "계산 중",
       tone:
-        indicators.sma20 !== null && indicators.sma60 !== null && indicators.sma20 > indicators.sma60
+        hasNumber(indicators.sma20) && hasNumber(indicators.sma60) && indicators.sma20 > indicators.sma60
           ? "border-emerald-200 bg-emerald-50/80 text-emerald-800"
           : "border-border/70 bg-background/50 text-foreground/85",
       description:
@@ -470,13 +474,13 @@ export function TradingViewChartCard({
     {
       label: "추세 강도",
       value:
-        indicators.adx14 !== null && indicators.plusDi14 !== null && indicators.minusDi14 !== null
+        hasNumber(indicators.adx14) && hasNumber(indicators.plusDi14) && hasNumber(indicators.minusDi14)
           ? `ADX ${indicators.adx14.toFixed(1)} / +DI ${indicators.plusDi14.toFixed(1)} / -DI ${indicators.minusDi14.toFixed(1)}`
           : "계산 중",
       tone:
-        indicators.adx14 !== null &&
-        indicators.plusDi14 !== null &&
-        indicators.minusDi14 !== null &&
+        hasNumber(indicators.adx14) &&
+        hasNumber(indicators.plusDi14) &&
+        hasNumber(indicators.minusDi14) &&
         indicators.adx14 >= 25 &&
         indicators.plusDi14 > indicators.minusDi14
           ? "border-emerald-200 bg-emerald-50/80 text-emerald-800"
@@ -486,9 +490,9 @@ export function TradingViewChartCard({
     },
     {
       label: "거래량 배수",
-      value: indicators.volumeRatio20 !== null ? `${indicators.volumeRatio20.toFixed(2)}배` : "계산 중",
+      value: hasNumber(indicators.volumeRatio20) ? `${indicators.volumeRatio20.toFixed(2)}배` : "계산 중",
       tone:
-        indicators.volumeRatio20 !== null && indicators.volumeRatio20 >= 1.2
+        hasNumber(indicators.volumeRatio20) && indicators.volumeRatio20 >= 1.2
           ? "border-primary/20 bg-primary/8 text-primary"
           : "border-border/70 bg-background/50 text-foreground/85",
       description:
@@ -496,9 +500,9 @@ export function TradingViewChartCard({
     },
     {
       label: "RSI(14)",
-      value: indicators.rsi14 !== null ? indicators.rsi14.toFixed(1) : "계산 중",
+      value: hasNumber(indicators.rsi14) ? indicators.rsi14.toFixed(1) : "계산 중",
       tone:
-        indicators.rsi14 !== null && indicators.rsi14 >= 45 && indicators.rsi14 <= 65
+        hasNumber(indicators.rsi14) && indicators.rsi14 >= 45 && indicators.rsi14 <= 65
           ? "border-emerald-200 bg-emerald-50/80 text-emerald-800"
           : "border-border/70 bg-background/50 text-foreground/85",
       description:
@@ -507,12 +511,12 @@ export function TradingViewChartCard({
     {
       label: "Stochastic",
       value:
-        indicators.stochasticK !== null && indicators.stochasticD !== null
+        hasNumber(indicators.stochasticK) && hasNumber(indicators.stochasticD)
           ? `${indicators.stochasticK.toFixed(1)} / ${indicators.stochasticD.toFixed(1)}`
           : "계산 중",
       tone:
-        indicators.stochasticK !== null &&
-        indicators.stochasticD !== null &&
+        hasNumber(indicators.stochasticK) &&
+        hasNumber(indicators.stochasticD) &&
         indicators.stochasticK >= indicators.stochasticD &&
         indicators.stochasticK >= 55 &&
         indicators.stochasticK <= 82
@@ -524,11 +528,11 @@ export function TradingViewChartCard({
     {
       label: "MACD",
       value:
-        indicators.macd !== null && indicators.macdSignal !== null
+        hasNumber(indicators.macd) && hasNumber(indicators.macdSignal)
           ? `${indicators.macd.toFixed(1)} / ${indicators.macdSignal.toFixed(1)}`
           : "계산 중",
       tone:
-        indicators.macd !== null && indicators.macdSignal !== null && indicators.macd >= indicators.macdSignal
+        hasNumber(indicators.macd) && hasNumber(indicators.macdSignal) && indicators.macd >= indicators.macdSignal
           ? "border-emerald-200 bg-emerald-50/80 text-emerald-800"
           : "border-border/70 bg-background/50 text-foreground/85",
       description:
@@ -536,9 +540,9 @@ export function TradingViewChartCard({
     },
     {
       label: "MFI(14)",
-      value: indicators.mfi14 !== null ? indicators.mfi14.toFixed(1) : "계산 중",
+      value: hasNumber(indicators.mfi14) ? indicators.mfi14.toFixed(1) : "계산 중",
       tone:
-        indicators.mfi14 !== null && indicators.mfi14 >= 55 && indicators.mfi14 <= 78
+        hasNumber(indicators.mfi14) && indicators.mfi14 >= 55 && indicators.mfi14 <= 78
           ? "border-emerald-200 bg-emerald-50/80 text-emerald-800"
           : "border-border/70 bg-background/50 text-foreground/85",
       description:
@@ -546,16 +550,16 @@ export function TradingViewChartCard({
     },
     {
       label: "ATR(14)",
-      value: indicators.atr14 !== null ? formatPrice(indicators.atr14) : "계산 중",
+      value: hasNumber(indicators.atr14) ? formatPrice(indicators.atr14) : "계산 중",
       tone: "border-border/70 bg-background/50 text-foreground/85",
       description:
         "최근 14일 동안 하루 평균 진폭이 얼마인지 보여줍니다. 손절 폭과 분할 진입 간격을 잡을 때 기준이 됩니다."
     },
     {
       label: "NATR(14)",
-      value: indicators.natr14 !== null ? `${indicators.natr14.toFixed(2)}%` : "계산 중",
+      value: hasNumber(indicators.natr14) ? `${indicators.natr14.toFixed(2)}%` : "계산 중",
       tone:
-        indicators.natr14 !== null && indicators.natr14 <= 5.5
+        hasNumber(indicators.natr14) && indicators.natr14 <= 5.5
           ? "border-emerald-200 bg-emerald-50/80 text-emerald-800"
           : "border-border/70 bg-background/50 text-foreground/85",
       description:
@@ -563,9 +567,9 @@ export function TradingViewChartCard({
     },
     {
       label: "ROC(20)",
-      value: indicators.roc20 !== null ? formatSignedPercent(indicators.roc20) : "계산 중",
+      value: hasNumber(indicators.roc20) ? formatSignedPercent(indicators.roc20) : "계산 중",
       tone:
-        indicators.roc20 !== null && indicators.roc20 >= 4 && indicators.roc20 <= 18
+        hasNumber(indicators.roc20) && indicators.roc20 >= 4 && indicators.roc20 <= 18
           ? "border-emerald-200 bg-emerald-50/80 text-emerald-800"
           : "border-border/70 bg-background/50 text-foreground/85",
       description:
@@ -573,9 +577,9 @@ export function TradingViewChartCard({
     },
     {
       label: "CCI(20)",
-      value: indicators.cci20 !== null ? indicators.cci20.toFixed(1) : "계산 중",
+      value: hasNumber(indicators.cci20) ? indicators.cci20.toFixed(1) : "계산 중",
       tone:
-        indicators.cci20 !== null && indicators.cci20 >= 20 && indicators.cci20 <= 140
+        hasNumber(indicators.cci20) && indicators.cci20 >= 20 && indicators.cci20 <= 140
           ? "border-emerald-200 bg-emerald-50/80 text-emerald-800"
           : "border-border/70 bg-background/50 text-foreground/85",
       description:
@@ -583,9 +587,9 @@ export function TradingViewChartCard({
     },
     {
       label: "CMF(20)",
-      value: indicators.cmf20 !== null ? indicators.cmf20.toFixed(2) : "계산 중",
+      value: hasNumber(indicators.cmf20) ? indicators.cmf20.toFixed(2) : "계산 중",
       tone:
-        indicators.cmf20 !== null && indicators.cmf20 >= 0.05
+        hasNumber(indicators.cmf20) && indicators.cmf20 >= 0.05
           ? "border-emerald-200 bg-emerald-50/80 text-emerald-800"
           : "border-border/70 bg-background/50 text-foreground/85",
       description:
