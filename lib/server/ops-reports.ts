@@ -62,6 +62,12 @@ async function readJsonFile<T>(filePath: string): Promise<T | null> {
     if ((error as NodeJS.ErrnoException).code === "ENOENT") {
       return null;
     }
+
+    if (error instanceof SyntaxError) {
+      console.warn(`[ops-reports] Invalid JSON report ignored: ${filePath}`, error.message);
+      return null;
+    }
+
     throw error;
   }
 }

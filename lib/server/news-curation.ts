@@ -7,6 +7,7 @@ import type {
   RecommendationsResponseDto,
   TrackingResponseDto
 } from "@/lib/api-contracts/swing-radar";
+import { ApiError } from "@/lib/server/api-error";
 import { recordAuditLog } from "@/lib/server/audit-log";
 import { getRuntimePaths } from "@/lib/server/runtime-paths";
 
@@ -155,11 +156,17 @@ export async function loadNewsCuration(): Promise<NewsCurationDocument> {
       items: sortItems((parsed.items ?? []).map(normalizeCuratedItem))
     };
   } catch (error) {
-    if ((error as NodeJS.ErrnoException).code !== "ENOENT") {
-      throw error;
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+      return createDefaultDocument();
     }
 
-    return createDefaultDocument();
+    if (error instanceof SyntaxError) {
+      throw new ApiError(500, "NEWS_CURATION_INVALID", "Curated news document is not valid JSON", {
+        path: getNewsCurationPath()
+      });
+    }
+
+    throw error;
   }
 }
 
