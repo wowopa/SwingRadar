@@ -253,7 +253,7 @@ export function TradingViewChartCard({
     chartsRef.current.forEach((chart) => chart.remove());
     chartsRef.current = [];
 
-    const priceChart = createBaseChart(priceContainerRef.current, 320, true);
+    const priceChart = createBaseChart(priceContainerRef.current, 320);
     const turnoverChart = createBaseChart(turnoverContainerRef.current, 120);
     const macdChart = createBaseChart(macdContainerRef.current, 140);
 
@@ -270,7 +270,9 @@ export function TradingViewChartCard({
       ? priceChart.addSeries(CandlestickSeries, {
           upColor: "#218069",
           downColor: "#e76f51",
-          borderVisible: false,
+          borderVisible: true,
+          borderUpColor: "#218069",
+          borderDownColor: "#e76f51",
           wickUpColor: "#218069",
           wickDownColor: "#e76f51",
           priceLineVisible: true,
@@ -284,40 +286,35 @@ export function TradingViewChartCard({
         });
     const sma20Series = priceChart.addSeries(LineSeries, {
       color: "#f59e0b",
-      lineWidth: 2,
+      lineWidth: 3,
       priceLineVisible: false,
       lastValueVisible: false
     });
     const sma60Series = priceChart.addSeries(LineSeries, {
       color: "#6366f1",
-      lineWidth: 2,
+      lineWidth: 3,
       priceLineVisible: false,
       lastValueVisible: false
     });
     const ema20Series = priceChart.addSeries(LineSeries, {
       color: "#0ea5e9",
-      lineWidth: 2,
+      lineWidth: 3,
       priceLineVisible: false,
       lastValueVisible: false
     });
     const upperBandSeries = priceChart.addSeries(LineSeries, {
       color: "rgba(251, 113, 133, 0.82)",
-      lineWidth: 1,
+      lineWidth: 2,
       lineStyle: 2 as LineStyle,
       priceLineVisible: false,
       lastValueVisible: false
     });
     const lowerBandSeries = priceChart.addSeries(LineSeries, {
       color: "rgba(251, 113, 133, 0.82)",
-      lineWidth: 1,
+      lineWidth: 2,
       lineStyle: 2 as LineStyle,
       priceLineVisible: false,
       lastValueVisible: false
-    });
-    const volumeSeries = priceChart.addSeries(HistogramSeries, {
-      priceScaleId: "left",
-      color: "rgba(33, 128, 105, 0.35)",
-      priceFormat: { type: "volume" }
     });
 
     const turnoverSeries = turnoverChart.addSeries(HistogramSeries, {
@@ -395,17 +392,6 @@ export function TradingViewChartCard({
     ema20Series.setData(seriesData.filter((point) => point.ema20 !== undefined).map((point) => ({ time: point.time, value: point.ema20! })));
     upperBandSeries.setData(seriesData.filter((point) => point.bollingerUpper !== undefined).map((point) => ({ time: point.time, value: point.bollingerUpper! })));
     lowerBandSeries.setData(seriesData.filter((point) => point.bollingerLower !== undefined).map((point) => ({ time: point.time, value: point.bollingerLower! })));
-    volumeSeries.setData(
-      seriesData.map((point, index) => ({
-        time: point.time,
-        value: point.volume,
-        color:
-          index > 0 && point.close < (seriesData[index - 1]?.close ?? point.close)
-            ? "rgba(251, 113, 133, 0.45)"
-            : "rgba(33, 128, 105, 0.35)"
-      }))
-    );
-
     turnoverSeries.setData(
       seriesData.map((point, index) => ({
         time: point.time,
@@ -644,7 +630,6 @@ export function TradingViewChartCard({
                 <LegendDot color="#6366f1" label="60일선" />
                 <LegendDot color="#0ea5e9" label="20EMA" />
                 <LegendDot color="#fb7185" label="볼린저 밴드" />
-                <LegendDot color="#b47d29" label="거래금액" />
                 <LegendDot color="#1d4ed8" label="MACD" />
                 <LegendDot color="#0ea5e9" label="진입 기준" />
                 <LegendDot color="#f59e0b" label="목표 가격" />
