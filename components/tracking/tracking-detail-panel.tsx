@@ -228,7 +228,7 @@ export function TrackingDetailPanel({ history, details }: TrackingDetailPanelPro
               <TabsList>
                 <TabsTrigger value="review">메모</TabsTrigger>
                 <TabsTrigger value="chart">가격 흐름</TabsTrigger>
-                <TabsTrigger value="news">이벤트</TabsTrigger>
+                <TabsTrigger value="news">뉴스 검색</TabsTrigger>
                 <TabsTrigger value="log">점수 로그</TabsTrigger>
               </TabsList>
               <TabsContent value="review">
@@ -238,7 +238,7 @@ export function TrackingDetailPanel({ history, details }: TrackingDetailPanelPro
                 <ChartSnapshot points={activeDetail.chartSnapshot} />
               </TabsContent>
               <TabsContent value="news">
-                <NewsHistoryCards items={activeDetail.historicalNews} />
+                <NewsHistoryCards ticker={activeEntry.ticker} company={activeCompany ?? activeEntry.company} />
               </TabsContent>
               <TabsContent value="log">
                 <ScoreLogPanel items={activeDetail.scoreLog} />
