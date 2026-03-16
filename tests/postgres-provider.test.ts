@@ -8,7 +8,6 @@ vi.mock("@/lib/server/postgres", () => ({
   getPostgresPool: mocks.getPostgresPool
 }));
 
-import { ApiError } from "@/lib/server/api-error";
 import { postgresDataProvider } from "@/lib/data-sources/postgres-provider";
 
 describe("postgresDataProvider", () => {
