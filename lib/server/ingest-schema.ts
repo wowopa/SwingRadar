@@ -56,7 +56,15 @@ const analysisItemSchema = z.object({
     bollingerUpper: z.number().nullable(),
     bollingerMiddle: z.number().nullable(),
     bollingerLower: z.number().nullable(),
-    volumeRatio20: z.number().nullable()
+    volumeRatio20: z.number().nullable(),
+    atr14: z.number().nullable(),
+    natr14: z.number().nullable(),
+    adx14: z.number().nullable(),
+    plusDi14: z.number().nullable(),
+    minusDi14: z.number().nullable(),
+    stochasticK: z.number().nullable(),
+    stochasticD: z.number().nullable(),
+    mfi14: z.number().nullable()
   }),
   chartSeries: z.array(
     z.object({

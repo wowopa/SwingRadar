@@ -30,7 +30,15 @@ export const analysisByTicker: Record<string, TickerAnalysis> = {
       bollingerUpper: null,
       bollingerMiddle: null,
       bollingerLower: null,
-      volumeRatio20: null
+      volumeRatio20: null,
+      atr14: null,
+      natr14: null,
+      adx14: null,
+      plusDi14: null,
+      minusDi14: null,
+      stochasticK: null,
+      stochasticD: null,
+      mfi14: null
     },
     chartSeries: [],
     decisionNotes: [
@@ -110,7 +118,15 @@ export const analysisByTicker: Record<string, TickerAnalysis> = {
       bollingerUpper: null,
       bollingerMiddle: null,
       bollingerLower: null,
-      volumeRatio20: null
+      volumeRatio20: null,
+      atr14: null,
+      natr14: null,
+      adx14: null,
+      plusDi14: null,
+      minusDi14: null,
+      stochasticK: null,
+      stochasticD: null,
+      mfi14: null
     },
     chartSeries: [],
     decisionNotes: [
@@ -181,7 +197,15 @@ export const analysisByTicker: Record<string, TickerAnalysis> = {
       bollingerUpper: null,
       bollingerMiddle: null,
       bollingerLower: null,
-      volumeRatio20: null
+      volumeRatio20: null,
+      atr14: null,
+      natr14: null,
+      adx14: null,
+      plusDi14: null,
+      minusDi14: null,
+      stochasticK: null,
+      stochasticD: null,
+      mfi14: null
     },
     chartSeries: [],
     decisionNotes: [

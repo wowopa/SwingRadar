@@ -29,7 +29,15 @@ const EMPTY_TECHNICAL_INDICATORS = {
   bollingerUpper: null,
   bollingerMiddle: null,
   bollingerLower: null,
-  volumeRatio20: null
+  volumeRatio20: null,
+  atr14: null,
+  natr14: null,
+  adx14: null,
+  plusDi14: null,
+  minusDi14: null,
+  stochasticK: null,
+  stochasticD: null,
+  mfi14: null
 };
 
 const EMPTY_CHART_SERIES: TickerAnalysisDto["chartSeries"] = [];
@@ -99,14 +107,14 @@ function buildScoreBreakdown(score: number) {
   const trend = Math.round(score * 0.38);
   const flow = Math.round(score * 0.2);
   const volatility = Math.round(score * 0.12);
-  const event = Math.round(score * 0.15);
-  const quality = Math.max(score - trend - flow - volatility - event, 0);
+  const momentum = Math.round(score * 0.15);
+  const quality = Math.max(score - trend - flow - volatility - momentum, 0);
 
   return [
     { label: "추세", score: trend, description: "중기 가격 흐름" },
     { label: "수급", score: flow, description: "거래량과 회전 흐름" },
     { label: "변동성", score: volatility, description: "가격 흔들림 관리" },
-    { label: "이벤트", score: event, description: "기사와 공시 반영" },
+    { label: "모멘텀", score: momentum, description: "기술적 움직임 확인" },
     { label: "품질", score: quality, description: "데이터 정합성" }
   ];
 }

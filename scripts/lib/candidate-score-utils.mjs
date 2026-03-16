@@ -75,16 +75,6 @@ export function getValidationAdjustment(validation = {}, validationBasis) {
   return Number((hitRateScore + avgReturnScore + sampleScore + basisScore).toFixed(1));
 }
 
-export function getCoverageAdjustment(eventCoverage) {
-  if (eventCoverage === "보강됨") {
-    return 3;
-  }
-  if (eventCoverage === "제한적") {
-    return 1;
-  }
-  return 0;
-}
-
 export function getVolumeRatioAdjustment(volumeRatio) {
   if (!Number.isFinite(volumeRatio)) {
     return 0;
@@ -125,7 +115,6 @@ export function calculateCandidateScore({
   score,
   validation,
   validationBasis,
-  eventCoverage,
   averageTurnover20,
   currentPrice,
   volumeRatio,
@@ -136,7 +125,6 @@ export function calculateCandidateScore({
   const candidateScore =
     baseScore +
     getValidationAdjustment(validation, validationBasis) +
-    getCoverageAdjustment(eventCoverage) +
     liquidity.score +
     getVolumeRatioAdjustment(volumeRatio) +
     getSignalToneAdjustment(signalTone) +

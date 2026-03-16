@@ -324,6 +324,21 @@ export function TradingViewChartCard({
           : "border-border/70 bg-background/50 text-foreground/85"
     },
     {
+      label: "추세 강도",
+      value:
+        indicators.adx14 !== null && indicators.plusDi14 !== null && indicators.minusDi14 !== null
+          ? `ADX ${indicators.adx14.toFixed(1)} / +DI ${indicators.plusDi14.toFixed(1)} / -DI ${indicators.minusDi14.toFixed(1)}`
+          : "계산 중",
+      tone:
+        indicators.adx14 !== null &&
+        indicators.plusDi14 !== null &&
+        indicators.minusDi14 !== null &&
+        indicators.adx14 >= 25 &&
+        indicators.plusDi14 > indicators.minusDi14
+          ? "border-emerald-200 bg-emerald-50/80 text-emerald-800"
+          : "border-border/70 bg-background/50 text-foreground/85"
+    },
+    {
       label: "거래량 배수",
       value: indicators.volumeRatio20 !== null ? `${indicators.volumeRatio20.toFixed(2)}배` : "계산 중",
       tone:
@@ -340,6 +355,21 @@ export function TradingViewChartCard({
           : "border-border/70 bg-background/50 text-foreground/85"
     },
     {
+      label: "Stochastic",
+      value:
+        indicators.stochasticK !== null && indicators.stochasticD !== null
+          ? `${indicators.stochasticK.toFixed(1)} / ${indicators.stochasticD.toFixed(1)}`
+          : "계산 중",
+      tone:
+        indicators.stochasticK !== null &&
+        indicators.stochasticD !== null &&
+        indicators.stochasticK >= indicators.stochasticD &&
+        indicators.stochasticK >= 55 &&
+        indicators.stochasticK <= 82
+          ? "border-emerald-200 bg-emerald-50/80 text-emerald-800"
+          : "border-border/70 bg-background/50 text-foreground/85"
+    },
+    {
       label: "MACD",
       value:
         indicators.macd !== null && indicators.macdSignal !== null
@@ -347,6 +377,27 @@ export function TradingViewChartCard({
           : "계산 중",
       tone:
         indicators.macd !== null && indicators.macdSignal !== null && indicators.macd >= indicators.macdSignal
+          ? "border-emerald-200 bg-emerald-50/80 text-emerald-800"
+          : "border-border/70 bg-background/50 text-foreground/85"
+    },
+    {
+      label: "MFI(14)",
+      value: indicators.mfi14 !== null ? indicators.mfi14.toFixed(1) : "계산 중",
+      tone:
+        indicators.mfi14 !== null && indicators.mfi14 >= 55 && indicators.mfi14 <= 78
+          ? "border-emerald-200 bg-emerald-50/80 text-emerald-800"
+          : "border-border/70 bg-background/50 text-foreground/85"
+    },
+    {
+      label: "ATR(14)",
+      value: indicators.atr14 !== null ? formatPrice(indicators.atr14) : "계산 중",
+      tone: "border-border/70 bg-background/50 text-foreground/85"
+    },
+    {
+      label: "NATR(14)",
+      value: indicators.natr14 !== null ? `${indicators.natr14.toFixed(2)}%` : "계산 중",
+      tone:
+        indicators.natr14 !== null && indicators.natr14 <= 5.5
           ? "border-emerald-200 bg-emerald-50/80 text-emerald-800"
           : "border-border/70 bg-background/50 text-foreground/85"
     }

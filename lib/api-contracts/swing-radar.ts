@@ -104,6 +104,14 @@ export interface TechnicalIndicatorsDto {
   bollingerMiddle: number | null;
   bollingerLower: number | null;
   volumeRatio20: number | null;
+  atr14: number | null;
+  natr14: number | null;
+  adx14: number | null;
+  plusDi14: number | null;
+  minusDi14: number | null;
+  stochasticK: number | null;
+  stochasticD: number | null;
+  mfi14: number | null;
 }
 
 export interface AnalysisChartPointDto {

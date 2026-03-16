@@ -79,7 +79,15 @@ function createSnapshotBundle(generatedAt: string): SnapshotBundle {
             bollingerUpper: null,
             bollingerMiddle: null,
             bollingerLower: null,
-            volumeRatio20: null
+            volumeRatio20: null,
+            atr14: null,
+            natr14: null,
+            adx14: null,
+            plusDi14: null,
+            minusDi14: null,
+            stochasticK: null,
+            stochasticD: null,
+            mfi14: null
           },
           chartSeries: [],
           decisionNotes: ["기존 메모"],
