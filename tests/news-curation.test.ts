@@ -173,7 +173,10 @@ describe("news curation", () => {
             minusDi14: null,
             stochasticK: null,
             stochasticD: null,
-            mfi14: null
+            mfi14: null,
+            roc20: null,
+            cci20: null,
+            cmf20: null
           },
           chartSeries: [],
           decisionNotes: [],

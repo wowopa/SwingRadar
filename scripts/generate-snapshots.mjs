@@ -372,6 +372,68 @@ function calculateMFI(series, period = 14) {
   return 100 - 100 / (1 + moneyRatio);
 }
 
+function calculateROC(values, period = 20) {
+  if (values.length <= period) {
+    return null;
+  }
+
+  const previous = values.at(-(period + 1));
+  const current = values.at(-1);
+  if (!Number.isFinite(previous) || !Number.isFinite(current) || previous === 0) {
+    return null;
+  }
+
+  return ((current - previous) / previous) * 100;
+}
+
+function calculateCCI(series, period = 20) {
+  if (series.length < period) {
+    return null;
+  }
+
+  const window = series.slice(-period);
+  const typicalPrices = window.map((point) => (point.high + point.low + point.close) / 3);
+  const averageTypicalPrice = average(typicalPrices);
+  const meanDeviation = average(typicalPrices.map((price) => Math.abs(price - averageTypicalPrice)));
+  if (averageTypicalPrice === null || meanDeviation === null || meanDeviation === 0) {
+    return null;
+  }
+
+  const currentTypicalPrice = typicalPrices.at(-1);
+  if (!Number.isFinite(currentTypicalPrice)) {
+    return null;
+  }
+
+  return (currentTypicalPrice - averageTypicalPrice) / (0.015 * meanDeviation);
+}
+
+function calculateCMF(series, period = 20) {
+  if (series.length < period) {
+    return null;
+  }
+
+  const window = series.slice(-period);
+  let moneyFlowVolume = 0;
+  let totalVolume = 0;
+
+  for (const point of window) {
+    if (!Number.isFinite(point.volume) || point.volume <= 0) {
+      continue;
+    }
+
+    const denominator = point.high - point.low;
+    const multiplier = denominator === 0 ? 0 : ((point.close - point.low) - (point.high - point.close)) / denominator;
+    moneyFlowVolume += multiplier * point.volume;
+    totalVolume += point.volume;
+  }
+
+  if (totalVolume === 0) {
+    return null;
+  }
+
+  return moneyFlowVolume / totalVolume;
+}
+
 function calculateTechnicalIndicators(item) {
   const series = buildPriceHistorySeries(item);
   const closes = series.map((point) => point.close);
@@ -397,7 +459,10 @@ function calculateTechnicalIndicators(item) {
       minusDi14: null,
       stochasticK: null,
       stochasticD: null,
-      mfi14: null
+      mfi14: null,
+      roc20: null,
+      cci20: null,
+      cmf20: null
     };
   }
 
@@ -433,6 +498,9 @@ function calculateTechnicalIndicators(item) {
   const { adx14, plusDi14, minusDi14 } = calculateDirectionalIndicators(series, 14);
   const { stochasticK, stochasticD } = calculateStochastic(series, 14, 3);
   const mfi14 = calculateMFI(series, 14);
+  const roc20 = calculateROC(closes, 20);
+  const cci20 = calculateCCI(series, 20);
+  const cmf20 = calculateCMF(series, 20);
 
   return {
     sma20: roundNumber(sma20, 0),
@@ -453,7 +521,10 @@ function calculateTechnicalIndicators(item) {
     minusDi14,
     stochasticK,
     stochasticD,
-    mfi14: roundNumber(mfi14, 1)
+    mfi14: roundNumber(mfi14, 1),
+    roc20: roundNumber(roc20, 1),
+    cci20: roundNumber(cci20, 1),
+    cmf20: roundNumber(cmf20, 2)
   };
 }
 
