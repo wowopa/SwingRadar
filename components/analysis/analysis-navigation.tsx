@@ -29,24 +29,28 @@ type AnalysisNavigationProps = {
 
 const STORAGE_KEY = "swing-radar.recent-analysis";
 const MAX_RECENT_ITEMS = 5;
+type RecentAnalysisItem = ReadySymbol;
 
 export function AnalysisNavigation({ currentTicker, readyItems, overview }: AnalysisNavigationProps) {
-  const [recentTickers, setRecentTickers] = useState<string[]>([]);
+  const [recentItems, setRecentItems] = useState<RecentAnalysisItem[]>([]);
 
   useEffect(() => {
-    const parsed = readRecentTickers();
-    const nextTickers = [currentTicker, ...parsed.filter((item) => item !== currentTicker)].slice(0, MAX_RECENT_ITEMS);
+    const parsed = readRecentItems(readyItems);
+    const currentItem =
+      readyItems.find((item) => item.ticker === currentTicker) ?? {
+        ticker: currentTicker,
+        company: overview.company,
+        sector: overview.market
+      };
+    const nextItems = [currentItem, ...parsed.filter((item) => item.ticker !== currentTicker)].slice(0, MAX_RECENT_ITEMS);
 
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(nextTickers));
-    setRecentTickers(nextTickers);
-  }, [currentTicker]);
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(nextItems));
+    setRecentItems(nextItems);
+  }, [currentTicker, overview.company, overview.market, readyItems]);
 
-  const recentItems = useMemo(() => {
-    return recentTickers
-      .filter((ticker) => ticker !== currentTicker)
-      .map((ticker) => readyItems.find((item) => item.ticker === ticker))
-      .filter((item): item is ReadySymbol => Boolean(item));
-  }, [currentTicker, readyItems, recentTickers]);
+  const visibleRecentItems = useMemo(() => {
+    return recentItems.filter((item) => item.ticker !== currentTicker);
+  }, [currentTicker, recentItems]);
 
   const statusLabel = overview.status === "ready" ? "분석 가능" : "준비 중";
 
@@ -97,8 +101,8 @@ export function AnalysisNavigation({ currentTicker, readyItems, overview }: Anal
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          {recentItems.length ? (
-            recentItems.map((item) => (
+          {visibleRecentItems.length ? (
+            visibleRecentItems.map((item) => (
               <Link
                 key={item.ticker}
                 href={`/analysis/${item.ticker}`}
@@ -124,7 +128,7 @@ export function AnalysisNavigation({ currentTicker, readyItems, overview }: Anal
   );
 }
 
-function readRecentTickers() {
+function readRecentItems(readyItems: ReadySymbol[]) {
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) {
@@ -132,8 +136,39 @@ function readRecentTickers() {
     }
 
     const parsed: unknown = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed.filter((item): item is string => typeof item === "string") : [];
+    if (!Array.isArray(parsed)) {
+      return [];
+    }
+
+    return parsed
+      .map((item) => normalizeRecentItem(item, readyItems))
+      .filter((item): item is RecentAnalysisItem => Boolean(item));
   } catch {
     return [];
   }
+}
+
+function normalizeRecentItem(value: unknown, readyItems: ReadySymbol[]): RecentAnalysisItem | null {
+  if (typeof value === "string") {
+    return readyItems.find((item) => item.ticker === value) ?? null;
+  }
+
+  if (!value || typeof value !== "object") {
+    return null;
+  }
+
+  const candidate = value as Partial<RecentAnalysisItem>;
+  if (
+    typeof candidate.ticker !== "string" ||
+    typeof candidate.company !== "string" ||
+    typeof candidate.sector !== "string"
+  ) {
+    return null;
+  }
+
+  return {
+    ticker: candidate.ticker,
+    company: candidate.company,
+    sector: candidate.sector
+  };
 }
