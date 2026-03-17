@@ -19,7 +19,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen">
       <div className="mx-auto flex min-h-screen w-full max-w-[1480px] flex-col px-4 pb-12 pt-5 sm:px-6 lg:px-8">
-        <header className="relative mb-6 overflow-visible rounded-[36px] border border-border/80 bg-white/72 px-5 py-6 shadow-panel backdrop-blur-xl sm:px-7 sm:py-7">
+        <header className="relative mb-5 overflow-visible rounded-[36px] border border-border/80 bg-white/78 px-5 py-6 shadow-panel backdrop-blur-xl sm:px-7 sm:py-7">
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,hsl(38_38%_74%_/_0.18),transparent_34%),linear-gradient(135deg,hsl(38_20%_82%_/_0.18),transparent_42%)]" />
           <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/55 to-transparent" />
 
@@ -28,7 +28,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <BrandSignature />
 
               <div className="max-w-[960px] border-b border-border/70 pb-5">
-                <h1 className="text-2xl font-semibold leading-[1.06] tracking-[-0.05em] text-foreground sm:text-3xl lg:text-[2.4rem]">
+                <h1 className="text-xl font-semibold leading-[1.08] tracking-[-0.05em] text-foreground sm:text-[1.8rem] lg:text-[2.05rem]">
                   국내 스윙 후보를 구조화하고 검증합니다
                 </h1>
                 <p className="mt-3 text-sm leading-7 text-muted-foreground sm:text-base">
@@ -44,10 +44,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
         </header>
 
-        <div className="sticky top-4 z-40 mb-10">
-          <div className="overflow-visible rounded-[32px] border border-border/80 bg-white/76 px-5 py-4 shadow-panel backdrop-blur-xl sm:px-6">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-              <nav className="flex flex-wrap gap-2.5">
+        <div className="sticky top-2 z-40 mb-8 sm:top-3 lg:top-4">
+          <div className="overflow-hidden rounded-[26px] border border-border/90 bg-white/94 px-3 py-3 shadow-[0_14px_32px_hsl(33_32%_22%_/_0.12)] backdrop-blur-md sm:rounded-[30px] sm:px-5 sm:py-4">
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+              <nav className="-mx-1 flex snap-x gap-2 overflow-x-auto px-1 pb-1 scrollbar-none sm:flex-wrap sm:overflow-visible sm:px-0 sm:pb-0">
                 {navItems.map((item) => {
                   const Icon = item.icon;
                   return (
@@ -55,7 +55,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                       key={item.href}
                       href={item.href as Route}
                       className={cn(
-                        "inline-flex items-center gap-2 rounded-full border border-border/80 bg-white/78 px-4 py-2.5 text-sm font-medium text-foreground/88 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/45 hover:bg-white"
+                        "inline-flex shrink-0 snap-start items-center gap-2 rounded-full border border-border/80 bg-white px-3.5 py-2.5 text-sm font-medium text-foreground/88 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/45 hover:bg-white sm:px-4"
                       )}
                     >
                       <Icon className="h-4 w-4 text-primary" />
@@ -65,7 +65,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 })}
               </nav>
 
-              <div className="grid gap-3 sm:grid-cols-3">
+              <div className="hidden gap-3 md:grid md:grid-cols-3">
                 <MetricCard label="Universe" value="KRX Daily" />
                 <MetricCard label="Focus" value="Technical Swing" />
                 <MetricCard label="Method" value="Signal with History" />
@@ -83,7 +83,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
 function MetricCard({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-2xl border border-border/80 bg-white/70 px-4 py-3">
+    <div className="rounded-2xl border border-border/85 bg-white px-4 py-3">
       <p className="text-[11px] uppercase tracking-[0.24em] text-muted-foreground">{label}</p>
       <p className="mt-1 text-sm font-semibold text-foreground">{value}</p>
     </div>
