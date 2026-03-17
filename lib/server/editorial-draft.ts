@@ -7,6 +7,7 @@ import type {
   RecommendationsResponseDto,
   TrackingResponseDto
 } from "@/lib/api-contracts/swing-radar";
+import { getDataProvider } from "@/lib/providers";
 import { ApiError } from "@/lib/server/api-error";
 import { recordAuditLog } from "@/lib/server/audit-log";
 import { ingestSnapshotBundle, loadSnapshotBundleFromDisk } from "@/lib/server/postgres-ingest";
@@ -60,6 +61,35 @@ export interface SnapshotBundle {
   recommendations: RecommendationsResponseDto;
   analysis: AnalysisResponseDto;
   tracking: TrackingResponseDto;
+}
+
+async function loadSnapshotBundleForAdmin(): Promise<SnapshotBundle> {
+  try {
+    return await loadSnapshotBundleFromDisk();
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== "ENOENT") {
+      throw error;
+    }
+  }
+
+  try {
+    const provider = getDataProvider();
+    const [recommendations, analysis, tracking] = await Promise.all([
+      provider.getRecommendations(),
+      provider.getAnalysis(),
+      provider.getTracking()
+    ]);
+
+    return {
+      recommendations,
+      analysis,
+      tracking
+    };
+  } catch (error) {
+    throw new ApiError(500, "EDITORIAL_SOURCE_UNAVAILABLE", "Failed to load current recommendation snapshots for admin", {
+      cause: error instanceof Error ? error.message : String(error)
+    });
+  }
 }
 
 export interface PublishHistoryEntry {
@@ -251,7 +281,7 @@ async function savePublishHistory(entries: PublishHistoryEntry[]) {
 }
 
 export async function loadEditorialDraft(): Promise<EditorialDraftPayload> {
-  const bundle = await loadSnapshotBundleFromDisk();
+  const bundle = await loadSnapshotBundleForAdmin();
   const catalog = bundle.recommendations.items.map((item) => ({
     ticker: item.ticker,
     company: item.company,
@@ -375,7 +405,7 @@ function buildPublishNotes(diff: EditorialDraftDiffItem[]): string[] {
 }
 
 export async function publishEditorialDraft(options: PublishOptions) {
-  const currentBundle = await loadSnapshotBundleFromDisk();
+  const currentBundle = await loadSnapshotBundleForAdmin();
   const { draft, diff } = await loadEditorialDraft();
   const nextBundle = mergeDraftIntoBundle(currentBundle, draft);
 

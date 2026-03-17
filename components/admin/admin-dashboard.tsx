@@ -56,6 +56,7 @@ export function AdminDashboard() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [hasAdminAccess, setHasAdminAccess] = useState(false);
   const [sectionWarnings, setSectionWarnings] = useState<Array<{ label: string; message: string }>>([]);
   const [health, setHealth] = useState<HealthPayload | null>(null);
   const [incidents, setIncidents] = useState<OperationalIncident[]>([]);
@@ -157,6 +158,7 @@ export function AdminDashboard() {
 
     try {
       if (!authHeaders) {
+        setHasAdminAccess(false);
         setHealth(await fetchJson<HealthPayload>("/api/health"));
         setOpsHealthReport(null);
         setDailyCycleReport(null);
@@ -170,6 +172,7 @@ export function AdminDashboard() {
       }
 
       const statusJson = await fetchJson<AdminStatusPayload>("/api/admin/status", { headers: authHeaders });
+      setHasAdminAccess(true);
 
       setHealth(statusJson.health);
       setIncidents(statusJson.incidents ?? []);
@@ -245,6 +248,7 @@ export function AdminDashboard() {
       setSectionWarnings(warnings);
       setMessage("운영 데이터를 불러왔습니다.");
     } catch (loadError) {
+      setHasAdminAccess(false);
       setError(loadError instanceof Error ? loadError.message : "운영 데이터를 불러오지 못했습니다.");
     } finally {
       setLoading(false);
@@ -572,7 +576,7 @@ export function AdminDashboard() {
 
       {message ? <Banner tone="success" message={message} /> : null}
       {error ? <Banner tone="error" message={error} /> : null}
-      {sectionWarnings.length ? (
+      {hasAdminAccess && sectionWarnings.length ? (
         <Card className="border-destructive/30 bg-destructive/5">
           <CardHeader>
             <CardTitle>Admin section warnings</CardTitle>
@@ -588,7 +592,7 @@ export function AdminDashboard() {
         </Card>
       ) : null}
 
-      <Tabs value={tab} onValueChange={setTab}>
+      {hasAdminAccess ? <Tabs value={tab} onValueChange={setTab}>
         <TabsList>
           <TabsTrigger value="editorial">초안</TabsTrigger>
           <TabsTrigger value="news">뉴스</TabsTrigger>
@@ -674,7 +678,7 @@ export function AdminDashboard() {
             loading={loading}
           />
         </TabsContent>
-      </Tabs>
+      </Tabs> : null}
     </div>
   );
 }
