@@ -77,6 +77,12 @@ function normalizeMarkets(value) {
     .filter(Boolean);
 }
 
+function wait(delayMs) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, delayMs);
+  });
+}
+
 async function fetchKrxReadinessCount(endpoint, basDd) {
   const apiKey = process.env.SWING_RADAR_KRX_API_KEY;
   if (!apiKey) {
@@ -115,38 +121,79 @@ async function ensureKrxMarketReady(markets) {
 
   const targetDateCompact = resolvePreviousBusinessDate();
   const requestedMarkets = normalizeMarkets(markets);
-  const readiness = [];
+  const retryLimit = Math.max(0, Number.parseInt(process.env.SWING_RADAR_KRX_READINESS_RETRY_LIMIT ?? "12", 10));
+  const retryDelayMs = Math.max(0, Number.parseInt(process.env.SWING_RADAR_KRX_READINESS_RETRY_DELAY_MS ?? "300000", 10));
+  const totalAttempts = retryLimit + 1;
+  let lastPendingDetails = null;
+  let lastError = null;
 
-  for (const market of requestedMarkets) {
-    const endpoint = KRX_ENDPOINTS_BY_MARKET[market];
-    if (!endpoint) {
+  for (let attempt = 0; attempt < totalAttempts; attempt += 1) {
+    const readiness = [];
+
+    try {
+      for (const market of requestedMarkets) {
+        const endpoint = KRX_ENDPOINTS_BY_MARKET[market];
+        if (!endpoint) {
+          continue;
+        }
+
+        const count = await fetchKrxReadinessCount(endpoint, targetDateCompact);
+        readiness.push({ market, count });
+      }
+    } catch (error) {
+      lastError = error;
+
+      if (attempt === totalAttempts - 1) {
+        throw error;
+      }
+
+      console.warn("KRX readiness check errored.");
+      console.warn(`- targetDate: ${formatHyphenDate(targetDateCompact)}`);
+      console.warn(`- attempt: ${attempt + 1}/${totalAttempts}`);
+      console.warn(`- retryInMs: ${retryDelayMs}`);
+      console.warn(`- message: ${error instanceof Error ? error.message : String(error)}`);
+      await wait(retryDelayMs);
       continue;
     }
 
-    const count = await fetchKrxReadinessCount(endpoint, targetDateCompact);
-    readiness.push({ market, count });
+    if (!readiness.length) {
+      return null;
+    }
+
+    const unavailable = readiness.filter((entry) => entry.count < 1);
+    if (unavailable.length === 0) {
+      console.log("KRX readiness confirmed.");
+      console.log(`- targetDate: ${formatHyphenDate(targetDateCompact)}`);
+      console.log(`- availability: ${readiness.map((entry) => `${entry.market}=${entry.count}`).join(", ")}`);
+
+      return {
+        targetDate: formatHyphenDate(targetDateCompact),
+        counts: readiness,
+        attempts: attempt + 1
+      };
+    }
+
+    lastPendingDetails = readiness.map((entry) => `${entry.market}=${entry.count}`).join(", ");
+
+    if (attempt === totalAttempts - 1) {
+      break;
+    }
+
+    console.warn("KRX daily trade data is not ready yet.");
+    console.warn(`- targetDate: ${formatHyphenDate(targetDateCompact)}`);
+    console.warn(`- attempt: ${attempt + 1}/${totalAttempts}`);
+    console.warn(`- availability: ${lastPendingDetails}`);
+    console.warn(`- retryInMs: ${retryDelayMs}`);
+    await wait(retryDelayMs);
   }
 
-  if (!readiness.length) {
-    return null;
+  if (lastError) {
+    throw lastError;
   }
 
-  const unavailable = readiness.filter((entry) => entry.count < 1);
-  if (unavailable.length > 0) {
-    const details = readiness.map((entry) => `${entry.market}=${entry.count}`).join(", ");
-    throw new Error(
-      `KRX daily trade data is not ready for ${formatHyphenDate(targetDateCompact)} (${details}).`
-    );
-  }
-
-  console.log("KRX readiness confirmed.");
-  console.log(`- targetDate: ${formatHyphenDate(targetDateCompact)}`);
-  console.log(`- availability: ${readiness.map((entry) => `${entry.market}=${entry.count}`).join(", ")}`);
-
-  return {
-    targetDate: formatHyphenDate(targetDateCompact),
-    counts: readiness
-  };
+  throw new Error(
+    `KRX daily trade data is not ready for ${formatHyphenDate(targetDateCompact)} (${lastPendingDetails ?? "no readiness data"}).`
+  );
 }
 
 async function runScript(scriptName) {
@@ -281,7 +328,8 @@ async function main() {
     limit,
     marketSignalDate,
     krxReadinessDate: krxReadiness?.targetDate ?? null,
-    krxReadinessCounts: krxReadiness?.counts ?? []
+    krxReadinessCounts: krxReadiness?.counts ?? [],
+    krxReadinessAttempts: krxReadiness?.attempts ?? null
   };
   await persistRuntimeDocument("prefetch-manifest", manifest);
 
