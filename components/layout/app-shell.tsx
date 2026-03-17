@@ -54,12 +54,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     <Link
                       key={item.href}
                       href={item.href as Route}
+                      aria-label={item.label}
                       className={cn(
-                        "inline-flex shrink-0 snap-start items-center gap-2 rounded-full border border-border/80 bg-white px-3.5 py-2.5 text-sm font-medium text-foreground/88 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/45 hover:bg-white sm:px-4"
+                        "inline-flex h-10 w-10 shrink-0 snap-start items-center justify-center rounded-full border border-border/80 bg-white text-sm font-medium text-foreground/88 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/45 hover:bg-white sm:h-auto sm:w-auto sm:gap-2 sm:px-4 sm:py-2.5"
                       )}
                     >
                       <Icon className="h-4 w-4 text-primary" />
-                      {item.label}
+                      <span className="hidden sm:inline">{item.label}</span>
                     </Link>
                   );
                 })}

@@ -47,6 +47,14 @@ function formatAmount(value: number | null) {
   return `${eok.toFixed(eok >= 100 ? 0 : 1)}억`;
 }
 
+function formatDisplayDate(value: string | null) {
+  if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return null;
+  }
+
+  return value.replace(/-/g, ".");
+}
+
 function getLatestCompletedTradingDay(anchor?: string | null) {
   const parsed = anchor ? new Date(anchor) : new Date();
   const baseDate = Number.isNaN(parsed.getTime()) ? new Date() : parsed;
@@ -205,6 +213,7 @@ export function TradingViewChartCard({
     return points.slice(-count);
   }, [points, range]);
   const latestChartDate = chartPoints.at(-1)?.date ?? null;
+  const latestChartDateLabel = formatDisplayDate(latestChartDate);
   const levelItems = useMemo(
     () => {
       const entryLevel = levels.find((level) => getLevelKind(level.label) === "entry");
@@ -611,6 +620,9 @@ export function TradingViewChartCard({
     <Card>
       <CardHeader className="flex flex-row items-center justify-between gap-4">
         <div>
+          {latestChartDateLabel ? (
+            <p className="mb-1 text-xs font-medium text-muted-foreground">최종 반영 날짜 {latestChartDateLabel}</p>
+          ) : null}
           <CardTitle>가격 차트</CardTitle>
           <p className="mt-2 text-sm text-muted-foreground">
             가격, 이동평균선, 거래량, 최근 거래금액과 핵심 보조지표를 한 흐름으로 확인합니다.
