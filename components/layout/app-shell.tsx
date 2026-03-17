@@ -1,6 +1,6 @@
 import type { Route } from "next";
 import Link from "next/link";
-import { ArrowUpRight, ChartNoAxesCombined, ShieldCheck, Sparkles } from "lucide-react";
+import { ArrowUpRight, ChartNoAxesCombined, Medal, ShieldCheck, Sparkles } from "lucide-react";
 
 import { BrandSignature } from "@/components/layout/brand-signature";
 import { GlobalSymbolSearch } from "@/components/layout/global-symbol-search";
@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 
 const navItems = [
   { href: "/recommendations", label: "관찰 종목", mobileLabel: "관찰", icon: Sparkles },
-  { href: "/ranking", label: "추천 랭킹", mobileLabel: "랭킹", icon: ChartNoAxesCombined },
+  { href: "/ranking", label: "추천 랭킹", mobileLabel: "랭킹", icon: Medal },
   { href: "/tracking", label: "추적", mobileLabel: "추적", icon: ChartNoAxesCombined },
   { href: "/guide", label: "이용 가이드", mobileLabel: "가이드", icon: ShieldCheck },
   { href: "/analysis/005930", label: "분석 예시", mobileLabel: "예시", icon: ArrowUpRight }
@@ -34,8 +34,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   국내 스윙 후보를 구조화하고 검증합니다
                 </h1>
                 <p className="mt-3 text-sm leading-7 text-muted-foreground sm:text-base">
-                  관찰 후보, 무효화 기준, 검증 이력까지 한 화면 안에서 읽어내는 KRX 기술적 스윙
-                  워크스페이스입니다.
+                  관찰 후보, 무효화 기준, 검증 이력까지 한 화면 안에서 이어보는 KRX 기반 기술적 스윙 워크스페이스입니다.
                 </p>
               </div>
             </div>

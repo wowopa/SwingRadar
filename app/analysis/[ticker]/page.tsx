@@ -8,6 +8,7 @@ import { RiskChecklist } from "@/components/analysis/risk-checklist";
 import { ScenarioPanel } from "@/components/analysis/scenario-panel";
 import { ScoreBreakdown } from "@/components/analysis/score-breakdown";
 import { TradingViewChartCard } from "@/components/analysis/tradingview-chart-card";
+import { GoogleNewsSearchCard } from "@/components/shared/google-news-search-card";
 import { PageHeader } from "@/components/shared/page-header";
 import { PublicDataStatusBar } from "@/components/shared/public-data-status-bar";
 import { SignalToneBadge } from "@/components/shared/signal-tone-badge";
@@ -273,8 +274,13 @@ export default async function AnalysisPage({ params }: { params: Promise<{ ticke
         <ScenarioPanel scenarios={analysis.scenarios} />
       </section>
 
-      <section className="grid gap-6 xl:items-start">
+      <section className="grid gap-6 xl:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)] xl:items-start">
         <DataQualityPanel items={analysis.dataQuality} />
+        <GoogleNewsSearchCard
+          company={analysis.company}
+          ticker={analysis.ticker}
+          description="서비스 안에서 뉴스를 직접 점수화해 보여주기보다, 필요할 때 바로 관련 기사 흐름을 확인할 수 있도록 외부 뉴스 검색으로 연결합니다."
+        />
       </section>
     </main>
   );
