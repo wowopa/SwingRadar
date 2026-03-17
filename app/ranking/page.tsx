@@ -288,11 +288,14 @@ export default async function RankingPage() {
                           <td className="py-4 pr-4 text-foreground/78">{item.currentPrice ? formatPrice(item.currentPrice) : "-"}</td>
                           <td className="py-4 pr-4 text-foreground/78">{formatTurnover(item.averageTurnover20)}</td>
                           <td className="py-4 pr-4">
-                            <div className="flex flex-wrap gap-2">
+                            <div className="grid gap-2">
                               {badges.map((badge) => (
                                 <span
                                   key={`${item.ticker}-${badge.label}`}
-                                  className={cn("rounded-full px-3 py-1 text-xs font-medium whitespace-nowrap", badge.className)}
+                                  className={cn(
+                                    "inline-flex w-full items-center rounded-full px-3 py-1 text-xs font-medium whitespace-nowrap",
+                                    badge.className
+                                  )}
                                 >
                                   {badge.label}
                                 </span>
