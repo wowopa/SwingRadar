@@ -8,11 +8,11 @@ import { ScrollToTopButton } from "@/components/layout/scroll-to-top-button";
 import { cn } from "@/lib/utils";
 
 const navItems = [
-  { href: "/recommendations", label: "관찰 종목", icon: Sparkles },
-  { href: "/ranking", label: "추천 랭킹", icon: ChartNoAxesCombined },
-  { href: "/tracking", label: "추적", icon: ChartNoAxesCombined },
-  { href: "/guide", label: "이용 가이드", icon: ShieldCheck },
-  { href: "/analysis/005930", label: "분석 예시", icon: ArrowUpRight }
+  { href: "/recommendations", label: "관찰 종목", mobileLabel: "관찰", icon: Sparkles },
+  { href: "/ranking", label: "추천 랭킹", mobileLabel: "랭킹", icon: ChartNoAxesCombined },
+  { href: "/tracking", label: "추적", mobileLabel: "추적", icon: ChartNoAxesCombined },
+  { href: "/guide", label: "이용 가이드", mobileLabel: "가이드", icon: ShieldCheck },
+  { href: "/analysis/005930", label: "분석 예시", mobileLabel: "예시", icon: ArrowUpRight }
 ] as const;
 
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -56,10 +56,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                       href={item.href as Route}
                       aria-label={item.label}
                       className={cn(
-                        "inline-flex h-10 w-10 shrink-0 snap-start items-center justify-center rounded-full border border-border/80 bg-white text-sm font-medium text-foreground/88 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/45 hover:bg-white sm:h-auto sm:w-auto sm:gap-2 sm:px-4 sm:py-2.5"
+                        "inline-flex h-10 shrink-0 snap-start items-center gap-1.5 rounded-full border border-border/80 bg-white px-3 py-2 text-xs font-medium text-foreground/88 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/45 hover:bg-white sm:gap-2 sm:px-4 sm:py-2.5 sm:text-sm"
                       )}
                     >
                       <Icon className="h-4 w-4 text-primary" />
+                      <span className="sm:hidden">{item.mobileLabel}</span>
                       <span className="hidden sm:inline">{item.label}</span>
                     </Link>
                   );
