@@ -56,6 +56,7 @@ export function AdminDashboard() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [sectionWarnings, setSectionWarnings] = useState<Array<{ label: string; message: string }>>([]);
   const [health, setHealth] = useState<HealthPayload | null>(null);
   const [incidents, setIncidents] = useState<OperationalIncident[]>([]);
   const [opsHealthReport, setOpsHealthReport] = useState<OpsHealthReportPayload | null>(null);
@@ -106,6 +107,10 @@ export function AdminDashboard() {
   }, [activeWatchlist, baselineWatchlist]);
   const watchlistTickers = useMemo(() => watchlist.map((item) => item.ticker), [watchlist]);
 
+  function getLoadErrorMessage(loadError: unknown) {
+    return loadError instanceof Error ? loadError.message : "Unexpected section load failure";
+  }
+
   useEffect(() => {
     const nextTab = searchParams.get("tab");
     const query = searchParams.get("q");
@@ -148,6 +153,7 @@ export function AdminDashboard() {
     setLoading(true);
     setError(null);
     setMessage(null);
+    setSectionWarnings([]);
 
     try {
       if (!authHeaders) {
@@ -163,8 +169,18 @@ export function AdminDashboard() {
         return;
       }
 
-      const [statusJson, auditJson, draftJson, newsJson, watchlistJson, universeJson] = await Promise.all([
-        fetchJson<AdminStatusPayload>("/api/admin/status", { headers: authHeaders }),
+      const statusJson = await fetchJson<AdminStatusPayload>("/api/admin/status", { headers: authHeaders });
+
+      setHealth(statusJson.health);
+      setIncidents(statusJson.incidents ?? []);
+      setOpsHealthReport(statusJson.opsHealthReport ?? null);
+      setDailyCycleReport(statusJson.dailyCycleReport ?? null);
+      setAutoHealReport(statusJson.autoHealReport ?? null);
+      setNewsFetchReport(statusJson.newsFetchReport ?? null);
+      setSnapshotGenerationReport(statusJson.snapshotGenerationReport ?? null);
+      setPostLaunchHistory(statusJson.postLaunchHistory ?? []);
+      setThresholdAdviceReport(statusJson.thresholdAdviceReport ?? null);
+      const [auditResult, draftResult, newsResult, watchlistResult, universeResult] = await Promise.allSettled([
         fetchJson<{ items: AuditItem[] }>("/api/admin/audit", { headers: authHeaders }),
         fetchJson<{
           draft: EditorialDraftDocument;
@@ -183,28 +199,50 @@ export function AdminDashboard() {
         }>("/api/admin/universe", { headers: authHeaders })
       ]);
 
-      setHealth(statusJson.health);
-      setIncidents(statusJson.incidents ?? []);
-      setOpsHealthReport(statusJson.opsHealthReport ?? null);
-      setDailyCycleReport(statusJson.dailyCycleReport ?? null);
-      setAutoHealReport(statusJson.autoHealReport ?? null);
-      setNewsFetchReport(statusJson.newsFetchReport ?? null);
-      setSnapshotGenerationReport(statusJson.snapshotGenerationReport ?? null);
-      setPostLaunchHistory(statusJson.postLaunchHistory ?? []);
-      setThresholdAdviceReport(statusJson.thresholdAdviceReport ?? null);
-      setAudits(auditJson.items ?? []);
-      setDailyCandidates(universeJson.dailyCandidates ?? null);
-      setDraft(draftJson.draft);
-      setCatalog(draftJson.catalog ?? []);
-      setDiff(draftJson.diff ?? []);
-      setHistory(draftJson.publishHistory ?? []);
-      setNews(newsJson.document);
-      setSymbolResults(watchlistJson.items ?? []);
-      setWatchlist(watchlistJson.watchlist ?? []);
-      setWatchlistBaseline(watchlistJson.watchlist ?? []);
-      setWatchlistSyncStatuses(watchlistJson.syncStatuses ?? {});
-      setActiveTicker((current) => current || draftJson.catalog?.[0]?.ticker || "");
-      setActiveWatchlistTicker((current) => current || watchlistJson.watchlist?.[0]?.ticker || "");
+      const warnings: Array<{ label: string; message: string }> = (statusJson.statusWarnings ?? []).map((message) => ({
+        label: "status",
+        message
+      }));
+
+      if (auditResult.status === "fulfilled") {
+        setAudits(auditResult.value.items ?? []);
+      } else {
+        warnings.push({ label: "audit", message: getLoadErrorMessage(auditResult.reason) });
+      }
+
+      if (draftResult.status === "fulfilled") {
+        setDraft(draftResult.value.draft);
+        setCatalog(draftResult.value.catalog ?? []);
+        setDiff(draftResult.value.diff ?? []);
+        setHistory(draftResult.value.publishHistory ?? []);
+        setActiveTicker((current) => current || draftResult.value.catalog?.[0]?.ticker || "");
+      } else {
+        warnings.push({ label: "editorial-draft", message: getLoadErrorMessage(draftResult.reason) });
+      }
+
+      if (newsResult.status === "fulfilled") {
+        setNews(newsResult.value.document);
+      } else {
+        warnings.push({ label: "news-curation", message: getLoadErrorMessage(newsResult.reason) });
+      }
+
+      if (watchlistResult.status === "fulfilled") {
+        setSymbolResults(watchlistResult.value.items ?? []);
+        setWatchlist(watchlistResult.value.watchlist ?? []);
+        setWatchlistBaseline(watchlistResult.value.watchlist ?? []);
+        setWatchlistSyncStatuses(watchlistResult.value.syncStatuses ?? {});
+        setActiveWatchlistTicker((current) => current || watchlistResult.value.watchlist?.[0]?.ticker || "");
+      } else {
+        warnings.push({ label: "watchlist", message: getLoadErrorMessage(watchlistResult.reason) });
+      }
+
+      if (universeResult.status === "fulfilled") {
+        setDailyCandidates(universeResult.value.dailyCandidates ?? null);
+      } else {
+        warnings.push({ label: "universe", message: getLoadErrorMessage(universeResult.reason) });
+      }
+
+      setSectionWarnings(warnings);
       setMessage("운영 데이터를 불러왔습니다.");
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : "운영 데이터를 불러오지 못했습니다.");
@@ -534,6 +572,21 @@ export function AdminDashboard() {
 
       {message ? <Banner tone="success" message={message} /> : null}
       {error ? <Banner tone="error" message={error} /> : null}
+      {sectionWarnings.length ? (
+        <Card className="border-destructive/30 bg-destructive/5">
+          <CardHeader>
+            <CardTitle>Admin section warnings</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {sectionWarnings.map((warning) => (
+              <div key={warning.label} className="rounded-[20px] border border-destructive/20 bg-background/80 p-4">
+                <p className="text-sm font-semibold text-foreground">{warning.label}</p>
+                <p className="mt-2 text-sm text-muted-foreground">{warning.message}</p>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      ) : null}
 
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList>

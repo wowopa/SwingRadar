@@ -168,6 +168,7 @@ export type AdminStatusPayload = {
   requestId: string;
   operationalMode: string;
   overallStatus: "ok" | "warning" | "critical";
+  statusWarnings?: string[];
   health: HealthPayload;
   opsHealthReport: OpsHealthReportPayload | null;
   dailyCycleReport: DailyCycleReportPayload | null;
