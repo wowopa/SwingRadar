@@ -22,7 +22,7 @@ describe("listRecommendations", () => {
     vi.clearAllMocks();
   });
 
-  it("prioritizes daily scan candidates ahead of raw score order", async () => {
+  it("limits recommendation items to daily scan candidates when scan data exists", async () => {
     mocks.getRecommendations.mockResolvedValue({
       generatedAt: "2026-03-08T00:00:00.000Z",
       items: [
@@ -85,7 +85,7 @@ describe("listRecommendations", () => {
 
     const result = await listRecommendations({ sort: "score_desc" });
 
-    expect(result.items.map((item) => item.ticker)).toEqual(["BBB001", "AAA001"]);
+    expect(result.items.map((item) => item.ticker)).toEqual(["BBB001"]);
     expect(result.generatedAt).toBe("2026-03-08T01:00:00.000Z");
     expect(result.items[0]).toMatchObject({
       score: 77,

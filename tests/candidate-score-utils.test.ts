@@ -25,7 +25,7 @@ describe("candidate score utils", () => {
       signalTone: "긍정"
     });
 
-    expect(score).toBe(50.1);
+    expect(score).toBe(47.1);
   });
 
   it("penalizes overheated or low-quality candidates without collapsing the score", () => {
