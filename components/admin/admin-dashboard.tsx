@@ -552,7 +552,7 @@ export function AdminDashboard() {
         </CardHeader>
         <CardContent className="grid gap-4 lg:grid-cols-[1.5fr_auto_auto] lg:items-end">
           <div>
-            <p className="mb-2 text-sm text-muted-foreground">`SWING_RADAR_ADMIN_TOKEN`을 입력하면 운영 기능을 사용할 수 있습니다.</p>
+            <p className="mb-2 text-sm text-muted-foreground">관리자 비밀번호를 입력하면 운영 기능을 사용할 수 있습니다.</p>
             <Input type="password" placeholder="관리자 토큰" value={token} onChange={(event) => setToken(event.target.value)} />
           </div>
           <Button
