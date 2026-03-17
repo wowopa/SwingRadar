@@ -40,11 +40,12 @@ export function PublicDataStatusBarGroup({ summaries }: { summaries: PublicDataS
         <div className={cn("min-w-0", hasSingleSummary ? "flex-1" : "w-full md:flex-1")}>
           <p className="text-sm font-semibold text-foreground">데이터 기준</p>
           <p className="mt-2 text-sm leading-6 text-muted-foreground">
-            같은 화면 안에서도 관찰 종목, 추천 랭킹, 상세 분석이 서로 다른 스냅샷 시각을 쓸 수 있어
+            같은 화면 안에서도 관찰 종목, 추천 랭킹, 상세 분석이 서로 다른 시각의 데이터를 쓸 수 있어
             기준 시간을 함께 보여줍니다.
           </p>
           <p className="mt-1 text-sm leading-6 text-muted-foreground">
-            데일리 배치는 한국시간 기준 오전 8시 `prefetch`, 오전 10시 `scan` 순서로 동작합니다.
+            오전 8시에 종목 데이터를 갱신하고, 오전 10시에 갱신된 데이터를 바탕으로 내용을 다시
+            정리합니다.
           </p>
         </div>
         <div
