@@ -134,12 +134,25 @@ function getLiveDataDir() {
     : getRuntimePaths(projectRoot).liveDir;
 }
 
-async function readHistory() {
-  try {
-    return JSON.parse((await readFile(getHistoryPath(), "utf8")).replace(/^\uFEFF/, ""));
-  } catch {
-    return { runs: [] };
+async function hydrateHistoryFromRuntimeDocument() {
+  const historyPath = getHistoryPath();
+  const localHistory = await readOptionalJsonFile(historyPath);
+  if (localHistory?.runs) {
+    return localHistory;
   }
+
+  const runtimeHistory = await readRuntimeDocument("daily-candidates-history");
+  if (runtimeHistory?.runs) {
+    await writeJsonFile(historyPath, runtimeHistory);
+    return runtimeHistory;
+  }
+
+  return { runs: [] };
+}
+
+async function readHistory() {
+  const history = await hydrateHistoryFromRuntimeDocument();
+  return Array.isArray(history?.runs) ? history : { runs: [] };
 }
 
 async function writeHistory(entry) {
@@ -699,6 +712,8 @@ async function main() {
     printHelp();
     return;
   }
+
+  await hydrateHistoryFromRuntimeDocument();
 
   const watchlistPath = path.resolve(options.watchlist);
   const payload = JSON.parse((await readFile(watchlistPath, "utf8")).replace(/^\uFEFF/, ""));
