@@ -1503,6 +1503,10 @@ function buildScoreLog(item, recommendation) {
 }
 
 function getServiceTrackingStatePath() {
+  if (process.env.SWING_RADAR_TRACKING_STATE_FILE) {
+    return path.resolve(process.env.SWING_RADAR_TRACKING_STATE_FILE);
+  }
+
   return path.join(getRuntimePaths(projectRoot).trackingDir, "service-tracking-state.json");
 }
 

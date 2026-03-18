@@ -134,6 +134,10 @@ function getLiveDataDir() {
     : getRuntimePaths(projectRoot).liveDir;
 }
 
+function getServiceTrackingStatePath() {
+  return path.join(getRuntimePaths(projectRoot).trackingDir, "service-tracking-state.json");
+}
+
 async function hydrateHistoryFromRuntimeDocument() {
   const historyPath = getHistoryPath();
   const localHistory = await readOptionalJsonFile(historyPath);
@@ -376,6 +380,7 @@ function buildBatchEnv(baseEnv, batchWatchlistPath, rawDir, liveDir, options) {
     SWING_RADAR_WATCHLIST_FILE: batchWatchlistPath,
     SWING_RADAR_RAW_DATA_DIR: rawDir,
     SWING_RADAR_DATA_DIR: liveDir,
+    SWING_RADAR_TRACKING_STATE_FILE: path.join(liveDir, "service-tracking-state.json"),
     SWING_RADAR_SNAPSHOT_GENERATION_REPORT_PATH: path.join(reportDir, "latest-snapshot-generation.json"),
     ...(options.newsProvider ? { SWING_RADAR_NEWS_PROVIDER: options.newsProvider } : {}),
     ...(options.disclosureProvider ? { SWING_RADAR_DISCLOSURE_PROVIDER: options.disclosureProvider } : {})
@@ -628,6 +633,7 @@ async function runBatch(batch, index, tempRoot, options) {
   const recommendationPath = path.join(liveDir, "recommendations.json");
   const analysisPath = path.join(liveDir, "analysis.json");
   const trackingPath = path.join(liveDir, "tracking.json");
+  const serviceTrackingStatePath = path.join(liveDir, "service-tracking-state.json");
   const marketSnapshotPath = path.join(rawDir, "market-snapshot.json");
   const hasOutputs = (await fileExists(recommendationPath)) && (await fileExists(analysisPath)) && (await fileExists(trackingPath));
 
@@ -643,6 +649,10 @@ async function runBatch(batch, index, tempRoot, options) {
   const recommendations = await readJsonWithRetry(recommendationPath);
   const analysis = await readJsonWithRetry(analysisPath);
   const tracking = await readJsonWithRetry(trackingPath);
+  const serviceTrackingState = (await readOptionalJsonFile(serviceTrackingStatePath, { generatedAt: null, entries: [] })) ?? {
+    generatedAt: null,
+    entries: []
+  };
   const marketSnapshot = await readJsonWithRetry(marketSnapshotPath);
   const marketItemsByTicker = new Map((marketSnapshot.items ?? []).map((item) => [item.ticker, item]));
 
@@ -672,14 +682,61 @@ async function runBatch(batch, index, tempRoot, options) {
     ok: true,
     batch: index + 1,
     count: batch.length,
+    tickers: batch.map((entry) => entry.ticker),
     generatedAt: recommendations.generatedAt,
     topTicker: [...candidates].sort((left, right) => right.candidateScore - left.candidateScore)[0]?.ticker ?? null,
     trackingRows: tracking.history.length,
     recommendations,
     analysis,
+    serviceTrackingState,
     candidates,
     errors
   };
+}
+
+function sortTrackingEntries(entries) {
+  return [...entries].sort((left, right) => {
+    const leftDate = left.closedAt ?? left.startedAt ?? `${left.signalDate}T00:00:00+09:00`;
+    const rightDate = right.closedAt ?? right.startedAt ?? `${right.signalDate}T00:00:00+09:00`;
+    return String(rightDate).localeCompare(String(leftDate));
+  });
+}
+
+async function mergeServiceTrackingStates(batchResults) {
+  const sharedStatePath = getServiceTrackingStatePath();
+  const existingState = (await readOptionalJsonFile(sharedStatePath, { generatedAt: null, entries: [] })) ?? {
+    generatedAt: null,
+    entries: []
+  };
+  const entryMap = new Map((existingState.entries ?? []).map((entry) => [entry.id, entry]));
+  let generatedAt = existingState.generatedAt ?? null;
+
+  for (const result of batchResults) {
+    if (!result.ok || !result.serviceTrackingState?.entries?.length) {
+      continue;
+    }
+
+    if (result.serviceTrackingState.generatedAt) {
+      generatedAt = result.serviceTrackingState.generatedAt;
+    }
+
+    const authoritativeTickers = new Set(result.tickers ?? []);
+    for (const entry of result.serviceTrackingState.entries ?? []) {
+      if (!entry?.id || !entry?.ticker || !authoritativeTickers.has(entry.ticker)) {
+        continue;
+      }
+      entryMap.set(entry.id, entry);
+    }
+  }
+
+  const mergedState = {
+    version: 3,
+    generatedAt,
+    entries: sortTrackingEntries(Array.from(entryMap.values()))
+  };
+
+  await writeJsonFile(sharedStatePath, mergedState);
+  return mergedState;
 }
 
 async function runBatchesInParallel(batches, tempRoot, options) {
@@ -774,6 +831,7 @@ async function main() {
       topCandidatesLimit: document.topCandidatesLimit,
       topCandidates: document.topCandidates
     });
+    await mergeServiceTrackingStates(results);
     await writeLiveSnapshots({
       generatedAt: document.generatedAt,
       topCandidates: document.topCandidates,
