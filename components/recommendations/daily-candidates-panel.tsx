@@ -3,17 +3,7 @@
 import type { DailyScanSummaryDto } from "@/lib/api-contracts/swing-radar";
 import { SignalToneBadge } from "@/components/shared/signal-tone-badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-
-function formatGeneratedAt(value: string) {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
-  return new Intl.DateTimeFormat("ko-KR", {
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit"
-  }).format(date);
-}
+import { formatDateTimeShort } from "@/lib/utils";
 
 function formatTurnover(value?: number | null) {
   if (!value || value <= 0) {
@@ -46,7 +36,7 @@ export function DailyCandidatesPanel({ dailyScan }: { dailyScan: DailyScanSummar
         <div>
           <CardTitle>오늘의 후보</CardTitle>
           <p className="mt-2 text-sm text-muted-foreground">
-            최신 유니버스 스캔 기준 상위 후보입니다. 생성 시각 {formatGeneratedAt(dailyScan.generatedAt)}
+            최신 유니버스 스캔 기준 상위 후보입니다. 생성 시각 {formatDateTimeShort(dailyScan.generatedAt)}
           </p>
         </div>
         <div className="rounded-2xl border border-border/70 bg-secondary/35 px-4 py-3 text-sm text-muted-foreground">
