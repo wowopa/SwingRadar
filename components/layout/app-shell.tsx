@@ -1,6 +1,6 @@
 import type { Route } from "next";
 import Link from "next/link";
-import { ArrowUpRight, ChartNoAxesCombined, Medal, ShieldCheck, Sparkles } from "lucide-react";
+import { ChartNoAxesCombined, Medal, ShieldCheck, Sparkles } from "lucide-react";
 
 import { BrandSignature } from "@/components/layout/brand-signature";
 import { GlobalSymbolSearch } from "@/components/layout/global-symbol-search";
@@ -12,8 +12,7 @@ const navItems = [
   { href: "/recommendations", label: "관찰 종목", mobileLabel: "관찰", icon: Sparkles },
   { href: "/ranking", label: "추천 랭킹", mobileLabel: "랭킹", icon: Medal },
   { href: "/tracking", label: "추적", mobileLabel: "추적", icon: ChartNoAxesCombined },
-  { href: "/guide", label: "이용 가이드", mobileLabel: "가이드", icon: ShieldCheck },
-  { href: "/analysis/005930", label: "분석 예시", mobileLabel: "예시", icon: ArrowUpRight }
+  { href: "/guide", label: "이용 가이드", mobileLabel: "가이드", icon: ShieldCheck }
 ] as const;
 
 export function AppShell({ children }: { children: React.ReactNode }) {

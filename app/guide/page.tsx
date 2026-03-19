@@ -27,8 +27,8 @@ const serviceFlow = [
     title: "2. 개별 분석에서 가격 구조 읽기",
     description:
       "차트, 핵심 가격대, 보조지표, 검증 메모를 같이 보며 진입 기준과 위험 가격을 확인합니다.",
-    href: "/analysis/005930",
-    label: "종목 분석 예시 보기",
+    href: "/recommendations",
+    label: "관찰 종목에서 종목 선택하기",
     icon: Compass
   },
   {
