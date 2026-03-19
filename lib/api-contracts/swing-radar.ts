@@ -9,6 +9,32 @@ export type ValidationBasisDto =
   | "유사 흐름 참고"
   | "보수 계산";
 
+export interface ValidationStatsDto {
+  hitRate: number;
+  avgReturn: number;
+  sampleSize: number;
+  maxDrawdown: number;
+}
+
+export interface ValidationInsightDto {
+  level: "높음" | "보통" | "주의";
+  basis: ValidationBasisDto;
+  headline: string;
+  detail: string;
+  samplesToMeasured?: number;
+}
+
+export interface TrackingDiagnosticDto {
+  stage: "진입 추적 가능" | "감시 편입 가능" | "조건 보강 필요";
+  activationScore: number;
+  watchThreshold: number;
+  entryThreshold: number;
+  isWatchEligible: boolean;
+  isEntryEligible: boolean;
+  blockers: string[];
+  supports: string[];
+}
+
 export interface RecommendationListItemDto {
   ticker: string;
   company: string;
@@ -24,18 +50,15 @@ export interface RecommendationListItemDto {
   validationSummary: string;
   validationBasis?: ValidationBasisDto;
   checkpoints: string[];
-  validation: {
-    hitRate: number;
-    avgReturn: number;
-    sampleSize: number;
-    maxDrawdown: number;
-  };
+  validation: ValidationStatsDto;
   observationWindow: string;
   updatedAt: string;
   featuredRank?: number;
   candidateScore?: number;
   eventCoverage?: string;
   candidateBatch?: number;
+  trackingDiagnostic?: TrackingDiagnosticDto;
+  validationInsight?: ValidationInsightDto;
 }
 
 export interface DailyCandidateDto {
@@ -120,6 +143,8 @@ export interface TechnicalIndicatorsDto {
   roc20: number | null;
   cci20: number | null;
   cmf20: number | null;
+  marketRelativeStrength20?: number | null;
+  marketRelativeSpread20?: number | null;
 }
 
 export interface AnalysisChartPointDto {
@@ -156,6 +181,10 @@ export interface TickerAnalysisDto {
   signalTone: SignalToneDto;
   score: number;
   activationScore?: number;
+  validation?: ValidationStatsDto;
+  validationBasis?: ValidationBasisDto;
+  validationInsight?: ValidationInsightDto;
+  trackingDiagnostic?: TrackingDiagnosticDto;
   headline: string;
   invalidation: string;
   analysisSummary: AnalysisSummaryMetricDto[];

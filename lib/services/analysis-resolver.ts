@@ -40,7 +40,9 @@ const EMPTY_TECHNICAL_INDICATORS = {
   mfi14: null,
   roc20: null,
   cci20: null,
-  cmf20: null
+  cmf20: null,
+  marketRelativeStrength20: null,
+  marketRelativeSpread20: null
 };
 
 const EMPTY_CHART_SERIES: TickerAnalysisDto["chartSeries"] = [];
@@ -258,6 +260,30 @@ function buildDataQuality(recommendation: RecommendationListItemDto, coverage: s
   ];
 }
 
+function buildFallbackValidationInsight(recommendation: RecommendationListItemDto) {
+  if (recommendation.validationInsight) {
+    return recommendation.validationInsight;
+  }
+
+  const basis = recommendation.validationBasis ?? "보수 계산";
+  const level =
+    basis === "실측 기반" ? "높음" : basis === "공용 추적 참고" ? "보통" : basis === "유사 흐름 참고" || basis === "유사 업종 참고" ? "보통" : "주의";
+  const samplesToMeasured = basis === "실측 기반" ? 0 : Math.max(0, 8 - recommendation.validation.sampleSize);
+
+  return {
+    level,
+    basis,
+    headline: `${basis} 기준으로 표본 ${recommendation.validation.sampleSize}건을 참고합니다.`,
+    detail:
+      basis === "실측 기반"
+        ? `실측 이력 기준 적중률 ${recommendation.validation.hitRate}% / 평균 수익 ${formatPercent(recommendation.validation.avgReturn)}입니다.`
+        : samplesToMeasured > 0
+          ? `실측 전환 판단까지 참고 표본 ${samplesToMeasured}건 정도가 더 필요합니다.`
+          : "표본 수는 확보됐지만 아직 실측 기반보다는 참고 성격이 더 큽니다.",
+    samplesToMeasured
+  } as const;
+}
+
 function buildAnalysisFallback(
   recommendation: RecommendationListItemDto,
   generatedAt: string,
@@ -274,6 +300,10 @@ function buildAnalysisFallback(
     signalTone: recommendation.signalTone,
     score: recommendation.score,
     activationScore: dailyCandidate?.activationScore ?? recommendation.activationScore,
+    validation: recommendation.validation,
+    validationBasis: recommendation.validationBasis,
+    validationInsight: buildFallbackValidationInsight(recommendation),
+    trackingDiagnostic: recommendation.trackingDiagnostic,
     headline: `${recommendation.company} 관찰 신호는 ${recommendation.signalLabel} 관점에서 해석합니다.`,
     invalidation: recommendation.invalidation,
     analysisSummary: buildAnalysisSummary(recommendation, coverage, scoreBreakdown),

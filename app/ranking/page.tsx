@@ -21,6 +21,7 @@ function formatTurnover(value?: number | null) {
 }
 
 function buildHistorySummary(history: Awaited<ReturnType<typeof getDailyCandidatesHistory>>) {
+  const runs = history?.runs ?? [];
   const appearanceMap = new Map<
     string,
     {
@@ -29,11 +30,13 @@ function buildHistorySummary(history: Awaited<ReturnType<typeof getDailyCandidat
       appearances: number;
       bestRank: number;
       latestRank: number;
+      previousRank: number | null;
+      consecutiveAppearances: number;
       lastSeenAt: string;
     }
   >();
 
-  for (const run of history?.runs ?? []) {
+  for (const [runIndex, run] of runs.entries()) {
     for (const [index, item] of run.topCandidates.entries()) {
       const current = appearanceMap.get(item.ticker);
       const rank = index + 1;
@@ -45,6 +48,8 @@ function buildHistorySummary(history: Awaited<ReturnType<typeof getDailyCandidat
           appearances: 1,
           bestRank: rank,
           latestRank: rank,
+          previousRank: runIndex === 0 ? null : rank,
+          consecutiveAppearances: runIndex === 0 ? 1 : 0,
           lastSeenAt: run.generatedAt
         });
         continue;
@@ -55,6 +60,12 @@ function buildHistorySummary(history: Awaited<ReturnType<typeof getDailyCandidat
       if (run.generatedAt >= current.lastSeenAt) {
         current.latestRank = rank;
         current.lastSeenAt = run.generatedAt;
+      }
+      if (runIndex === 1 && current.previousRank === null) {
+        current.previousRank = rank;
+      }
+      if (runIndex === current.consecutiveAppearances) {
+        current.consecutiveAppearances += 1;
       }
     }
   }
@@ -68,8 +79,46 @@ function buildHistorySummary(history: Awaited<ReturnType<typeof getDailyCandidat
         return left.bestRank - right.bestRank;
       }
       return left.ticker.localeCompare(right.ticker);
-    })
-    .slice(0, 12);
+    });
+}
+
+function getRankMovement(summary?: {
+  latestRank: number;
+  previousRank: number | null;
+  consecutiveAppearances: number;
+}) {
+  if (!summary) {
+    return {
+      label: "신규 진입",
+      className: "border border-primary/20 bg-primary/10 text-primary"
+    };
+  }
+
+  if (summary.previousRank === null) {
+    return {
+      label: `신규 진입 · 연속 ${Math.max(summary.consecutiveAppearances, 1)}회`,
+      className: "border border-primary/20 bg-primary/10 text-primary"
+    };
+  }
+
+  const delta = summary.previousRank - summary.latestRank;
+  if (delta > 0) {
+    return {
+      label: `전일 대비 +${delta} · 연속 ${summary.consecutiveAppearances}회`,
+      className: "border border-emerald-200 bg-emerald-50 text-emerald-700"
+    };
+  }
+  if (delta < 0) {
+    return {
+      label: `전일 대비 ${delta} · 연속 ${summary.consecutiveAppearances}회`,
+      className: "border border-rose-200 bg-rose-50 text-rose-700"
+    };
+  }
+
+  return {
+    label: `전일과 동일 · 연속 ${summary.consecutiveAppearances}회`,
+    className: "border border-border/70 bg-secondary/80 text-foreground/75"
+  };
 }
 
 function getLiquidityTone(value?: string) {
@@ -112,8 +161,8 @@ function getLiquidityMeaning(value?: string) {
 
 function buildSignalBadges(item: {
   liquidityRating?: string;
-  observationWindow?: string;
   validationBasis?: string;
+  movement?: { label: string; className: string };
 }) {
   const badges = [
     {
@@ -122,10 +171,10 @@ function buildSignalBadges(item: {
     }
   ];
 
-  if (item.observationWindow) {
+  if (item.movement) {
     badges.push({
-      label: `관찰 기간 ${item.observationWindow}`,
-      className: "border border-border/70 bg-secondary/80 text-foreground/75"
+      label: item.movement.label,
+      className: item.movement.className
     });
   }
 
@@ -147,12 +196,15 @@ export default async function RankingPage() {
   ]);
 
   const recommendationMap = new Map(recommendations.items.map((item) => [item.ticker, item]));
+  const fullHistorySummary = buildHistorySummary(history);
+  const historySummary = fullHistorySummary.slice(0, 12);
+  const historySummaryByTicker = new Map(fullHistorySummary.map((item) => [item.ticker, item]));
   const todayRanking = (dailyCandidates?.topCandidates ?? []).map((item, index) => ({
     ...item,
     rank: index + 1,
-    recommendation: recommendationMap.get(item.ticker)
+    recommendation: recommendationMap.get(item.ticker),
+    historySummary: historySummaryByTicker.get(item.ticker)
   }));
-  const historySummary = buildHistorySummary(history);
   const statusSummary = buildPublicDataStatusSummary(
     dailyCandidates ? "daily-candidates" : "recommendations",
     dailyCandidates?.generatedAt ?? recommendations.generatedAt
@@ -268,8 +320,8 @@ export default async function RankingPage() {
                     {todayRanking.map((item) => {
                       const badges = buildSignalBadges({
                         liquidityRating: item.liquidityRating,
-                        observationWindow: item.observationWindow,
-                        validationBasis: item.recommendation?.validationBasis
+                        validationBasis: item.recommendation?.validationBasis,
+                        movement: getRankMovement(item.historySummary)
                       });
 
                       return (
@@ -288,7 +340,10 @@ export default async function RankingPage() {
                             <div className="text-foreground/78">{item.score}</div>
                           </td>
                           <td className="py-4 pr-4 text-foreground/78">
-                            {typeof item.recommendation?.activationScore === "number" ? item.recommendation.activationScore : "-"}
+                            <div className="space-y-1">
+                              <div>{typeof item.recommendation?.activationScore === "number" ? item.recommendation.activationScore : "-"}</div>
+                              <div className="text-xs text-muted-foreground">{item.recommendation?.trackingDiagnostic?.stage ?? "진단 대기"}</div>
+                            </div>
                           </td>
                           <td className="py-4 pr-4 text-foreground/78">{item.currentPrice ? formatPrice(item.currentPrice) : "-"}</td>
                           <td className="py-4 pr-4 text-foreground/78">{formatTurnover(item.averageTurnover20)}</td>
@@ -371,10 +426,20 @@ export default async function RankingPage() {
                       <p className="mt-1 font-semibold text-foreground">#{item.bestRank}</p>
                     </div>
                     <div>
-                      <p className="text-muted-foreground">최근 순위</p>
-                      <p className="mt-1 font-semibold text-foreground">#{item.latestRank}</p>
+                      <p className="text-muted-foreground">연속 등장</p>
+                      <p className="mt-1 font-semibold text-foreground">{Math.max(item.consecutiveAppearances, 1)}회</p>
                     </div>
                   </div>
+                  <p className="mt-3 text-xs text-muted-foreground">
+                    최근 #{item.latestRank}
+                    {item.previousRank === null
+                      ? " · 신규 진입"
+                      : item.previousRank > item.latestRank
+                        ? ` · 전일 대비 +${item.previousRank - item.latestRank}`
+                        : item.previousRank < item.latestRank
+                          ? ` · 전일 대비 ${item.previousRank - item.latestRank}`
+                          : " · 전일과 동일"}
+                  </p>
                 </Link>
               ))}
             </CardContent>

@@ -13,12 +13,14 @@ import {
 import type {
   AuditItem,
   AutoHealReportPayload,
+  DatabaseStorageReportPayload,
   DailyCycleReportPayload,
   HealthPayload,
   NewsFetchReportPayload,
   OperationalIncident,
   OpsHealthReportPayload,
   PostLaunchHistoryEntryPayload,
+  RuntimeStorageReportPayload,
   SnapshotGenerationReportPayload,
   ThresholdAdviceReportPayload,
   UniverseDailyCandidates,
@@ -42,6 +44,23 @@ function formatDuration(durationMs: number | null) {
   return `${(durationMs / 1000).toFixed(1)}s`;
 }
 
+function formatBytes(value: number | null | undefined) {
+  if (!value || value <= 0) {
+    return "0 B";
+  }
+
+  const units = ["B", "KB", "MB", "GB", "TB"];
+  let current = value;
+  let index = 0;
+
+  while (current >= 1024 && index < units.length - 1) {
+    current /= 1024;
+    index += 1;
+  }
+
+  return `${current.toFixed(current >= 100 || index === 0 ? 0 : 1)} ${units[index]}`;
+}
+
 export function StatusTab({
   health,
   incidents,
@@ -53,6 +72,8 @@ export function StatusTab({
   snapshotGenerationReport,
   postLaunchHistory,
   thresholdAdviceReport,
+  runtimeStorageReport,
+  databaseStorageReport,
   dailyCandidates,
   watchlistTickers,
   onPromoteCandidate,
@@ -69,6 +90,8 @@ export function StatusTab({
   snapshotGenerationReport: SnapshotGenerationReportPayload | null;
   postLaunchHistory: PostLaunchHistoryEntryPayload[];
   thresholdAdviceReport: ThresholdAdviceReportPayload | null;
+  runtimeStorageReport: RuntimeStorageReportPayload | null;
+  databaseStorageReport: DatabaseStorageReportPayload | null;
   dailyCandidates: UniverseDailyCandidates | null;
   watchlistTickers: string[];
   onPromoteCandidate: (ticker: string) => void;
@@ -163,6 +186,108 @@ export function StatusTab({
               ))
             ) : (
               <p className="text-sm text-muted-foreground">감사 로그가 아직 없습니다.</p>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
+        <Card>
+          <CardHeader>
+            <CardTitle>Postgres 저장소</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid gap-4 md:grid-cols-3">
+              <MetricCard
+                label="DB 전체"
+                value={databaseStorageReport?.databaseSizeLabel ?? "확인 중"}
+                note={databaseStorageReport ? formatDateTime(databaseStorageReport.checkedAt) : "storage metrics pending"}
+              />
+              <MetricCard
+                label="runtime_documents"
+                value={databaseStorageReport?.runtimeDocuments.totalPayloadLabel ?? "확인 중"}
+                note={
+                  databaseStorageReport
+                    ? `문서 ${databaseStorageReport.runtimeDocuments.documentCount}개`
+                    : "runtime document metrics pending"
+                }
+              />
+              <MetricCard
+                label="가장 큰 테이블"
+                value={databaseStorageReport?.tables[0]?.tableName ?? "확인 중"}
+                note={databaseStorageReport?.tables[0]?.totalSizeLabel ?? "table metrics pending"}
+              />
+            </div>
+            {databaseStorageReport?.tables?.length ? (
+              <div className="space-y-3">
+                {databaseStorageReport.tables.slice(0, 4).map((table) => (
+                  <div key={table.tableName} className="rounded-[24px] border border-border/70 bg-secondary/45 p-4">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <p className="text-sm font-semibold text-foreground">{table.tableName}</p>
+                      <p className="text-xs text-muted-foreground">{table.totalSizeLabel}</p>
+                    </div>
+                    <p className="mt-2 text-xs leading-6 text-muted-foreground">
+                      live {table.liveRows.toLocaleString()} rows | dead {table.deadRows.toLocaleString()} rows | last vacuum{" "}
+                      {table.lastAutovacuum ?? table.lastVacuum ?? "none"}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">DB 저장소 통계가 아직 없습니다.</p>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>런타임 저장소</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid gap-4 md:grid-cols-3">
+              <MetricCard
+                label="전체 크기"
+                value={runtimeStorageReport?.totalSizeLabel ?? "확인 중"}
+                note={runtimeStorageReport ? formatDateTime(runtimeStorageReport.generatedAt) : "runtime report pending"}
+              />
+              <MetricCard
+                label="파일 수"
+                value={runtimeStorageReport ? runtimeStorageReport.totalFiles.toLocaleString() : "확인 중"}
+                note={runtimeStorageReport?.runtimeRoot ?? "runtime root pending"}
+              />
+              <MetricCard
+                label="가장 큰 섹션"
+                value={
+                  runtimeStorageReport
+                    ? Object.entries(runtimeStorageReport.sections).sort((left, right) => right[1].sizeBytes - left[1].sizeBytes)[0]?.[0] ?? "none"
+                    : "확인 중"
+                }
+                note={
+                  runtimeStorageReport
+                    ? Object.entries(runtimeStorageReport.sections).sort((left, right) => right[1].sizeBytes - left[1].sizeBytes)[0]?.[1]?.sizeLabel ?? "none"
+                    : "section metrics pending"
+                }
+              />
+            </div>
+            {runtimeStorageReport ? (
+              <div className="space-y-3">
+                {Object.entries(runtimeStorageReport.sections)
+                  .sort((left, right) => right[1].sizeBytes - left[1].sizeBytes)
+                  .slice(0, 5)
+                  .map(([section, info]) => (
+                    <div key={section} className="rounded-[24px] border border-border/70 bg-secondary/45 p-4">
+                      <div className="flex flex-wrap items-center justify-between gap-3">
+                        <p className="text-sm font-semibold text-foreground">{section}</p>
+                        <p className="text-xs text-muted-foreground">{info.sizeLabel}</p>
+                      </div>
+                      <p className="mt-2 text-xs leading-6 text-muted-foreground">
+                        {info.fileCount.toLocaleString()} files | raw {formatBytes(info.sizeBytes)}
+                      </p>
+                    </div>
+                  ))}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">런타임 저장소 리포트가 아직 없습니다.</p>
             )}
           </CardContent>
         </Card>

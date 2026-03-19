@@ -1,4 +1,10 @@
-import type { SignalTone } from "@/types/recommendation";
+import type {
+  SignalTone,
+  TrackingDiagnostic,
+  ValidationBasis,
+  ValidationInsight,
+  ValidationStats
+} from "@/types/recommendation";
 
 export interface ScoreBreakdownItem {
   label: string;
@@ -71,6 +77,8 @@ export interface TechnicalIndicators {
   roc20: number | null;
   cci20: number | null;
   cmf20: number | null;
+  marketRelativeStrength20?: number | null;
+  marketRelativeSpread20?: number | null;
 }
 
 export interface AnalysisChartPoint {
@@ -97,6 +105,10 @@ export interface TickerAnalysis {
   signalTone: SignalTone;
   score: number;
   activationScore?: number;
+  validation?: ValidationStats;
+  validationBasis?: ValidationBasis;
+  validationInsight?: ValidationInsight;
+  trackingDiagnostic?: TrackingDiagnostic;
   headline: string;
   invalidation: string;
   analysisSummary: AnalysisSummaryMetric[];

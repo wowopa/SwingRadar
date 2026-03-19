@@ -16,6 +16,8 @@ const mocks = vi.hoisted(() => ({
   loadSnapshotGenerationReport: vi.fn(),
   loadPostLaunchHistory: vi.fn(),
   loadThresholdAdviceReport: vi.fn(),
+  loadRuntimeStorageReport: vi.fn(),
+  loadDatabaseStorageReport: vi.fn(),
   publishEditorialDraft: vi.fn(),
   rollbackPublishedSnapshot: vi.fn(),
   loadNewsCuration: vi.fn(),
@@ -59,7 +61,12 @@ vi.mock("@/lib/server/ops-reports", () => ({
   loadSnapshotGenerationReport: mocks.loadSnapshotGenerationReport,
   loadPostLaunchHistory: mocks.loadPostLaunchHistory
   ,
-  loadThresholdAdviceReport: mocks.loadThresholdAdviceReport
+  loadThresholdAdviceReport: mocks.loadThresholdAdviceReport,
+  loadRuntimeStorageReport: mocks.loadRuntimeStorageReport
+}));
+
+vi.mock("@/lib/server/postgres-storage-report", () => ({
+  loadDatabaseStorageReport: mocks.loadDatabaseStorageReport
 }));
 
 vi.mock("@/lib/server/editorial-draft", () => ({
@@ -158,6 +165,8 @@ describe("admin routes", () => {
     mocks.loadSnapshotGenerationReport.mockResolvedValue(null);
     mocks.loadPostLaunchHistory.mockResolvedValue([]);
     mocks.loadThresholdAdviceReport.mockResolvedValue(null);
+    mocks.loadRuntimeStorageReport.mockResolvedValue(null);
+    mocks.loadDatabaseStorageReport.mockResolvedValue(null);
     mocks.loadSnapshotBundleFromDisk.mockResolvedValue({
       recommendations: { generatedAt: "2026-03-08T00:00:00.000Z", items: [], dailyScan: null },
       analysis: { generatedAt: "2026-03-08T00:00:00.000Z", items: [] },

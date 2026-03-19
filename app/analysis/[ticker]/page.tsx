@@ -7,6 +7,7 @@ import { HistoricalValidationPanel } from "@/components/analysis/historical-vali
 import { RiskChecklist } from "@/components/analysis/risk-checklist";
 import { ScenarioPanel } from "@/components/analysis/scenario-panel";
 import { ScoreBreakdown } from "@/components/analysis/score-breakdown";
+import { TrackingDiagnosticPanel } from "@/components/analysis/tracking-diagnostic-panel";
 import { TradingViewChartCard } from "@/components/analysis/tradingview-chart-card";
 import { GoogleNewsSearchCard } from "@/components/shared/google-news-search-card";
 import { PageHeader } from "@/components/shared/page-header";
@@ -46,7 +47,9 @@ const EMPTY_TECHNICAL_INDICATORS = {
   mfi14: null,
   roc20: null,
   cci20: null,
-  cmf20: null
+  cmf20: null,
+  marketRelativeStrength20: null,
+  marketRelativeSpread20: null
 } as const;
 
 const EMPTY_CHART_SERIES = [] as const;
@@ -260,6 +263,7 @@ export default async function AnalysisPage({ params }: { params: Promise<{ ticke
 
         <div className="space-y-6">
           <RiskChecklist items={visibleRiskChecklist} />
+          <TrackingDiagnosticPanel diagnostic={analysis.trackingDiagnostic} />
           <Card>
             <CardHeader>
               <CardTitle>과거 검증 해석</CardTitle>
@@ -278,7 +282,13 @@ export default async function AnalysisPage({ params }: { params: Promise<{ ticke
         <ScoreBreakdown items={analysis.scoreBreakdown} />
       </section>
 
-      <HistoricalValidationPanel history={historicalItems} details={historicalDetails} />
+      <HistoricalValidationPanel
+        history={historicalItems}
+        details={historicalDetails}
+        validation={analysis.validation}
+        validationBasis={analysis.validationBasis}
+        insight={analysis.validationInsight}
+      />
 
       <TradingViewChartCard
         company={analysis.company}

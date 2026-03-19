@@ -585,14 +585,20 @@ export function TradingViewChartCard({
         "ATR을 현재가 대비 퍼센트로 환산한 값입니다. 종목 가격대가 달라도 변동성 크기를 같은 기준으로 비교할 수 있습니다."
     },
     {
-      label: "ROC(20)",
-      value: hasNumber(indicators.roc20) ? formatSignedPercent(indicators.roc20) : "계산 중",
+      label: "시장 상대강도",
+      value:
+        hasNumber(indicators.marketRelativeStrength20) && hasNumber(indicators.marketRelativeSpread20)
+          ? `${indicators.marketRelativeStrength20.toFixed(0)}점 / ${indicators.marketRelativeSpread20 > 0 ? "+" : ""}${indicators.marketRelativeSpread20.toFixed(1)}%p`
+          : "계산 중",
       tone:
-        hasNumber(indicators.roc20) && indicators.roc20 >= 4 && indicators.roc20 <= 18
+        hasNumber(indicators.marketRelativeStrength20) &&
+        hasNumber(indicators.marketRelativeSpread20) &&
+        indicators.marketRelativeStrength20 >= 70 &&
+        indicators.marketRelativeSpread20 >= 0
           ? "border-emerald-200 bg-emerald-50/80 text-emerald-800"
           : "border-border/70 bg-background/50 text-foreground/85",
       description:
-        "20거래일 전 대비 현재 가격 상승률입니다. 추세가 붙은 종목인지, 아니면 이미 과도하게 급등했는지 가늠하는 데 도움이 됩니다."
+        "같은 시장(KOSPI/KOSDAQ) 안에서 최근 20거래일 상대 수익률이 어느 정도 우위인지 보여줍니다. 순위가 높고 평균 대비 스프레드가 플러스면 시장 대비 강한 흐름으로 볼 수 있습니다."
     },
     {
       label: "CCI(20)",

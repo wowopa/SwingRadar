@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint app components lib tests --max-warnings=0",
+    "typecheck": "node -e \"const fs=require('fs'); fs.rmSync('.next/types',{ recursive:true, force:true }); fs.rmSync('tsconfig.tsbuildinfo',{ force:true });\" && tsc --noEmit --pretty false",
     "test": "vitest run",
     "test:watch": "vitest",
     "db:ingest": "node scripts/ingest-postgres.mjs",

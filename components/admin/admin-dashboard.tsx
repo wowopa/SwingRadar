@@ -18,6 +18,7 @@ import type {
   AutoHealReportPayload,
   CuratedNewsItem,
   DailyCycleReportPayload,
+  DatabaseStorageReportPayload,
   EditorialCatalogItem,
   EditorialDiffItem,
   EditorialDraftDocument,
@@ -32,6 +33,7 @@ import type {
   SnapshotGenerationReportPayload,
   SymbolSearchItem,
   ThresholdAdviceReportPayload,
+  RuntimeStorageReportPayload,
   UniverseCandidateReview,
   UniverseDailyCandidates,
   UniverseReviewStatus,
@@ -67,6 +69,8 @@ export function AdminDashboard() {
   const [snapshotGenerationReport, setSnapshotGenerationReport] = useState<SnapshotGenerationReportPayload | null>(null);
   const [postLaunchHistory, setPostLaunchHistory] = useState<PostLaunchHistoryEntryPayload[]>([]);
   const [thresholdAdviceReport, setThresholdAdviceReport] = useState<ThresholdAdviceReportPayload | null>(null);
+  const [runtimeStorageReport, setRuntimeStorageReport] = useState<RuntimeStorageReportPayload | null>(null);
+  const [databaseStorageReport, setDatabaseStorageReport] = useState<DatabaseStorageReportPayload | null>(null);
   const [audits, setAudits] = useState<AuditItem[]>([]);
   const [dailyCandidates, setDailyCandidates] = useState<UniverseDailyCandidates | null>(null);
   const [draft, setDraft] = useState<EditorialDraftDocument | null>(null);
@@ -167,6 +171,8 @@ export function AdminDashboard() {
         setSnapshotGenerationReport(null);
         setPostLaunchHistory([]);
         setThresholdAdviceReport(null);
+        setRuntimeStorageReport(null);
+        setDatabaseStorageReport(null);
         setMessage("관리자 토큰을 입력하면 운영 데이터를 불러옵니다.");
         return;
       }
@@ -183,6 +189,8 @@ export function AdminDashboard() {
       setSnapshotGenerationReport(statusJson.snapshotGenerationReport ?? null);
       setPostLaunchHistory(statusJson.postLaunchHistory ?? []);
       setThresholdAdviceReport(statusJson.thresholdAdviceReport ?? null);
+      setRuntimeStorageReport(statusJson.runtimeStorageReport ?? null);
+      setDatabaseStorageReport(statusJson.databaseStorageReport ?? null);
       const [auditResult, draftResult, newsResult, watchlistResult, universeResult] = await Promise.allSettled([
         fetchJson<{ items: AuditItem[] }>("/api/admin/audit", { headers: authHeaders }),
         fetchJson<{
@@ -671,6 +679,8 @@ export function AdminDashboard() {
             snapshotGenerationReport={snapshotGenerationReport}
             postLaunchHistory={postLaunchHistory}
             thresholdAdviceReport={thresholdAdviceReport}
+            runtimeStorageReport={runtimeStorageReport}
+            databaseStorageReport={databaseStorageReport}
             dailyCandidates={dailyCandidates}
             watchlistTickers={watchlistTickers}
             onPromoteCandidate={(ticker) => void promoteUniverseCandidate(ticker)}

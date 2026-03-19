@@ -163,6 +163,48 @@ export type ThresholdAdviceReportPayload = {
   }>;
 };
 
+export type RuntimeStorageReportPayload = {
+  generatedAt: string;
+  runtimeRoot: string;
+  totalSizeBytes: number;
+  totalSizeLabel: string;
+  totalFiles: number;
+  sections: Record<
+    string,
+    {
+      sizeBytes: number;
+      sizeLabel: string;
+      fileCount: number;
+    }
+  >;
+  metadata?: Record<string, unknown>;
+};
+
+export type DatabaseStorageReportPayload = {
+  checkedAt: string;
+  databaseSizeBytes: number;
+  databaseSizeLabel: string;
+  tables: Array<{
+    tableName: string;
+    totalBytes: number;
+    totalSizeLabel: string;
+    liveRows: number;
+    deadRows: number;
+    lastVacuum: string | null;
+    lastAutovacuum: string | null;
+  }>;
+  runtimeDocuments: {
+    documentCount: number;
+    totalPayloadBytes: number;
+    totalPayloadLabel: string;
+    largestDocuments: Array<{
+      name: string;
+      payloadBytes: number;
+      payloadLabel: string;
+    }>;
+  };
+};
+
 export type AdminStatusPayload = {
   ok: boolean;
   requestId: string;
@@ -177,6 +219,8 @@ export type AdminStatusPayload = {
   snapshotGenerationReport: SnapshotGenerationReportPayload | null;
   postLaunchHistory: PostLaunchHistoryEntryPayload[];
   thresholdAdviceReport: ThresholdAdviceReportPayload | null;
+  runtimeStorageReport: RuntimeStorageReportPayload | null;
+  databaseStorageReport: DatabaseStorageReportPayload | null;
   incidents: OperationalIncident[];
 };
 

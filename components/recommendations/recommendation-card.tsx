@@ -4,7 +4,7 @@ import { FavoriteTickerButton } from "@/components/shared/favorite-ticker-button
 import { SignalToneBadge } from "@/components/shared/signal-tone-badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { describeSignalScore, formatDateTimeShort, formatPercent, formatScore } from "@/lib/utils";
-import type { Recommendation, ValidationBasis } from "@/types/recommendation";
+import type { Recommendation, ValidationBasis, ValidationInsight } from "@/types/recommendation";
 
 function getValidationToneClasses(basis: ValidationBasis) {
   if (basis === "실측 기반") {
@@ -36,6 +36,55 @@ function resolveValidationBasis(item: Recommendation): ValidationBasis {
   }
 
   return "보수 계산";
+}
+
+function resolveValidationInsight(item: Recommendation, validationBasis: ValidationBasis): ValidationInsight {
+  if (item.validationInsight) {
+    return item.validationInsight;
+  }
+
+  const level =
+    validationBasis === "실측 기반"
+      ? "높음"
+      : validationBasis === "공용 추적 참고"
+        ? "보통"
+        : validationBasis === "유사 흐름 참고" || validationBasis === "유사 업종 참고"
+          ? "보통"
+          : "주의";
+  const samplesToMeasured = validationBasis === "실측 기반" ? 0 : Math.max(0, 8 - item.validation.sampleSize);
+
+  return {
+    level,
+    basis: validationBasis,
+    headline: `${validationBasis} 기준 표본 ${item.validation.sampleSize}건`,
+    detail:
+      validationBasis === "실측 기반"
+        ? `실측 이력 기준 적중률 ${item.validation.hitRate}% / 평균 수익 ${formatPercent(item.validation.avgReturn)}입니다.`
+        : samplesToMeasured > 0
+          ? `실측 전환 판단까지 참고 표본 ${samplesToMeasured}건 정도가 더 필요합니다.`
+          : "표본 수는 확보됐지만 아직 실측 기반보다는 참고 성격이 더 큽니다.",
+    samplesToMeasured
+  };
+}
+
+function getValidationLevelClasses(level: ValidationInsight["level"]) {
+  if (level === "높음") {
+    return "border-emerald-200 bg-emerald-50 text-emerald-700";
+  }
+  if (level === "보통") {
+    return "border-amber-200 bg-amber-50 text-amber-700";
+  }
+  return "border-rose-200 bg-rose-50 text-rose-700";
+}
+
+function getTrackingStageClasses(item: Recommendation) {
+  if (item.trackingDiagnostic?.isEntryEligible) {
+    return "border-emerald-200 bg-emerald-50 text-emerald-700";
+  }
+  if (item.trackingDiagnostic?.isWatchEligible) {
+    return "border-sky-200 bg-sky-50 text-sky-700";
+  }
+  return "border-amber-200 bg-amber-50 text-amber-700";
 }
 
 function buildWhyNow(item: Recommendation) {
@@ -108,6 +157,7 @@ export function RecommendationCard({
   onToggleFavorite: (ticker: string) => void;
 }) {
   const validationBasis = resolveValidationBasis(item);
+  const validationInsight = resolveValidationInsight(item, validationBasis);
   const whyNow = buildWhyNow(item);
   const watchouts = buildWatchouts(item, validationBasis);
   const historicalSummary = buildHistoricalSummary(item, validationBasis);
@@ -199,8 +249,12 @@ export function RecommendationCard({
               <span className={`rounded-full border px-2.5 py-1 text-[11px] font-medium ${getValidationToneClasses(validationBasis)}`}>
                 {validationBasis}
               </span>
+              <span className={`rounded-full border px-2.5 py-1 text-[11px] font-medium ${getValidationLevelClasses(validationInsight.level)}`}>
+                신뢰도 {validationInsight.level}
+              </span>
             </div>
             <p className="mt-3 text-sm leading-7 text-foreground/80">{historicalSummary}</p>
+            <p className="mt-2 text-sm leading-7 text-muted-foreground">{validationInsight.detail}</p>
             <p className="mt-2 line-clamp-4 text-sm leading-7 text-muted-foreground">{item.validationSummary}</p>
           </div>
 
@@ -210,6 +264,41 @@ export function RecommendationCard({
             <CompactStat label="업데이트" value={formatDateTimeShort(item.updatedAt)} />
           </div>
         </section>
+
+        {item.trackingDiagnostic ? (
+          <section className="rounded-2xl border border-border/70 bg-background/35 p-4">
+            <div className="flex flex-wrap items-center gap-2">
+              <p className="text-sm font-semibold text-foreground">공용 추적 진단</p>
+              <span className={`rounded-full border px-2.5 py-1 text-[11px] font-medium ${getTrackingStageClasses(item)}`}>
+                {item.trackingDiagnostic.stage}
+              </span>
+            </div>
+            <p className="mt-3 text-sm leading-7 text-foreground/80">
+              활성화 점수 {formatScore(item.trackingDiagnostic.activationScore)}점 / 감시 기준 {formatScore(item.trackingDiagnostic.watchThreshold)}점 /
+              진입 기준 {formatScore(item.trackingDiagnostic.entryThreshold)}점
+            </p>
+            <div className="mt-4 grid gap-4 md:grid-cols-2">
+              <div className="rounded-2xl border border-emerald-200/70 bg-emerald-50/50 p-4">
+                <p className="text-xs font-medium text-muted-foreground">충족한 조건</p>
+                <ul className="mt-3 space-y-2 text-sm leading-6 text-foreground/82">
+                  {item.trackingDiagnostic.supports.map((support) => (
+                    <li key={support}>{support}</li>
+                  ))}
+                </ul>
+              </div>
+              <div className="rounded-2xl border border-amber-200/70 bg-amber-50/50 p-4">
+                <p className="text-xs font-medium text-muted-foreground">보강이 필요한 조건</p>
+                <ul className="mt-3 space-y-2 text-sm leading-6 text-foreground/82">
+                  {item.trackingDiagnostic.blockers.length ? (
+                    item.trackingDiagnostic.blockers.map((blocker) => <li key={blocker}>{blocker}</li>)
+                  ) : (
+                    <li>현재 공용 추적 기준은 대부분 충족하고 있습니다.</li>
+                  )}
+                </ul>
+              </div>
+            </div>
+          </section>
+        ) : null}
 
         {(item.checkpoints.length || item.validationBasis || item.candidateScore) && (
           <section className="rounded-2xl border border-border/70 bg-secondary/20 p-4">

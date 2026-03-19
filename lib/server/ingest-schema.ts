@@ -11,6 +11,29 @@ const resultStatus = z.enum(["진행중", "성공", "실패", "무효화"]);
 const riskStatus = z.enum(["양호", "확인 필요", "주의"]);
 const scenarioLabel = z.enum(["기본", "강세", "약세"]);
 const validationBasis = z.enum(["실측 기반", "공용 추적 참고", "유사 업종 참고", "유사 흐름 참고", "보수 계산"]);
+const validationStatsSchema = z.object({
+  hitRate: z.number(),
+  avgReturn: z.number(),
+  sampleSize: z.number(),
+  maxDrawdown: z.number()
+});
+const validationInsightSchema = z.object({
+  level: z.enum(["높음", "보통", "주의"]),
+  basis: validationBasis,
+  headline: z.string(),
+  detail: z.string(),
+  samplesToMeasured: z.number().optional()
+});
+const trackingDiagnosticSchema = z.object({
+  stage: z.enum(["진입 추적 가능", "감시 편입 가능", "조건 보강 필요"]),
+  activationScore: z.number(),
+  watchThreshold: z.number(),
+  entryThreshold: z.number(),
+  isWatchEligible: z.boolean(),
+  isEntryEligible: z.boolean(),
+  blockers: z.array(z.string()),
+  supports: z.array(z.string())
+});
 
 const recommendationItemSchema = z.object({
   ticker: z.string(),
@@ -27,14 +50,11 @@ const recommendationItemSchema = z.object({
   validationSummary: z.string(),
   validationBasis: validationBasis.optional(),
   checkpoints: z.array(z.string()),
-  validation: z.object({
-    hitRate: z.number(),
-    avgReturn: z.number(),
-    sampleSize: z.number(),
-    maxDrawdown: z.number()
-  }),
+  validation: validationStatsSchema,
   observationWindow: z.string(),
-  updatedAt: z.string()
+  updatedAt: z.string(),
+  trackingDiagnostic: trackingDiagnosticSchema.optional(),
+  validationInsight: validationInsightSchema.optional()
 });
 
 const analysisItemSchema = z.object({
@@ -43,6 +63,10 @@ const analysisItemSchema = z.object({
   signalTone,
   score: z.number(),
   activationScore: z.number().optional(),
+  validation: validationStatsSchema.optional(),
+  validationBasis: validationBasis.optional(),
+  validationInsight: validationInsightSchema.optional(),
+  trackingDiagnostic: trackingDiagnosticSchema.optional(),
   headline: z.string(),
   invalidation: z.string(),
   analysisSummary: z.array(z.object({ label: z.string(), value: z.string(), note: z.string() })),
@@ -69,7 +93,9 @@ const analysisItemSchema = z.object({
     mfi14: z.number().nullable(),
     roc20: z.number().nullable(),
     cci20: z.number().nullable(),
-    cmf20: z.number().nullable()
+    cmf20: z.number().nullable(),
+    marketRelativeStrength20: z.number().nullable().optional(),
+    marketRelativeSpread20: z.number().nullable().optional()
   }),
   chartSeries: z.array(
     z.object({

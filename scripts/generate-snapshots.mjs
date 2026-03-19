@@ -434,10 +434,11 @@ function calculateCMF(series, period = 20) {
   return moneyFlowVolume / totalVolume;
 }
 
-function calculateTechnicalIndicators(item) {
+function calculateTechnicalIndicators(item, marketRelativeStrengthMap = null) {
   const series = buildPriceHistorySeries(item);
   const closes = series.map((point) => point.close);
   const volumes = series.map((point) => point.volume ?? 0);
+  const relativeStrength = marketRelativeStrengthMap?.get(item.ticker) ?? null;
 
   if (!series.length) {
     return {
@@ -462,7 +463,9 @@ function calculateTechnicalIndicators(item) {
       mfi14: null,
       roc20: null,
       cci20: null,
-      cmf20: null
+      cmf20: null,
+      marketRelativeStrength20: relativeStrength?.marketRelativeStrength20 ?? null,
+      marketRelativeSpread20: relativeStrength?.marketRelativeSpread20 ?? null
     };
   }
 
@@ -524,8 +527,50 @@ function calculateTechnicalIndicators(item) {
     mfi14: roundNumber(mfi14, 1),
     roc20: roundNumber(roc20, 1),
     cci20: roundNumber(cci20, 1),
-    cmf20: roundNumber(cmf20, 2)
+    cmf20: roundNumber(cmf20, 2),
+    marketRelativeStrength20: relativeStrength?.marketRelativeStrength20 ?? null,
+    marketRelativeSpread20: relativeStrength?.marketRelativeSpread20 ?? null
   };
+}
+
+function buildMarketRelativeStrengthMap(items) {
+  const grouped = new Map();
+
+  for (const item of items) {
+    const series = buildPriceHistorySeries(item);
+    const roc20 = roundNumber(calculateROC(series.map((point) => point.close), 20), 1);
+    if (roc20 === null) {
+      continue;
+    }
+
+    const market = item.market ?? "KRX";
+    const bucket = grouped.get(market) ?? [];
+    bucket.push({ ticker: item.ticker, roc20 });
+    grouped.set(market, bucket);
+  }
+
+  const relativeStrengthByTicker = new Map();
+
+  for (const entries of grouped.values()) {
+    if (!entries.length) {
+      continue;
+    }
+
+    const rocs = entries.map((entry) => entry.roc20);
+    const averageRoc = average(rocs) ?? 0;
+    const sorted = [...rocs].sort((left, right) => left - right);
+
+    for (const entry of entries) {
+      const lessOrEqualCount = sorted.filter((value) => value <= entry.roc20).length;
+      const percentile = roundNumber((lessOrEqualCount / sorted.length) * 100, 1) ?? 50;
+      relativeStrengthByTicker.set(entry.ticker, {
+        marketRelativeStrength20: percentile,
+        marketRelativeSpread20: roundNumber(entry.roc20 - averageRoc, 1) ?? 0
+      });
+    }
+  }
+
+  return relativeStrengthByTicker;
 }
 
 function resolveObservationWindow(sampleSize, hitRate) {
@@ -541,6 +586,51 @@ function buildMeasuredValidationItem(item) {
     basis,
     observationWindow: item.observationWindow ?? resolveObservationWindow(item.sampleSize, item.hitRate),
     validationSummary: item.validationSummary ?? buildValidationSummary(item)
+  };
+}
+
+function resolveValidationConfidenceLevel(validationItem) {
+  if (validationItem.basis === "실측 기반") {
+    return "높음";
+  }
+
+  if (validationItem.basis === "공용 추적 참고") {
+    return validationItem.sampleSize >= 8 ? "높음" : "보통";
+  }
+
+  if (validationItem.basis === "유사 흐름 참고" || validationItem.basis === "유사 업종 참고") {
+    return validationItem.sampleSize >= 8 ? "보통" : "주의";
+  }
+
+  return "주의";
+}
+
+function buildValidationInsight(validationItem) {
+  const level = resolveValidationConfidenceLevel(validationItem);
+  const samplesToMeasured = validationItem.basis === "실측 기반" ? 0 : Math.max(0, 8 - validationItem.sampleSize);
+  const headline =
+    validationItem.basis === "실측 기반"
+      ? `실측 기반 ${validationItem.sampleSize}건으로 검증했습니다.`
+      : validationItem.basis === "공용 추적 참고"
+        ? `공용 추적 종료 이력 ${validationItem.sampleSize}건을 참고했습니다.`
+        : validationItem.basis === "유사 흐름 참고"
+          ? `최근 반복 등장 흐름 ${validationItem.sampleSize}건을 참고했습니다.`
+          : validationItem.basis === "유사 업종 참고"
+            ? `같은 업종의 검증 사례 ${validationItem.sampleSize}건을 참고했습니다.`
+            : "실측 표본이 아직 부족해 보수 계산을 함께 반영했습니다.";
+  const detail =
+    validationItem.basis === "실측 기반"
+      ? `적중률 ${validationItem.hitRate}%와 평균 수익 ${formatPercent(validationItem.avgReturn)}를 실측 이력 기준으로 읽을 수 있습니다.`
+      : samplesToMeasured > 0
+        ? `실측 전환 판단까지 참고 표본 ${samplesToMeasured}건 정도가 더 쌓이면 해석 신뢰도가 한 단계 올라갑니다.`
+        : "표본 수는 어느 정도 확보됐지만, 아직 해당 종목의 실측 이력보다는 참고 기반 비중이 큽니다.";
+
+  return {
+    level,
+    basis: validationItem.basis,
+    headline,
+    detail,
+    samplesToMeasured
   };
 }
 
@@ -836,7 +926,15 @@ function buildMomentumRead(indicators) {
     }
   }
 
-  return parts[0] ?? "모멘텀은 가격 확인을 더 필요로 하는 중립 구간입니다.";
+  if (indicators.marketRelativeStrength20 !== null && indicators.marketRelativeSpread20 !== null) {
+    if (indicators.marketRelativeStrength20 >= 70 && indicators.marketRelativeSpread20 >= 0) {
+      parts.push(`같은 시장 안에서 상대강도 ${indicators.marketRelativeStrength20}점으로 우위권입니다.`);
+    } else if (indicators.marketRelativeStrength20 <= 35) {
+      parts.push(`같은 시장 대비 상대강도 ${indicators.marketRelativeStrength20}점으로 아직 약한 편입니다.`);
+    }
+  }
+
+  return parts.length ? parts.slice(0, 2).join(" ") : "모멘텀은 가격 확인을 더 필요로 하는 중립 구간입니다.";
 }
 
 function buildTrendStrengthRead(indicators) {
@@ -871,6 +969,12 @@ function buildFlowRead(indicators) {
     if (indicators.mfi14 >= 70) parts.push(`MFI ${indicators.mfi14}로 자금 유입이 강한 편입니다.`);
     else if (indicators.mfi14 <= 35) parts.push(`MFI ${indicators.mfi14}로 자금 유입이 아직 약합니다.`);
     else parts.push(`MFI ${indicators.mfi14}로 자금 흐름은 중립권입니다.`);
+  }
+
+  if (indicators.marketRelativeSpread20 !== null) {
+    const spreadLabel = `${indicators.marketRelativeSpread20 > 0 ? "+" : ""}${indicators.marketRelativeSpread20.toFixed(1)}%p`;
+    if (indicators.marketRelativeSpread20 >= 4) parts.push(`같은 시장 평균보다 20일 수익률이 ${spreadLabel} 높습니다.`);
+    else if (indicators.marketRelativeSpread20 <= -4) parts.push(`같은 시장 평균보다 20일 수익률이 ${spreadLabel} 낮습니다.`);
   }
 
   return parts.join(" ");
@@ -1003,6 +1107,14 @@ function buildTechnicalNotes(indicators) {
     else if (indicators.natr14 <= 4.5) notes.push("NATR이 낮아 무효화 관리가 비교적 쉬운 편입니다.");
   }
 
+  if (indicators.marketRelativeStrength20 !== null && indicators.marketRelativeSpread20 !== null) {
+    if (indicators.marketRelativeStrength20 >= 70 && indicators.marketRelativeSpread20 >= 0) {
+      notes.push("같은 시장 대비 상대강도가 높아 수급 우위가 유지되는 편입니다.");
+    } else if (indicators.marketRelativeStrength20 <= 35) {
+      notes.push("같은 시장 대비 상대강도가 약해 추세 지속 확인이 더 필요합니다.");
+    }
+  }
+
   return notes;
 }
 
@@ -1109,6 +1221,24 @@ function calculateTechnicalAdjustment(indicators, item) {
       adjustment -= 1.8;
     } else if (indicators.natr14 >= 7.5) {
       adjustment -= 0.8;
+    }
+  }
+
+  if (indicators.marketRelativeStrength20 !== null) {
+    if (indicators.marketRelativeStrength20 >= 70) {
+      adjustment += 1.4;
+    } else if (indicators.marketRelativeStrength20 >= 55) {
+      adjustment += 0.6;
+    } else if (indicators.marketRelativeStrength20 <= 35) {
+      adjustment -= 1.1;
+    }
+  }
+
+  if (indicators.marketRelativeSpread20 !== null) {
+    if (indicators.marketRelativeSpread20 >= 4) {
+      adjustment += 0.7;
+    } else if (indicators.marketRelativeSpread20 <= -4) {
+      adjustment -= 0.7;
     }
   }
 
@@ -1332,6 +1462,7 @@ function buildTrackingSelectionContext({ recommendation, marketItem, stateEntry,
   const stage = resolveTrackingSelectionStage(stateEntry);
   const company = recommendation?.company ?? marketItem?.company ?? stateEntry?.company ?? stateEntry?.ticker ?? "해당 종목";
   const appearances = stateEntry?.appearances ?? 0;
+  const consecutiveAppearances = stateEntry?.consecutiveAppearances ?? 0;
   const latestRank = stateEntry?.latestRank ?? null;
   const activationScore = roundNumber(Number(stateEntry?.activationScore ?? 0), 1) ?? 0;
   const activationThreshold = stage === "진입 추적" ? config.minEntryActivationScore : config.minWatchActivationScore;
@@ -1339,6 +1470,7 @@ function buildTrackingSelectionContext({ recommendation, marketItem, stateEntry,
   const signalTone = recommendation?.signalTone ?? KO.neutral;
   const rankLabel = latestRank ? `${latestRank}위` : "순위 기록 없음";
   const appearanceLabel = appearances > 0 ? `${appearances}회` : "첫 편입";
+  const consecutiveLabel = consecutiveAppearances > 1 ? `최근 ${consecutiveAppearances}회 연속 등장` : "연속 등장 기록은 아직 1회";
   const turnoverLabel = formatTrackingAmount(averageTurnover20);
   const currentPrice = Number(marketItem?.currentPrice ?? stateEntry?.currentPrice ?? 0);
   const invalidationPrice = Number(stateEntry?.invalidationPrice ?? marketItem?.invalidationPrice ?? 0);
@@ -1358,10 +1490,11 @@ function buildTrackingSelectionContext({ recommendation, marketItem, stateEntry,
   const selectionReason =
     stage === "진입 추적"
       ? `${company}는 최근 상위 후보에 ${appearanceLabel} 등장했고 최신 순위는 ${rankLabel}입니다. 20일 평균 거래대금 ${turnoverLabel}, 활성화 점수 ${activationScore}점으로 진입 추적 기준 ${activationThreshold}점을 충족해 공용 추적 진행 대상으로 승격했습니다. ${toneNote} ${structureNote}`
-      : `${company}는 최근 상위 후보에 ${appearanceLabel} 등장했고 최신 순위는 ${rankLabel}입니다. 20일 평균 거래대금 ${turnoverLabel}, 활성화 점수 ${activationScore}점으로 감시 편입 기준 ${activationThreshold}점을 충족해 공용 추적 대상에 편입했습니다. ${toneNote} ${structureNote}`;
+      : `${company}는 최근 상위 후보에 ${appearanceLabel} 등장했고 최신 순위는 ${rankLabel}입니다. ${consecutiveLabel}. 20일 평균 거래대금 ${turnoverLabel}, 활성화 점수 ${activationScore}점으로 감시 편입 기준 ${activationThreshold}점을 충족해 공용 추적 대상에 편입했습니다. ${toneNote} ${structureNote}`;
 
   const selectionHighlights = [
     `최근 상위 후보 ${appearanceLabel}, 최신 순위 ${rankLabel}`,
+    consecutiveLabel,
     `활성화 점수 ${activationScore}점 / ${stage === "진입 추적" ? "진입" : "감시"} 기준 ${activationThreshold}점`,
     `20일 평균 거래대금 ${turnoverLabel}`,
     signalTone === KO.neutral
@@ -1537,27 +1670,37 @@ function getAverageTurnover20(item) {
 function buildRankingStats(runs) {
   const stats = new Map();
 
-  for (const run of runs) {
+  runs.forEach((run, runIndex) => {
     const topCandidates = run.topCandidates ?? [];
     topCandidates.forEach((candidate, index) => {
       const current = stats.get(candidate.ticker) ?? {
         appearances: 0,
         latestRank: null,
         bestRank: null,
-        averageRank: null
+        averageRank: null,
+        previousRank: null,
+        consecutiveAppearances: 0,
+        lastSeenAt: null
       };
 
       current.appearances += 1;
       current.bestRank = current.bestRank === null ? index + 1 : Math.min(current.bestRank, index + 1);
       current.latestRank = current.latestRank === null ? index + 1 : current.latestRank;
+      current.lastSeenAt = current.lastSeenAt ?? run.generatedAt;
+      if (runIndex === 1 && current.previousRank === null) {
+        current.previousRank = index + 1;
+      }
       current.averageRank =
         current.averageRank === null
           ? index + 1
           : roundNumber((current.averageRank * (current.appearances - 1) + (index + 1)) / current.appearances, 1);
+      if (runIndex === current.consecutiveAppearances) {
+        current.consecutiveAppearances += 1;
+      }
 
       stats.set(candidate.ticker, current);
     });
-  }
+  });
 
   return stats;
 }
@@ -1580,12 +1723,12 @@ function getTrackingConfig() {
   };
 }
 
-function buildActivationScore(item, rankingStat) {
+function buildActivationScore(item, rankingStat, marketRelativeStrengthMap = null) {
   const historyBonus = (rankingStat?.appearances ?? 0) * 1.5;
   const rankBonus = rankingStat?.latestRank ? Math.max(0, 24 - rankingStat.latestRank) * 0.9 : 0;
   const liquidityBonus = getAverageTurnover20(item) >= 10000000000 ? 4 : getAverageTurnover20(item) >= 5000000000 ? 2 : 0;
   const structureBonus = item.currentPrice > item.invalidationPrice ? 6 : -8;
-  const technicalAdjustment = calculateTechnicalAdjustment(calculateTechnicalIndicators(item), item);
+  const technicalAdjustment = calculateTechnicalAdjustment(calculateTechnicalIndicators(item, marketRelativeStrengthMap), item);
 
   return (
     item.trendScore * 1.1 +
@@ -1613,12 +1756,20 @@ function buildTrackingEntryPlan(item) {
     (((indicators.sma20 ?? 0) > 0 && (indicators.sma60 ?? 0) > 0 && (indicators.sma20 ?? 0) >= (indicators.sma60 ?? 0))) ||
     item.trendScore >= 20;
   const momentumConfirmed = (indicators.rsi14 ?? 50) >= 47;
-  const entryReady = currentPrice >= breakoutLevel * 0.995 && volumeConfirmed && trendConfirmed && momentumConfirmed;
+  const nearConfirmation = currentPrice >= breakoutLevel * 0.995;
+  const aboveInvalidation = currentPrice > Number(item.invalidationPrice ?? 0);
+  const entryReady = nearConfirmation && volumeConfirmed && trendConfirmed && momentumConfirmed;
   const entryPrice = roundNumber(Math.max(currentPrice, breakoutLevel), 0) ?? currentPrice;
   const bounds = buildTrackingPositionBounds(item, entryPrice, breakoutLevel);
 
   return {
     entryReady,
+    nearConfirmation,
+    aboveInvalidation,
+    volumeConfirmed,
+    trendConfirmed,
+    momentumConfirmed,
+    breakoutLevel,
     entryPrice,
     invalidationPrice: bounds.invalidationPrice,
     targetPrice: bounds.targetPrice
@@ -1708,10 +1859,80 @@ function isEntryCandidateEligible(item, activationScore, rankingStat, config) {
   );
 }
 
+function buildTrackingDiagnostic(item, activationScore, rankingStat, config) {
+  const entryPlan = buildTrackingEntryPlan(item);
+  const averageTurnover20 = getAverageTurnover20(item);
+  const appearances = rankingStat?.appearances ?? 0;
+  const watchEligible = isWatchCandidateEligible(item, activationScore, rankingStat, config);
+  const entryEligible = isEntryCandidateEligible(item, activationScore, rankingStat, config);
+  const blockers = [];
+  const supports = [];
+
+  if (activationScore >= config.minWatchActivationScore) {
+    supports.push(`활성화 점수 ${activationScore}점으로 감시 기준 ${config.minWatchActivationScore}점을 넘습니다.`);
+  } else {
+    blockers.push(`활성화 점수 ${activationScore}점으로 감시 기준 ${config.minWatchActivationScore}점에 못 미칩니다.`);
+  }
+
+  if (averageTurnover20 >= config.minAverageTurnover20) {
+    supports.push(`20일 평균 거래대금 ${formatTrackingAmount(averageTurnover20)}로 유동성 기준을 충족합니다.`);
+  } else {
+    blockers.push(`20일 평균 거래대금 ${formatTrackingAmount(averageTurnover20)}로 유동성 기준 ${formatTrackingAmount(config.minAverageTurnover20)}에 못 미칩니다.`);
+  }
+
+  if (appearances >= 1) {
+    supports.push(`최근 상위 후보에 ${appearances}회 등장했습니다.`);
+  } else {
+    blockers.push("최근 상위 후보 등장 이력이 아직 없습니다.");
+  }
+
+  if (entryPlan.aboveInvalidation) {
+    supports.push(`현재 가격이 무효화 가격 ${formatTrackingPrice(Number(item.invalidationPrice ?? 0))} 위에서 구조를 유지합니다.`);
+  } else {
+    blockers.push("현재 가격이 무효화 가격 위에 안정적으로 있지 않습니다.");
+  }
+
+  if (entryPlan.nearConfirmation) {
+    supports.push(`현재 가격이 확인 가격 ${formatTrackingPrice(Math.round(entryPlan.breakoutLevel))} 근처까지 올라왔습니다.`);
+  } else {
+    blockers.push(`확인 가격 ${formatTrackingPrice(Math.round(entryPlan.breakoutLevel))} 근처까지는 아직 오지 않았습니다.`);
+  }
+
+  if (entryPlan.volumeConfirmed) {
+    supports.push("거래량 또는 수급 점수가 진입 추적 기준을 보조합니다.");
+  } else {
+    blockers.push("거래량이 아직 충분히 붙지 않아 진입 추적 판단을 보류합니다.");
+  }
+
+  if (entryPlan.trendConfirmed) {
+    supports.push("중기 추세 구조는 유지되는 편입니다.");
+  } else {
+    blockers.push("추세 구조가 아직 진입 추적 기준만큼 선명하지 않습니다.");
+  }
+
+  if (entryPlan.momentumConfirmed) {
+    supports.push("RSI 기준 모멘텀은 감시 이상 단계로 볼 수 있습니다.");
+  } else {
+    blockers.push("모멘텀이 아직 확실히 살아나지 않았습니다.");
+  }
+
+  return {
+    stage: entryEligible ? "진입 추적 가능" : watchEligible ? "감시 편입 가능" : "조건 보강 필요",
+    activationScore,
+    watchThreshold: config.minWatchActivationScore,
+    entryThreshold: config.minEntryActivationScore,
+    isWatchEligible: watchEligible,
+    isEntryEligible: entryEligible,
+    blockers: blockers.slice(0, 4),
+    supports: supports.slice(0, 4)
+  };
+}
+
 function buildTrackingState({ generatedAt, candidateEntries, marketByTicker, previousState, rankingStats }) {
   const config = getTrackingConfig();
   const today = generatedAt.slice(0, 10);
   const stateVersion = 3;
+  const marketRelativeStrengthMap = buildMarketRelativeStrengthMap(Array.from(marketByTicker.values()));
   const previousEntries = previousState?.version === stateVersion && Array.isArray(previousState?.entries) ? previousState.entries : [];
   const entries = [];
   const liveTickers = new Set();
@@ -1729,7 +1950,7 @@ function buildTrackingState({ generatedAt, candidateEntries, marketByTicker, pre
     const lowestPrice = Math.min(entry.lowestPrice ?? entry.entryPrice, currentPrice);
     const holdingDays = diffDays(parseDateOnly(entry.signalDate), parseDateOnly(today)) + 1;
     const rankingStat = rankingStats.get(entry.ticker);
-    const activationScore = roundNumber(buildActivationScore(marketItem, rankingStat), 1) ?? entry.activationScore ?? 0;
+    const activationScore = roundNumber(buildActivationScore(marketItem, rankingStat, marketRelativeStrengthMap), 1) ?? entry.activationScore ?? 0;
 
     const updated = {
       ...entry,
@@ -1740,6 +1961,7 @@ function buildTrackingState({ generatedAt, candidateEntries, marketByTicker, pre
       holdingDays,
       latestRank: rankingStat?.latestRank ?? null,
       appearances: rankingStat?.appearances ?? 0,
+      consecutiveAppearances: rankingStat?.consecutiveAppearances ?? 0,
       activationScore
     };
 
@@ -1800,7 +2022,7 @@ function buildTrackingState({ generatedAt, candidateEntries, marketByTicker, pre
       .filter(Boolean)
       .map((item) => {
         const rankingStat = rankingStats.get(item.ticker);
-        const activationScore = roundNumber(buildActivationScore(item, rankingStat), 1) ?? 0;
+        const activationScore = roundNumber(buildActivationScore(item, rankingStat, marketRelativeStrengthMap), 1) ?? 0;
         const lastClosed = latestClosedByTicker.get(item.ticker);
         const cooldownDays = lastClosed?.closedAt ? diffDays(parseDateOnly(lastClosed.signalDate), parseDateOnly(today)) : null;
 
@@ -1846,6 +2068,7 @@ function buildTrackingState({ generatedAt, candidateEntries, marketByTicker, pre
         activationScore: candidate.activationScore,
         holdingDays: 1,
         appearances: candidate.rankingStat?.appearances ?? 0,
+        consecutiveAppearances: candidate.rankingStat?.consecutiveAppearances ?? 0,
         latestRank: candidate.rankingStat?.latestRank ?? null,
         status: "watch",
         closedAt: null,
@@ -1861,7 +2084,7 @@ function buildTrackingState({ generatedAt, candidateEntries, marketByTicker, pre
       .map((entry) => {
         const item = marketByTicker.get(entry.ticker);
         const rankingStat = rankingStats.get(entry.ticker);
-        const activationScore = item ? roundNumber(buildActivationScore(item, rankingStat), 1) ?? entry.activationScore ?? 0 : entry.activationScore ?? 0;
+        const activationScore = item ? roundNumber(buildActivationScore(item, rankingStat, marketRelativeStrengthMap), 1) ?? entry.activationScore ?? 0 : entry.activationScore ?? 0;
 
         return {
           entry,
@@ -1992,6 +2215,7 @@ async function main() {
   }
 
   const marketByTicker = new Map(market.items.map((item) => [item.ticker, item]));
+  const marketRelativeStrengthMap = buildMarketRelativeStrengthMap(market.items);
   const trackingPool = new Map();
   for (const entry of watchlistDocument.tickers ?? []) {
     if (entry?.ticker) {
@@ -2009,6 +2233,7 @@ async function main() {
   }
 
   const rankingStats = buildRankingStats(candidateHistoryDocument.runs ?? []);
+  const trackingConfig = getTrackingConfig();
 
   const trackingState = buildTrackingState({
     generatedAt,
@@ -2053,10 +2278,10 @@ async function main() {
 
     const tickerNews = newsByTicker.get(item.ticker) ?? [];
     const coverage = summarizeEventCoverage(tickerNews);
-    const technicalIndicators = calculateTechnicalIndicators(item);
+    const technicalIndicators = calculateTechnicalIndicators(item, marketRelativeStrengthMap);
     const technicalAdjustment = calculateTechnicalAdjustment(technicalIndicators, item);
     const rankingStat = rankingStats.get(item.ticker);
-    const activationScore = roundNumber(buildActivationScore(item, rankingStat), 1) ?? 0;
+    const activationScore = roundNumber(buildActivationScore(item, rankingStat, marketRelativeStrengthMap), 1) ?? 0;
     const baseScore = getSwingBaseScore(item);
     const score = clamp(roundNumber(baseScore + technicalAdjustment, 1) ?? baseScore, 0, 100);
     const invalidationDistance = Number((((item.invalidationPrice - item.currentPrice) / item.currentPrice) * 100).toFixed(1));
@@ -2065,6 +2290,8 @@ async function main() {
     const quality = buildQualityValue(item, validationItem);
     const marketQuality = buildMarketDataQuality(item);
     const technicalNotes = buildTechnicalNotes(technicalIndicators);
+    const trackingDiagnostic = buildTrackingDiagnostic(item, activationScore, rankingStat, trackingConfig);
+    const validationInsight = buildValidationInsight(validationItem);
 
     recommendations.push({
       ticker: item.ticker,
@@ -2087,6 +2314,8 @@ async function main() {
         sampleSize: validationItem.sampleSize,
         maxDrawdown: validationItem.maxDrawdown
       },
+      trackingDiagnostic,
+      validationInsight,
       observationWindow: validationItem.observationWindow,
       updatedAt: generatedAt.replace("T", " ").slice(0, 16)
     });
@@ -2097,6 +2326,15 @@ async function main() {
       signalTone,
       score,
       activationScore,
+      validation: {
+        hitRate: validationItem.hitRate,
+        avgReturn: validationItem.avgReturn,
+        sampleSize: validationItem.sampleSize,
+        maxDrawdown: validationItem.maxDrawdown
+      },
+      validationBasis: validationItem.basis,
+      validationInsight,
+      trackingDiagnostic,
       headline: `${item.company} 관찰 신호는 ${label} 관점에서 해석합니다.`,
       invalidation: buildInvalidation(item),
       analysisSummary: buildAnalysisSummary(item, quality, technicalIndicators),
@@ -2149,7 +2387,7 @@ async function main() {
           note:
             validationItem.basis === "실측 기반"
               ? `비슷한 흐름 ${validationItem.sampleSize}건 기준으로 정리한 값입니다.`
-              : validationItem.validationSummary
+              : validationInsight.detail
         },
         { label: "품질", value: quality, note: buildQualityDataNote(item) },
         {
@@ -2171,7 +2409,6 @@ async function main() {
     return left.company.localeCompare(right.company, "ko");
   });
 
-  const trackingConfig = getTrackingConfig();
   const recommendationByTicker = new Map(recommendations.map((item) => [item.ticker, item]));
 
   const trackingStateById = new Map(trackingState.entries.map((entry) => [entry.id, entry]));

@@ -9,10 +9,11 @@ import {
   loadNewsFetchReport,
   loadOpsHealthCheckReport,
   loadPostLaunchHistory,
-  loadSnapshotGenerationReport
-  ,
+  loadRuntimeStorageReport,
+  loadSnapshotGenerationReport,
   loadThresholdAdviceReport
 } from "@/lib/server/ops-reports";
+import { loadDatabaseStorageReport } from "@/lib/server/postgres-storage-report";
 import { getHealthReport } from "@/lib/services/health-service";
 import type { HealthReport } from "@/lib/services/health-service";
 import { buildResponseMeta, withRouteTelemetry } from "@/lib/server/telemetry";
@@ -30,6 +31,8 @@ export async function GET(request: Request) {
       loadSnapshotGenerationReport(),
       loadPostLaunchHistory(),
       loadThresholdAdviceReport(),
+      loadRuntimeStorageReport(),
+      loadDatabaseStorageReport(),
       listAuditLogs(policy.audit.adminListLimit)
     ]);
 
@@ -43,6 +46,8 @@ export async function GET(request: Request) {
       snapshotGenerationReportResult,
       postLaunchHistoryResult,
       thresholdAdviceReportResult,
+      runtimeStorageReportResult,
+      databaseStorageReportResult,
       auditsResult
     ] = results;
 
@@ -120,6 +125,20 @@ export async function GET(request: Request) {
       );
     }
 
+    const runtimeStorageReport = runtimeStorageReportResult.status === "fulfilled" ? runtimeStorageReportResult.value : null;
+    if (runtimeStorageReportResult.status !== "fulfilled") {
+      statusWarnings.push(
+        `runtime-storage-report: ${runtimeStorageReportResult.reason instanceof Error ? runtimeStorageReportResult.reason.message : "Unexpected runtime storage report failure"}`
+      );
+    }
+
+    const databaseStorageReport = databaseStorageReportResult.status === "fulfilled" ? databaseStorageReportResult.value : null;
+    if (databaseStorageReportResult.status !== "fulfilled") {
+      statusWarnings.push(
+        `database-storage-report: ${databaseStorageReportResult.reason instanceof Error ? databaseStorageReportResult.reason.message : "Unexpected database storage report failure"}`
+      );
+    }
+
     const audits = auditsResult.status === "fulfilled" ? auditsResult.value : [];
     if (auditsResult.status !== "fulfilled") {
       statusWarnings.push(
@@ -148,6 +167,8 @@ export async function GET(request: Request) {
         snapshotGenerationReport,
         postLaunchHistory: postLaunchHistory?.slice(-3).reverse() ?? [],
         thresholdAdviceReport,
+        runtimeStorageReport,
+        databaseStorageReport,
         statusWarnings,
         incidents: escalation.incidents,
         overallStatus: escalation.overallStatus,
