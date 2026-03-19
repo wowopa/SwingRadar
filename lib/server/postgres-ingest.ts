@@ -47,17 +47,43 @@ function getRetentionDays(name: string, fallback: number) {
   return Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : fallback;
 }
 
+async function pruneDuplicateDailySnapshots(client: { query: (sql: string, values?: unknown[]) => Promise<unknown> }) {
+  const snapshotTables = ["recommendation_snapshots", "analysis_snapshots", "tracking_snapshots"];
+
+  for (const table of snapshotTables) {
+    await client.query(
+      `
+      with keep as (
+        select max(generated_at) as generated_at
+        from ${table}
+        group by (generated_at at time zone 'Asia/Seoul')::date
+      ),
+      obsolete as (
+        select distinct generated_at
+        from ${table}
+        except
+        select generated_at
+        from keep
+      )
+      delete from ${table} target
+      using obsolete
+      where target.generated_at = obsolete.generated_at
+      `
+    );
+  }
+}
+
 async function pruneExpiredSnapshots(client: { query: (sql: string, values?: unknown[]) => Promise<unknown> }) {
   const retentionPolicies = [
     {
       table: "recommendation_snapshots",
       column: "generated_at",
-      days: getRetentionDays("SWING_RADAR_RECOMMENDATION_RETENTION_DAYS", 60)
+      days: getRetentionDays("SWING_RADAR_RECOMMENDATION_RETENTION_DAYS", 30)
     },
     {
       table: "analysis_snapshots",
       column: "generated_at",
-      days: getRetentionDays("SWING_RADAR_ANALYSIS_RETENTION_DAYS", 30)
+      days: getRetentionDays("SWING_RADAR_ANALYSIS_RETENTION_DAYS", 14)
     },
     {
       table: "tracking_snapshots",
@@ -158,6 +184,7 @@ export async function ingestSnapshotBundle(
       );
     }
 
+    await pruneDuplicateDailySnapshots(client);
     await pruneExpiredSnapshots(client);
 
     await client.query("commit");
