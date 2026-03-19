@@ -3,7 +3,6 @@
 import type { DailyScanSummaryDto } from "@/lib/api-contracts/swing-radar";
 import { SignalToneBadge } from "@/components/shared/signal-tone-badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { formatDateTimeShort } from "@/lib/utils";
 
 function formatTurnover(value?: number | null) {
   if (!value || value <= 0) {
@@ -35,9 +34,7 @@ export function DailyCandidatesPanel({ dailyScan }: { dailyScan: DailyScanSummar
       <CardHeader className="flex flex-row items-start justify-between gap-4">
         <div>
           <CardTitle>오늘의 후보</CardTitle>
-          <p className="mt-2 text-sm text-muted-foreground">
-            최신 유니버스 스캔 기준 상위 후보입니다. 생성 시각 {formatDateTimeShort(dailyScan.generatedAt)}
-          </p>
+          <p className="mt-2 text-sm text-muted-foreground">최신 유니버스 스캔 기준 상위 후보입니다.</p>
         </div>
         <div className="rounded-2xl border border-border/70 bg-secondary/35 px-4 py-3 text-sm text-muted-foreground">
           배치 {dailyScan.succeededBatches}/{dailyScan.totalBatches} 성공
