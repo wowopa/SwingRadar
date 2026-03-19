@@ -151,8 +151,13 @@ export function RecommendationCard({
           </div>
         ) : null}
 
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
           <QuickMetric label="기본 신호" value={signalScoreLabel} detail={`${formatScore(item.score)}점`} />
+          <QuickMetric
+            label="활성화 점수"
+            value={typeof item.activationScore === "number" ? `${formatScore(item.activationScore)}점` : "계산 중"}
+            detail="공용 추적 선별 기준"
+          />
           <QuickMetric label="적중률" value={`${item.validation.hitRate}%`} />
           <QuickMetric label="평균 수익" value={formatPercent(item.validation.avgReturn)} />
           <QuickMetric label="표본 수" value={`${item.validation.sampleSize}건`} />
@@ -218,6 +223,11 @@ export function RecommendationCard({
               {item.candidateScore ? (
                 <span className="rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs text-primary">
                   오늘 랭킹 점수 {item.candidateScore}
+                </span>
+              ) : null}
+              {typeof item.activationScore === "number" ? (
+                <span className="rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs text-sky-700">
+                  활성화 점수 {formatScore(item.activationScore)}
                 </span>
               ) : null}
               {item.checkpoints.map((checkpoint) => (

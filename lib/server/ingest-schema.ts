@@ -10,7 +10,7 @@ const signalTone = z.enum(["긍정", "중립", "주의"]);
 const resultStatus = z.enum(["진행중", "성공", "실패", "무효화"]);
 const riskStatus = z.enum(["양호", "확인 필요", "주의"]);
 const scenarioLabel = z.enum(["기본", "강세", "약세"]);
-const validationBasis = z.enum(["실측 기반", "유사 업종 참고", "유사 흐름 참고", "보수 계산"]);
+const validationBasis = z.enum(["실측 기반", "공용 추적 참고", "유사 업종 참고", "유사 흐름 참고", "보수 계산"]);
 
 const recommendationItemSchema = z.object({
   ticker: z.string(),
@@ -18,6 +18,7 @@ const recommendationItemSchema = z.object({
   sector: z.string(),
   signalTone,
   score: z.number(),
+  activationScore: z.number().optional(),
   signalLabel: z.string(),
   rationale: z.string(),
   invalidation: z.string(),
@@ -41,6 +42,7 @@ const analysisItemSchema = z.object({
   company: z.string(),
   signalTone,
   score: z.number(),
+  activationScore: z.number().optional(),
   headline: z.string(),
   invalidation: z.string(),
   analysisSummary: z.array(z.object({ label: z.string(), value: z.string(), note: z.string() })),

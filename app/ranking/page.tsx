@@ -241,7 +241,8 @@ export default async function RankingPage() {
               시장 전체를 스캔한 뒤 오늘 먼저 볼 만한 후보를 점수순으로 정리한 표입니다. 실제 관찰 종목이나 자동 추적 종목은 이 후보 중 더 엄격한 기준을 통과한 일부만 이어집니다.
             </p>
             <p className="text-xs leading-5 text-muted-foreground">
-              랭킹 점수는 기본 신호 점수에 검증 품질, 유동성, 거래량 상태, 가격 구조를 더해 다시 정렬한 값입니다.
+              랭킹 점수는 기본 신호 점수에 검증 품질, 유동성, 거래량 상태, 가격 구조를 더해 다시 정렬한 값입니다. 활성화 점수는
+              공용 추적 편입 가능성을 보는 별도 점수입니다.
             </p>
           </CardHeader>
           <CardContent className="overflow-x-auto">
@@ -254,6 +255,7 @@ export default async function RankingPage() {
                       <th className="w-[180px] pb-3 pr-4">종목</th>
                       <th className="w-[96px] pb-3 pr-4">랭킹 점수</th>
                       <th className="w-[96px] pb-3 pr-4">기본 신호</th>
+                      <th className="w-[96px] pb-3 pr-4">활성화</th>
                       <th className="w-[104px] pb-3 pr-4">현재가</th>
                       <th className="w-[120px] pb-3 pr-4">20일 평균 거래대금</th>
                       <th className="w-[240px] pb-3 pr-4">후보 해석</th>
@@ -284,6 +286,9 @@ export default async function RankingPage() {
                           </td>
                           <td className="py-4 pr-4">
                             <div className="text-foreground/78">{item.score}</div>
+                          </td>
+                          <td className="py-4 pr-4 text-foreground/78">
+                            {typeof item.recommendation?.activationScore === "number" ? item.recommendation.activationScore : "-"}
                           </td>
                           <td className="py-4 pr-4 text-foreground/78">{item.currentPrice ? formatPrice(item.currentPrice) : "-"}</td>
                           <td className="py-4 pr-4 text-foreground/78">{formatTurnover(item.averageTurnover20)}</td>

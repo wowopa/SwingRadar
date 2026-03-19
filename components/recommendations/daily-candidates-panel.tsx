@@ -62,10 +62,16 @@ export function DailyCandidatesPanel({ dailyScan }: { dailyScan: DailyScanSummar
                     </div>
                     <SignalToneBadge tone={item.signalTone} />
                   </div>
-                  <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
+                  <div className="mt-4 grid grid-cols-3 gap-3 text-sm">
                     <div className="rounded-xl border border-border/70 px-3 py-2">
                       <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">랭킹 점수</p>
                       <p className="mt-1 font-semibold text-foreground">{item.candidateScore}</p>
+                    </div>
+                    <div className="rounded-xl border border-border/70 px-3 py-2">
+                      <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">활성화</p>
+                      <p className="mt-1 font-semibold text-foreground">
+                        {typeof item.activationScore === "number" ? item.activationScore : "계산 중"}
+                      </p>
                     </div>
                     <div className="rounded-xl border border-border/70 px-3 py-2">
                       <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">유동성</p>

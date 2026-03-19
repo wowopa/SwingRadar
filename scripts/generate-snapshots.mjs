@@ -2008,12 +2008,14 @@ async function main() {
     }
   }
 
+  const rankingStats = buildRankingStats(candidateHistoryDocument.runs ?? []);
+
   const trackingState = buildTrackingState({
     generatedAt,
     candidateEntries: Array.from(trackingPool.values()),
     marketByTicker,
     previousState: previousTrackingState,
-    rankingStats: buildRankingStats(candidateHistoryDocument.runs ?? [])
+    rankingStats
   });
   const trackingEvents = buildTrackingEventsFromState(trackingState);
   const validationByTicker = new Map(validation.items.map((item) => [item.ticker, buildMeasuredValidationItem(item)]));
@@ -2053,6 +2055,8 @@ async function main() {
     const coverage = summarizeEventCoverage(tickerNews);
     const technicalIndicators = calculateTechnicalIndicators(item);
     const technicalAdjustment = calculateTechnicalAdjustment(technicalIndicators, item);
+    const rankingStat = rankingStats.get(item.ticker);
+    const activationScore = roundNumber(buildActivationScore(item, rankingStat), 1) ?? 0;
     const baseScore = getSwingBaseScore(item);
     const score = clamp(roundNumber(baseScore + technicalAdjustment, 1) ?? baseScore, 0, 100);
     const invalidationDistance = Number((((item.invalidationPrice - item.currentPrice) / item.currentPrice) * 100).toFixed(1));
@@ -2068,6 +2072,7 @@ async function main() {
       sector: item.sector,
       signalTone,
       score,
+      activationScore,
       signalLabel: label,
       rationale: buildRationale(item, technicalIndicators),
       invalidation: buildInvalidation(item),
@@ -2091,6 +2096,7 @@ async function main() {
       company: item.company,
       signalTone,
       score,
+      activationScore,
       headline: `${item.company} 관찰 신호는 ${label} 관점에서 해석합니다.`,
       invalidation: buildInvalidation(item),
       analysisSummary: buildAnalysisSummary(item, quality, technicalIndicators),

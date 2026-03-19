@@ -15,6 +15,7 @@ export interface RecommendationListItemDto {
   sector: string;
   signalTone: SignalToneDto;
   score: number;
+  activationScore?: number;
   signalLabel: string;
   rationale: string;
   invalidation: string;
@@ -45,6 +46,7 @@ export interface DailyCandidateDto {
   signalTone: SignalToneDto;
   score: number;
   candidateScore: number;
+  activationScore?: number;
   currentPrice?: number | null;
   confirmationPrice?: number | null;
   expansionPrice?: number | null;
@@ -153,6 +155,7 @@ export interface TickerAnalysisDto {
   company: string;
   signalTone: SignalToneDto;
   score: number;
+  activationScore?: number;
   headline: string;
   invalidation: string;
   analysisSummary: AnalysisSummaryMetricDto[];

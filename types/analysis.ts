@@ -96,6 +96,7 @@ export interface TickerAnalysis {
   company: string;
   signalTone: SignalTone;
   score: number;
+  activationScore?: number;
   headline: string;
   invalidation: string;
   analysisSummary: AnalysisSummaryMetric[];

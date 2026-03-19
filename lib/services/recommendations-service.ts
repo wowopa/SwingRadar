@@ -36,6 +36,7 @@ export async function listRecommendations(query: RecommendationsQuery): Promise<
       {
         rank: index + 1,
         candidateScore: candidate.candidateScore,
+        activationScore: sourceByTicker.get(candidate.ticker)?.activationScore,
         eventCoverage: candidate.eventCoverage,
         batch: candidate.batch,
         riskRewardRatio: formatRiskRewardRatio(
@@ -66,6 +67,7 @@ export async function listRecommendations(query: RecommendationsQuery): Promise<
             item.riskRewardRatio,
           featuredRank: index + 1,
           candidateScore: candidate.candidateScore,
+          activationScore: item.activationScore,
           eventCoverage: candidate.eventCoverage,
           candidateBatch: candidate.batch
         }];
@@ -79,6 +81,7 @@ export async function listRecommendations(query: RecommendationsQuery): Promise<
               riskRewardRatio: candidate.riskRewardRatio ?? item.riskRewardRatio,
               featuredRank: candidate.rank,
               candidateScore: candidate.candidateScore,
+              activationScore: candidate.activationScore,
               eventCoverage: candidate.eventCoverage,
               candidateBatch: candidate.batch
             }
@@ -122,6 +125,10 @@ export async function listRecommendations(query: RecommendationsQuery): Promise<
           succeededBatches: dailyCandidates.succeededBatches,
           failedBatches: dailyCandidates.failedBatches,
           topCandidates: dailyCandidates.topCandidates
+            .map((candidate) => ({
+              ...candidate,
+              activationScore: sourceByTicker.get(candidate.ticker)?.activationScore
+            }))
         }
       : null
   };

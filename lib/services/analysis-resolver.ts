@@ -57,7 +57,8 @@ function overlayDailyCandidateAnalysis(item: TickerAnalysisDto, dailyCandidate?:
 
   return {
     ...item,
-    score: dailyCandidate.score
+    score: dailyCandidate.score,
+    activationScore: dailyCandidate.activationScore ?? item.activationScore
   };
 }
 
@@ -272,6 +273,7 @@ function buildAnalysisFallback(
     company: recommendation.company,
     signalTone: recommendation.signalTone,
     score: recommendation.score,
+    activationScore: dailyCandidate?.activationScore ?? recommendation.activationScore,
     headline: `${recommendation.company} 관찰 신호는 ${recommendation.signalLabel} 관점에서 해석합니다.`,
     invalidation: recommendation.invalidation,
     analysisSummary: buildAnalysisSummary(recommendation, coverage, scoreBreakdown),
@@ -312,6 +314,7 @@ function toRecommendationFromDailyCandidate(candidate: DailyCandidateDto, genera
     observationWindow: candidate.observationWindow,
     updatedAt: generatedAt.replace("T", " ").slice(0, 16),
     candidateScore: candidate.candidateScore,
+    activationScore: candidate.activationScore,
     eventCoverage: candidate.eventCoverage,
     candidateBatch: candidate.batch
   };

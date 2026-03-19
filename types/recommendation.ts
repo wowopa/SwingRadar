@@ -15,6 +15,7 @@ export interface Recommendation {
   sector: string;
   signalTone: SignalTone;
   score: number;
+  activationScore?: number;
   signalLabel: string;
   rationale: string;
   invalidation: string;

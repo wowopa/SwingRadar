@@ -11,6 +11,7 @@ export type DailyCandidate = {
   signalTone: "긍정" | "중립" | "주의";
   score: number;
   candidateScore: number;
+  activationScore?: number;
   currentPrice?: number | null;
   confirmationPrice?: number | null;
   expansionPrice?: number | null;

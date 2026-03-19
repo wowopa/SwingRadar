@@ -74,6 +74,24 @@ const analysisSignals = [
   }
 ] as const;
 
+const scoreSystemNotes = [
+  {
+    title: "기본 신호",
+    description:
+      "개별 종목의 추세, 수급, 변동성, 품질, 보조지표를 바탕으로 계산한 기본 분석 점수입니다. 개별 종목 분석에서 가장 먼저 읽는 중심 점수입니다."
+  },
+  {
+    title: "랭킹 점수",
+    description:
+      "기본 신호에 검증 품질, 유동성, 거래량 상태, 가격 구조를 더해 오늘의 후보를 다시 정렬한 점수입니다. 추천 랭킹과 오늘의 후보에서 우선순위를 볼 때 사용합니다."
+  },
+  {
+    title: "활성화 점수",
+    description:
+      "공용 추적에 올릴지 판단하는 별도 점수입니다. 최근 상위 후보 반복 등장, 거래대금, 기술 구조, 가격 위치까지 함께 반영해 감시 편입이나 진입 추적 조건을 넘는지 확인합니다."
+  }
+] as const;
+
 const cautions = [
   "점수가 높아도 무효화 가격이 너무 가깝거나 거래대금이 약하면 보수적으로 보는 편이 좋습니다.",
   "후보 수가 많다고 다 좋은 종목은 아닙니다. 가격 구조와 거래대금이 같이 받쳐주는지가 더 중요합니다.",
@@ -212,6 +230,25 @@ export default function GuidePage() {
               <div key={item} className="flex items-start gap-3 rounded-[24px] border border-border/70 bg-secondary/45 p-4">
                 <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
                 <p className="text-sm leading-6 text-foreground/82">{item}</p>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      </section>
+
+      <section>
+        <Card className="border-border/70 bg-white/82 shadow-sm">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-xl text-foreground">
+              <Medal className="h-5 w-5 text-primary" />
+              점수 체계 읽는 법
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="grid gap-4 md:grid-cols-3">
+            {scoreSystemNotes.map((item) => (
+              <div key={item.title} className="rounded-[24px] border border-border/70 bg-secondary/45 p-4">
+                <p className="text-sm font-semibold text-foreground">{item.title}</p>
+                <p className="mt-2 text-sm leading-6 text-foreground/80">{item.description}</p>
               </div>
             ))}
           </CardContent>

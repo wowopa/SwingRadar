@@ -139,6 +139,8 @@ export default async function AnalysisPage({ params }: { params: Promise<{ ticke
   const methodRead = getMethodRead();
   const signalScoreLabel = describeSignalScore(analysis.score);
   const featuredRank = dailyCandidates?.topCandidates.findIndex((item) => item.ticker === resolvedTicker);
+  const featuredCandidate =
+    typeof featuredRank === "number" && featuredRank >= 0 ? dailyCandidates?.topCandidates[featuredRank] : undefined;
   const historicalItems =
     trackingPayload?.history
       .filter((item) => resolveTicker(item.ticker) === resolvedTicker)
@@ -200,6 +202,24 @@ export default async function AnalysisPage({ params }: { params: Promise<{ ticke
                 <p className="mt-2 text-sm text-muted-foreground">기본 신호 {formatScore(analysis.score)} / 100점</p>
               </div>
               <SignalToneBadge tone={analysis.signalTone} />
+            </div>
+            <div className="grid gap-3 sm:grid-cols-3">
+              <div className="rounded-2xl border border-border/70 bg-secondary/25 px-4 py-3">
+                <p className="text-xs text-muted-foreground">기본 신호</p>
+                <p className="mt-1 text-base font-semibold text-foreground">{formatScore(analysis.score)}점</p>
+              </div>
+              <div className="rounded-2xl border border-border/70 bg-secondary/25 px-4 py-3">
+                <p className="text-xs text-muted-foreground">랭킹 점수</p>
+                <p className="mt-1 text-base font-semibold text-foreground">
+                  {typeof featuredCandidate?.candidateScore === "number" ? `${formatScore(featuredCandidate.candidateScore)}점` : "후보 외"}
+                </p>
+              </div>
+              <div className="rounded-2xl border border-border/70 bg-secondary/25 px-4 py-3">
+                <p className="text-xs text-muted-foreground">활성화 점수</p>
+                <p className="mt-1 text-base font-semibold text-foreground">
+                  {typeof analysis.activationScore === "number" ? `${formatScore(analysis.activationScore)}점` : "계산 중"}
+                </p>
+              </div>
             </div>
           </CardHeader>
           <CardContent className="space-y-6">
