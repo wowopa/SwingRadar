@@ -13,6 +13,7 @@ import {
   createClientId
 } from "@/components/admin/dashboard-shared";
 import type {
+  AccessStatsReportPayload,
   AdminStatusPayload,
   AuditItem,
   AutoHealReportPayload,
@@ -71,6 +72,7 @@ export function AdminDashboard() {
   const [snapshotGenerationReport, setSnapshotGenerationReport] = useState<SnapshotGenerationReportPayload | null>(null);
   const [postLaunchHistory, setPostLaunchHistory] = useState<PostLaunchHistoryEntryPayload[]>([]);
   const [thresholdAdviceReport, setThresholdAdviceReport] = useState<ThresholdAdviceReportPayload | null>(null);
+  const [accessStatsReport, setAccessStatsReport] = useState<AccessStatsReportPayload | null>(null);
   const [runtimeStorageReport, setRuntimeStorageReport] = useState<RuntimeStorageReportPayload | null>(null);
   const [databaseStorageReport, setDatabaseStorageReport] = useState<DatabaseStorageReportPayload | null>(null);
   const [audits, setAudits] = useState<AuditItem[]>([]);
@@ -174,6 +176,7 @@ export function AdminDashboard() {
         setSnapshotGenerationReport(null);
         setPostLaunchHistory([]);
         setThresholdAdviceReport(null);
+        setAccessStatsReport(null);
         setRuntimeStorageReport(null);
         setDatabaseStorageReport(null);
         setPopupNotice(null);
@@ -193,6 +196,7 @@ export function AdminDashboard() {
       setSnapshotGenerationReport(statusJson.snapshotGenerationReport ?? null);
       setPostLaunchHistory(statusJson.postLaunchHistory ?? []);
       setThresholdAdviceReport(statusJson.thresholdAdviceReport ?? null);
+      setAccessStatsReport(statusJson.accessStatsReport ?? null);
       setRuntimeStorageReport(statusJson.runtimeStorageReport ?? null);
       setDatabaseStorageReport(statusJson.databaseStorageReport ?? null);
       const [auditResult, draftResult, newsResult, popupResult, watchlistResult, universeResult] = await Promise.allSettled([
@@ -725,6 +729,7 @@ export function AdminDashboard() {
             snapshotGenerationReport={snapshotGenerationReport}
             postLaunchHistory={postLaunchHistory}
             thresholdAdviceReport={thresholdAdviceReport}
+            accessStatsReport={accessStatsReport}
             runtimeStorageReport={runtimeStorageReport}
             databaseStorageReport={databaseStorageReport}
             dailyCandidates={dailyCandidates}

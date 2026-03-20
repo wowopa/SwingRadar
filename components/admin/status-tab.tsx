@@ -11,6 +11,7 @@ import {
   formatUniverseReviewStatus
 } from "@/components/admin/dashboard-shared";
 import type {
+  AccessStatsReportPayload,
   AuditItem,
   AutoHealReportPayload,
   DatabaseStorageReportPayload,
@@ -61,6 +62,23 @@ function formatBytes(value: number | null | undefined) {
   return `${current.toFixed(current >= 100 || index === 0 ? 0 : 1)} ${units[index]}`;
 }
 
+function formatShortDate(value: string) {
+  if (!value) {
+    return "-";
+  }
+
+  const date = new Date(`${value}T00:00:00+09:00`);
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  return new Intl.DateTimeFormat("ko-KR", {
+    timeZone: "Asia/Seoul",
+    month: "2-digit",
+    day: "2-digit"
+  }).format(date);
+}
+
 export function StatusTab({
   health,
   incidents,
@@ -72,6 +90,7 @@ export function StatusTab({
   snapshotGenerationReport,
   postLaunchHistory,
   thresholdAdviceReport,
+  accessStatsReport,
   runtimeStorageReport,
   databaseStorageReport,
   dailyCandidates,
@@ -90,6 +109,7 @@ export function StatusTab({
   snapshotGenerationReport: SnapshotGenerationReportPayload | null;
   postLaunchHistory: PostLaunchHistoryEntryPayload[];
   thresholdAdviceReport: ThresholdAdviceReportPayload | null;
+  accessStatsReport: AccessStatsReportPayload | null;
   runtimeStorageReport: RuntimeStorageReportPayload | null;
   databaseStorageReport: DatabaseStorageReportPayload | null;
   dailyCandidates: UniverseDailyCandidates | null;
@@ -190,6 +210,57 @@ export function StatusTab({
           </CardContent>
         </Card>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>접속 통계</CardTitle>
+        </CardHeader>
+        <CardContent className="grid gap-4 md:grid-cols-4">
+          <MetricCard
+            label="오늘"
+            value={accessStatsReport ? accessStatsReport.today.uniqueVisitors.toLocaleString() : "확인 중"}
+            note={accessStatsReport ? `${formatShortDate(accessStatsReport.today.date)} 기준` : "방문 통계 집계 중"}
+          />
+          <MetricCard
+            label="최근 7일"
+            value={accessStatsReport ? accessStatsReport.last7Days.uniqueVisitors.toLocaleString() : "확인 중"}
+            note={
+              accessStatsReport
+                ? `${formatShortDate(accessStatsReport.last7Days.startDate)} ~ ${formatShortDate(accessStatsReport.last7Days.endDate)}`
+                : "최근 7일 기준"
+            }
+          />
+          <MetricCard
+            label="최근 30일"
+            value={accessStatsReport ? accessStatsReport.last30Days.uniqueVisitors.toLocaleString() : "확인 중"}
+            note={
+              accessStatsReport
+                ? `${formatShortDate(accessStatsReport.last30Days.startDate)} ~ ${formatShortDate(accessStatsReport.last30Days.endDate)}`
+                : "최근 30일 기준"
+            }
+          />
+          <MetricCard
+            label="집계 일수"
+            value={accessStatsReport ? accessStatsReport.trackedDays.toLocaleString() : "확인 중"}
+            note={accessStatsReport ? formatDateTime(accessStatsReport.generatedAt) : "아직 데이터가 없습니다"}
+          />
+        </CardContent>
+        <CardContent className="space-y-3 pt-0">
+          {accessStatsReport?.recentDaily.length ? (
+            accessStatsReport.recentDaily.slice(0, 7).map((entry) => (
+              <div key={entry.date} className="rounded-[24px] border border-border/70 bg-secondary/45 p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-sm font-semibold text-foreground">{formatShortDate(entry.date)}</p>
+                  <p className="text-xs text-muted-foreground">{entry.uniqueVisitors.toLocaleString()}명</p>
+                </div>
+                <p className="mt-2 text-xs text-muted-foreground">당일 기준 고유 방문자 수</p>
+              </div>
+            ))
+          ) : (
+            <p className="text-sm text-muted-foreground">아직 집계된 방문 기록이 없습니다.</p>
+          )}
+        </CardContent>
+      </Card>
 
       <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
         <Card>

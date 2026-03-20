@@ -180,6 +180,29 @@ export type RuntimeStorageReportPayload = {
   metadata?: Record<string, unknown>;
 };
 
+export type AccessStatsReportPayload = {
+  generatedAt: string;
+  today: {
+    date: string;
+    uniqueVisitors: number;
+  };
+  last7Days: {
+    startDate: string;
+    endDate: string;
+    uniqueVisitors: number;
+  };
+  last30Days: {
+    startDate: string;
+    endDate: string;
+    uniqueVisitors: number;
+  };
+  trackedDays: number;
+  recentDaily: Array<{
+    date: string;
+    uniqueVisitors: number;
+  }>;
+};
+
 export type DatabaseStorageReportPayload = {
   checkedAt: string;
   databaseSizeBytes: number;
@@ -231,6 +254,7 @@ export type AdminStatusPayload = {
   snapshotGenerationReport: SnapshotGenerationReportPayload | null;
   postLaunchHistory: PostLaunchHistoryEntryPayload[];
   thresholdAdviceReport: ThresholdAdviceReportPayload | null;
+  accessStatsReport: AccessStatsReportPayload | null;
   runtimeStorageReport: RuntimeStorageReportPayload | null;
   databaseStorageReport: DatabaseStorageReportPayload | null;
   incidents: OperationalIncident[];

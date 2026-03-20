@@ -1,4 +1,5 @@
 import { jsonOk } from "@/lib/server/api-response";
+import { loadAccessStatsReport } from "@/lib/server/access-stats";
 import { assertAdminRequest } from "@/lib/server/admin-auth";
 import { listAuditLogs } from "@/lib/server/audit-log";
 import { buildOperationalIncidents } from "@/lib/server/operational-incidents";
@@ -31,6 +32,7 @@ export async function GET(request: Request) {
       loadSnapshotGenerationReport(),
       loadPostLaunchHistory(),
       loadThresholdAdviceReport(),
+      loadAccessStatsReport(),
       loadRuntimeStorageReport(),
       loadDatabaseStorageReport(),
       listAuditLogs(policy.audit.adminListLimit)
@@ -46,6 +48,7 @@ export async function GET(request: Request) {
       snapshotGenerationReportResult,
       postLaunchHistoryResult,
       thresholdAdviceReportResult,
+      accessStatsReportResult,
       runtimeStorageReportResult,
       databaseStorageReportResult,
       auditsResult
@@ -125,6 +128,13 @@ export async function GET(request: Request) {
       );
     }
 
+    const accessStatsReport = accessStatsReportResult.status === "fulfilled" ? accessStatsReportResult.value : null;
+    if (accessStatsReportResult.status !== "fulfilled") {
+      statusWarnings.push(
+        `access-stats-report: ${accessStatsReportResult.reason instanceof Error ? accessStatsReportResult.reason.message : "Unexpected access stats report failure"}`
+      );
+    }
+
     const runtimeStorageReport = runtimeStorageReportResult.status === "fulfilled" ? runtimeStorageReportResult.value : null;
     if (runtimeStorageReportResult.status !== "fulfilled") {
       statusWarnings.push(
@@ -167,6 +177,7 @@ export async function GET(request: Request) {
         snapshotGenerationReport,
         postLaunchHistory: postLaunchHistory?.slice(-3).reverse() ?? [],
         thresholdAdviceReport,
+        accessStatsReport,
         runtimeStorageReport,
         databaseStorageReport,
         statusWarnings,

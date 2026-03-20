@@ -62,3 +62,20 @@ create table if not exists runtime_documents (
   payload jsonb not null,
   updated_at timestamptz not null default now()
 );
+
+create table if not exists site_visit_daily_visitors (
+  visit_date date not null,
+  visitor_hash text not null,
+  first_seen_at timestamptz not null default now(),
+  last_seen_at timestamptz not null default now(),
+  visits integer not null default 1,
+  first_path text not null default '/',
+  last_path text not null default '/',
+  primary key (visit_date, visitor_hash)
+);
+
+create index if not exists site_visit_daily_visitors_visit_date_idx
+  on site_visit_daily_visitors (visit_date desc);
+
+create index if not exists site_visit_daily_visitors_last_seen_at_idx
+  on site_visit_daily_visitors (last_seen_at desc);
