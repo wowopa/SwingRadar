@@ -132,7 +132,7 @@ const pageRoles = [
   {
     title: "운영 후원",
     icon: HandHeart,
-    description: "서비스가 도움이 되셨다면 토스 결제창으로 1회성 운영 후원을 보낼 수 있는 화면입니다."
+    description: "서비스가 도움이 되셨다면 토스 송금 링크로 1회성 운영 후원을 보낼 수 있는 화면입니다."
   }
 ] as const;
 
