@@ -11,7 +11,7 @@ function getSelectionReason(detail: TrackingDetail) {
 function getSelectionHighlights(detail: TrackingDetail) {
   return (
     detail.selectionHighlights ?? [
-      "추천 톤보다 반복 등장, 유동성, 가격 구조 확인 기준을 우선해 공용 추적 편입 여부를 판단합니다."
+      "추천 톤보다 반복 등장, 유동성, 가격 구조 확인 기준을 우선해 자동 감시 시작 여부를 판단합니다."
     ]
   );
 }

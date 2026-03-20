@@ -235,7 +235,7 @@ export default async function RankingPage() {
           </CardHeader>
           <CardContent>
             <p className="text-3xl font-semibold text-foreground">{todayRanking.length}</p>
-            <p className="mt-2 text-sm leading-6 text-muted-foreground">상위 후보로 추린 종목 수입니다. 이 가운데 일부는 공용 추적과 후속 감시 대상으로 이어집니다.</p>
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">상위 후보로 추린 종목 수입니다. 이 가운데 일부는 공용 추적의 자동 감시 단계로 이어집니다.</p>
           </CardContent>
         </Card>
         <Card>
@@ -290,7 +290,7 @@ export default async function RankingPage() {
               오늘의 후보
             </CardTitle>
             <p className="text-sm leading-6 text-muted-foreground">
-              시장 전체를 스캔한 뒤 오늘 먼저 볼 만한 후보를 점수순으로 정리한 표입니다. 실제 관찰 종목이나 자동 추적 종목은 이 후보 중 더 엄격한 기준을 통과한 일부만 이어집니다.
+              시장 전체를 스캔한 뒤 오늘 먼저 볼 만한 후보를 점수순으로 정리한 표입니다. 실제 관찰 종목이나 공용 추적 종목은 이 후보 중 더 엄격한 기준을 통과한 일부만 이어집니다.
             </p>
             <p className="text-xs leading-5 text-muted-foreground">
               랭킹 점수는 기본 신호 점수에 검증 품질, 유동성, 거래량 상태, 가격 구조를 더해 다시 정렬한 값입니다. 활성화 점수는

@@ -41,7 +41,7 @@ export function TrackingDiagnosticPanel({ diagnostic }: { diagnostic?: TrackingD
       <CardContent className="space-y-4">
         <div className="grid gap-3 sm:grid-cols-3">
           <MetricCard label="활성화 점수" value={`${formatScore(diagnostic.activationScore)}점`} note="공용 추적 선별용 점수" />
-          <MetricCard label="감시 기준" value={`${formatScore(diagnostic.watchThreshold)}점`} note="감시 편입 최소 기준" />
+          <MetricCard label="자동 감시 기준" value={`${formatScore(diagnostic.watchThreshold)}점`} note="자동 감시 시작 최소 기준" />
           <MetricCard label="진입 기준" value={`${formatScore(diagnostic.entryThreshold)}점`} note="진입 추적 최소 기준" />
         </div>
 

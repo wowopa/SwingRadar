@@ -274,7 +274,7 @@ export function RecommendationCard({
               </span>
             </div>
             <p className="mt-3 text-sm leading-7 text-foreground/80">
-              활성화 점수 {formatScore(item.trackingDiagnostic.activationScore)}점 / 감시 기준 {formatScore(item.trackingDiagnostic.watchThreshold)}점 /
+              활성화 점수 {formatScore(item.trackingDiagnostic.activationScore)}점 / 자동 감시 기준 {formatScore(item.trackingDiagnostic.watchThreshold)}점 /
               진입 기준 {formatScore(item.trackingDiagnostic.entryThreshold)}점
             </p>
             <div className="mt-4 grid gap-4 md:grid-cols-2">

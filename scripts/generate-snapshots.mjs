@@ -1469,7 +1469,7 @@ function buildTrackingSelectionContext({ recommendation, marketItem, stateEntry,
   const averageTurnover20 = marketItem ? getAverageTurnover20(marketItem) : 0;
   const signalTone = recommendation?.signalTone ?? KO.neutral;
   const rankLabel = latestRank ? `${latestRank}위` : "순위 기록 없음";
-  const appearanceLabel = appearances > 0 ? `${appearances}회` : "첫 편입";
+  const appearanceLabel = appearances > 0 ? `${appearances}회` : "첫 자동 감시 후보";
   const consecutiveLabel = consecutiveAppearances > 1 ? `최근 ${consecutiveAppearances}회 연속 등장` : "연속 등장 기록은 아직 1회";
   const turnoverLabel = formatTrackingAmount(averageTurnover20);
   const currentPrice = Number(marketItem?.currentPrice ?? stateEntry?.currentPrice ?? 0);
@@ -1482,26 +1482,26 @@ function buildTrackingSelectionContext({ recommendation, marketItem, stateEntry,
       : "가격 구조 확인 데이터는 계속 보강 중입니다.";
   const toneNote =
     signalTone === KO.neutral
-      ? "현재 추천 톤은 중립이지만, 공용 추적은 즉시 매수 신호보다 반복 등장, 유동성, 가격 구조 확인을 우선해 편입합니다."
+      ? "현재 추천 톤은 중립이지만, 공용 추적은 즉시 매수 신호보다 반복 등장, 유동성, 가격 구조 확인을 우선합니다."
       : signalTone === KO.positive
         ? "현재 추천 톤도 긍정 구간이라 추적 우선순위가 높은 편입니다."
-        : "현재 추천 톤은 주의지만, 공용 추적은 경계 구간의 구조 회복 여부를 다시 보는 감시 단계로도 활용합니다.";
+        : "현재 추천 톤은 주의지만, 공용 추적은 경계 구간의 구조 회복 여부를 다시 보는 자동 감시 단계로도 활용합니다.";
 
   const selectionReason =
     stage === "진입 추적"
       ? `${company}는 최근 상위 후보에 ${appearanceLabel} 등장했고 최신 순위는 ${rankLabel}입니다. 20일 평균 거래대금 ${turnoverLabel}, 활성화 점수 ${activationScore}점으로 진입 추적 기준 ${activationThreshold}점을 충족해 공용 추적 진행 대상으로 승격했습니다. ${toneNote} ${structureNote}`
-      : `${company}는 최근 상위 후보에 ${appearanceLabel} 등장했고 최신 순위는 ${rankLabel}입니다. ${consecutiveLabel}. 20일 평균 거래대금 ${turnoverLabel}, 활성화 점수 ${activationScore}점으로 감시 편입 기준 ${activationThreshold}점을 충족해 공용 추적 대상에 편입했습니다. ${toneNote} ${structureNote}`;
+      : `${company}는 최근 상위 후보에 ${appearanceLabel} 등장했고 최신 순위는 ${rankLabel}입니다. ${consecutiveLabel}. 20일 평균 거래대금 ${turnoverLabel}, 활성화 점수 ${activationScore}점으로 자동 감시 기준 ${activationThreshold}점을 충족해 공용 추적의 자동 감시를 시작합니다. ${toneNote} ${structureNote}`;
 
   const selectionHighlights = [
     `최근 상위 후보 ${appearanceLabel}, 최신 순위 ${rankLabel}`,
     consecutiveLabel,
-    `활성화 점수 ${activationScore}점 / ${stage === "진입 추적" ? "진입" : "감시"} 기준 ${activationThreshold}점`,
+    `활성화 점수 ${activationScore}점 / ${stage === "진입 추적" ? "진입" : "자동 감시"} 기준 ${activationThreshold}점`,
     `20일 평균 거래대금 ${turnoverLabel}`,
     signalTone === KO.neutral
       ? "현재 톤은 중립이지만, 공용 추적은 톤보다 반복 등장과 유동성, 가격 구조를 우선합니다."
       : signalTone === KO.positive
         ? "현재 톤이 긍정이라 추적 우선순위를 더 높게 봅니다."
-        : "현재 톤은 주의지만, 감시 단계에서 구조 회복 여부를 다시 확인합니다."
+        : "현재 톤은 주의지만, 자동 감시 단계에서 구조 회복 여부를 다시 확인합니다."
   ];
 
   if (stage === "진입 추적" && Number(stateEntry?.entryPrice ?? 0) > 0 && Number(stateEntry?.invalidationPrice ?? 0) > 0) {
@@ -1917,7 +1917,7 @@ function buildTrackingDiagnostic(item, activationScore, rankingStat, config) {
   }
 
   return {
-    stage: entryEligible ? "진입 추적 가능" : watchEligible ? "감시 편입 가능" : "조건 보강 필요",
+    stage: entryEligible ? "진입 추적 가능" : watchEligible ? "자동 감시 가능" : "조건 보강 필요",
     activationScore,
     watchThreshold: config.minWatchActivationScore,
     entryThreshold: config.minEntryActivationScore,
