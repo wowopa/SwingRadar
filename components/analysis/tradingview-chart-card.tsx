@@ -455,17 +455,27 @@ export function TradingViewChartCard({
     macdChart.timeScale().fitContent();
     chartsRef.current = [priceChart, turnoverChart, macdChart];
 
-    const resizeObserver = new ResizeObserver((entries) => {
-      const entry = entries[0];
-      if (!entry) return;
-      const width = Math.floor(entry.contentRect.width);
-      chartsRef.current.forEach((chart) => {
+    const chartEntries = [
+      { chart: priceChart, container: priceContainerRef.current },
+      { chart: turnoverChart, container: turnoverContainerRef.current },
+      { chart: macdChart, container: macdContainerRef.current }
+    ] as const;
+
+    const resizeObserver = new ResizeObserver(() => {
+      chartEntries.forEach(({ chart, container }) => {
+        const width = Math.max(0, Math.floor(container.clientWidth));
+        if (!width) {
+          return;
+        }
+
         chart.applyOptions({ width });
         chart.timeScale().fitContent();
       });
     });
 
-    resizeObserver.observe(priceContainerRef.current);
+    chartEntries.forEach(({ container }) => {
+      resizeObserver.observe(container);
+    });
 
     return () => {
       resizeObserver.disconnect();
