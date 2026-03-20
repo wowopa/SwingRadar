@@ -4,6 +4,7 @@ import {
   BookOpenText,
   CheckCircle2,
   Compass,
+  HandHeart,
   Medal,
   Radar,
   Search,
@@ -127,6 +128,11 @@ const pageRoles = [
     title: "개별 분석",
     icon: Search,
     description: "차트와 가격 기준, 판단 메모를 바탕으로 실제 매매 판단을 돕는 화면입니다."
+  },
+  {
+    title: "운영 후원",
+    icon: HandHeart,
+    description: "서비스가 도움이 되셨다면 토스 결제창으로 1회성 운영 후원을 보낼 수 있는 화면입니다."
   }
 ] as const;
 

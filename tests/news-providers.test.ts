@@ -3,6 +3,9 @@ import { describe, expect, it } from "vitest";
 
 import { dedupeArticles, filterAndRankArticles } from "../scripts/lib/news-providers.mjs";
 
+const RECENT_DATE = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+const PREVIOUS_DATE = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+
 describe("news provider dedupe", () => {
   it("keeps the better source when near-duplicate articles exist", () => {
     const items = dedupeArticles([
@@ -12,7 +15,7 @@ describe("news provider dedupe", () => {
         summary: "삼성전자가 반도체 투자 확대에 나섰다. 시장 기대가 커지고 있다.",
         source: "topstarnews",
         url: "https://www.topstarnews.net/article/1",
-        date: "2026-03-10"
+        date: RECENT_DATE
       },
       {
         ticker: "005930",
@@ -20,7 +23,7 @@ describe("news provider dedupe", () => {
         summary: "삼성전자가 반도체 투자 확대에 나섰다. 시장 기대가 커지고 있다.",
         source: "hankyung.com",
         url: "https://www.hankyung.com/article/1",
-        date: "2026-03-10"
+        date: RECENT_DATE
       }
     ]);
 
@@ -36,7 +39,7 @@ describe("news provider dedupe", () => {
         summary: "HBM 수요 확대 기대가 커지고 있다.",
         source: "mk.co.kr",
         url: "https://www.mk.co.kr/news/1",
-        date: "2026-03-10"
+        date: RECENT_DATE
       },
       {
         ticker: "000660",
@@ -44,7 +47,7 @@ describe("news provider dedupe", () => {
         summary: "HBM 수요 확대 기대가 커지고 있다.",
         source: "yna.co.kr",
         url: "https://www.yna.co.kr/view/1",
-        date: "2026-03-10"
+        date: RECENT_DATE
       }
     ]);
 
@@ -61,7 +64,7 @@ describe("news provider dedupe", () => {
           summary: "삼성전자 반도체 투자 확대 소식입니다.",
           source: "hankyung.com",
           url: "https://www.hankyung.com/article/1",
-          date: "2026-03-10",
+          date: RECENT_DATE,
           impact: "중립"
         },
         {
@@ -71,7 +74,7 @@ describe("news provider dedupe", () => {
           summary: "삼성전자 반도체 투자 확대 소식입니다.",
           source: "hankyung.com",
           url: "https://www.hankyung.com/article/2",
-          date: "2026-03-09",
+          date: PREVIOUS_DATE,
           impact: "중립"
         },
         {
@@ -81,7 +84,7 @@ describe("news provider dedupe", () => {
           summary: "삼성전자 반도체 투자 확대 소식입니다.",
           source: "mk.co.kr",
           url: "https://www.mk.co.kr/news/1",
-          date: "2026-03-10",
+          date: RECENT_DATE,
           impact: "중립"
         }
       ],
@@ -119,7 +122,7 @@ describe("news provider dedupe", () => {
           summary: "삼성전자 반도체 투자 확대 소식입니다.",
           source: "topstarnews",
           url: "https://www.topstarnews.net/article/1",
-          date: "2026-03-10",
+          date: RECENT_DATE,
           impact: "중립"
         },
         {
@@ -129,7 +132,7 @@ describe("news provider dedupe", () => {
           summary: "삼성전자 반도체 투자 확대 소식입니다.",
           source: "hankyung.com",
           url: "https://www.hankyung.com/article/1",
-          date: "2026-03-10",
+          date: RECENT_DATE,
           impact: "중립"
         }
       ],
