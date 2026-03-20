@@ -154,10 +154,11 @@ function mergeUniqueEntries(targetMap, entries, reasonFactory) {
 
 async function loadFocusedWatchlist(configDir) {
   const projectPaths = getProjectPaths(path.dirname(path.dirname(configDir)));
-  const manualWatchlistFile = path.join(configDir, "watchlist.json");
   const universeWatchlistFile = path.join(projectPaths.runtimeConfigDir, "watchlist.universe.json");
   const dailyCandidatesFile = path.join(projectPaths.universeDir, "daily-candidates.json");
   const dailyCandidateHistoryFile = path.join(projectPaths.universeDir, "daily-candidates-history.json");
+  const includeManualWatchlist = process.env.SWING_RADAR_INCLUDE_MANUAL_WATCHLIST === "true";
+  const manualWatchlistFile = path.join(configDir, "watchlist.json");
 
   const topUniverseCount = normalizePositiveInteger(process.env.SWING_RADAR_FOCUSED_WATCHLIST_TOP_UNIVERSE ?? "80", 80);
   const recentCandidateCount = normalizePositiveInteger(process.env.SWING_RADAR_FOCUSED_WATCHLIST_RECENT_CANDIDATES ?? "40", 40);
@@ -168,7 +169,7 @@ async function loadFocusedWatchlist(configDir) {
   );
 
   const [manualWatchlist, universeWatchlist, dailyCandidates, dailyCandidateHistory] = await Promise.all([
-    readOptionalJson(manualWatchlistFile, { tickers: [] }),
+    includeManualWatchlist ? readOptionalJson(manualWatchlistFile, { tickers: [] }) : Promise.resolve({ tickers: [] }),
     readOptionalJson(universeWatchlistFile, { tickers: [] }),
     readOptionalJson(dailyCandidatesFile, { topCandidates: [] }),
     readOptionalJson(dailyCandidateHistoryFile, { runs: [] })
@@ -177,11 +178,13 @@ async function loadFocusedWatchlist(configDir) {
   const universeMap = new Map((universeWatchlist.tickers ?? []).map((item) => [item.ticker, item]));
   const focused = new Map();
 
-  mergeUniqueEntries(focused, manualWatchlist.tickers, () => ({
-    key: "manual-watchlist",
-    label: "관심종목",
-    detail: "수동 관심종목"
-  }));
+  if (includeManualWatchlist) {
+    mergeUniqueEntries(focused, manualWatchlist.tickers, () => ({
+      key: "manual-watchlist",
+      label: "관심종목",
+      detail: "수동 관심종목"
+    }));
+  }
   mergeUniqueEntries(
     focused,
     (dailyCandidates.topCandidates ?? [])

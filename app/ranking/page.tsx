@@ -235,7 +235,7 @@ export default async function RankingPage() {
           </CardHeader>
           <CardContent>
             <p className="text-3xl font-semibold text-foreground">{todayRanking.length}</p>
-            <p className="mt-2 text-sm leading-6 text-muted-foreground">상위 후보로 추린 종목 수입니다. 이 가운데 일부만 watchlist로 이어집니다.</p>
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">상위 후보로 추린 종목 수입니다. 이 가운데 일부는 공용 추적과 후속 감시 대상으로 이어집니다.</p>
           </CardContent>
         </Card>
         <Card>

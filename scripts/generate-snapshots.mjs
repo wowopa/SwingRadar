@@ -2197,11 +2197,10 @@ async function main() {
   }
   const startedAt = new Date().toISOString();
 
-  const [market, news, validation, watchlistDocument, candidateHistoryDocument, currentDailyCandidatesDocument, previousTrackingState] = await Promise.all([
+  const [market, news, validation, candidateHistoryDocument, currentDailyCandidatesDocument, previousTrackingState] = await Promise.all([
     readJson(options.rawDir, "market-snapshot.json"),
     readJson(options.rawDir, "news-snapshot.json"),
     readOptionalJson(options.rawDir, "validation-snapshot.json", { items: [] }),
-    readOptionalJson(path.join(projectRoot, "data", "config"), "watchlist.json", { tickers: [] }),
     readOptionalJson(getRuntimePaths(projectRoot).universeDir, "daily-candidates-history.json", { runs: [] }),
     readOptionalJson(path.dirname(getDailyCandidatesPath()), path.basename(getDailyCandidatesPath()), { topCandidates: [] }),
     readOptionalJson(getRuntimePaths(projectRoot).trackingDir, "service-tracking-state.json", { generatedAt: null, entries: [] })
@@ -2217,11 +2216,6 @@ async function main() {
   const marketByTicker = new Map(market.items.map((item) => [item.ticker, item]));
   const marketRelativeStrengthMap = buildMarketRelativeStrengthMap(market.items);
   const trackingPool = new Map();
-  for (const entry of watchlistDocument.tickers ?? []) {
-    if (entry?.ticker) {
-      trackingPool.set(entry.ticker, entry);
-    }
-  }
   for (const candidate of currentDailyCandidatesDocument.topCandidates ?? []) {
     if (candidate?.ticker) {
       trackingPool.set(candidate.ticker, {
