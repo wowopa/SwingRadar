@@ -147,7 +147,7 @@ describe("symbols route", () => {
     expect(response.status).toBe(200);
     expect(payload.mode).toBe("featured");
     expect(payload.limit).toBe(3);
-    expect(payload.description).toContain("오늘 후보");
+    expect(payload.description).toContain("오늘의 후보");
     expect(payload.items.map((item) => item.ticker)).toEqual(["000660", "068270", "005930"]);
   });
 
