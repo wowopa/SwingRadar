@@ -21,8 +21,8 @@ export async function promoteUniverseCandidate(input: {
     note:
       normalizedNote ||
       (watchlistResult.added
-        ? "watchlist 편입 및 후속 파이프라인 반영 완료"
-        : "이미 watchlist에 포함된 종목으로 편입 상태만 정리"),
+        ? "예외 편입 및 후속 파이프라인 반영 완료"
+        : "이미 예외 편입 목록에 포함된 종목으로 편입 상태만 정리"),
     updatedBy: input.updatedBy
   });
 

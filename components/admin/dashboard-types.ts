@@ -182,6 +182,7 @@ export type RuntimeStorageReportPayload = {
 
 export type AccessStatsReportPayload = {
   generatedAt: string;
+  totalUniqueVisitors: number;
   today: {
     date: string;
     uniqueVisitors: number;
@@ -201,6 +202,12 @@ export type AccessStatsReportPayload = {
     date: string;
     uniqueVisitors: number;
   }>;
+};
+
+export type AccessStatsLookupPayload = {
+  requestedDate: string;
+  uniqueVisitors: number;
+  tracked: boolean;
 };
 
 export type DatabaseStorageReportPayload = {

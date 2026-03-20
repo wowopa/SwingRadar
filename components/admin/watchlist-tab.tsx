@@ -80,9 +80,9 @@ export function WatchlistTab({
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
-            <CardTitle>종목 추가</CardTitle>
+            <CardTitle>예외 편입 추가</CardTitle>
             <p className="mt-2 text-sm text-muted-foreground">
-              준비 중인 종목을 watchlist에 넣으면 분석 흐름에 다시 반영됩니다.
+              자동 선별과 별개로 예외적으로 직접 편입할 종목을 여기서 추가할 수 있습니다.
             </p>
           </div>
           <div className="flex gap-2">
@@ -109,7 +109,7 @@ export function WatchlistTab({
                 </div>
                 <Button onClick={() => addWatchlistSymbol(item.ticker)} disabled={loading || item.status === "ready"}>
                   <PlusCircle className="h-4 w-4" />
-                  {item.status === "ready" ? "편입 완료" : "watchlist 추가"}
+                  {item.status === "ready" ? "편입 완료" : "예외 편입"}
                 </Button>
               </div>
             ))
@@ -122,9 +122,9 @@ export function WatchlistTab({
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
-            <CardTitle>종목 설정 보정</CardTitle>
+            <CardTitle>예외 편입 설정 보정</CardTitle>
             <p className="mt-2 text-sm text-muted-foreground">
-              검색어, 키워드, 도메인 규칙을 다듬고 저장 전 차이를 확인할 수 있습니다.
+              예외 편입 종목의 검색어, 키워드, 도메인 규칙을 다듬고 저장 전 차이를 확인할 수 있습니다.
             </p>
           </div>
           <WatchlistPreviewDialog changes={watchlistChanges} disabled={!activeWatchlist || loading} onConfirm={onSaveMetadata} />
@@ -310,7 +310,7 @@ export function WatchlistTab({
               </>
             ) : (
               <p className="text-sm text-muted-foreground">
-                왼쪽에서 watchlist 종목을 고르면 설정을 수정할 수 있습니다.
+                왼쪽에서 예외 편입 종목을 고르면 설정을 수정할 수 있습니다.
               </p>
             )}
           </div>

@@ -259,7 +259,7 @@ export function AdminDashboard() {
         setWatchlistSyncStatuses(watchlistResult.value.syncStatuses ?? {});
         setActiveWatchlistTicker((current) => current || watchlistResult.value.watchlist?.[0]?.ticker || "");
       } else {
-        warnings.push({ label: "watchlist", message: getLoadErrorMessage(watchlistResult.reason) });
+        warnings.push({ label: "manual-override", message: getLoadErrorMessage(watchlistResult.reason) });
       }
 
       if (universeResult.status === "fulfilled") {
@@ -416,7 +416,7 @@ export function AdminDashboard() {
       });
 
       setMessage(
-        json.result?.added ? `종목 추가 완료. ${json.result?.estimate ?? ""}`.trim() : "이미 watchlist에 포함된 종목입니다."
+        json.result?.added ? `예외 편입 완료. ${json.result?.estimate ?? ""}`.trim() : "이미 예외 편입 목록에 포함된 종목입니다."
       );
 
       await loadDashboard();
@@ -425,7 +425,7 @@ export function AdminDashboard() {
         router.push(returnTo);
       }
     } catch (addError) {
-      setError(addError instanceof Error ? addError.message : "watchlist 종목 추가에 실패했습니다.");
+      setError(addError instanceof Error ? addError.message : "예외 편입 종목 추가에 실패했습니다.");
     } finally {
       setLoading(false);
     }
@@ -482,7 +482,7 @@ export function AdminDashboard() {
       }>("/api/admin/universe", {
         method: "POST",
         headers: { "Content-Type": "application/json", ...authHeaders },
-        body: JSON.stringify({ ticker, note: "watchlist 편입 실행" })
+        body: JSON.stringify({ ticker, note: "예외 편입 실행" })
       });
 
       setDailyCandidates((current) =>
@@ -499,8 +499,8 @@ export function AdminDashboard() {
       setActiveWatchlistTicker(ticker);
       setMessage(
         json.watchlist.added
-          ? `${ticker} 후보를 watchlist에 편입하고 후속 파이프라인까지 반영했습니다.`
-          : `${ticker} 후보는 이미 watchlist에 있어 편입 상태만 정리했습니다.`
+          ? `${ticker} 후보를 예외 편입 목록에 추가하고 후속 파이프라인까지 반영했습니다.`
+          : `${ticker} 후보는 이미 예외 편입 목록에 있어 편입 상태만 정리했습니다.`
       );
       await loadDashboard();
     } catch (promoteError) {
@@ -525,10 +525,10 @@ export function AdminDashboard() {
         headers: { "Content-Type": "application/json", ...authHeaders },
         body: JSON.stringify({ ...activeWatchlist, rerunPipeline: true })
       });
-      setMessage("watchlist 메타데이터를 저장했습니다.");
+      setMessage("예외 편입 메타데이터를 저장했습니다.");
       await loadDashboard();
     } catch (saveError) {
-      setError(saveError instanceof Error ? saveError.message : "watchlist 저장에 실패했습니다.");
+      setError(saveError instanceof Error ? saveError.message : "예외 편입 메타데이터 저장에 실패했습니다.");
     } finally {
       setLoading(false);
     }
@@ -645,7 +645,7 @@ export function AdminDashboard() {
           <TabsTrigger value="popup">팝업 공지</TabsTrigger>
           <TabsTrigger value="editorial">초안</TabsTrigger>
           <TabsTrigger value="news">뉴스</TabsTrigger>
-          <TabsTrigger value="watchlist">워치리스트</TabsTrigger>
+          <TabsTrigger value="watchlist">예외 편입</TabsTrigger>
           <TabsTrigger value="diff">변경점</TabsTrigger>
           <TabsTrigger value="history">이력</TabsTrigger>
           <TabsTrigger value="status">상태</TabsTrigger>
@@ -734,6 +734,7 @@ export function AdminDashboard() {
             databaseStorageReport={databaseStorageReport}
             dailyCandidates={dailyCandidates}
             watchlistTickers={watchlistTickers}
+            authToken={token}
             onPromoteCandidate={(ticker) => void promoteUniverseCandidate(ticker)}
             onSaveReview={(ticker, status, note) => void saveUniverseReview(ticker, status, note)}
             loading={loading}

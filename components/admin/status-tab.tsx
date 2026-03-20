@@ -11,6 +11,7 @@ import {
   formatUniverseReviewStatus
 } from "@/components/admin/dashboard-shared";
 import type {
+  AccessStatsLookupPayload,
   AccessStatsReportPayload,
   AuditItem,
   AutoHealReportPayload,
@@ -29,6 +30,7 @@ import type {
 } from "@/components/admin/dashboard-types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 
 type ReviewDraftState = Record<string, { status: UniverseReviewStatus; note: string }>;
@@ -60,6 +62,26 @@ function formatBytes(value: number | null | undefined) {
   }
 
   return `${current.toFixed(current >= 100 || index === 0 ? 0 : 1)} ${units[index]}`;
+}
+
+function formatProviderLabel(value: string | null | undefined) {
+  if (!value) {
+    return "unknown";
+  }
+
+  if (value === "postgresDataProvider") {
+    return "postgres";
+  }
+
+  if (value === "fileDataProvider") {
+    return "file";
+  }
+
+  if (value === "externalDataProvider") {
+    return "external";
+  }
+
+  return value;
 }
 
 function formatShortDate(value: string) {
@@ -95,6 +117,7 @@ export function StatusTab({
   databaseStorageReport,
   dailyCandidates,
   watchlistTickers,
+  authToken,
   onPromoteCandidate,
   onSaveReview,
   loading
@@ -114,11 +137,16 @@ export function StatusTab({
   databaseStorageReport: DatabaseStorageReportPayload | null;
   dailyCandidates: UniverseDailyCandidates | null;
   watchlistTickers: string[];
+  authToken: string;
   onPromoteCandidate: (ticker: string) => void;
   onSaveReview: (ticker: string, status: UniverseReviewStatus, note: string) => void;
   loading: boolean;
 }) {
   const [reviewDrafts, setReviewDrafts] = useState<ReviewDraftState>({});
+  const [lookupDate, setLookupDate] = useState("");
+  const [lookupResult, setLookupResult] = useState<AccessStatsLookupPayload | null>(null);
+  const [lookupLoading, setLookupLoading] = useState(false);
+  const [lookupError, setLookupError] = useState<string | null>(null);
 
   useEffect(() => {
     setReviewDrafts(
@@ -133,6 +161,56 @@ export function StatusTab({
       )
     );
   }, [dailyCandidates]);
+
+  useEffect(() => {
+    const today = accessStatsReport?.today.date ?? "";
+    setLookupDate(today);
+    setLookupResult(
+      today
+        ? {
+            requestedDate: today,
+            uniqueVisitors: accessStatsReport?.today.uniqueVisitors ?? 0,
+            tracked: (accessStatsReport?.today.uniqueVisitors ?? 0) > 0
+          }
+        : null
+    );
+    setLookupError(null);
+  }, [accessStatsReport]);
+
+  async function searchAccessStatsByDate() {
+    if (!authToken.trim() || !lookupDate) {
+      return;
+    }
+
+    setLookupLoading(true);
+    setLookupError(null);
+
+    try {
+      const response = await fetch(`/api/admin/access-stats?date=${encodeURIComponent(lookupDate)}`, {
+        headers: {
+          Authorization: `Bearer ${authToken.trim()}`
+        },
+        cache: "no-store"
+      });
+      const json = (await response.json()) as {
+        message?: string;
+        requestId?: string;
+        lookup?: AccessStatsLookupPayload | null;
+      };
+
+      if (!response.ok) {
+        throw new Error(
+          json.requestId ? `${json.message ?? "날짜별 접속 수를 불러오지 못했습니다."} (request: ${json.requestId})` : json.message ?? "날짜별 접속 수를 불러오지 못했습니다."
+        );
+      }
+
+      setLookupResult(json.lookup ?? null);
+    } catch (error) {
+      setLookupError(error instanceof Error ? error.message : "날짜별 접속 수를 불러오지 못했습니다.");
+    } finally {
+      setLookupLoading(false);
+    }
+  }
 
   return (
     <div className="grid gap-6">
@@ -174,7 +252,9 @@ export function StatusTab({
             <MetricCard label="서비스" value={health?.status ?? "not_loaded"} note={health?.service ?? "not loaded"} />
             <MetricCard
               label="provider"
-              value={health?.dataProvider.lastUsed?.provider ?? health?.dataProvider.configured.provider ?? "unknown"}
+              value={formatProviderLabel(
+                health?.dataProvider.lastUsed?.provider ?? health?.dataProvider.configured.provider ?? "unknown"
+              )}
               note={health?.dataProvider.lastUsed?.mode ?? health?.dataProvider.configured.mode ?? "unknown"}
             />
             <MetricCard
@@ -217,6 +297,11 @@ export function StatusTab({
         </CardHeader>
         <CardContent className="grid gap-4 md:grid-cols-4">
           <MetricCard
+            label="누적 방문자"
+            value={accessStatsReport ? accessStatsReport.totalUniqueVisitors.toLocaleString() : "확인 중"}
+            note="집계 기간 전체 기준 고유 방문자 수"
+          />
+          <MetricCard
             label="오늘"
             value={accessStatsReport ? accessStatsReport.today.uniqueVisitors.toLocaleString() : "확인 중"}
             note={accessStatsReport ? `${formatShortDate(accessStatsReport.today.date)} 기준` : "방문 통계 집계 중"}
@@ -239,11 +324,34 @@ export function StatusTab({
                 : "최근 30일 기준"
             }
           />
-          <MetricCard
-            label="집계 일수"
-            value={accessStatsReport ? accessStatsReport.trackedDays.toLocaleString() : "확인 중"}
-            note={accessStatsReport ? formatDateTime(accessStatsReport.generatedAt) : "아직 데이터가 없습니다"}
-          />
+        </CardContent>
+        <CardContent className="pt-0">
+          <div className="rounded-[24px] border border-border/70 bg-secondary/45 p-4">
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+              <div>
+                <p className="text-sm font-semibold text-foreground">날짜별 접속 수 검색</p>
+                <p className="mt-1 text-xs text-muted-foreground">특정 날짜의 고유 방문자 수를 바로 확인할 수 있습니다.</p>
+              </div>
+              <div className="grid gap-2 sm:grid-cols-[180px_auto]">
+                <Input type="date" value={lookupDate} onChange={(event) => setLookupDate(event.target.value)} />
+                <Button type="button" onClick={() => void searchAccessStatsByDate()} disabled={lookupLoading || !lookupDate}>
+                  {lookupLoading ? "검색 중" : "검색"}
+                </Button>
+              </div>
+            </div>
+            {lookupError ? <p className="mt-3 text-xs text-destructive">{lookupError}</p> : null}
+            {lookupResult ? (
+              <div className="mt-4 rounded-[20px] border border-border/70 bg-background/85 px-4 py-3">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <p className="text-sm font-semibold text-foreground">{formatShortDate(lookupResult.requestedDate)}</p>
+                  <p className="text-xs text-muted-foreground">{lookupResult.uniqueVisitors.toLocaleString()}명</p>
+                </div>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  {lookupResult.tracked ? "해당 날짜에 기록된 고유 방문자 수입니다." : "해당 날짜에는 기록된 방문 데이터가 없습니다."}
+                </p>
+              </div>
+            ) : null}
+          </div>
         </CardContent>
         <CardContent className="space-y-3 pt-0">
           {accessStatsReport?.recentDaily.length ? (
@@ -729,7 +837,7 @@ export function StatusTab({
                         {watchlistTickers.includes(item.ticker) ? (
                           <span className="inline-flex items-center gap-1 rounded-full border border-positive/30 bg-positive/10 px-2.5 py-1 text-[11px] text-positive">
                             <CheckCircle2 className="h-3.5 w-3.5" />
-                            watchlist
+                            예외 편입됨
                           </span>
                         ) : null}
                         <p className="text-xs text-primary">candidate {item.candidateScore}</p>
@@ -800,7 +908,7 @@ export function StatusTab({
                           onClick={() => onPromoteCandidate(item.ticker)}
                         >
                           <ArrowRight className="h-4 w-4" />
-                          {watchlistTickers.includes(item.ticker) ? "편입 완료" : "watchlist 편입"}
+                          {watchlistTickers.includes(item.ticker) ? "편입 완료" : "예외 편입"}
                         </Button>
                       </div>
                     </div>

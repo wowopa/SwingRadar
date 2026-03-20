@@ -53,8 +53,8 @@ export function MetricCard({ label, value, note }: { label: string; value: strin
   return (
     <div className="rounded-[24px] border border-border/70 bg-secondary/55 p-4">
       <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">{label}</p>
-      <p className="mt-2 text-lg font-semibold text-foreground">{value}</p>
-      <p className="mt-2 text-sm text-muted-foreground">{note}</p>
+      <p className="mt-2 break-all text-base font-semibold leading-snug text-foreground sm:text-lg">{value}</p>
+      <p className="mt-2 break-words text-sm leading-6 text-muted-foreground">{note}</p>
     </div>
   );
 }
@@ -124,8 +124,8 @@ export function formatAuditEventType(eventType: string) {
     admin_news_curation_saved: "뉴스 큐레이션 저장",
     popup_notice_saved: "팝업 공지 저장",
     admin_publish: "발행",
-    watchlist_add: "watchlist 추가",
-    watchlist_update: "watchlist 수정",
+    watchlist_add: "예외 편입 추가",
+    watchlist_update: "예외 편입 수정",
     universe_review_update: "유니버스 후보 검토",
     provider_fallback: "데이터 provider fallback"
   };
@@ -351,7 +351,7 @@ export function WatchlistPreviewDialog({
       </DialogTrigger>
       <DialogContent className="max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>watchlist 변경 검토</DialogTitle>
+          <DialogTitle>예외 편입 변경 검토</DialogTitle>
           <DialogDescription>현재 입력 내용과 마지막 저장 상태를 비교합니다.</DialogDescription>
         </DialogHeader>
         <div className="space-y-3">

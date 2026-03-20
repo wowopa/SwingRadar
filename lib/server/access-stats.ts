@@ -3,7 +3,7 @@ import { createHash, randomUUID } from "node:crypto";
 import { getPostgresPool } from "@/lib/server/postgres";
 
 const ACCESS_STATS_COOKIE_NAME = "swing_radar_vid";
-const DEFAULT_RETENTION_DAYS = 400;
+const DEFAULT_RETENTION_DAYS = 3650;
 const ACCESS_STATS_SCHEMA_SQL = `
 create table if not exists site_visit_daily_visitors (
   visit_date date not null,
@@ -27,6 +27,7 @@ let ensureAccessStatsSchemaPromise: Promise<void> | null = null;
 
 export type AccessStatsReportPayload = {
   generatedAt: string;
+  totalUniqueVisitors: number;
   today: {
     date: string;
     uniqueVisitors: number;
@@ -46,6 +47,12 @@ export type AccessStatsReportPayload = {
     date: string;
     uniqueVisitors: number;
   }>;
+};
+
+export type AccessStatsLookupPayload = {
+  requestedDate: string;
+  uniqueVisitors: number;
+  tracked: boolean;
 };
 
 export function getAccessStatsCookieName() {
@@ -181,6 +188,7 @@ export async function loadAccessStatsReport(): Promise<AccessStatsReportPayload>
   const [summaryResult, recentDailyResult] = await Promise.all([
     pool.query<{
       today: string;
+      total_unique_visitors: string;
       today_unique_visitors: string;
       last7_start: string;
       last7_end: string;
@@ -195,6 +203,10 @@ export async function loadAccessStatsReport(): Promise<AccessStatsReportPayload>
       )
       select
         bounds.today::text as today,
+        (
+          select count(distinct visitor_hash)
+          from site_visit_daily_visitors
+        )::text as total_unique_visitors,
         (
           select count(*)
           from site_visit_daily_visitors
@@ -238,6 +250,7 @@ export async function loadAccessStatsReport(): Promise<AccessStatsReportPayload>
 
   return {
     generatedAt: new Date().toISOString(),
+    totalUniqueVisitors: Number(summary?.total_unique_visitors ?? 0),
     today: {
       date: summary?.today ?? "",
       uniqueVisitors: Number(summary?.today_unique_visitors ?? 0)
@@ -257,5 +270,32 @@ export async function loadAccessStatsReport(): Promise<AccessStatsReportPayload>
       date: row.date,
       uniqueVisitors: Number(row.unique_visitors ?? 0)
     }))
+  };
+}
+
+export async function lookupAccessStatsByDate(requestedDate: string): Promise<AccessStatsLookupPayload> {
+  await ensureAccessStatsSchema();
+
+  const normalizedDate = requestedDate.trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(normalizedDate)) {
+    throw new Error("Requested date must match YYYY-MM-DD.");
+  }
+
+  const pool = getPostgresPool();
+  const result = await pool.query<{ unique_visitors: string }>(
+    `
+      select count(*)::text as unique_visitors
+      from site_visit_daily_visitors
+      where visit_date = $1::date
+    `,
+    [normalizedDate]
+  );
+
+  const uniqueVisitors = Number(result.rows[0]?.unique_visitors ?? 0);
+
+  return {
+    requestedDate: normalizedDate,
+    uniqueVisitors,
+    tracked: uniqueVisitors > 0
   };
 }
