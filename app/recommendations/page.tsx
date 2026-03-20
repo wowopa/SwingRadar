@@ -18,8 +18,8 @@ export default async function RecommendationsPage() {
     <main>
       <PageHeader
         eyebrow="Recommendations"
-        title="관찰 신호 보드"
-        description="지금 차분히 볼 만한 종목과 가격 기준, 참고 이유를 한눈에 정리해두는 페이지입니다."
+        title="후보 보드"
+        description="지금 먼저 볼 만한 후보와 가격 기준, 참고 이유를 한눈에 정리해두는 페이지입니다."
       />
       <PublicDataStatusBarGroup summaries={statusSummaries} />
       <section className="mb-6">

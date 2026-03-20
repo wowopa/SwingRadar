@@ -40,7 +40,7 @@ export function PublicDataStatusBarGroup({ summaries }: { summaries: PublicDataS
         <div className={cn("min-w-0", hasSingleSummary ? "flex-1" : "w-full md:flex-1")}>
           <p className="text-sm font-semibold text-foreground">데이터 기준</p>
           <p className="mt-2 text-sm leading-6 text-muted-foreground">
-            같은 화면 안에서도 관찰 종목, 추천 랭킹, 상세 분석이 서로 다른 스냅샷 시각을 쓸 수 있어 기준 시각을 함께
+            같은 화면 안에서도 후보 보드, 추천 랭킹, 상세 분석이 서로 다른 스냅샷 시각을 쓸 수 있어 기준 시각을 함께
             보여드립니다.
           </p>
           <p className="mt-1 text-sm leading-6 text-muted-foreground">

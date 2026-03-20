@@ -290,11 +290,11 @@ export default async function RankingPage() {
               오늘의 후보
             </CardTitle>
             <p className="text-sm leading-6 text-muted-foreground">
-              시장 전체를 스캔한 뒤 오늘 먼저 볼 만한 후보를 점수순으로 정리한 표입니다. 실제 관찰 종목이나 공용 추적 종목은 이 후보 중 더 엄격한 기준을 통과한 일부만 이어집니다.
+              시장 전체를 스캔한 뒤 오늘 먼저 볼 만한 후보를 점수순으로 정리한 표입니다. 실제 공용 추적 종목은 이 후보 중 더 엄격한 기준을 통과한 일부만 이어집니다.
             </p>
             <p className="text-xs leading-5 text-muted-foreground">
               랭킹 점수는 기본 신호 점수에 검증 품질, 유동성, 거래량 상태, 가격 구조를 더해 다시 정렬한 값입니다. 활성화 점수는
-              공용 추적 편입 가능성을 보는 별도 점수입니다.
+              공용 추적으로 이어질 가능성을 보는 별도 점수입니다.
             </p>
           </CardHeader>
           <CardContent className="overflow-x-auto">
@@ -384,7 +384,7 @@ export default async function RankingPage() {
               <div className="rounded-[24px] border border-dashed border-border/70 bg-secondary/20 px-6 py-10 text-center">
                 <p className="text-lg font-semibold text-foreground">오늘 표시할 랭킹 후보가 아직 없습니다.</p>
                 <p className="mx-auto mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
-                  일일 유니버스 스캔 결과가 아직 생성되지 않았거나 후보 점수가 기준에 미치지 못했습니다. 먼저 추천 보드에서 현재 관찰 종목을
+                  일일 유니버스 스캔 결과가 아직 생성되지 않았거나 후보 점수가 기준에 미치지 못했습니다. 먼저 후보 보드에서 현재 후보를
                   확인할 수 있습니다.
                 </p>
                 <div className="mt-5">
@@ -392,7 +392,7 @@ export default async function RankingPage() {
                     className="inline-flex rounded-full border border-primary/20 bg-primary/6 px-4 py-2 text-sm font-medium text-primary transition-colors hover:bg-primary/10"
                     href="/recommendations"
                   >
-                    추천 보드 보기
+                    후보 보드 보기
                   </Link>
                 </div>
               </div>

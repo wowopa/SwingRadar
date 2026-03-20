@@ -65,7 +65,7 @@ export function GET(request: Request) {
         mode: isSearchMode ? "search" : "featured",
         description: isSearchMode
           ? `티커, 종목명, 별칭, 섹터 일치도를 기준으로 최대 ${limit}개를 보여줍니다.`
-          : `기본 결과는 오늘 후보, 관찰 종목, 분석 준비 종목을 우선해 최대 ${limit}개를 보여줍니다.`,
+          : `기본 결과는 오늘의 후보, 우선 볼 후보, 분석 준비 종목을 우선해 최대 ${limit}개를 보여줍니다.`,
         limit
       },
       buildResponseMeta(context, 60)

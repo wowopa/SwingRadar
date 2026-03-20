@@ -17,11 +17,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 const serviceFlow = [
   {
-    title: "1. 관찰 신호 보드에서 오늘 후보 확인",
+    title: "1. 후보 보드에서 오늘 후보 확인",
     description:
-      "매일 정리된 관찰 후보를 먼저 보고, 지금 시장에서 어떤 종목을 우선 확인하면 좋을지 빠르게 훑습니다.",
+      "매일 정리된 오늘의 후보를 먼저 보고, 지금 시장에서 어떤 종목을 우선 확인하면 좋을지 빠르게 훑습니다.",
     href: "/recommendations",
-    label: "관찰 신호 보드 보기",
+    label: "후보 보드 보기",
     icon: Sparkles
   },
   {
@@ -29,7 +29,7 @@ const serviceFlow = [
     description:
       "차트, 핵심 가격대, 보조지표, 검증 메모를 같이 보며 진입 기준과 위험 가격을 확인합니다.",
     href: "/recommendations",
-    label: "관찰 종목에서 종목 선택하기",
+    label: "후보 보드에서 종목 선택하기",
     icon: Compass
   },
   {
@@ -110,9 +110,9 @@ const cautions = [
 
 const pageRoles = [
   {
-    title: "관찰 신호 보드",
+    title: "후보 보드",
     icon: Radar,
-    description: "지금 차분히 볼 만한 종목을 빠르게 훑는 시작 화면입니다."
+    description: "지금 차분히 볼 만한 후보를 빠르게 훑는 시작 화면입니다."
   },
   {
     title: "추천 랭킹",

@@ -215,12 +215,12 @@ export function RecommendationExplorer({ items }: { items: Recommendation[] }) {
           <div className="border-b border-border/60 pb-4">
             <p className="text-sm font-semibold text-foreground">오늘은 이 후보부터 보면 됩니다</p>
             <p className="mt-2 text-sm leading-6 text-muted-foreground">
-              이 화면은 가능한 많은 종목을 나열하기보다, 지금 볼 만한 관찰 후보를 먼저 추리고 그 이유와 리스크를 빠르게 읽는 데
+              이 화면은 가능한 많은 종목을 나열하기보다, 지금 볼 만한 후보를 먼저 추리고 그 이유와 리스크를 빠르게 읽는 데
               맞춰져 있습니다.
             </p>
           </div>
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            <SummaryCard label="현재 관찰 후보" value={`${filteredItems.length}개`} detail="필터 기준으로 남은 후보" tone="emerald" />
+            <SummaryCard label="현재 후보" value={`${filteredItems.length}개`} detail="필터 기준으로 남은 후보" tone="emerald" />
             <SummaryCard label="우선 볼 종목" value={`${shortlistCount}개`} detail="아래 카드에 먼저 보여주는 상위 12개 기준" tone="sky" />
             <SummaryCard label="검증 근거 확보" value={`${verifiedCount}개`} detail="보수 계산만으로 보지 않은 후보" tone="teal" />
             <SummaryCard
@@ -239,7 +239,7 @@ export function RecommendationExplorer({ items }: { items: Recommendation[] }) {
               <p className="mt-2 text-sm leading-6 text-muted-foreground">
                 {countsMatchAll
                   ? "필터가 적용되지 않은 기본 상태라 현재 분포와 전체 분포가 같습니다."
-                  : "현재 필터 결과와 전체 관찰 종목의 검증 근거를 한 번에 비교합니다."}
+                  : "현재 필터 결과와 전체 후보의 검증 근거를 한 번에 비교합니다."}
               </p>
             </div>
             <div className="rounded-2xl border border-border/70 bg-secondary/35 px-3 py-2 text-sm text-muted-foreground">
@@ -263,7 +263,7 @@ export function RecommendationExplorer({ items }: { items: Recommendation[] }) {
         <>
           <section className="flex flex-wrap items-end justify-between gap-3">
             <div>
-              <h2 className="text-xl font-semibold text-foreground">우선 볼 관찰 종목</h2>
+              <h2 className="text-xl font-semibold text-foreground">우선 볼 후보</h2>
               <p className="mt-2 text-sm leading-6 text-muted-foreground">
                 카드에서는 종목별 핵심 판단만 먼저 보고, 더 넓은 비교는 아래 표에서 이어서 보면 됩니다.
               </p>
@@ -302,7 +302,7 @@ export function RecommendationExplorer({ items }: { items: Recommendation[] }) {
         </>
       ) : (
         <section className="rounded-3xl border border-border/70 bg-card/40 p-8 text-center">
-          <p className="text-lg font-semibold text-foreground">조건에 맞는 관찰 종목이 없습니다.</p>
+          <p className="text-lg font-semibold text-foreground">조건에 맞는 후보가 없습니다.</p>
           <p className="mt-3 text-sm leading-6 text-muted-foreground">
             검색어나 톤, 섹터, 검증 근거 조건을 조금 더 넓히면 더 많은 종목을 볼 수 있습니다.
           </p>
