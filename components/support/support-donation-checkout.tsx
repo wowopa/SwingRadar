@@ -1,11 +1,13 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { Check, Copy, ExternalLink, HeartHandshake, Smartphone } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { toDataURL } from "qrcode";
+import { Check, Copy, HeartHandshake, QrCode, Smartphone } from "lucide-react";
 
 import type { SupportTier } from "@/lib/server/support-config";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { formatPrice } from "@/lib/utils";
 
 type SupportDonationCheckoutProps = {
@@ -25,17 +27,52 @@ export function SupportDonationCheckout({
   supportTitle,
   tiers
 }: SupportDonationCheckoutProps) {
-  const [copied, setCopied] = useState<"account" | number | null>(null);
+  const [copied, setCopied] = useState<"account" | null>(null);
+  const [qrSources, setQrSources] = useState<Record<number, string>>({});
 
-  const accountLabel = useMemo(() => {
+  const accountCopyValue = useMemo(() => {
     if (!accountNumber) {
       return "";
     }
 
-    return `${bankName} ${accountNumber}${accountHolder ? ` (${accountHolder})` : ""}`;
-  }, [accountHolder, accountNumber, bankName]);
+    return `${bankName} ${accountNumber}`;
+  }, [accountNumber, bankName]);
 
-  async function handleCopy(value: string, kind: "account" | number) {
+  useEffect(() => {
+    let cancelled = false;
+
+    async function generate() {
+      const entries = await Promise.all(
+        tiers.map(async (tier) => {
+          const dataUrl = await toDataURL(tier.deepLink, {
+            errorCorrectionLevel: "M",
+            margin: 1,
+            width: 240,
+            color: {
+              dark: "#183153",
+              light: "#0000"
+            }
+          });
+
+          return [tier.amount, dataUrl] as const;
+        })
+      );
+
+      if (!cancelled) {
+        setQrSources(Object.fromEntries(entries));
+      }
+    }
+
+    if (tiers.length > 0) {
+      void generate();
+    }
+
+    return () => {
+      cancelled = true;
+    };
+  }, [tiers]);
+
+  async function handleCopy(value: string, kind: "account") {
     try {
       await navigator.clipboard.writeText(value);
       setCopied(kind);
@@ -55,7 +92,7 @@ export function SupportDonationCheckout({
           </CardTitle>
         </CardHeader>
         <CardContent className="rounded-[24px] border border-dashed border-border/80 bg-secondary/40 p-5 text-sm leading-6 text-muted-foreground">
-          토스 송금 링크를 연결하면 여기에서 바로 1회성 운영 후원을 받을 수 있습니다.
+          토스로 후원하실 수 있도록 계좌와 링크를 연결하면 여기에서 바로 1회성 운영 후원을 받을 수 있습니다.
         </CardContent>
       </Card>
     );
@@ -70,8 +107,8 @@ export function SupportDonationCheckout({
             1회성 운영 후원
           </CardTitle>
           <p className="text-sm leading-6 text-muted-foreground">
-            아래 금액 버튼을 누르면 모바일에서는 토스 앱 송금 화면이 바로 열립니다. 각 금액은 같은 계좌로 연결되며,
-            서비스 운영과 개선에 사용됩니다.
+            후원은 토스를 통해서만 진행할 수 있습니다. 모바일에서는 버튼으로 바로 열 수 있고, 데스크톱에서는 각 금액의 QR 코드를
+            열어 같은 송금 화면으로 이어서 확인하실 수 있습니다.
           </p>
         </CardHeader>
         <CardContent className="grid gap-4 lg:grid-cols-3">
@@ -83,17 +120,42 @@ export function SupportDonationCheckout({
                 <p className="text-sm leading-6 text-foreground/78">{tier.description}</p>
               </div>
 
-              <div className="mt-5 space-y-3">
+              <div className="mt-5 grid gap-3">
                 <Button asChild className="w-full">
                   <a href={tier.deepLink}>
                     <Smartphone className="h-4 w-4" />
                     토스로 열기
                   </a>
                 </Button>
-                <Button type="button" variant="outline" className="w-full" onClick={() => void handleCopy(tier.deepLink, tier.amount)}>
-                  {copied === tier.amount ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                  링크 복사
-                </Button>
+
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button type="button" variant="outline" className="w-full">
+                      <QrCode className="h-4 w-4" />
+                      QR 코드 보기
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-md">
+                    <DialogHeader>
+                      <DialogTitle>{formatPrice(tier.amount)} 후원 QR 코드</DialogTitle>
+                      <DialogDescription>
+                        토스 앱으로 아래 QR 코드를 스캔하면 해당 금액의 송금 화면을 바로 열 수 있습니다.
+                      </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="rounded-[28px] border border-border/70 bg-secondary/35 p-5">
+                      <div className="mx-auto flex w-full max-w-[260px] items-center justify-center rounded-[24px] border border-border/70 bg-white p-4 shadow-sm">
+                        {qrSources[tier.amount] ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={qrSources[tier.amount]} alt={`${formatPrice(tier.amount)} 후원 QR 코드`} className="h-56 w-56" />
+                        ) : (
+                          <div className="flex h-56 w-56 items-center justify-center text-sm text-muted-foreground">QR 준비 중</div>
+                        )}
+                      </div>
+                      <p className="mt-4 text-center text-sm text-foreground/75">{tier.label}</p>
+                    </div>
+                  </DialogContent>
+                </Dialog>
               </div>
             </div>
           ))}
@@ -107,14 +169,25 @@ export function SupportDonationCheckout({
         <CardContent className="space-y-4 text-sm leading-6 text-foreground/80">
           <div className="rounded-[24px] border border-border/70 bg-secondary/45 p-4">
             <p className="font-semibold text-foreground">{supportTitle}</p>
-            <p className="mt-2">모바일에서 링크를 누르면 토스 앱으로 이동해 송금 화면이 열립니다.</p>
+            <p className="mt-2">모바일에서는 버튼으로 바로 이동할 수 있고, 데스크톱에서는 금액별 QR 코드로 같은 송금 화면을 열 수 있습니다.</p>
           </div>
 
           <div className="rounded-[24px] border border-border/70 bg-secondary/45 p-4">
             <p className="font-semibold text-foreground">송금 계좌</p>
-            <p className="mt-2 break-all font-mono text-base text-foreground">{accountLabel}</p>
+            <div className="mt-3 rounded-[20px] border border-border/70 bg-white/90 p-4">
+              <p className="text-sm text-muted-foreground">은행</p>
+              <p className="mt-1 text-base font-medium text-foreground">{bankName}</p>
+              <p className="mt-3 text-sm text-muted-foreground">계좌번호</p>
+              <p className="mt-1 text-base font-medium tracking-[0.04em] text-foreground">{accountNumber}</p>
+              {accountHolder ? (
+                <>
+                  <p className="mt-3 text-sm text-muted-foreground">예금주</p>
+                  <p className="mt-1 text-base font-medium text-foreground">{accountHolder}</p>
+                </>
+              ) : null}
+            </div>
             <div className="mt-3 flex flex-wrap gap-2">
-              <Button type="button" variant="outline" onClick={() => void handleCopy(accountLabel, "account")}>
+              <Button type="button" variant="outline" onClick={() => void handleCopy(accountCopyValue, "account")}>
                 {copied === "account" ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                 계좌 복사
               </Button>
@@ -123,26 +196,13 @@ export function SupportDonationCheckout({
 
           <div className="rounded-[24px] border border-border/70 bg-secondary/45 p-4">
             <p className="font-semibold text-foreground">데스크톱에서 여는 경우</p>
-            <p className="mt-2">
-              PC에서는 딥링크가 바로 열리지 않을 수 있습니다. 이 경우 계좌를 복사해 토스 앱에서 직접 송금하거나, 모바일에서
-              페이지를 다시 열어 진행해 주세요.
-            </p>
+            <p className="mt-2">상단 금액 카드의 QR 코드를 열어 토스 앱으로 스캔해 주세요. 계좌 복사로 직접 송금하셔도 됩니다.</p>
           </div>
 
           <div className="rounded-[24px] border border-border/70 bg-secondary/45 p-4">
             <p className="font-semibold text-foreground">후원 성격</p>
-            <p className="mt-2">
-              정기 구독이 아닌 1회성 운영 후원입니다. 후원 여부와 관계없이 기존 기능은 그대로 이용하실 수 있습니다.
-            </p>
+            <p className="mt-2">정기 구독이 아닌 1회성 운영 후원입니다. 후원 여부와 관계없이 기존 기능은 그대로 이용하실 수 있습니다.</p>
           </div>
-
-          <a
-            href={tiers[0]?.deepLink}
-            className="inline-flex items-center gap-2 text-sm font-medium text-primary underline-offset-4 hover:underline"
-          >
-            기본 후원 링크 열기
-            <ExternalLink className="h-4 w-4" />
-          </a>
         </CardContent>
       </Card>
     </div>
