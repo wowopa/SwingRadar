@@ -25,7 +25,7 @@ export default async function TrackingPage() {
   };
 
   return (
-    <main>
+    <main className="space-y-8 pb-10">
       <PageHeader
         eyebrow="Tracking"
         title="공용 추적 워크스페이스"
