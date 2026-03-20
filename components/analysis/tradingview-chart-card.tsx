@@ -199,6 +199,8 @@ export function TradingViewChartCard({
   const macdContainerRef = useRef<HTMLDivElement | null>(null);
   const chartsRef = useRef<IChartApi[]>([]);
   const [range, setRange] = useState<RangeKey>("3M");
+  const [isTouchTooltipMode, setIsTouchTooltipMode] = useState(false);
+  const [openIndicatorHelpLabel, setOpenIndicatorHelpLabel] = useState<string | null>(null);
   const tradingViewUrl = symbol ? `https://www.tradingview.com/chart/?symbol=${encodeURIComponent(symbol)}` : null;
   const availableRanges = useMemo(() => {
     const items: RangeKey[] = [];
@@ -253,6 +255,28 @@ export function TradingViewChartCard({
       setRange(availableRanges[availableRanges.length - 1] ?? "1M");
     }
   }, [availableRanges, range]);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || typeof window.matchMedia !== "function") {
+      return;
+    }
+
+    const mediaQuery = window.matchMedia("(hover: none), (pointer: coarse)");
+    const syncMode = () => {
+      setIsTouchTooltipMode(mediaQuery.matches);
+      setOpenIndicatorHelpLabel(null);
+    };
+
+    syncMode();
+
+    if (typeof mediaQuery.addEventListener === "function") {
+      mediaQuery.addEventListener("change", syncMode);
+      return () => mediaQuery.removeEventListener("change", syncMode);
+    }
+
+    mediaQuery.addListener(syncMode);
+    return () => mediaQuery.removeListener(syncMode);
+  }, []);
 
   useEffect(() => {
     if (!priceContainerRef.current || !turnoverContainerRef.current || !macdContainerRef.current || !chartPoints.length) {
@@ -717,12 +741,20 @@ export function TradingViewChartCard({
                   <div key={item.label} className={cn("rounded-[20px] border px-4 py-3", item.tone)}>
                     <div className="flex items-start justify-between gap-3">
                       <p className="text-xs font-medium opacity-80">{item.label}</p>
-                      <Tooltip>
+                      <Tooltip open={isTouchTooltipMode ? false : undefined}>
                         <TooltipTrigger asChild>
                           <button
                             type="button"
                             aria-label={`${item.label} 설명`}
+                            aria-expanded={isTouchTooltipMode ? openIndicatorHelpLabel === item.label : undefined}
                             className="rounded-full text-muted-foreground/70 transition hover:text-foreground"
+                            onClick={() => {
+                              if (!isTouchTooltipMode) {
+                                return;
+                              }
+
+                              setOpenIndicatorHelpLabel((current) => (current === item.label ? null : item.label));
+                            }}
                           >
                             <CircleHelp className="h-3.5 w-3.5" />
                           </button>
@@ -731,6 +763,11 @@ export function TradingViewChartCard({
                       </Tooltip>
                     </div>
                     <p className="mt-2 text-sm font-semibold leading-6">{item.value}</p>
+                    {isTouchTooltipMode && openIndicatorHelpLabel === item.label ? (
+                      <div className="mt-3 rounded-2xl border border-border/70 bg-white/88 px-3 py-3 text-xs leading-5 text-foreground/80 shadow-sm">
+                        {item.description}
+                      </div>
+                    ) : null}
                   </div>
                 ))}
               </div>
