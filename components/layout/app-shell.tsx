@@ -21,7 +21,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <div className="min-h-screen">
       <RouteScrollReset />
       <div className="mx-auto flex min-h-screen w-full max-w-[1480px] flex-col px-4 pb-12 pt-5 sm:px-6 lg:px-8">
-        <header className="relative mb-5 overflow-visible rounded-[36px] border border-border/80 bg-white/78 px-5 py-6 shadow-panel backdrop-blur-xl sm:px-7 sm:py-7">
+        <header className="relative z-50 mb-5 overflow-visible rounded-[36px] border border-border/80 bg-white/78 px-5 py-6 shadow-panel backdrop-blur-xl sm:px-7 sm:py-7">
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,hsl(38_38%_74%_/_0.18),transparent_34%),linear-gradient(135deg,hsl(38_20%_82%_/_0.18),transparent_42%)]" />
           <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/55 to-transparent" />
 

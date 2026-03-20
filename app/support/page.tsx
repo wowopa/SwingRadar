@@ -56,24 +56,14 @@ export default function SupportPage() {
       </section>
 
       <Card className="overflow-hidden border-border/70 bg-white/86 shadow-sm">
-        <CardContent className="grid gap-5 p-6 lg:grid-cols-[1.1fr_0.9fr]">
+        <CardContent className="p-6">
           <div className="space-y-3">
             <p className="eyebrow-label">Why Support</p>
             <h2 className="text-2xl font-semibold text-foreground">작고 꾸준한 후원이 서비스의 리듬을 지켜줍니다.</h2>
-            <p className="text-sm leading-7 text-foreground/80">
+            <p className="max-w-4xl text-sm leading-7 text-foreground/80">
               SWING-RADAR는 매일 아침 데이터를 다시 정리하고, 후보 흐름을 누적해서 보여주는 운영형 서비스입니다. 후원은 서버비와
               데이터 운영비, 그리고 실제로 체감되는 화면 개선 작업에 우선적으로 사용됩니다.
             </p>
-          </div>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div className="rounded-[24px] border border-primary/15 bg-primary/8 p-4">
-              <p className="text-sm font-semibold text-foreground">부담 없이</p>
-              <p className="mt-2 text-sm leading-6 text-foreground/78">구독 없이 한 번만 후원하는 방식이라, 편한 금액으로 가볍게 응원해 주셔도 충분합니다.</p>
-            </div>
-            <div className="rounded-[24px] border border-border/70 bg-secondary/45 p-4">
-              <p className="text-sm font-semibold text-foreground">간단하게</p>
-              <p className="mt-2 text-sm leading-6 text-foreground/78">모바일에서는 바로 열고, 데스크톱에서는 QR 코드로 이어갈 수 있게 최대한 단순하게 준비했습니다.</p>
-            </div>
           </div>
         </CardContent>
       </Card>

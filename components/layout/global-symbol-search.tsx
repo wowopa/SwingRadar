@@ -80,7 +80,7 @@ export function GlobalSymbolSearch() {
   const [query, setQuery] = useState("");
   const [items, setItems] = useState<SearchItem[]>([]);
   const [recentItems, setRecentItems] = useState<SearchItem[]>([]);
-  const [description, setDescription] = useState("최근에 확인한 종목을 다시 열어볼 수 있습니다.");
+  const [description, setDescription] = useState("최근에 확인한 종목을 다시 이어볼 수 있습니다.");
   const [mode, setMode] = useState<"search" | "recent">("recent");
   const [focused, setFocused] = useState(false);
   const [isComposing, setIsComposing] = useState(false);
@@ -97,7 +97,9 @@ export function GlobalSymbolSearch() {
       setItems([]);
       setMode("recent");
       setDescription(
-        recentItems.length ? "최근에 살펴본 종목입니다. 다시 열어보거나 새 검색어를 입력해 종목을 찾을 수 있습니다." : "검색어를 입력해 종목을 찾을 수 있습니다."
+        recentItems.length
+          ? "최근에 봤던 종목입니다. 다시 이어보거나 검색어를 입력해 다른 종목을 찾을 수 있습니다."
+          : "검색어를 입력해 종목을 찾을 수 있습니다."
       );
       return () => {
         ignore = true;
@@ -105,7 +107,7 @@ export function GlobalSymbolSearch() {
     }
 
     setMode("search");
-    setDescription("티커, 종목명, 별칭, 섹터 일치어를 기준으로 최대 12개를 보여줍니다.");
+    setDescription("티커, 종목명, 섹터 기준으로 최대 12개까지 보여드립니다.");
 
     async function load() {
       const response = await fetch(`/api/symbols?q=${encodeURIComponent(search)}&limit=12`, { cache: "no-store" });
@@ -159,7 +161,7 @@ export function GlobalSymbolSearch() {
   }
 
   return (
-    <div ref={containerRef} className="relative z-[120] w-full">
+    <div ref={containerRef} className="relative z-[220] w-full">
       <div className="rounded-[28px] border border-border/70 bg-white/88 p-2 shadow-panel backdrop-blur-xl">
         <div className="flex items-center gap-3 rounded-[22px] border border-border/60 bg-background/85 px-4 py-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-accent/70 text-foreground">
@@ -186,7 +188,7 @@ export function GlobalSymbolSearch() {
                 setFocused(true);
               }}
               onFocus={() => setFocused(true)}
-              placeholder="티커, 종목명, 별칭, 섹터로 검색"
+              placeholder="티커, 종목명, 섹터로 검색"
               className="h-auto border-0 bg-transparent px-0 pb-0 pt-1 text-base shadow-none focus-visible:ring-0"
             />
           </div>
@@ -197,7 +199,7 @@ export function GlobalSymbolSearch() {
       </div>
 
       {showDropdown ? (
-        <div className="absolute left-0 right-0 top-[calc(100%+0.75rem)] z-[240] rounded-[28px] border border-border/80 bg-white p-2 shadow-[0_28px_60px_rgba(66,50,34,0.18)]">
+        <div className="absolute left-0 right-0 top-[calc(100%+0.75rem)] z-[400] rounded-[28px] border border-border/80 bg-white p-2 shadow-[0_28px_60px_rgba(66,50,34,0.18)]">
           <div className="flex items-center justify-between px-3 py-2">
             <div className="flex items-center gap-2 text-xs uppercase tracking-[0.24em] text-muted-foreground">
               {mode === "recent" ? <History className="h-3.5 w-3.5" /> : <Sparkles className="h-3.5 w-3.5" />}
@@ -224,7 +226,7 @@ export function GlobalSymbolSearch() {
                     <div className="min-w-0">
                       <p className="truncate text-sm font-semibold text-foreground">{item.company}</p>
                       <p className="mt-1 text-xs text-muted-foreground">
-                        {item.ticker} 쨌 {item.market} 쨌 {item.sector}
+                        {item.ticker} / {item.market} / {item.sector}
                       </p>
                     </div>
                     <div className="flex shrink-0 items-center gap-2">
@@ -251,7 +253,7 @@ export function GlobalSymbolSearch() {
                     <div className="min-w-0">
                       <p className="truncate text-sm font-semibold text-foreground">{item.company}</p>
                       <p className="mt-1 text-xs text-muted-foreground">
-                        {item.ticker} 쨌 {item.market} 쨌 {item.sector}
+                        {item.ticker} / {item.market} / {item.sector}
                       </p>
                     </div>
                     <div className="flex shrink-0 items-center gap-2">

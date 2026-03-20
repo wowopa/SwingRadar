@@ -19,22 +19,10 @@ type SupportDonationCheckoutProps = {
   tiers: SupportTier[];
 };
 
-const tierAccents = [
-  {
-    badge: "Light",
-    card: "border-border/70 bg-secondary/45",
-    accent: "bg-white/80 text-foreground"
-  },
-  {
-    badge: "Recommended",
-    card: "border-primary/20 bg-primary/10",
-    accent: "bg-primary text-primary-foreground"
-  },
-  {
-    badge: "Deep",
-    card: "border-[hsl(var(--positive)/0.18)] bg-[hsl(var(--positive)/0.08)]",
-    accent: "bg-[hsl(var(--positive))] text-white"
-  }
+const tierCardClasses = [
+  "border-border/70 bg-secondary/45",
+  "border-primary/20 bg-primary/10",
+  "border-[hsl(var(--positive)/0.18)] bg-[hsl(var(--positive)/0.08)]"
 ] as const;
 
 export function SupportDonationCheckout({
@@ -131,18 +119,13 @@ export function SupportDonationCheckout({
         </CardHeader>
         <CardContent className="grid gap-4 lg:grid-cols-3">
           {tiers.map((tier, index) => {
-            const accent = tierAccents[index] ?? tierAccents[0];
+            const cardClass = tierCardClasses[index] ?? tierCardClasses[0];
 
             return (
-              <div key={tier.amount} className={`flex flex-col rounded-[28px] border p-5 shadow-sm ${accent.card}`}>
-                <div className="flex items-start justify-between gap-3">
-                  <div className="space-y-2">
-                    <p className="text-xs uppercase tracking-[0.24em] text-muted-foreground">{tier.label}</p>
-                    <p className="text-2xl font-semibold text-foreground">{formatPrice(tier.amount)}</p>
-                  </div>
-                  <span className={`rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] ${accent.accent}`}>
-                    {accent.badge}
-                  </span>
+              <div key={tier.amount} className={`flex flex-col rounded-[28px] border p-5 shadow-sm ${cardClass}`}>
+                <div className="space-y-2">
+                  <p className="text-xs uppercase tracking-[0.24em] text-muted-foreground">{tier.label}</p>
+                  <p className="text-2xl font-semibold text-foreground">{formatPrice(tier.amount)}</p>
                 </div>
 
                 <p className="mt-3 text-sm leading-6 text-foreground/78">{tier.description}</p>
