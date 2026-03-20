@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { toDataURL } from "qrcode";
-import { Check, Copy, HeartHandshake, QrCode, Smartphone } from "lucide-react";
+import { Check, Copy, HeartHandshake, QrCode, Smartphone, Sparkles } from "lucide-react";
 
 import type { SupportTier } from "@/lib/server/support-config";
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,24 @@ type SupportDonationCheckoutProps = {
   supportTitle: string;
   tiers: SupportTier[];
 };
+
+const tierAccents = [
+  {
+    badge: "Light",
+    card: "border-border/70 bg-secondary/45",
+    accent: "bg-white/80 text-foreground"
+  },
+  {
+    badge: "Recommended",
+    card: "border-primary/20 bg-primary/10",
+    accent: "bg-primary text-primary-foreground"
+  },
+  {
+    badge: "Deep",
+    card: "border-[hsl(var(--positive)/0.18)] bg-[hsl(var(--positive)/0.08)]",
+    accent: "bg-[hsl(var(--positive))] text-white"
+  }
+] as const;
 
 export function SupportDonationCheckout({
   enabled,
@@ -99,7 +117,7 @@ export function SupportDonationCheckout({
   }
 
   return (
-    <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
+    <div className="grid gap-6 xl:grid-cols-[1.18fr_0.82fr]">
       <Card className="border-border/70 bg-white/82 shadow-sm">
         <CardHeader className="space-y-3">
           <CardTitle className="flex items-center gap-2 text-xl text-foreground">
@@ -107,58 +125,77 @@ export function SupportDonationCheckout({
             1회성 운영 후원
           </CardTitle>
           <p className="text-sm leading-6 text-muted-foreground">
-            후원은 토스를 통해서만 진행할 수 있습니다. 모바일에서는 버튼으로 바로 열 수 있고, 데스크톱에서는 각 금액의 QR 코드를
+            후원은 토스를 통해서만 진행할 수 있습니다. 모바일에서는 버튼으로 바로 열 수 있고, 데스크톱에서는 금액별 QR 코드를
             열어 같은 송금 화면으로 이어서 확인하실 수 있습니다.
           </p>
         </CardHeader>
         <CardContent className="grid gap-4 lg:grid-cols-3">
-          {tiers.map((tier) => (
-            <div key={tier.amount} className="flex flex-col rounded-[28px] border border-border/70 bg-secondary/45 p-5">
-              <div className="space-y-2">
-                <p className="text-xs uppercase tracking-[0.24em] text-muted-foreground">{tier.label}</p>
-                <p className="text-2xl font-semibold text-foreground">{formatPrice(tier.amount)}</p>
-                <p className="text-sm leading-6 text-foreground/78">{tier.description}</p>
-              </div>
+          {tiers.map((tier, index) => {
+            const accent = tierAccents[index] ?? tierAccents[0];
 
-              <div className="mt-5 grid gap-3">
-                <Button asChild className="w-full">
-                  <a href={tier.deepLink}>
-                    <Smartphone className="h-4 w-4" />
-                    토스로 열기
-                  </a>
-                </Button>
+            return (
+              <div key={tier.amount} className={`flex flex-col rounded-[28px] border p-5 shadow-sm ${accent.card}`}>
+                <div className="flex items-start justify-between gap-3">
+                  <div className="space-y-2">
+                    <p className="text-xs uppercase tracking-[0.24em] text-muted-foreground">{tier.label}</p>
+                    <p className="text-2xl font-semibold text-foreground">{formatPrice(tier.amount)}</p>
+                  </div>
+                  <span className={`rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] ${accent.accent}`}>
+                    {accent.badge}
+                  </span>
+                </div>
 
-                <Dialog>
-                  <DialogTrigger asChild>
-                    <Button type="button" variant="outline" className="w-full">
-                      <QrCode className="h-4 w-4" />
-                      QR 코드 보기
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="max-w-md">
-                    <DialogHeader>
-                      <DialogTitle>{formatPrice(tier.amount)} 후원 QR 코드</DialogTitle>
-                      <DialogDescription>
-                        토스 앱으로 아래 QR 코드를 스캔하면 해당 금액의 송금 화면을 바로 열 수 있습니다.
-                      </DialogDescription>
-                    </DialogHeader>
+                <p className="mt-3 text-sm leading-6 text-foreground/78">{tier.description}</p>
 
-                    <div className="rounded-[28px] border border-border/70 bg-secondary/35 p-5">
-                      <div className="mx-auto flex w-full max-w-[260px] items-center justify-center rounded-[24px] border border-border/70 bg-white p-4 shadow-sm">
-                        {qrSources[tier.amount] ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img src={qrSources[tier.amount]} alt={`${formatPrice(tier.amount)} 후원 QR 코드`} className="h-56 w-56" />
-                        ) : (
-                          <div className="flex h-56 w-56 items-center justify-center text-sm text-muted-foreground">QR 준비 중</div>
-                        )}
+                <div className="mt-5 grid gap-3">
+                  <Button asChild className="w-full">
+                    <a href={tier.deepLink}>
+                      <Smartphone className="h-4 w-4" />
+                      토스로 열기
+                    </a>
+                  </Button>
+
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button type="button" variant="outline" className="w-full">
+                        <QrCode className="h-4 w-4" />
+                        QR 코드 보기
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-md">
+                      <DialogHeader>
+                        <DialogTitle>{formatPrice(tier.amount)} 후원 QR 코드</DialogTitle>
+                        <DialogDescription>
+                          토스 앱으로 아래 QR 코드를 스캔하면 해당 금액의 송금 화면을 바로 열 수 있습니다.
+                        </DialogDescription>
+                      </DialogHeader>
+
+                      <div className="space-y-4">
+                        <div className="rounded-[28px] border border-border/70 bg-secondary/35 p-5">
+                          <div className="mx-auto flex w-full max-w-[260px] items-center justify-center rounded-[24px] border border-border/70 bg-white p-4 shadow-sm">
+                            {qrSources[tier.amount] ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img src={qrSources[tier.amount]} alt={`${formatPrice(tier.amount)} 후원 QR 코드`} className="h-56 w-56" />
+                            ) : (
+                              <div className="flex h-56 w-56 items-center justify-center text-sm text-muted-foreground">QR 준비 중</div>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="rounded-[24px] border border-border/70 bg-secondary/45 p-4">
+                          <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                            <Sparkles className="h-4 w-4 text-primary" />
+                            {tier.label}
+                          </div>
+                          <p className="mt-2 text-sm leading-6 text-foreground/78">{tier.description}</p>
+                        </div>
                       </div>
-                      <p className="mt-4 text-center text-sm text-foreground/75">{tier.label}</p>
-                    </div>
-                  </DialogContent>
-                </Dialog>
+                    </DialogContent>
+                  </Dialog>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </CardContent>
       </Card>
 
@@ -174,17 +211,23 @@ export function SupportDonationCheckout({
 
           <div className="rounded-[24px] border border-border/70 bg-secondary/45 p-4">
             <p className="font-semibold text-foreground">송금 계좌</p>
-            <div className="mt-3 rounded-[20px] border border-border/70 bg-white/90 p-4">
-              <p className="text-sm text-muted-foreground">은행</p>
-              <p className="mt-1 text-base font-medium text-foreground">{bankName}</p>
-              <p className="mt-3 text-sm text-muted-foreground">계좌번호</p>
-              <p className="mt-1 text-base font-medium tracking-[0.04em] text-foreground">{accountNumber}</p>
-              {accountHolder ? (
-                <>
-                  <p className="mt-3 text-sm text-muted-foreground">예금주</p>
-                  <p className="mt-1 text-base font-medium text-foreground">{accountHolder}</p>
-                </>
-              ) : null}
+            <div className="mt-3 rounded-[22px] border border-border/70 bg-white/90 p-4">
+              <div className="space-y-3">
+                <div>
+                  <p className="text-sm text-muted-foreground">은행</p>
+                  <p className="mt-1 text-base font-medium text-foreground">{bankName}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">계좌번호</p>
+                  <p className="mt-1 text-base font-medium tracking-[0.04em] text-foreground">{accountNumber}</p>
+                </div>
+                {accountHolder ? (
+                  <div>
+                    <p className="text-sm text-muted-foreground">예금주</p>
+                    <p className="mt-1 text-base font-medium text-foreground">{accountHolder}</p>
+                  </div>
+                ) : null}
+              </div>
             </div>
             <div className="mt-3 flex flex-wrap gap-2">
               <Button type="button" variant="outline" onClick={() => void handleCopy(accountCopyValue, "account")}>
