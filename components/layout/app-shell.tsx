@@ -6,6 +6,7 @@ import { BrandSignature } from "@/components/layout/brand-signature";
 import { GlobalSymbolSearch } from "@/components/layout/global-symbol-search";
 import { RouteScrollReset } from "@/components/layout/route-scroll-reset";
 import { ScrollToTopButton } from "@/components/layout/scroll-to-top-button";
+import { SitePopupNotice } from "@/components/layout/site-popup-notice";
 import { cn } from "@/lib/utils";
 
 const navItems = [
@@ -20,6 +21,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen">
       <RouteScrollReset />
+      <SitePopupNotice />
       <div className="mx-auto flex min-h-screen w-full max-w-[1480px] flex-col px-4 pb-12 pt-5 sm:px-6 lg:px-8">
         <header className="relative z-50 mb-5 overflow-visible rounded-[36px] border border-border/80 bg-white/78 px-5 py-6 shadow-panel backdrop-blur-xl sm:px-7 sm:py-7">
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,hsl(38_38%_74%_/_0.18),transparent_34%),linear-gradient(135deg,hsl(38_20%_82%_/_0.18),transparent_42%)]" />

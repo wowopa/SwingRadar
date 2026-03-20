@@ -122,6 +122,7 @@ export function formatAuditEventType(eventType: string) {
     health_warning: "상태 경고",
     admin_draft_saved: "초안 저장",
     admin_news_curation_saved: "뉴스 큐레이션 저장",
+    popup_notice_saved: "팝업 공지 저장",
     admin_publish: "발행",
     watchlist_add: "watchlist 추가",
     watchlist_update: "watchlist 수정",

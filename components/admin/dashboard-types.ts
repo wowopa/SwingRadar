@@ -205,6 +205,18 @@ export type DatabaseStorageReportPayload = {
   };
 };
 
+export type PopupNoticeDocument = {
+  enabled: boolean;
+  title: string;
+  body: string;
+  imageUrl: string | null;
+  imageAlt: string | null;
+  startAt: string | null;
+  endAt: string | null;
+  updatedAt: string;
+  updatedBy: string;
+};
+
 export type AdminStatusPayload = {
   ok: boolean;
   requestId: string;

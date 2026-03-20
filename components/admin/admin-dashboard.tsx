@@ -29,6 +29,7 @@ import type {
   OperationalIncident,
   OpsHealthReportPayload,
   PostLaunchHistoryEntryPayload,
+  PopupNoticeDocument,
   PublishHistoryItem,
   SnapshotGenerationReportPayload,
   SymbolSearchItem,
@@ -43,6 +44,7 @@ import type {
 import { EditorialTab } from "@/components/admin/editorial-tab";
 import { HistoryTab } from "@/components/admin/history-tab";
 import { NewsTab } from "@/components/admin/news-tab";
+import { PopupNoticeTab } from "@/components/admin/popup-notice-tab";
 import { StatusTab } from "@/components/admin/status-tab";
 import { WatchlistTab } from "@/components/admin/watchlist-tab";
 import { Button } from "@/components/ui/button";
@@ -78,6 +80,7 @@ export function AdminDashboard() {
   const [diff, setDiff] = useState<EditorialDiffItem[]>([]);
   const [history, setHistory] = useState<PublishHistoryItem[]>([]);
   const [news, setNews] = useState<NewsCurationDocument | null>(null);
+  const [popupNotice, setPopupNotice] = useState<PopupNoticeDocument | null>(null);
   const [activeTicker, setActiveTicker] = useState("");
   const [symbolQuery, setSymbolQuery] = useState("");
   const [symbolResults, setSymbolResults] = useState<SymbolSearchItem[]>([]);
@@ -173,6 +176,7 @@ export function AdminDashboard() {
         setThresholdAdviceReport(null);
         setRuntimeStorageReport(null);
         setDatabaseStorageReport(null);
+        setPopupNotice(null);
         setMessage("관리자 토큰을 입력하면 운영 데이터를 불러옵니다.");
         return;
       }
@@ -191,7 +195,7 @@ export function AdminDashboard() {
       setThresholdAdviceReport(statusJson.thresholdAdviceReport ?? null);
       setRuntimeStorageReport(statusJson.runtimeStorageReport ?? null);
       setDatabaseStorageReport(statusJson.databaseStorageReport ?? null);
-      const [auditResult, draftResult, newsResult, watchlistResult, universeResult] = await Promise.allSettled([
+      const [auditResult, draftResult, newsResult, popupResult, watchlistResult, universeResult] = await Promise.allSettled([
         fetchJson<{ items: AuditItem[] }>("/api/admin/audit", { headers: authHeaders }),
         fetchJson<{
           draft: EditorialDraftDocument;
@@ -200,6 +204,7 @@ export function AdminDashboard() {
           publishHistory: PublishHistoryItem[];
         }>("/api/admin/editorial-draft", { headers: authHeaders }),
         fetchJson<{ document: NewsCurationDocument }>("/api/admin/news-curation", { headers: authHeaders }),
+        fetchJson<{ document: PopupNoticeDocument }>("/api/admin/popup-notice", { headers: authHeaders }),
         fetchJson<{ items: SymbolSearchItem[]; watchlist: WatchlistEntry[]; syncStatuses: Record<string, WatchlistSyncStatus> }>(
           `/api/admin/watchlist${symbolQuery.trim() ? `?q=${encodeURIComponent(symbolQuery.trim())}` : ""}`,
           { headers: authHeaders }
@@ -235,6 +240,12 @@ export function AdminDashboard() {
         setNews(newsResult.value.document);
       } else {
         warnings.push({ label: "news-curation", message: getLoadErrorMessage(newsResult.reason) });
+      }
+
+      if (popupResult.status === "fulfilled") {
+        setPopupNotice(popupResult.value.document);
+      } else {
+        warnings.push({ label: "popup-notice", message: getLoadErrorMessage(popupResult.reason) });
       }
 
       if (watchlistResult.status === "fulfilled") {
@@ -330,6 +341,31 @@ export function AdminDashboard() {
       await loadDashboard();
     } catch (saveError) {
       setError(saveError instanceof Error ? saveError.message : "뉴스 큐레이션 저장에 실패했습니다.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function savePopupNotice() {
+    if (!authHeaders || !popupNotice) {
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+    setMessage(null);
+
+    try {
+      const json = await fetchJson<{ document: PopupNoticeDocument }>("/api/admin/popup-notice", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...authHeaders },
+        body: JSON.stringify(popupNotice)
+      });
+      setPopupNotice(json.document);
+      setMessage("팝업 공지 설정을 저장했습니다.");
+      await loadDashboard();
+    } catch (saveError) {
+      setError(saveError instanceof Error ? saveError.message : "팝업 공지 저장에 실패했습니다.");
     } finally {
       setLoading(false);
     }
@@ -602,6 +638,7 @@ export function AdminDashboard() {
 
       {hasAdminAccess ? <Tabs value={tab} onValueChange={setTab}>
         <TabsList>
+          <TabsTrigger value="popup">팝업 공지</TabsTrigger>
           <TabsTrigger value="editorial">초안</TabsTrigger>
           <TabsTrigger value="news">뉴스</TabsTrigger>
           <TabsTrigger value="watchlist">워치리스트</TabsTrigger>
@@ -631,6 +668,15 @@ export function AdminDashboard() {
             addNewsItem={addNewsItem}
             onSave={() => void saveNews()}
             disabled={loading || !news}
+          />
+        </TabsContent>
+
+        <TabsContent value="popup">
+          <PopupNoticeTab
+            document={popupNotice}
+            setDocument={(updater) => setPopupNotice((current) => (current ? updater(current) : current))}
+            onSave={() => void savePopupNotice()}
+            disabled={loading || !popupNotice}
           />
         </TabsContent>
 
