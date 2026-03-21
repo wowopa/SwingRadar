@@ -19,6 +19,8 @@ const navItems = [
 ] as const;
 
 export function AppShell({ children }: { children: React.ReactNode }) {
+  const currentYear = new Date().getFullYear();
+
   return (
     <div className="min-h-screen">
       <RouteScrollReset />
@@ -81,7 +83,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
         </div>
 
-        {children}
+        <main className="flex-1">{children}</main>
+
+        <footer className="mt-12 border-t border-border/75 px-2 pt-6 text-center">
+          <p className="text-xs tracking-[0.18em] text-muted-foreground">
+            Copyright {currentYear} SWING-RADAR. All rights reserved.
+          </p>
+          <p className="mt-2 text-sm text-muted-foreground">
+            SWING-RADAR의 데이터와 분석 정보는 투자 참고용으로 제공됩니다.
+          </p>
+        </footer>
       </div>
       <ScrollToTopButton />
     </div>
