@@ -4,47 +4,30 @@ import { useEffect, useMemo, useState } from "react";
 import { RefreshCw } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 
-import { DiffTab } from "@/components/admin/diff-tab";
-import {
-  APPROVAL_STAGE_OPTIONS,
-  Banner,
-  PublishDialog,
-  buildWatchlistChanges,
-  createClientId
-} from "@/components/admin/dashboard-shared";
+import { Banner, buildWatchlistChanges } from "@/components/admin/dashboard-shared";
 import type {
   AccessStatsReportPayload,
   AdminStatusPayload,
   AuditItem,
   AutoHealReportPayload,
-  CuratedNewsItem,
   DailyCycleReportPayload,
   DatabaseStorageReportPayload,
-  EditorialCatalogItem,
-  EditorialDiffItem,
-  EditorialDraftDocument,
-  EditorialDraftItem,
   HealthPayload,
-  NewsCurationDocument,
   NewsFetchReportPayload,
   OperationalIncident,
   OpsHealthReportPayload,
-  PostLaunchHistoryEntryPayload,
   PopupNoticeDocument,
-  PublishHistoryItem,
+  PostLaunchHistoryEntryPayload,
+  RuntimeStorageReportPayload,
   SnapshotGenerationReportPayload,
   SymbolSearchItem,
   ThresholdAdviceReportPayload,
-  RuntimeStorageReportPayload,
   UniverseCandidateReview,
   UniverseDailyCandidates,
   UniverseReviewStatus,
   WatchlistEntry,
   WatchlistSyncStatus
 } from "@/components/admin/dashboard-types";
-import { EditorialTab } from "@/components/admin/editorial-tab";
-import { HistoryTab } from "@/components/admin/history-tab";
-import { NewsTab } from "@/components/admin/news-tab";
 import { PopupNoticeTab } from "@/components/admin/popup-notice-tab";
 import { StatusTab } from "@/components/admin/status-tab";
 import { WatchlistTab } from "@/components/admin/watchlist-tab";
@@ -53,11 +36,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
+const ENABLED_TABS = new Set(["status", "popup", "watchlist"]);
+
 export function AdminDashboard() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [token, setToken] = useState("");
-  const [tab, setTab] = useState("editorial");
+  const [tab, setTab] = useState("status");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -77,13 +62,7 @@ export function AdminDashboard() {
   const [databaseStorageReport, setDatabaseStorageReport] = useState<DatabaseStorageReportPayload | null>(null);
   const [audits, setAudits] = useState<AuditItem[]>([]);
   const [dailyCandidates, setDailyCandidates] = useState<UniverseDailyCandidates | null>(null);
-  const [draft, setDraft] = useState<EditorialDraftDocument | null>(null);
-  const [catalog, setCatalog] = useState<EditorialCatalogItem[]>([]);
-  const [diff, setDiff] = useState<EditorialDiffItem[]>([]);
-  const [history, setHistory] = useState<PublishHistoryItem[]>([]);
-  const [news, setNews] = useState<NewsCurationDocument | null>(null);
   const [popupNotice, setPopupNotice] = useState<PopupNoticeDocument | null>(null);
-  const [activeTicker, setActiveTicker] = useState("");
   const [symbolQuery, setSymbolQuery] = useState("");
   const [symbolResults, setSymbolResults] = useState<SymbolSearchItem[]>([]);
   const [watchlist, setWatchlist] = useState<WatchlistEntry[]>([]);
@@ -91,15 +70,11 @@ export function AdminDashboard() {
   const [watchlistSyncStatuses, setWatchlistSyncStatuses] = useState<Record<string, WatchlistSyncStatus>>({});
   const [activeWatchlistTicker, setActiveWatchlistTicker] = useState("");
   const [returnTo, setReturnTo] = useState("");
-  const [approvalStage, setApprovalStage] = useState<(typeof APPROVAL_STAGE_OPTIONS)[number]["value"]>("final_publish");
-  const [rollbackReason, setRollbackReason] = useState("manual rollback");
 
-  const authHeaders = useMemo(() => (token.trim() ? { Authorization: `Bearer ${token.trim()}` } : undefined), [token]);
-  const activeDraftItem = useMemo(
-    () => draft?.items.find((item) => item.ticker === activeTicker) ?? null,
-    [activeTicker, draft]
+  const authHeaders = useMemo(
+    () => (token.trim() ? { Authorization: `Bearer ${token.trim()}` } : undefined),
+    [token]
   );
-  const activeNews = useMemo(() => news?.items.filter((item) => item.ticker === activeTicker) ?? [], [activeTicker, news]);
   const activeWatchlist = useMemo(
     () => watchlist.find((item) => item.ticker === activeWatchlistTicker) ?? null,
     [activeWatchlistTicker, watchlist]
@@ -126,7 +101,7 @@ export function AdminDashboard() {
     const query = searchParams.get("q");
     const nextReturnTo = searchParams.get("returnTo");
 
-    if (nextTab) {
+    if (nextTab && ENABLED_TABS.has(nextTab)) {
       setTab(nextTab);
     }
     if (query) {
@@ -147,13 +122,9 @@ export function AdminDashboard() {
     };
 
     if (!response.ok) {
-      const message = json?.error?.message ?? json?.message ?? `요청이 실패했습니다. (${response.status})`;
-      const withCode = json?.code ? `${message} [${json.code}]` : message;
+      const baseMessage = json?.error?.message ?? json?.message ?? `요청이 실패했습니다. (${response.status})`;
+      const withCode = json?.code ? `${baseMessage} [${json.code}]` : baseMessage;
       throw new Error(json?.requestId ? `${withCode} (request: ${json.requestId})` : withCode);
-    }
-
-    if (!response.ok) {
-      throw new Error(json?.error?.message ?? `요청이 실패했습니다. (${response.status})`);
     }
 
     return json;
@@ -169,6 +140,7 @@ export function AdminDashboard() {
       if (!authHeaders) {
         setHasAdminAccess(false);
         setHealth(await fetchJson<HealthPayload>("/api/health"));
+        setIncidents([]);
         setOpsHealthReport(null);
         setDailyCycleReport(null);
         setAutoHealReport(null);
@@ -179,14 +151,20 @@ export function AdminDashboard() {
         setAccessStatsReport(null);
         setRuntimeStorageReport(null);
         setDatabaseStorageReport(null);
+        setAudits([]);
+        setDailyCandidates(null);
         setPopupNotice(null);
-        setMessage("관리자 토큰을 입력하면 운영 데이터를 불러옵니다.");
+        setSymbolResults([]);
+        setWatchlist([]);
+        setWatchlistBaseline([]);
+        setWatchlistSyncStatuses({});
+        setActiveWatchlistTicker("");
+        setMessage("관리자 비밀번호를 입력하면 운영 기능을 사용할 수 있습니다.");
         return;
       }
 
       const statusJson = await fetchJson<AdminStatusPayload>("/api/admin/status", { headers: authHeaders });
       setHasAdminAccess(true);
-
       setHealth(statusJson.health);
       setIncidents(statusJson.incidents ?? []);
       setOpsHealthReport(statusJson.opsHealthReport ?? null);
@@ -199,15 +177,9 @@ export function AdminDashboard() {
       setAccessStatsReport(statusJson.accessStatsReport ?? null);
       setRuntimeStorageReport(statusJson.runtimeStorageReport ?? null);
       setDatabaseStorageReport(statusJson.databaseStorageReport ?? null);
-      const [auditResult, draftResult, newsResult, popupResult, watchlistResult, universeResult] = await Promise.allSettled([
+
+      const [auditResult, popupResult, watchlistResult, universeResult] = await Promise.allSettled([
         fetchJson<{ items: AuditItem[] }>("/api/admin/audit", { headers: authHeaders }),
-        fetchJson<{
-          draft: EditorialDraftDocument;
-          catalog: EditorialCatalogItem[];
-          diff: EditorialDiffItem[];
-          publishHistory: PublishHistoryItem[];
-        }>("/api/admin/editorial-draft", { headers: authHeaders }),
-        fetchJson<{ document: NewsCurationDocument }>("/api/admin/news-curation", { headers: authHeaders }),
         fetchJson<{ document: PopupNoticeDocument }>("/api/admin/popup-notice", { headers: authHeaders }),
         fetchJson<{ items: SymbolSearchItem[]; watchlist: WatchlistEntry[]; syncStatuses: Record<string, WatchlistSyncStatus> }>(
           `/api/admin/watchlist${symbolQuery.trim() ? `?q=${encodeURIComponent(symbolQuery.trim())}` : ""}`,
@@ -219,31 +191,15 @@ export function AdminDashboard() {
         }>("/api/admin/universe", { headers: authHeaders })
       ]);
 
-      const warnings: Array<{ label: string; message: string }> = (statusJson.statusWarnings ?? []).map((message) => ({
+      const warnings: Array<{ label: string; message: string }> = (statusJson.statusWarnings ?? []).map((item) => ({
         label: "status",
-        message
+        message: item
       }));
 
       if (auditResult.status === "fulfilled") {
         setAudits(auditResult.value.items ?? []);
       } else {
         warnings.push({ label: "audit", message: getLoadErrorMessage(auditResult.reason) });
-      }
-
-      if (draftResult.status === "fulfilled") {
-        setDraft(draftResult.value.draft);
-        setCatalog(draftResult.value.catalog ?? []);
-        setDiff(draftResult.value.diff ?? []);
-        setHistory(draftResult.value.publishHistory ?? []);
-        setActiveTicker((current) => current || draftResult.value.catalog?.[0]?.ticker || "");
-      } else {
-        warnings.push({ label: "editorial-draft", message: getLoadErrorMessage(draftResult.reason) });
-      }
-
-      if (newsResult.status === "fulfilled") {
-        setNews(newsResult.value.document);
-      } else {
-        warnings.push({ label: "news-curation", message: getLoadErrorMessage(newsResult.reason) });
       }
 
       if (popupResult.status === "fulfilled") {
@@ -278,78 +234,6 @@ export function AdminDashboard() {
     }
   }
 
-  async function saveDraft() {
-    if (!authHeaders || !draft) {
-      return;
-    }
-
-    setLoading(true);
-    setError(null);
-    setMessage(null);
-
-    try {
-      await fetchJson("/api/admin/editorial-draft", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", ...authHeaders },
-        body: JSON.stringify(draft)
-      });
-      setMessage("초안을 저장했습니다.");
-      await loadDashboard();
-    } catch (saveError) {
-      setError(saveError instanceof Error ? saveError.message : "초안 저장에 실패했습니다.");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function publishDraft() {
-    if (!authHeaders) {
-      return;
-    }
-
-    setLoading(true);
-    setError(null);
-    setMessage(null);
-
-    try {
-      const result = await fetchJson<{ publish: { diffCount: number } }>("/api/admin/publish", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", ...authHeaders },
-        body: JSON.stringify({ approvalStage, ingestToPostgres: true })
-      });
-      setMessage(`발행을 완료했습니다. 변경 종목 ${result.publish.diffCount}건`);
-      await loadDashboard();
-    } catch (publishError) {
-      setError(publishError instanceof Error ? publishError.message : "발행에 실패했습니다.");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function saveNews() {
-    if (!authHeaders || !news) {
-      return;
-    }
-
-    setLoading(true);
-    setError(null);
-    setMessage(null);
-
-    try {
-      await fetchJson("/api/admin/news-curation", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", ...authHeaders },
-        body: JSON.stringify(news)
-      });
-      setMessage("뉴스 큐레이션을 저장했습니다.");
-      await loadDashboard();
-    } catch (saveError) {
-      setError(saveError instanceof Error ? saveError.message : "뉴스 큐레이션 저장에 실패했습니다.");
-    } finally {
-      setLoading(false);
-    }
-  }
-
   async function savePopupNotice() {
     if (!authHeaders || !popupNotice) {
       return;
@@ -375,30 +259,6 @@ export function AdminDashboard() {
     }
   }
 
-  async function rollbackHistory(historyId: string) {
-    if (!authHeaders) {
-      return;
-    }
-
-    setLoading(true);
-    setError(null);
-    setMessage(null);
-
-    try {
-      await fetchJson("/api/admin/rollback", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", ...authHeaders },
-        body: JSON.stringify({ historyId, ingestToPostgres: true, rollbackReason })
-      });
-      setMessage("선택한 발행 이력으로 롤백했습니다.");
-      await loadDashboard();
-    } catch (rollbackError) {
-      setError(rollbackError instanceof Error ? rollbackError.message : "롤백에 실패했습니다.");
-    } finally {
-      setLoading(false);
-    }
-  }
-
   async function addWatchlistSymbol(ticker: string) {
     if (!authHeaders) {
       return;
@@ -416,7 +276,9 @@ export function AdminDashboard() {
       });
 
       setMessage(
-        json.result?.added ? `예외 편입 완료. ${json.result?.estimate ?? ""}`.trim() : "이미 예외 편입 목록에 포함된 종목입니다."
+        json.result?.added
+          ? `예외 편입을 완료했습니다. ${json.result?.estimate ?? ""}`.trim()
+          : "이미 예외 편입 목록에 포함된 종목입니다."
       );
 
       await loadDashboard();
@@ -534,74 +396,18 @@ export function AdminDashboard() {
     }
   }
 
-  function updateDraftItem(ticker: string, updater: (item: EditorialDraftItem) => EditorialDraftItem) {
-    setDraft((current) =>
-      current
-        ? {
-            ...current,
-            items: current.items.map((item) => (item.ticker === ticker ? updater(item) : item))
-          }
-        : current
-    );
-  }
-
-  function updateNewsItem(id: string, updater: (item: CuratedNewsItem) => CuratedNewsItem) {
-    setNews((current) =>
-      current
-        ? {
-            ...current,
-            items: current.items.map((item) => (item.id === id ? updater(item) : item))
-          }
-        : current
-    );
-  }
-
-  function removeNewsItem(id: string) {
-    setNews((current) =>
-      current
-        ? {
-            ...current,
-            items: current.items.filter((item) => item.id !== id)
-          }
-        : current
-    );
-  }
-
-  function addNewsItem() {
-    if (!activeTicker) {
-      return;
-    }
-
-    const nextItem: CuratedNewsItem = {
-      id: createClientId(),
-      ticker: activeTicker,
-      headline: "",
-      summary: "",
-      source: "",
-      url: "https://",
-      date: new Date().toISOString().slice(0, 10),
-      impact: "중립",
-      pinned: false,
-      operatorNote: ""
-    };
-
-    setNews((current) => ({
-      updatedAt: current?.updatedAt ?? new Date(0).toISOString(),
-      updatedBy: current?.updatedBy ?? "system",
-      items: [nextItem, ...(current?.items ?? [])]
-    }));
-  }
-
   return (
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>운영 접근 인증</CardTitle>
+          <CardTitle>운영 콘솔 접속</CardTitle>
         </CardHeader>
-        <CardContent className="grid gap-4 lg:grid-cols-[1.5fr_auto_auto] lg:items-end">
+        <CardContent className="grid gap-4 lg:grid-cols-[1fr_auto] lg:items-end">
           <div>
-            <p className="mb-2 text-sm text-muted-foreground">관리자 비밀번호를 입력하면 운영 기능을 사용할 수 있습니다.</p>
-            <Input type="password" placeholder="관리자 토큰" value={token} onChange={(event) => setToken(event.target.value)} />
+            <p className="mb-2 text-sm text-muted-foreground">
+              관리자 비밀번호를 입력하면 시스템 운영 상태와 공지, 예외 편입 설정을 확인할 수 있습니다.
+            </p>
+            <Input type="password" placeholder="관리자 비밀번호" value={token} onChange={(event) => setToken(event.target.value)} />
           </div>
           <Button
             onClick={() => {
@@ -613,17 +419,12 @@ export function AdminDashboard() {
             <RefreshCw className="h-4 w-4" />
             새로고침
           </Button>
-          <PublishDialog
-            approvalStage={approvalStage}
-            onApprovalStageChange={setApprovalStage}
-            onConfirm={() => void publishDraft()}
-            disabled={loading || !draft}
-          />
         </CardContent>
       </Card>
 
       {message ? <Banner tone="success" message={message} /> : null}
       {error ? <Banner tone="error" message={error} /> : null}
+
       {hasAdminAccess && sectionWarnings.length ? (
         <Card className="border-destructive/30 bg-destructive/5">
           <CardHeader>
@@ -640,107 +441,67 @@ export function AdminDashboard() {
         </Card>
       ) : null}
 
-      {hasAdminAccess ? <Tabs value={tab} onValueChange={setTab}>
-        <TabsList>
-          <TabsTrigger value="popup">팝업 공지</TabsTrigger>
-          <TabsTrigger value="editorial">초안</TabsTrigger>
-          <TabsTrigger value="news">뉴스</TabsTrigger>
-          <TabsTrigger value="watchlist">예외 편입</TabsTrigger>
-          <TabsTrigger value="diff">변경점</TabsTrigger>
-          <TabsTrigger value="history">이력</TabsTrigger>
-          <TabsTrigger value="status">상태</TabsTrigger>
-        </TabsList>
+      {hasAdminAccess ? (
+        <Tabs value={tab} onValueChange={setTab}>
+          <TabsList>
+            <TabsTrigger value="status">상태</TabsTrigger>
+            <TabsTrigger value="popup">팝업 공지</TabsTrigger>
+            <TabsTrigger value="watchlist">예외 편입</TabsTrigger>
+          </TabsList>
 
-        <TabsContent value="editorial">
-          <EditorialTab
-            catalog={catalog}
-            activeTicker={activeTicker}
-            setActiveTicker={setActiveTicker}
-            activeDraftItem={activeDraftItem}
-            updateDraftItem={updateDraftItem}
-            onSave={() => void saveDraft()}
-            disabled={loading || !draft}
-          />
-        </TabsContent>
+          <TabsContent value="status">
+            <StatusTab
+              health={health}
+              incidents={incidents}
+              audits={audits}
+              opsHealthReport={opsHealthReport}
+              dailyCycleReport={dailyCycleReport}
+              autoHealReport={autoHealReport}
+              newsFetchReport={newsFetchReport}
+              snapshotGenerationReport={snapshotGenerationReport}
+              postLaunchHistory={postLaunchHistory}
+              thresholdAdviceReport={thresholdAdviceReport}
+              accessStatsReport={accessStatsReport}
+              runtimeStorageReport={runtimeStorageReport}
+              databaseStorageReport={databaseStorageReport}
+              dailyCandidates={dailyCandidates}
+              watchlistTickers={watchlistTickers}
+              authToken={token}
+              onPromoteCandidate={(ticker) => void promoteUniverseCandidate(ticker)}
+              onSaveReview={(ticker, status, note) => void saveUniverseReview(ticker, status, note)}
+              loading={loading}
+            />
+          </TabsContent>
 
-        <TabsContent value="news">
-          <NewsTab
-            activeNews={activeNews}
-            activeTicker={activeTicker}
-            updateNewsItem={updateNewsItem}
-            removeNewsItem={removeNewsItem}
-            addNewsItem={addNewsItem}
-            onSave={() => void saveNews()}
-            disabled={loading || !news}
-          />
-        </TabsContent>
+          <TabsContent value="popup">
+            <PopupNoticeTab
+              document={popupNotice}
+              setDocument={(updater) => setPopupNotice((current) => (current ? updater(current) : current))}
+              onSave={() => void savePopupNotice()}
+              disabled={loading || !popupNotice}
+            />
+          </TabsContent>
 
-        <TabsContent value="popup">
-          <PopupNoticeTab
-            document={popupNotice}
-            setDocument={(updater) => setPopupNotice((current) => (current ? updater(current) : current))}
-            onSave={() => void savePopupNotice()}
-            disabled={loading || !popupNotice}
-          />
-        </TabsContent>
-
-        <TabsContent value="watchlist">
-          <WatchlistTab
-            symbolQuery={symbolQuery}
-            setSymbolQuery={setSymbolQuery}
-            onSearch={() => void loadDashboard()}
-            symbolResults={symbolResults}
-            addWatchlistSymbol={(ticker) => void addWatchlistSymbol(ticker)}
-            loading={loading}
-            watchlist={watchlist}
-            activeWatchlistTicker={activeWatchlistTicker}
-            setActiveWatchlistTicker={setActiveWatchlistTicker}
-            activeWatchlist={activeWatchlist}
-            setWatchlist={setWatchlist}
-            watchlistSyncStatuses={watchlistSyncStatuses}
-            watchlistChanges={watchlistChanges}
-            onSaveMetadata={() => void saveWatchlistMetadata()}
-          />
-        </TabsContent>
-
-        <TabsContent value="diff">
-          <DiffTab diff={diff} />
-        </TabsContent>
-
-        <TabsContent value="history">
-          <HistoryTab
-            history={history}
-            rollbackReason={rollbackReason}
-            onRollbackReasonChange={setRollbackReason}
-            onRollback={(historyId) => void rollbackHistory(historyId)}
-            loading={loading}
-          />
-        </TabsContent>
-
-        <TabsContent value="status">
-          <StatusTab
-            health={health}
-            incidents={incidents}
-            audits={audits}
-            opsHealthReport={opsHealthReport}
-            dailyCycleReport={dailyCycleReport}
-            autoHealReport={autoHealReport}
-            newsFetchReport={newsFetchReport}
-            snapshotGenerationReport={snapshotGenerationReport}
-            postLaunchHistory={postLaunchHistory}
-            thresholdAdviceReport={thresholdAdviceReport}
-            accessStatsReport={accessStatsReport}
-            runtimeStorageReport={runtimeStorageReport}
-            databaseStorageReport={databaseStorageReport}
-            dailyCandidates={dailyCandidates}
-            watchlistTickers={watchlistTickers}
-            authToken={token}
-            onPromoteCandidate={(ticker) => void promoteUniverseCandidate(ticker)}
-            onSaveReview={(ticker, status, note) => void saveUniverseReview(ticker, status, note)}
-            loading={loading}
-          />
-        </TabsContent>
-      </Tabs> : null}
+          <TabsContent value="watchlist">
+            <WatchlistTab
+              symbolQuery={symbolQuery}
+              setSymbolQuery={setSymbolQuery}
+              onSearch={() => void loadDashboard()}
+              symbolResults={symbolResults}
+              addWatchlistSymbol={(ticker) => void addWatchlistSymbol(ticker)}
+              loading={loading}
+              watchlist={watchlist}
+              activeWatchlistTicker={activeWatchlistTicker}
+              setActiveWatchlistTicker={setActiveWatchlistTicker}
+              activeWatchlist={activeWatchlist}
+              setWatchlist={setWatchlist}
+              watchlistSyncStatuses={watchlistSyncStatuses}
+              watchlistChanges={watchlistChanges}
+              onSaveMetadata={() => void saveWatchlistMetadata()}
+            />
+          </TabsContent>
+        </Tabs>
+      ) : null}
     </div>
   );
 }

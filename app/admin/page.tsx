@@ -7,7 +7,7 @@ export default function AdminPage() {
       <PageHeader
         eyebrow="Admin"
         title="운영 콘솔"
-        description="서비스 상태, 편집 초안 변경, 발행 이력, 롤백 작업을 한 화면에서 확인합니다."
+        description="시스템 운영 상태를 확인하고, 사이트 팝업 공지와 예외 편입 설정을 관리하는 페이지입니다."
       />
       <AdminDashboard />
     </main>
