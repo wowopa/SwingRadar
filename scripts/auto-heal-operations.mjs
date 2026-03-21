@@ -8,6 +8,7 @@ import { fileURLToPath } from "node:url";
 import pg from "pg";
 
 import { loadLocalEnv } from "./load-env.mjs";
+import { persistRuntimeDocument, readRuntimeDocument } from "./lib/runtime-document-store.mjs";
 
 const { Client } = pg;
 const execFileAsync = promisify(execFile);
@@ -99,10 +100,26 @@ async function readJsonFile(filePath) {
   }
 }
 
+async function readReportPayload(filePath, documentName) {
+  try {
+    const fromFile = await readJsonFile(filePath);
+    if (fromFile) {
+      return fromFile;
+    }
+  } catch (error) {
+    console.warn(
+      `[auto-heal-report] Falling back to runtime document ${documentName}: ${error instanceof Error ? error.message : String(error)}`
+    );
+  }
+
+  return readRuntimeDocument(documentName);
+}
+
 async function writeReport(report) {
   const reportPath = getAutoHealReportPath();
   await mkdir(path.dirname(reportPath), { recursive: true });
   await writeFile(reportPath, `${JSON.stringify(report, null, 2)}\n`, "utf8");
+  await persistRuntimeDocument("ops-auto-heal-report", report, { logPrefix: "auto-heal-report" });
 }
 
 async function runNodeScript(scriptName, args = []) {
@@ -245,8 +262,8 @@ async function main() {
 
   const requestId = createRequestId();
   const [opsHealthReport, dailyCycleReport] = await Promise.all([
-    readJsonFile(getOpsHealthReportPath()),
-    readJsonFile(getDailyCycleReportPath())
+    readReportPayload(getOpsHealthReportPath(), "ops-health-report"),
+    readReportPayload(getDailyCycleReportPath(), "ops-daily-cycle-report")
   ]);
 
   const triggers = buildTriggers(opsHealthReport, dailyCycleReport);

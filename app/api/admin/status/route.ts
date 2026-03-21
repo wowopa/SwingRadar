@@ -5,6 +5,7 @@ import { listAuditLogs } from "@/lib/server/audit-log";
 import { buildOperationalIncidents } from "@/lib/server/operational-incidents";
 import { getOperationalPolicy } from "@/lib/server/operations-policy";
 import {
+  appendPostLaunchHistoryEntry,
   loadAutoHealReport,
   loadDailyCycleReport,
   loadNewsFetchReport,
@@ -165,6 +166,33 @@ export async function GET(request: Request) {
       audits
     });
 
+    let refreshedPostLaunchHistory = postLaunchHistory ?? [];
+    try {
+      refreshedPostLaunchHistory = await appendPostLaunchHistoryEntry(
+        {
+          checkedAt: new Date().toISOString(),
+          healthStatus: health.status,
+          overallStatus: escalation.overallStatus,
+          dailyTaskRegistered: dailyCycleReport !== null,
+          autoHealTaskRegistered: autoHealReport !== null,
+          incidents: {
+            criticalCount: escalation.incidents.filter((item) => item.severity === "critical").length,
+            warningCount: escalation.incidents.filter((item) => item.severity === "warning").length
+          },
+          audits: {
+            total: audits.length,
+            failureCount: audits.filter((item) => item.status === "failure").length,
+            warningCount: audits.filter((item) => item.status === "warning").length
+          }
+        },
+        { maxEntries: 20 }
+      );
+    } catch (error) {
+      statusWarnings.push(
+        `post-launch-history-write: ${error instanceof Error ? error.message : "Unexpected post-launch history write failure"}`
+      );
+    }
+
     return jsonOk(
       {
         ok: true,
@@ -175,7 +203,7 @@ export async function GET(request: Request) {
         autoHealReport,
         newsFetchReport,
         snapshotGenerationReport,
-        postLaunchHistory: postLaunchHistory?.slice(-3).reverse() ?? [],
+        postLaunchHistory: refreshedPostLaunchHistory.slice(-3).reverse(),
         thresholdAdviceReport,
         accessStatsReport,
         runtimeStorageReport,

@@ -377,6 +377,7 @@ function buildBatchEnv(baseEnv, batchWatchlistPath, rawDir, liveDir, options) {
 
   return {
     ...baseEnv,
+    SWING_RADAR_PERSIST_OPS_REPORTS: "false",
     SWING_RADAR_WATCHLIST_FILE: batchWatchlistPath,
     SWING_RADAR_RAW_DATA_DIR: rawDir,
     SWING_RADAR_DATA_DIR: liveDir,

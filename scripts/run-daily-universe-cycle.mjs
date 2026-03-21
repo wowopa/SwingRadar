@@ -6,6 +6,7 @@ import { promisify } from "node:util";
 import { fileURLToPath } from "node:url";
 
 import { loadLocalEnv } from "./load-env.mjs";
+import { persistRuntimeDocument } from "./lib/runtime-document-store.mjs";
 import { getRuntimePaths } from "./lib/runtime-paths.mjs";
 import { getRuntimeStorageReportPath, writeRuntimeStorageReport } from "./lib/runtime-storage-report.mjs";
 
@@ -115,6 +116,7 @@ async function writeReport(report) {
   const reportPath = getReportPath();
   await mkdir(path.dirname(reportPath), { recursive: true });
   await writeFile(reportPath, `${JSON.stringify(report, null, 2)}\n`, "utf8");
+  await persistRuntimeDocument("ops-daily-cycle-report", report, { logPrefix: "daily-cycle-report" });
 }
 
 async function runScript(scriptName, args) {

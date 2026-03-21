@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { getRuntimePaths } from "@/lib/server/runtime-paths";
+import { loadRuntimeDocument, saveRuntimeDocument } from "@/lib/server/runtime-documents";
 
 function resolveProjectRoot() {
   return process.cwd();
@@ -70,6 +71,15 @@ async function readJsonFile<T>(filePath: string): Promise<T | null> {
 
     throw error;
   }
+}
+
+async function readJsonFileOrRuntimeDocument<T>(filePath: string, documentName: string) {
+  const runtimePayload = await loadRuntimeDocument<T>(documentName);
+  if (runtimePayload) {
+    return runtimePayload;
+  }
+
+  return readJsonFile<T>(filePath);
 }
 
 export type OpsHealthCheckReport = {
@@ -236,27 +246,33 @@ export type RuntimeStorageReport = {
 };
 
 export async function loadOpsHealthCheckReport() {
-  return readJsonFile<OpsHealthCheckReport>(getOpsHealthReportPath());
+  return readJsonFileOrRuntimeDocument<OpsHealthCheckReport>(getOpsHealthReportPath(), "ops-health-report");
 }
 
 export async function loadDailyCycleReport() {
-  return readJsonFile<DailyCycleReport>(getDailyCycleReportPath());
+  return readJsonFileOrRuntimeDocument<DailyCycleReport>(getDailyCycleReportPath(), "ops-daily-cycle-report");
 }
 
 export async function loadAutoHealReport() {
-  return readJsonFile<AutoHealReport>(getAutoHealReportPath());
+  return readJsonFileOrRuntimeDocument<AutoHealReport>(getAutoHealReportPath(), "ops-auto-heal-report");
 }
 
 export async function loadNewsFetchReport() {
-  return readJsonFile<NewsFetchReport>(getNewsFetchReportPath());
+  return readJsonFileOrRuntimeDocument<NewsFetchReport>(getNewsFetchReportPath(), "ops-news-fetch-report");
 }
 
 export async function loadSnapshotGenerationReport() {
-  return readJsonFile<SnapshotGenerationReport>(getSnapshotGenerationReportPath());
+  return readJsonFileOrRuntimeDocument<SnapshotGenerationReport>(
+    getSnapshotGenerationReportPath(),
+    "ops-snapshot-generation-report"
+  );
 }
 
 export async function loadPostLaunchHistory() {
-  const payload = await readJsonFile<PostLaunchHistoryEntry[] | PostLaunchHistoryEntry>(getPostLaunchHistoryPath());
+  const payload = await readJsonFileOrRuntimeDocument<PostLaunchHistoryEntry[] | PostLaunchHistoryEntry>(
+    getPostLaunchHistoryPath(),
+    "ops-post-launch-history"
+  );
 
   if (!payload) {
     return null;
@@ -266,9 +282,31 @@ export async function loadPostLaunchHistory() {
 }
 
 export async function loadThresholdAdviceReport() {
-  return readJsonFile<ThresholdAdviceReport>(getThresholdAdvicePath());
+  return readJsonFileOrRuntimeDocument<ThresholdAdviceReport>(
+    getThresholdAdvicePath(),
+    "ops-threshold-advice-report"
+  );
 }
 
 export async function loadRuntimeStorageReport() {
-  return readJsonFile<RuntimeStorageReport>(getRuntimeStorageReportPath());
+  return readJsonFileOrRuntimeDocument<RuntimeStorageReport>(
+    getRuntimeStorageReportPath(),
+    "ops-runtime-storage-report"
+  );
+}
+
+export async function appendPostLaunchHistoryEntry(
+  entry: PostLaunchHistoryEntry,
+  options?: { maxEntries?: number }
+) {
+  const current = (await loadPostLaunchHistory()) ?? [];
+  const maxEntries = options?.maxEntries ?? 20;
+  const entryDate = entry.checkedAt.slice(0, 10);
+
+  const next = [...current.filter((item) => item.checkedAt.slice(0, 10) !== entryDate), entry]
+    .sort((left, right) => new Date(left.checkedAt).getTime() - new Date(right.checkedAt).getTime())
+    .slice(-maxEntries);
+
+  await saveRuntimeDocument("ops-post-launch-history", next);
+  return next;
 }

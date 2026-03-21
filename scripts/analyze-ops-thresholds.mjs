@@ -4,6 +4,7 @@ import process from "node:process";
 import { fileURLToPath } from "node:url";
 
 import { loadLocalEnv } from "./load-env.mjs";
+import { persistRuntimeDocument, readRuntimeDocument } from "./lib/runtime-document-store.mjs";
 import { getRuntimePaths } from "./lib/runtime-paths.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -39,6 +40,22 @@ async function readJson(filePath, fallback) {
     }
     throw error;
   }
+}
+
+async function readReportPayload(filePath, documentName, fallback) {
+  try {
+    const fromFile = await readJson(filePath, null);
+    if (fromFile !== null) {
+      return fromFile;
+    }
+  } catch (error) {
+    console.warn(
+      `[threshold-advice-report] Falling back to runtime document ${documentName}: ${error instanceof Error ? error.message : String(error)}`
+    );
+  }
+
+  const fromRuntimeDocument = await readRuntimeDocument(documentName);
+  return fromRuntimeDocument ?? fallback;
 }
 
 function round1(value) {
@@ -130,9 +147,9 @@ async function main() {
     : path.join(opsDir, "latest-threshold-advice.json");
 
   const [history, newsFetchReport, snapshotGenerationReport] = await Promise.all([
-    readJson(historyPath, []),
-    readJson(newsFetchPath, null),
-    readJson(snapshotGenerationPath, null)
+    readReportPayload(historyPath, "ops-post-launch-history", []),
+    readReportPayload(newsFetchPath, "ops-news-fetch-report", null),
+    readReportPayload(snapshotGenerationPath, "ops-snapshot-generation-report", null)
   ]);
 
   const policy = getPolicy();
@@ -153,6 +170,7 @@ async function main() {
 
   await mkdir(path.dirname(outputPath), { recursive: true });
   await writeFile(outputPath, `${JSON.stringify(report, null, 2)}\n`, "utf8");
+  await persistRuntimeDocument("ops-threshold-advice-report", report, { logPrefix: "threshold-advice-report" });
 
   console.log(JSON.stringify(report, null, 2));
 }

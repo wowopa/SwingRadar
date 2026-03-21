@@ -13,6 +13,7 @@ import {
   matchesFilters,
   selectCuratedRssNews
 } from "./lib/news-providers.mjs";
+import { persistRuntimeDocument } from "./lib/runtime-document-store.mjs";
 import { getRuntimePaths } from "./lib/runtime-paths.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -405,6 +406,7 @@ async function main() {
     items: normalizedItems
   });
   await writeJson(getNewsFetchReportPath(), report);
+  await persistRuntimeDocument("ops-news-fetch-report", report, { logPrefix: "news-fetch-report" });
 
   console.log("External news fetch completed.");
   console.log(`- provider: ${providerLabel}`);

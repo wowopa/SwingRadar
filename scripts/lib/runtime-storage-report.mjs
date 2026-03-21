@@ -1,6 +1,7 @@
 import { mkdir, readdir, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
 
+import { persistRuntimeDocument } from "./runtime-document-store.mjs";
 import { getRuntimePaths } from "./runtime-paths.mjs";
 
 function formatBytes(bytes) {
@@ -108,5 +109,6 @@ export async function writeRuntimeStorageReport(projectRoot, metadata = {}) {
   const reportPath = getRuntimeStorageReportPath(projectRoot);
   await mkdir(path.dirname(reportPath), { recursive: true });
   await writeFile(reportPath, `${JSON.stringify(report, null, 2)}\n`, "utf8");
+  await persistRuntimeDocument("ops-runtime-storage-report", report, { logPrefix: "runtime-storage-report" });
   return report;
 }

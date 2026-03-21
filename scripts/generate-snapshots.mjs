@@ -6,6 +6,7 @@ import { fileURLToPath } from "node:url";
 import { loadLocalEnv } from "./load-env.mjs";
 import { getProjectPaths } from "./lib/external-source-utils.mjs";
 import { writeLiveSnapshotManifest } from "./lib/live-snapshot-manifest.mjs";
+import { persistRuntimeDocument } from "./lib/runtime-document-store.mjs";
 import { getRuntimePaths } from "./lib/runtime-paths.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -2486,26 +2487,23 @@ async function main() {
     writeFile(getTrackingEventsPath(options.rawDir), `${JSON.stringify(trackingEvents, null, 2)}\n`, "utf8")
   ]);
   await mkdir(path.dirname(getSnapshotGenerationReportPath()), { recursive: true });
-  await writeFile(
-    getSnapshotGenerationReportPath(),
-    `${JSON.stringify(
-      {
-        startedAt,
-        completedAt: new Date().toISOString(),
-        generatedAt,
-        totalTickers: market.items.length,
-        recommendationCount: recommendations.length,
-        analysisCount: analysisItems.length,
-        trackingHistoryCount: trackingHistory.length,
-        validationFallbackCount: validationFallbackTickers.length,
-        validationFallbackTickers,
-        validationBasisCounts
-      },
-      null,
-      2
-    )}\n`,
-    "utf8"
-  );
+  const snapshotGenerationReport = {
+    startedAt,
+    completedAt: new Date().toISOString(),
+    generatedAt,
+    totalTickers: market.items.length,
+    recommendationCount: recommendations.length,
+    analysisCount: analysisItems.length,
+    trackingHistoryCount: trackingHistory.length,
+    validationFallbackCount: validationFallbackTickers.length,
+    validationFallbackTickers,
+    validationBasisCounts
+  };
+
+  await writeFile(getSnapshotGenerationReportPath(), `${JSON.stringify(snapshotGenerationReport, null, 2)}\n`, "utf8");
+  await persistRuntimeDocument("ops-snapshot-generation-report", snapshotGenerationReport, {
+    logPrefix: "snapshot-generation-report"
+  });
 
   if (path.resolve(options.outDir) === path.resolve(defaults.liveDir)) {
     await writeLiveSnapshotManifest(projectRoot, options.outDir);
