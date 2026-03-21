@@ -221,7 +221,7 @@ export function RecommendationExplorer({ items }: { items: Recommendation[] }) {
           </div>
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
             <SummaryCard label="현재 후보" value={`${filteredItems.length}개`} detail="필터 기준으로 남은 후보" tone="emerald" />
-            <SummaryCard label="우선 볼 종목" value={`${shortlistCount}개`} detail="아래 카드에 먼저 보여주는 상위 12개 기준" tone="sky" />
+            <SummaryCard label="우선 볼 종목" value={`${shortlistCount}개`} detail="아래 카드에서 먼저 확인할 후보 기준" tone="sky" />
             <SummaryCard label="검증 근거 확보" value={`${verifiedCount}개`} detail="보수 계산만으로 보지 않은 후보" tone="teal" />
             <SummaryCard
               label="무효화 여유"

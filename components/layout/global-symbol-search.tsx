@@ -107,7 +107,7 @@ export function GlobalSymbolSearch() {
     }
 
     setMode("search");
-    setDescription("티커, 종목명, 섹터 기준으로 최대 12개까지 보여드립니다.");
+    setDescription("티커, 종목명, 섹터 기준으로 관련 종목을 보여드립니다.");
 
     async function load() {
       const response = await fetch(`/api/symbols?q=${encodeURIComponent(search)}&limit=12`, { cache: "no-store" });
