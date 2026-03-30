@@ -3,6 +3,7 @@ import { ArrowUpRight, Binoculars, CircleOff, LayoutDashboard, WalletCards } fro
 
 import { ActionBucketBadge } from "@/components/recommendations/action-bucket-badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import type { TodayActionSummaryDto } from "@/lib/api-contracts/swing-radar";
 import {
   buildTodayOperatingSummary,
   bucketRecommendationActions,
@@ -18,13 +19,19 @@ const bucketIcons = {
 } satisfies Record<RecommendationActionBucket, typeof ArrowUpRight>;
 
 const emptyMessages: Record<RecommendationActionBucket, string> = {
-  buy_now: "지금 바로 신규 매수까지 볼 종목은 없습니다.",
-  watch_only: "추가 관찰이 필요한 종목도 많지 않습니다.",
-  avoid: "현재 상위 후보 중 즉시 보류로 분류된 종목이 많지 않습니다."
+  buy_now: "지금 바로 신규 매수까지 볼 종목은 아직 없습니다.",
+  watch_only: "추가 관찰이 필요한 종목은 많지 않습니다.",
+  avoid: "현재 상위 후보 중 즉시 보류로 보는 종목은 많지 않습니다."
 };
 
-export function TodayOperatingSummary({ items }: { items: RecommendationActionItem[] }) {
-  const summary = buildTodayOperatingSummary(items);
+export function TodayOperatingSummary({
+  items,
+  summary
+}: {
+  items: RecommendationActionItem[];
+  summary?: TodayActionSummaryDto;
+}) {
+  const resolvedSummary = summary ?? buildTodayOperatingSummary(items);
   const buckets = bucketRecommendationActions(items);
   const sections: RecommendationActionBucket[] = ["buy_now", "watch_only", "avoid"];
 
@@ -34,31 +41,51 @@ export function TodayOperatingSummary({ items }: { items: RecommendationActionIt
         <Card className="border-border/70 bg-white/82 shadow-sm">
           <CardHeader className="space-y-4">
             <div className="flex flex-wrap items-center gap-3">
-              <ActionBucketBadge bucket={summary.maxNewPositions > 0 ? "buy_now" : "watch_only"} />
+              <ActionBucketBadge bucket={resolvedSummary.maxNewPositions > 0 ? "buy_now" : "watch_only"} />
               <span className="rounded-full border border-border/70 bg-secondary/40 px-3 py-1 text-xs font-medium text-foreground/78">
-                오늘 운영 모드 · {summary.marketStance}
+                오늘 운영 모드
               </span>
             </div>
             <div className="space-y-3">
-              <CardTitle className="text-2xl text-foreground">{summary.marketStance}</CardTitle>
-              <p className="text-sm leading-7 text-muted-foreground">{summary.summary}</p>
+              <CardTitle className="text-2xl text-foreground">{resolvedSummary.marketStanceLabel}</CardTitle>
+              <p className="text-sm leading-7 text-muted-foreground">{resolvedSummary.summary}</p>
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="rounded-[24px] border border-border/70 bg-secondary/25 p-4 text-sm leading-6 text-foreground/82">
-              {summary.focusNote}
+              {resolvedSummary.focusNote}
             </div>
             <div className="rounded-[24px] border border-primary/20 bg-primary/8 p-4 text-sm leading-6 text-foreground/82">
-              오늘은 화면에 보인 종목을 모두 사는 날이 아니라, 규칙상 허용된 수만 행동하는 날로 해석해야 합니다.
+              오늘 화면에 보이는 종목을 모두 사라는 뜻은 아닙니다. 운영 규칙 안에서 일부만 행동 후보로 해석해야 합니다.
             </div>
           </CardContent>
         </Card>
 
         <div className="grid gap-4 sm:grid-cols-2">
-          <SummaryMetric title="신규 매수 최대" value={`${summary.maxNewPositions}개`} note="오늘 새로 여는 포지션 기준" icon={ArrowUpRight} />
-          <SummaryMetric title="동시 관리 기준" value={`${summary.maxConcurrentPositions}개`} note="같이 들고 갈 총 종목 수 기준" icon={WalletCards} />
-          <SummaryMetric title="오늘 매수 가능" value={`${summary.bucketCounts.buy_now}개`} note="바로 계획까지 볼 수 있는 종목" icon={LayoutDashboard} />
-          <SummaryMetric title="관찰만" value={`${summary.bucketCounts.watch_only}개`} note="추격보다 확인이 먼저인 종목" icon={Binoculars} />
+          <SummaryMetric
+            title="신규 매수 최대"
+            value={`${resolvedSummary.maxNewPositions}개`}
+            note="오늘 새로 볼 수 있는 최대 진입 수"
+            icon={ArrowUpRight}
+          />
+          <SummaryMetric
+            title="동시 관리 기준"
+            value={`${resolvedSummary.maxConcurrentPositions}개`}
+            note="같이 들고 갈 총 종목 수 기준"
+            icon={WalletCards}
+          />
+          <SummaryMetric
+            title="오늘 매수 가능"
+            value={`${resolvedSummary.bucketCounts.buy_now}개`}
+            note="바로 계획까지 볼 수 있는 종목"
+            icon={LayoutDashboard}
+          />
+          <SummaryMetric
+            title="관찰만"
+            value={`${resolvedSummary.bucketCounts.watch_only}개`}
+            note="추격보다 확인이 먼저인 종목"
+            icon={Binoculars}
+          />
         </div>
       </div>
 
@@ -99,7 +126,7 @@ export function TodayOperatingSummary({ items }: { items: RecommendationActionIt
                               {item.company} <span className="text-xs font-medium text-muted-foreground">{item.ticker}</span>
                             </p>
                             <p className="mt-1 line-clamp-2 text-xs leading-5 text-muted-foreground">
-                              {item.signalLabel ?? "신호와 가격 구조를 함께 확인해 다음 행동을 판단합니다."}
+                              {item.signalLabel ?? "신호와 가격 구조를 함께 보고 다음 행동을 판단합니다."}
                             </p>
                           </div>
                           <span className="rounded-full border border-border/70 bg-background/90 px-2.5 py-1 text-[11px] font-medium text-foreground/72">

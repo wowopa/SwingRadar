@@ -16,11 +16,13 @@ export function AnalysisTradePlanPanel({
   featuredCandidate?: DailyCandidate | null;
   featuredRank?: number;
 }) {
-  const plan = buildAnalysisTradePlan({
-    analysis,
-    dailyCandidate: featuredCandidate,
-    featuredRank
-  });
+  const plan =
+    analysis.tradePlan ??
+    buildAnalysisTradePlan({
+      analysis,
+      dailyCandidate: featuredCandidate,
+      featuredRank
+    });
 
   return (
     <Card>
@@ -50,12 +52,12 @@ export function AnalysisTradePlanPanel({
         </div>
 
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-          <MetricCard label="현재가 기준" value={plan.currentPriceLabel} note="최신 스냅샷 기준 위치" icon={Flag} />
-          <MetricCard label="매수 구간" value={plan.entryLabel} note="지금 접근해도 되는 가격대" icon={ArrowUpRight} />
-          <MetricCard label="손절 기준" value={plan.stopLabel} note="틀리면 바로 다시 볼 가격" icon={ShieldAlert} />
+          <MetricCard label="현재가 기준" value={plan.currentPriceLabel} note="최신 데이터 기준 위치" icon={Flag} />
+          <MetricCard label="매수 구간" value={plan.entryLabel} note="지금 계획을 세워볼 가격대" icon={ArrowUpRight} />
+          <MetricCard label="손절 기준" value={plan.stopLabel} note="틀리면 다시 볼 가격" icon={ShieldAlert} />
           <MetricCard label="1차 목표" value={plan.targetLabel} note="먼저 반응을 확인할 구간" icon={Target} />
-          <MetricCard label="예상 보유" value={plan.holdWindowLabel} note="이번 스윙에서 보는 시간 폭" icon={Flag} />
-          <MetricCard label="기대 손익비" value={plan.riskRewardLabel} note="확인 가격 기준 대략적 비율" icon={Target} />
+          <MetricCard label="예상 보유" value={plan.holdWindowLabel} note="이번 스윙에서 보는 시간축" icon={Flag} />
+          <MetricCard label="기대 손익비" value={plan.riskRewardLabel} note="확인 가격 기준 기대 비율" icon={Target} />
         </div>
       </CardHeader>
 
@@ -68,7 +70,7 @@ export function AnalysisTradePlanPanel({
         <div className="grid gap-4 md:grid-cols-3">
           <DetailCard title="진입 전에 볼 것" body={plan.entryGuide} />
           <DetailCard title="손절은 이렇게" body={plan.stopGuide} />
-          <DetailCard title="목표 구간 읽기" body={`${plan.targetGuide} 확장 목표는 ${plan.stretchTargetLabel} 수준까지 열어 둘 수 있습니다.`} />
+          <DetailCard title="목표 구간 읽기" body={`${plan.targetGuide} 확장 목표는 ${plan.stretchTargetLabel}까지 열어 둘 수 있습니다.`} />
         </div>
 
         <div className="grid gap-4 md:grid-cols-2">

@@ -10,16 +10,16 @@ function createAnalysis(signalTone: TickerAnalysis["signalTone"] = "긍정"): Ti
     signalTone,
     score: 82,
     activationScore: 72,
-    headline: "확인 가격과 손절 기준이 비교적 분명한 편입니다.",
-    invalidation: "72,000원 하회 시 시나리오를 재검토합니다.",
+    headline: "확인 가격과 손절 기준이 비교적 분명한 자리입니다.",
+    invalidation: "72,000원 아래로 내려가면 시나리오를 다시 봅니다.",
     analysisSummary: [
       { label: "현재 위치", value: "추세 회복", note: "중기 구조 회복 구간" },
       { label: "체크 포인트", value: "72,000원 지지", note: "기본 시나리오 유지 조건" },
-      { label: "이벤트 민감도", value: "중간", note: "실적과 업황 뉴스에 반응" }
+      { label: "이벤트 민감도", value: "중간", note: "실적과 업황 뉴스 반응" }
     ],
     keyLevels: [
       { label: "손절", price: "72,000원", meaning: "구조 훼손 구간" },
-      { label: "확인", price: "74,200원", meaning: "돌파 및 재지지 확인" },
+      { label: "확인", price: "74,200원", meaning: "돌파 또는 재지지 확인" },
       { label: "목표", price: "76,500원", meaning: "1차 반응 구간" }
     ],
     technicalIndicators: {
@@ -48,7 +48,24 @@ function createAnalysis(signalTone: TickerAnalysis["signalTone"] = "긍정"): Ti
       marketRelativeStrength20: null,
       marketRelativeSpread20: null
     },
-    chartSeries: [{ label: "2026-03-30", close: 73_900, open: null, high: null, low: null, volume: null, sma20: null, sma60: null, ema20: null, bollingerUpper: null, bollingerLower: null, rsi14: null, macd: null, macdSignal: null }],
+    chartSeries: [
+      {
+        label: "2026-03-30",
+        close: 73_900,
+        open: null,
+        high: null,
+        low: null,
+        volume: null,
+        sma20: null,
+        sma60: null,
+        ema20: null,
+        bollingerUpper: null,
+        bollingerLower: null,
+        rsi14: null,
+        macd: null,
+        macdSignal: null
+      }
+    ],
     decisionNotes: ["추격보다 확인 가격 전후 반응이 중요합니다."],
     scoreBreakdown: [],
     scenarios: [],
@@ -71,7 +88,7 @@ describe("buildAnalysisTradePlan", () => {
           isWatchEligible: true,
           isEntryEligible: true,
           blockers: [],
-          supports: ["확인 가격 돌파", "거래량 유지"]
+          supports: ["확인 가격 돌파", "거래량 동반"]
         }
       },
       dailyCandidate: {

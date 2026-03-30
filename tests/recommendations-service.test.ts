@@ -34,13 +34,13 @@ describe("listRecommendations", () => {
           score: 90,
           signalLabel: "High score",
           rationale: "A",
-          invalidation: "A",
+          invalidation: "80원 이탈",
           invalidationDistance: -5,
-          riskRewardRatio: "1:2",
+          riskRewardRatio: "1 : 2",
           validationSummary: "A",
-          checkpoints: [],
+          checkpoints: ["80원 지지", "92원 돌파", "98원 확인"],
           validation: { hitRate: 50, avgReturn: 1, sampleSize: 10, maxDrawdown: -2 },
-          observationWindow: "5d",
+          observationWindow: "5일",
           updatedAt: "2026-03-08 09:00"
         },
         {
@@ -51,14 +51,24 @@ describe("listRecommendations", () => {
           score: 70,
           signalLabel: "Featured",
           rationale: "B",
-          invalidation: "B",
+          invalidation: "41,000원 이탈",
           invalidationDistance: -4,
-          riskRewardRatio: "1:3",
+          riskRewardRatio: "1 : 3",
           validationSummary: "B",
-          checkpoints: [],
+          checkpoints: ["41,000원 지지", "44,000원 돌파", "47,000원 확인"],
           validation: { hitRate: 60, avgReturn: 2, sampleSize: 11, maxDrawdown: -3 },
-          observationWindow: "5d",
-          updatedAt: "2026-03-08 09:00"
+          observationWindow: "5일",
+          updatedAt: "2026-03-08 09:00",
+          trackingDiagnostic: {
+            stage: "진입 추적 가능",
+            activationScore: 73,
+            watchThreshold: 52,
+            entryThreshold: 68,
+            isWatchEligible: true,
+            isEntryEligible: true,
+            blockers: [],
+            supports: ["거래량 증가"]
+          }
         }
       ],
       dailyScan: null
@@ -73,12 +83,25 @@ describe("listRecommendations", () => {
       failedBatches: [],
       topCandidates: [
         {
+          batch: 2,
           ticker: "BBB001",
           company: "Beta",
+          sector: "Bio",
+          signalTone: "긍정",
           score: 77,
           candidateScore: 97,
-          eventCoverage: 4,
-          batch: 2
+          activationScore: 73,
+          currentPrice: 43_500,
+          confirmationPrice: 44_000,
+          expansionPrice: 47_000,
+          invalidationPrice: 41_000,
+          averageTurnover20: 1_500_000_000,
+          liquidityRating: "양호",
+          invalidation: "41,000원 이탈",
+          validationSummary: "B",
+          observationWindow: "5일",
+          rationale: "B",
+          eventCoverage: "보강됨"
         }
       ]
     });
@@ -91,9 +114,12 @@ describe("listRecommendations", () => {
       score: 77,
       featuredRank: 1,
       candidateScore: 97,
-      eventCoverage: 4,
-      candidateBatch: 2
+      eventCoverage: "보강됨",
+      candidateBatch: 2,
+      actionBucket: "buy_now"
     });
+    expect(result.items[0]?.tradePlan?.entryLabel).toContain("43,500원");
+    expect(result.todaySummary?.bucketCounts.buy_now).toBe(1);
   });
 
   it("filters by signal tone and limit", async () => {
@@ -108,13 +134,13 @@ describe("listRecommendations", () => {
           score: 90,
           signalLabel: "A",
           rationale: "A",
-          invalidation: "A",
+          invalidation: "80원 이탈",
           invalidationDistance: -5,
-          riskRewardRatio: "1:2",
+          riskRewardRatio: "1 : 2",
           validationSummary: "A",
-          checkpoints: [],
+          checkpoints: ["80원 지지", "92원 돌파", "98원 확인"],
           validation: { hitRate: 50, avgReturn: 1, sampleSize: 10, maxDrawdown: -2 },
-          observationWindow: "5d",
+          observationWindow: "5일",
           updatedAt: "2026-03-08 09:00"
         },
         {
@@ -125,13 +151,13 @@ describe("listRecommendations", () => {
           score: 40,
           signalLabel: "B",
           rationale: "B",
-          invalidation: "B",
+          invalidation: "25,000원 이탈",
           invalidationDistance: -1,
-          riskRewardRatio: "1:1",
+          riskRewardRatio: "1 : 1",
           validationSummary: "B",
-          checkpoints: [],
+          checkpoints: ["25,000원 지지"],
           validation: { hitRate: 30, avgReturn: -1, sampleSize: 10, maxDrawdown: -6 },
-          observationWindow: "5d",
+          observationWindow: "5일",
           updatedAt: "2026-03-07 09:00"
         }
       ],
@@ -144,5 +170,7 @@ describe("listRecommendations", () => {
 
     expect(result.items).toHaveLength(1);
     expect(result.items[0]?.ticker).toBe("BBB001");
+    expect(result.items[0]?.actionBucket).toBe("avoid");
+    expect(result.todaySummary?.maxNewPositions).toBe(0);
   });
 });

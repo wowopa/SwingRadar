@@ -39,17 +39,30 @@ describe("analysis resolver", () => {
           analysisSummary: [],
           keyLevels: [],
           technicalIndicators: {
-            sma20: 50000,
-            sma60: 47000,
-            ema20: 49800,
+            sma20: 50_000,
+            sma60: 47_000,
+            ema20: 49_800,
             rsi14: 58.2,
             macd: 120.4,
             macdSignal: 98.1,
             macdHistogram: 22.3,
-            bollingerUpper: 54000,
-            bollingerMiddle: 50000,
-            bollingerLower: 46000,
-            volumeRatio20: 1.12
+            bollingerUpper: 54_000,
+            bollingerMiddle: 50_000,
+            bollingerLower: 46_000,
+            volumeRatio20: 1.12,
+            atr14: null,
+            natr14: null,
+            adx14: null,
+            plusDi14: null,
+            minusDi14: null,
+            stochasticK: null,
+            stochasticD: null,
+            mfi14: null,
+            roc20: null,
+            cci20: null,
+            cmf20: null,
+            marketRelativeStrength20: null,
+            marketRelativeSpread20: null
           },
           chartSeries: [],
           decisionNotes: [],
@@ -72,6 +85,7 @@ describe("analysis resolver", () => {
 
     expect(result.headline).toBe("existing");
     expect(result.newsImpact).toHaveLength(1);
+    expect(result.tradePlan?.bucket).toBe("watch_only");
   });
 
   it("uses today's candidate timestamp and score when available", async () => {
@@ -80,11 +94,11 @@ describe("analysis resolver", () => {
       items: [
         {
           ticker: "263750",
-          company: "?꾩뼱鍮꾩뒪",
-          signalTone: "以묐┰",
+          company: "펄어비스",
+          signalTone: "중립",
           score: 61.5,
           headline: "existing",
-          invalidation: "49,203???꾨옒濡??대젮媛硫??ㅼ떆 遊낅땲??",
+          invalidation: "49,203원 아래로 내려가면 다시 봅니다.",
           analysisSummary: [],
           keyLevels: [],
           technicalIndicators: {
@@ -98,7 +112,20 @@ describe("analysis resolver", () => {
             bollingerUpper: null,
             bollingerMiddle: null,
             bollingerLower: null,
-            volumeRatio20: null
+            volumeRatio20: null,
+            atr14: null,
+            natr14: null,
+            adx14: null,
+            plusDi14: null,
+            minusDi14: null,
+            stochasticK: null,
+            stochasticD: null,
+            mfi14: null,
+            roc20: null,
+            cci20: null,
+            cmf20: null,
+            marketRelativeStrength20: null,
+            marketRelativeSpread20: null
           },
           chartSeries: [],
           decisionNotes: [],
@@ -126,16 +153,17 @@ describe("analysis resolver", () => {
         {
           batch: 1,
           ticker: "263750",
-          company: "?꾩뼱鍮꾩뒪",
-          sector: "寃뚯엫",
-          signalTone: "以묐┰",
+          company: "펄어비스",
+          sector: "게임",
+          signalTone: "중립",
           score: 69.1,
           candidateScore: 119.9,
-          invalidation: "49,203???꾨옒濡??대젮媛硫??대쾲 ?먮쫫? ?ㅼ떆 遊먯빞 ?⑸땲??",
-          validationSummary: "寃利??쒕낯???꾩쭅 ?곸뼱 李멸퀬?⑹엯?덈떎.",
-          observationWindow: "3~10嫄곕옒??",
-          rationale: "理쒓렐 寃뚯엫 ?좎옉 ?댁뒋瑜??④퍡 蹂닿퀬 ?덉뒿?덈떎.",
-          eventCoverage: "?쒗븳??"
+          activationScore: 57,
+          invalidation: "49,203원 아래로 내려가면 다시 봅니다.",
+          validationSummary: "검증 표본은 아직 참고 수준입니다.",
+          observationWindow: "3~10거래일",
+          rationale: "최근 게임 신작 이슈를 함께 보고 있습니다.",
+          eventCoverage: "제한적"
         }
       ]
     });
@@ -144,6 +172,7 @@ describe("analysis resolver", () => {
 
     expect(result?.generatedAt).toBe("2026-03-09T09:10:00.000Z");
     expect(result?.item.score).toBe(69.1);
+    expect(result?.item.tradePlan?.bucket).toBe("watch_only");
   });
 
   it("builds a fallback analysis item from recommendations when analysis snapshot is missing", async () => {
@@ -160,13 +189,13 @@ describe("analysis resolver", () => {
           sector: "게임",
           signalTone: "중립",
           score: 69.1,
-          signalLabel: "조금 더 확인해볼 만함",
-          rationale: "가격 흐름과 거래 흐름이 함께 살아나는지 보고 있습니다.",
+          signalLabel: "조금 더 확인이 필요함",
+          rationale: "가격 흐름과 거래 흐름이 이어지는지 보고 있습니다.",
           invalidation: "49,203원 아래로 내려가면 이번 흐름은 다시 봐야 합니다.",
           invalidationDistance: -4.5,
           riskRewardRatio: "1 : 1.5",
-          validationSummary: "비슷한 흐름 20건 기준 성공률 56%입니다.",
-          checkpoints: ["49,203원 근처를 지키는지 보기", "53,000원을 넘는지 보기", "57,500원까지 힘이 이어지는지 보기"],
+          validationSummary: "비슷한 흐름 20건 기준 성공률은 56%입니다.",
+          checkpoints: ["49,203원 지지 확인", "53,000원 돌파 확인", "57,500원 목표 확인"],
           validation: {
             hitRate: 56,
             avgReturn: 4.2,
@@ -195,8 +224,9 @@ describe("analysis resolver", () => {
           signalTone: "중립",
           score: 69.1,
           candidateScore: 119.9,
+          activationScore: 58,
           invalidation: "49,203원 아래로 내려가면 이번 흐름은 다시 봐야 합니다.",
-          validationSummary: "검증 표본이 아직 적어 참고용입니다.",
+          validationSummary: "검증 표본은 아직 참고 수준입니다.",
           observationWindow: "3~10거래일",
           rationale: "최근 게임 신작 이슈를 함께 보고 있습니다.",
           eventCoverage: "제한적"
@@ -208,11 +238,12 @@ describe("analysis resolver", () => {
 
     expect(result?.generatedAt).toBe("2026-03-09T09:10:00.000Z");
     expect(result?.item.ticker).toBe("263750");
-    expect(result?.item.headline).toContain("조금 더 확인해볼 만함");
+    expect(result?.item.headline).toContain("조금 더 확인이 필요함");
     expect(result?.item.keyLevels[0]?.price).toBe("49,203원");
     expect(result?.item.technicalIndicators.rsi14).toBeNull();
     expect(result?.item.chartSeries).toEqual([]);
-    expect(result?.item.dataQuality[0]?.note).toContain("분석 상세가 아직 없어서");
+    expect(result?.item.dataQuality[0]?.note).toContain("추천 데이터 기반");
+    expect(result?.item.tradePlan?.bucket).toBe("watch_only");
   });
 
   it("applies query flags to synthesized analysis payloads", async () => {
@@ -229,13 +260,13 @@ describe("analysis resolver", () => {
           sector: "게임",
           signalTone: "중립",
           score: 69.1,
-          signalLabel: "조금 더 확인해볼 만함",
-          rationale: "가격 흐름과 거래 흐름이 함께 살아나는지 보고 있습니다.",
+          signalLabel: "조금 더 확인이 필요함",
+          rationale: "가격 흐름과 거래 흐름이 이어지는지 보고 있습니다.",
           invalidation: "49,203원 아래로 내려가면 이번 흐름은 다시 봐야 합니다.",
           invalidationDistance: -4.5,
           riskRewardRatio: "1 : 1.5",
-          validationSummary: "비슷한 흐름 20건 기준 성공률 56%입니다.",
-          checkpoints: ["49,203원 근처를 지키는지 보기", "53,000원을 넘는지 보기", "57,500원까지 힘이 이어지는지 보기"],
+          validationSummary: "비슷한 흐름 20건 기준 성공률은 56%입니다.",
+          checkpoints: ["49,203원 지지 확인", "53,000원 돌파 확인", "57,500원 목표 확인"],
           validation: {
             hitRate: 56,
             avgReturn: 4.2,
@@ -257,6 +288,7 @@ describe("analysis resolver", () => {
 
     expect(result.newsImpact).toEqual([]);
     expect(result.dataQuality).toEqual([]);
+    expect(result.tradePlan?.bucket).toBe("watch_only");
   });
 
   it("resolves legacy tickers to the current analysis symbol", async () => {
@@ -283,7 +315,20 @@ describe("analysis resolver", () => {
             bollingerUpper: null,
             bollingerMiddle: null,
             bollingerLower: null,
-            volumeRatio20: null
+            volumeRatio20: null,
+            atr14: null,
+            natr14: null,
+            adx14: null,
+            plusDi14: null,
+            minusDi14: null,
+            stochasticK: null,
+            stochasticD: null,
+            mfi14: null,
+            roc20: null,
+            cci20: null,
+            cmf20: null,
+            marketRelativeStrength20: null,
+            marketRelativeSpread20: null
           },
           chartSeries: [],
           decisionNotes: [],

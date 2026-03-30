@@ -2,12 +2,24 @@ export type SignalToneDto = "긍정" | "중립" | "주의";
 export type ScenarioLabelDto = "기본" | "강세" | "약세";
 export type RiskStatusDto = "양호" | "확인 필요" | "주의";
 export type TrackingResultDto = "감시중" | "진행중" | "성공" | "실패" | "무효화";
-export type ValidationBasisDto =
-  | "실측 기반"
-  | "공용 추적 참고"
-  | "유사 업종 참고"
-  | "유사 흐름 참고"
-  | "보수 계산";
+export type ValidationBasisDto = "실측 기반" | "공용 추적 참고" | "유사 업종 참고" | "유사 흐름 참고" | "보수 계산";
+export type RecommendationActionBucketDto = "buy_now" | "watch_only" | "avoid";
+
+export interface ActionBucketCountsDto {
+  buy_now: number;
+  watch_only: number;
+  avoid: number;
+}
+
+export interface TodayActionSummaryDto {
+  marketStance: "attack" | "selective" | "watch";
+  marketStanceLabel: string;
+  summary: string;
+  maxNewPositions: number;
+  maxConcurrentPositions: number;
+  bucketCounts: ActionBucketCountsDto;
+  focusNote: string;
+}
 
 export interface ValidationStatsDto {
   hitRate: number;
@@ -35,6 +47,38 @@ export interface TrackingDiagnosticDto {
   supports: string[];
 }
 
+export interface RecommendationTradePlanDto {
+  currentPrice?: number | null;
+  currentPriceLabel: string;
+  entryPriceLow?: number | null;
+  entryPriceHigh?: number | null;
+  confirmationPrice?: number | null;
+  entryLabel: string;
+  stopPrice?: number | null;
+  stopLabel: string;
+  targetPrice?: number | null;
+  targetLabel: string;
+  stretchTargetPrice?: number | null;
+  stretchTargetLabel: string;
+  holdWindowLabel: string;
+  riskRewardLabel: string;
+  nextStep: string;
+}
+
+export interface AnalysisTradePlanDto extends RecommendationTradePlanDto {
+  bucket: RecommendationActionBucketDto;
+  bucketLabel: string;
+  bucketDescription: string;
+  title: string;
+  summary: string;
+  headline: string;
+  entryGuide: string;
+  stopGuide: string;
+  targetGuide: string;
+  supportPoints: string[];
+  cautionPoints: string[];
+}
+
 export interface RecommendationListItemDto {
   ticker: string;
   company: string;
@@ -59,6 +103,8 @@ export interface RecommendationListItemDto {
   candidateBatch?: number;
   trackingDiagnostic?: TrackingDiagnosticDto;
   validationInsight?: ValidationInsightDto;
+  actionBucket?: RecommendationActionBucketDto;
+  tradePlan?: RecommendationTradePlanDto;
 }
 
 export interface DailyCandidateDto {
@@ -106,6 +152,7 @@ export interface RecommendationsResponseDto {
   generatedAt: string;
   items: RecommendationListItemDto[];
   dailyScan: DailyScanSummaryDto | null;
+  todaySummary?: TodayActionSummaryDto;
 }
 
 export interface AnalysisSummaryMetricDto {
@@ -197,6 +244,8 @@ export interface TickerAnalysisDto {
   riskChecklist: Array<{ label: string; status: RiskStatusDto; note: string }>;
   newsImpact: AnalysisEventDto[];
   dataQuality: Array<{ label: string; value: string; note: string }>;
+  actionBucket?: RecommendationActionBucketDto;
+  tradePlan?: AnalysisTradePlanDto;
 }
 
 export interface AnalysisResponseDto {

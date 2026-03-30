@@ -1,4 +1,6 @@
 import type {
+  RecommendationActionBucket,
+  RecommendationTradePlan,
   SignalTone,
   TrackingDiagnostic,
   ValidationBasis,
@@ -14,15 +16,15 @@ export interface ScoreBreakdownItem {
 }
 
 export interface Scenario {
-  label: "\uAE30\uBCF8" | "\uAC15\uC138" | "\uC57D\uC138";
+  label: "기본" | "강세" | "약세";
   probability: number;
   expectation: string;
   trigger: string;
 }
 
 export interface RiskChecklistItem {
-  label: string;
-  status: "\uC591\uD638" | "\uD655\uC778 \uD544\uC694" | "\uC8FC\uC758";
+  label: "양호" | "확인 필요" | "주의" | string;
+  status: "양호" | "확인 필요" | "주의";
   note: string;
 }
 
@@ -99,6 +101,20 @@ export interface AnalysisChartPoint {
   macdSignal: number | null;
 }
 
+export interface AnalysisTradePlan extends RecommendationTradePlan {
+  bucket: RecommendationActionBucket;
+  bucketLabel: string;
+  bucketDescription: string;
+  title: string;
+  summary: string;
+  headline: string;
+  entryGuide: string;
+  stopGuide: string;
+  targetGuide: string;
+  supportPoints: string[];
+  cautionPoints: string[];
+}
+
 export interface TickerAnalysis {
   ticker: string;
   company: string;
@@ -121,4 +137,6 @@ export interface TickerAnalysis {
   riskChecklist: RiskChecklistItem[];
   newsImpact: NewsImpactItem[];
   dataQuality: DataQualityItem[];
+  actionBucket?: RecommendationActionBucket;
+  tradePlan?: AnalysisTradePlan;
 }

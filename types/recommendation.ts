@@ -1,4 +1,4 @@
-﻿export type SignalTone = "긍정" | "중립" | "주의";
+export type SignalTone = "긍정" | "중립" | "주의";
 
 export interface ValidationStats {
   hitRate: number;
@@ -26,6 +26,42 @@ export interface TrackingDiagnostic {
   isEntryEligible: boolean;
   blockers: string[];
   supports: string[];
+}
+
+export type RecommendationActionBucket = "buy_now" | "watch_only" | "avoid";
+
+export interface ActionBucketCounts {
+  buy_now: number;
+  watch_only: number;
+  avoid: number;
+}
+
+export interface TodayActionSummary {
+  marketStance: "attack" | "selective" | "watch";
+  marketStanceLabel: string;
+  summary: string;
+  maxNewPositions: number;
+  maxConcurrentPositions: number;
+  bucketCounts: ActionBucketCounts;
+  focusNote: string;
+}
+
+export interface RecommendationTradePlan {
+  currentPrice?: number | null;
+  currentPriceLabel: string;
+  entryPriceLow?: number | null;
+  entryPriceHigh?: number | null;
+  confirmationPrice?: number | null;
+  entryLabel: string;
+  stopPrice?: number | null;
+  stopLabel: string;
+  targetPrice?: number | null;
+  targetLabel: string;
+  stretchTargetPrice?: number | null;
+  stretchTargetLabel: string;
+  holdWindowLabel: string;
+  riskRewardLabel: string;
+  nextStep: string;
 }
 
 export interface RankChangeSummary {
@@ -61,4 +97,6 @@ export interface Recommendation {
   candidateBatch?: number;
   trackingDiagnostic?: TrackingDiagnostic;
   validationInsight?: ValidationInsight;
+  actionBucket?: RecommendationActionBucket;
+  tradePlan?: RecommendationTradePlan;
 }

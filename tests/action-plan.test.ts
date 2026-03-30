@@ -41,7 +41,7 @@ describe("recommendation action plan", () => {
         signalTone: "중립",
         activationScore: 56,
         score: 68,
-        signalLabel: "재지지 확인 필요"
+        signalLabel: "지지 확인 필요"
       },
       {
         ticker: "068270",
@@ -53,7 +53,8 @@ describe("recommendation action plan", () => {
       }
     ]);
 
-    expect(summary.marketStance).toBe("선별 매수");
+    expect(summary.marketStance).toBe("selective");
+    expect(summary.marketStanceLabel).toBe("선별 매수");
     expect(summary.maxNewPositions).toBe(1);
     expect(summary.bucketCounts.buy_now).toBe(1);
     expect(summary.bucketCounts.watch_only).toBe(1);

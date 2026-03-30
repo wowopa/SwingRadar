@@ -1,11 +1,7 @@
-import type {
-  AnalysisEventDto,
-  DailyCandidateDto,
-  RecommendationListItemDto,
-  TickerAnalysisDto
-} from "@/lib/api-contracts/swing-radar";
+import type { AnalysisEventDto, RecommendationListItemDto, TickerAnalysisDto } from "@/lib/api-contracts/swing-radar";
+import { buildAnalysisTradePlan } from "@/lib/analysis/action-plan";
 import { getDataProvider } from "@/lib/providers";
-import { getDailyCandidates } from "@/lib/repositories/daily-candidates";
+import { getDailyCandidates, type DailyCandidate } from "@/lib/repositories/daily-candidates";
 import { getLatestAnalysisNewsByTicker } from "@/lib/server/latest-news";
 import type { AnalysisQuery } from "@/lib/server/query-schemas";
 
@@ -18,7 +14,7 @@ const KO = {
   bear: "약세" as const
 };
 
-const EMPTY_TECHNICAL_INDICATORS = {
+const EMPTY_TECHNICAL_INDICATORS: TickerAnalysisDto["technicalIndicators"] = {
   sma20: null,
   sma60: null,
   ema20: null,
@@ -52,7 +48,7 @@ export interface ResolvedTickerAnalysis {
   item: TickerAnalysisDto;
 }
 
-function overlayDailyCandidateAnalysis(item: TickerAnalysisDto, dailyCandidate?: DailyCandidateDto): TickerAnalysisDto {
+function overlayDailyCandidateAnalysis(item: TickerAnalysisDto, dailyCandidate?: DailyCandidate | null): TickerAnalysisDto {
   if (!dailyCandidate) {
     return item;
   }
@@ -61,6 +57,23 @@ function overlayDailyCandidateAnalysis(item: TickerAnalysisDto, dailyCandidate?:
     ...item,
     score: dailyCandidate.score,
     activationScore: dailyCandidate.activationScore ?? item.activationScore
+  };
+}
+
+function withTradePlan(item: TickerAnalysisDto, dailyCandidate?: DailyCandidate | null, featuredRank?: number) {
+  const analysis = overlayDailyCandidateAnalysis(item, dailyCandidate);
+  const tradePlan =
+    analysis.tradePlan ??
+    buildAnalysisTradePlan({
+      analysis,
+      dailyCandidate,
+      featuredRank
+    });
+
+  return {
+    ...analysis,
+    actionBucket: analysis.actionBucket ?? tradePlan.bucket,
+    tradePlan
   };
 }
 
@@ -78,24 +91,42 @@ function parsePrice(text: string) {
 }
 
 function riskStatusFromDistance(distance: number) {
-  if (distance <= -6) return KO.good;
-  if (distance <= -3) return KO.review;
+  if (distance <= -6) {
+    return KO.good;
+  }
+
+  if (distance <= -3) {
+    return KO.review;
+  }
+
   return KO.caution;
 }
 
 function riskStatusFromCoverage(coverage: string | undefined) {
-  if (coverage === "보강됨") return KO.good;
-  if (coverage === "제한적") return KO.review;
+  if (coverage === "보강됨") {
+    return KO.good;
+  }
+
+  if (coverage === "제한적") {
+    return KO.review;
+  }
+
   return KO.caution;
 }
 
 function riskStatusFromSampleSize(sampleSize: number) {
-  if (sampleSize >= 30) return KO.good;
-  if (sampleSize >= 18) return KO.review;
+  if (sampleSize >= 30) {
+    return KO.good;
+  }
+
+  if (sampleSize >= 18) {
+    return KO.review;
+  }
+
   return KO.caution;
 }
 
-function buildValidationFromCandidate(item: DailyCandidateDto) {
+function buildValidationFromCandidate(item: DailyCandidate) {
   const hitRate = clamp(Math.round(item.score * 0.72), 45, 61);
   const avgReturn = Number((item.score >= 65 ? 4.2 : item.score >= 55 ? 2.6 : 1.1).toFixed(1));
   const sampleSize = clamp(Math.round(item.score * 0.35), 14, 26);
@@ -117,11 +148,11 @@ function buildScoreBreakdown(score: number) {
   const quality = Math.max(score - trend - flow - volatility - momentum, 0);
 
   return [
-    { label: "추세", score: trend, description: "중기 가격 흐름" },
+    { label: "추세", score: trend, description: "중기 가격 구조와 방향성" },
     { label: "수급", score: flow, description: "거래량과 회전 흐름" },
-    { label: "변동성", score: volatility, description: "가격 흔들림 관리" },
+    { label: "변동성", score: volatility, description: "가격 흔들림 관리 여지" },
     { label: "모멘텀", score: momentum, description: "기술적 움직임 확인" },
-    { label: "품질", score: quality, description: "데이터 정합성" }
+    { label: "품질", score: quality, description: "데이터 신뢰도와 이벤트 보강" }
   ];
 }
 
@@ -133,16 +164,20 @@ function buildAnalysisSummary(
   return [
     { label: "현재 점수", value: `${Math.round(recommendation.score)}점`, note: recommendation.signalLabel },
     {
-      label: "검증 승률",
+      label: "검증 확률",
       value: `${recommendation.validation.hitRate}%`,
       note: `표본 ${recommendation.validation.sampleSize}건 기준`
     },
     {
       label: "평균 움직임",
       value: formatPercent(recommendation.validation.avgReturn),
-      note: "과거 비슷한 흐름 기준"
+      note: "과거 유사 케이스 평균"
     },
-    { label: "데이터 신뢰도", value: coverage, note: `품질 점수 ${scoreBreakdown[4]?.score ?? 0}점` }
+    {
+      label: "데이터 커버",
+      value: coverage,
+      note: `품질 점수 ${scoreBreakdown[4]?.score ?? 0}점`
+    }
   ];
 }
 
@@ -154,19 +189,19 @@ function buildKeyLevels(recommendation: RecommendationListItemDto) {
 
   return [
     {
-      label: "기준 이탈",
+      label: "손절 기준",
       price: invalidationPrice ? `${invalidationPrice.toLocaleString()}원` : recommendation.invalidation,
-      meaning: "이 가격 아래면 흐름을 다시 봅니다."
+      meaning: "이 가격 아래면 구조를 다시 봅니다."
     },
     {
       label: "확인 가격",
-      price: confirmationPrice ? `${confirmationPrice.toLocaleString()}원` : recommendation.checkpoints[1] ?? "확인 필요",
-      meaning: "상승 힘이 붙는지 확인하는 구간입니다."
+      price: confirmationPrice ? `${confirmationPrice.toLocaleString()}원` : (recommendation.checkpoints[1] ?? "확인 필요"),
+      meaning: "거래 반응이 붙는지 체크하는 구간입니다."
     },
     {
       label: "다음 목표",
-      price: expansionPrice ? `${expansionPrice.toLocaleString()}원` : recommendation.checkpoints[2] ?? "확인 필요",
-      meaning: "추가 상승이 이어질 때 보는 가격대입니다."
+      price: expansionPrice ? `${expansionPrice.toLocaleString()}원` : (recommendation.checkpoints[2] ?? "확인 필요"),
+      meaning: "추가 확장이 이어지는지 보는 구간입니다."
     }
   ];
 }
@@ -183,7 +218,7 @@ function buildDecisionNotes(recommendation: RecommendationListItemDto, coverage:
 function buildScenarios(keyLevels: ReturnType<typeof buildKeyLevels>, score: number) {
   const confirmationPrice = keyLevels[1]?.price ?? "확인 가격";
   const expansionPrice = keyLevels[2]?.price ?? "다음 목표";
-  const invalidationPrice = keyLevels[0]?.price ?? "기준 이탈 가격";
+  const invalidationPrice = keyLevels[0]?.price ?? "손절 기준";
   const basicProbability = clamp(42 + Math.round(score * 0.18), 40, 62);
   const bullProbability = clamp(14 + Math.round(score * 0.08), 15, 28);
   const bearProbability = Math.max(100 - basicProbability - bullProbability, 15);
@@ -193,19 +228,19 @@ function buildScenarios(keyLevels: ReturnType<typeof buildKeyLevels>, score: num
       label: KO.basic,
       probability: basicProbability,
       expectation: "지금 흐름이 이어지는 경우",
-      trigger: `${confirmationPrice} 위에서 버티는지 확인`
+      trigger: `${confirmationPrice} 전후에서 버티는지 확인`
     },
     {
       label: KO.bull,
       probability: bullProbability,
-      expectation: "생각보다 더 강하게 오르는 경우",
+      expectation: "예상보다 더 강하게 오르는 경우",
       trigger: `${expansionPrice}까지 빠르게 올라가는지 확인`
     },
     {
       label: KO.bear,
       probability: bearProbability,
       expectation: "흐름이 약해지는 경우",
-      trigger: `${invalidationPrice} 아래로 내려가는지 확인`
+      trigger: `${invalidationPrice} 아래로 밀리는지 확인`
     }
   ];
 }
@@ -213,14 +248,14 @@ function buildScenarios(keyLevels: ReturnType<typeof buildKeyLevels>, score: num
 function buildRiskChecklist(recommendation: RecommendationListItemDto, coverage: string) {
   return [
     {
-      label: "기준 이탈 거리",
+      label: "손절 기준 거리",
       status: riskStatusFromDistance(recommendation.invalidationDistance),
-      note: `${formatPercent(recommendation.invalidationDistance)} 수준`
+      note: `${formatPercent(recommendation.invalidationDistance)} 하회`
     },
     {
       label: "이벤트 커버리지",
       status: riskStatusFromCoverage(coverage),
-      note: coverage === "보강됨" ? "기사 외 보조 이벤트도 함께 반영됐습니다." : "추가 확인이 필요합니다."
+      note: coverage === "보강됨" ? "기사와 보조 이벤트가 함께 반영됐습니다." : "추가 확인이 필요합니다."
     },
     {
       label: "검증 표본",
@@ -237,7 +272,7 @@ function buildDataQuality(recommendation: RecommendationListItemDto, coverage: s
     {
       label: "출처",
       value: "추천 데이터",
-      note: "분석 상세가 아직 없어서 현재 추천 정보를 기준으로 구성했습니다."
+      note: "분석 스냅샷이 없을 때는 추천 데이터 기반으로 상세를 구성합니다."
     },
     {
       label: "업데이트",
@@ -250,7 +285,7 @@ function buildDataQuality(recommendation: RecommendationListItemDto, coverage: s
       note:
         validationBasis === "실측 기반"
           ? recommendation.validationSummary
-          : `${recommendation.validationSummary} 실측 표본이 더 쌓이기 전까지는 참고용으로 보는 편이 좋습니다.`
+          : `${recommendation.validationSummary} 실측 확정 전 단계의 참고 해석입니다.`
     },
     {
       label: "커버리지",
@@ -267,7 +302,11 @@ function buildFallbackValidationInsight(recommendation: RecommendationListItemDt
 
   const basis = recommendation.validationBasis ?? "보수 계산";
   const level =
-    basis === "실측 기반" ? "높음" : basis === "공용 추적 참고" ? "보통" : basis === "유사 흐름 참고" || basis === "유사 업종 참고" ? "보통" : "주의";
+    basis === "실측 기반"
+      ? "높음"
+      : basis === "공용 추적 참고" || basis === "유사 흐름 참고" || basis === "유사 업종 참고"
+        ? "보통"
+        : "주의";
   const samplesToMeasured = basis === "실측 기반" ? 0 : Math.max(0, 8 - recommendation.validation.sampleSize);
 
   return {
@@ -276,10 +315,10 @@ function buildFallbackValidationInsight(recommendation: RecommendationListItemDt
     headline: `${basis} 기준으로 표본 ${recommendation.validation.sampleSize}건을 참고합니다.`,
     detail:
       basis === "실측 기반"
-        ? `실측 이력 기준 적중률 ${recommendation.validation.hitRate}% / 평균 수익 ${formatPercent(recommendation.validation.avgReturn)}입니다.`
+        ? `과거 이력 기준 확률은 ${recommendation.validation.hitRate}% / 평균 수익은 ${formatPercent(recommendation.validation.avgReturn)}입니다.`
         : samplesToMeasured > 0
-          ? `실측 전환 판단까지 참고 표본 ${samplesToMeasured}건 정도가 더 필요합니다.`
-          : "표본 수는 확보됐지만 아직 실측 기반보다는 참고 성격이 더 큽니다.",
+          ? `실측 기반 확정 전까지는 참고 표본 ${samplesToMeasured}건 정도가 더 필요합니다.`
+          : "표본 수는 확보됐지만 아직 실측 기반보다 참고 성격이 더 큽니다.",
     samplesToMeasured
   } as const;
 }
@@ -287,7 +326,7 @@ function buildFallbackValidationInsight(recommendation: RecommendationListItemDt
 function buildAnalysisFallback(
   recommendation: RecommendationListItemDto,
   generatedAt: string,
-  dailyCandidate?: DailyCandidateDto,
+  dailyCandidate?: DailyCandidate,
   newsImpact: AnalysisEventDto[] = []
 ): TickerAnalysisDto {
   const coverage = dailyCandidate?.eventCoverage ?? recommendation.eventCoverage ?? "제한적";
@@ -304,7 +343,7 @@ function buildAnalysisFallback(
     validationBasis: recommendation.validationBasis,
     validationInsight: buildFallbackValidationInsight(recommendation),
     trackingDiagnostic: recommendation.trackingDiagnostic,
-    headline: `${recommendation.company} 관찰 신호는 ${recommendation.signalLabel} 관점에서 해석합니다.`,
+    headline: `${recommendation.company}은(는) ${recommendation.signalLabel} 관점에서 다시 볼 만한 흐름입니다.`,
     invalidation: recommendation.invalidation,
     analysisSummary: buildAnalysisSummary(recommendation, coverage, scoreBreakdown),
     keyLevels,
@@ -319,7 +358,7 @@ function buildAnalysisFallback(
   };
 }
 
-function toRecommendationFromDailyCandidate(candidate: DailyCandidateDto, generatedAt: string): RecommendationListItemDto {
+function toRecommendationFromDailyCandidate(candidate: DailyCandidate, generatedAt: string): RecommendationListItemDto {
   const validation = buildValidationFromCandidate(candidate);
 
   return {
@@ -328,7 +367,12 @@ function toRecommendationFromDailyCandidate(candidate: DailyCandidateDto, genera
     sector: candidate.sector,
     signalTone: candidate.signalTone,
     score: candidate.score,
-    signalLabel: candidate.signalTone === "긍정" ? "흐름이 강한 편" : candidate.signalTone === "주의" ? "가볍게 지켜보기" : "조금 더 확인해볼 만함",
+    signalLabel:
+      candidate.signalTone === "긍정"
+        ? "흐름이 강한 편"
+        : candidate.signalTone === "주의"
+          ? "가볍게 지켜보기"
+          : "조금 더 확인이 필요함",
     rationale: candidate.rationale,
     invalidation: candidate.invalidation,
     invalidationDistance: -4.5,
@@ -337,7 +381,7 @@ function toRecommendationFromDailyCandidate(candidate: DailyCandidateDto, genera
     validationBasis: "유사 흐름 참고",
     checkpoints: [
       candidate.invalidation,
-      `${candidate.company} 상승 확인 구간`,
+      `${candidate.company} 반응 확인 구간`,
       `${candidate.company} 다음 목표 구간`
     ],
     validation,
@@ -368,43 +412,50 @@ export async function resolveTickerAnalysis(ticker: string): Promise<ResolvedTic
     getDailyCandidates().catch(() => null)
   ]);
   const fallbackNews = await getLatestAnalysisNewsByTicker(ticker);
+  const dailyCandidate = dailyCandidates?.topCandidates.find((entry) => entry.ticker === ticker);
+  const featuredIndex = dailyCandidates?.topCandidates.findIndex((entry) => entry.ticker === ticker) ?? -1;
+  const featuredRank = featuredIndex >= 0 ? featuredIndex + 1 : undefined;
 
   const analysisItem = analysisSource?.items.find((entry) => entry.ticker === ticker);
-  const dailyCandidate = dailyCandidates?.topCandidates.find((entry) => entry.ticker === ticker);
   if (analysisSource && analysisItem) {
+    const item = withTradePlan(
+      {
+        ...analysisItem,
+        newsImpact: analysisItem.newsImpact?.length ? analysisItem.newsImpact : fallbackNews,
+        technicalIndicators: analysisItem.technicalIndicators ?? EMPTY_TECHNICAL_INDICATORS,
+        chartSeries: analysisItem.chartSeries ?? EMPTY_CHART_SERIES
+      },
+      dailyCandidate,
+      featuredRank
+    );
+
     return {
       generatedAt: dailyCandidate ? (dailyCandidates?.generatedAt ?? analysisSource.generatedAt) : analysisSource.generatedAt,
-      item: overlayDailyCandidateAnalysis(
-        {
-          ...analysisItem,
-          newsImpact: analysisItem.newsImpact.length > 0 ? analysisItem.newsImpact : fallbackNews,
-          technicalIndicators: analysisItem.technicalIndicators ?? EMPTY_TECHNICAL_INDICATORS,
-          chartSeries: analysisItem.chartSeries ?? EMPTY_CHART_SERIES
-        },
-        dailyCandidate
-      )
+      item
     };
   }
 
   const recommendationItem = recommendationSource?.items.find((entry) => entry.ticker === ticker);
-
   if (recommendationItem) {
+    const item = withTradePlan(
+      buildAnalysisFallback(
+        {
+          ...recommendationItem,
+          score: dailyCandidate?.score ?? recommendationItem.score
+        },
+        recommendationSource?.generatedAt ?? new Date().toISOString(),
+        dailyCandidate,
+        fallbackNews
+      ),
+      dailyCandidate,
+      featuredRank
+    );
+
     return {
       generatedAt: dailyCandidate
         ? (dailyCandidates?.generatedAt ?? recommendationSource?.generatedAt ?? new Date().toISOString())
         : (recommendationSource?.generatedAt ?? dailyCandidates?.generatedAt ?? new Date().toISOString()),
-      item: overlayDailyCandidateAnalysis(
-        buildAnalysisFallback(
-          {
-            ...recommendationItem,
-            score: dailyCandidate?.score ?? recommendationItem.score
-          },
-          recommendationSource?.generatedAt ?? new Date().toISOString(),
-          dailyCandidate,
-          fallbackNews
-        ),
-        dailyCandidate
-      )
+      item
     };
   }
 
@@ -416,11 +467,15 @@ export async function resolveTickerAnalysis(ticker: string): Promise<ResolvedTic
 
     return {
       generatedAt: dailyCandidates?.generatedAt ?? new Date().toISOString(),
-      item: buildAnalysisFallback(
-        recommendationFallback,
-        dailyCandidates?.generatedAt ?? new Date().toISOString(),
+      item: withTradePlan(
+        buildAnalysisFallback(
+          recommendationFallback,
+          dailyCandidates?.generatedAt ?? new Date().toISOString(),
+          dailyCandidate,
+          fallbackNews
+        ),
         dailyCandidate,
-        fallbackNews
+        featuredRank
       )
     };
   }
