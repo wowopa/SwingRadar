@@ -11,10 +11,31 @@ function average(values: number[]) {
   return values.reduce((sum, value) => sum + value, 0) / values.length;
 }
 
+function normalizeTrackingResult(result: string) {
+  if (result.includes("감시") || result.includes("媛먯떆")) {
+    return "감시중";
+  }
+  if (result.includes("진행") || result.includes("吏꾪뻾")) {
+    return "진행중";
+  }
+  if (result.includes("성공") || result.includes("?깃났")) {
+    return "성공";
+  }
+  if (result.includes("실패") || result.includes("?ㅽ뙣")) {
+    return "실패";
+  }
+  if (result.includes("무효") || result.includes("臾댄슚")) {
+    return "무효화";
+  }
+
+  return result;
+}
+
 function summarizeHistory(history: SignalHistoryEntry[]) {
-  const successCount = history.filter((item) => item.result === "성공").length;
-  const failedCount = history.filter((item) => item.result === "실패" || item.result === "무효화").length;
-  const inProgressCount = history.filter((item) => item.result === "감시중" || item.result === "진행중").length;
+  const normalized = history.map((item) => normalizeTrackingResult(item.result));
+  const successCount = normalized.filter((item) => item === "성공").length;
+  const failedCount = normalized.filter((item) => item === "실패" || item === "무효화").length;
+  const inProgressCount = normalized.filter((item) => item === "감시중" || item === "진행중").length;
 
   return {
     total: history.length,
@@ -46,19 +67,19 @@ export function HistoricalValidationPanel({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>과거 유사 사례</CardTitle>
+        <CardTitle>과거 유사 흐름</CardTitle>
       </CardHeader>
       <CardContent className="space-y-5">
         {resolvedInsight ? (
           <>
             <div className="grid gap-3 md:grid-cols-3">
               <MetricCard label="검증 기준" value={resolvedInsight.basis} note={resolvedInsight.headline} />
-              <MetricCard label="신뢰도" value={resolvedInsight.level} note={resolvedInsight.detail} />
+              <MetricCard label="신뢰 수준" value={resolvedInsight.level} note={resolvedInsight.detail} />
               <MetricCard
                 label="실측 전환"
                 value={
                   resolvedInsight.basis === "실측 기반"
-                    ? "실측 활용 중"
+                    ? "실측 사용 중"
                     : typeof resolvedInsight.samplesToMeasured === "number" && resolvedInsight.samplesToMeasured > 0
                       ? `${resolvedInsight.samplesToMeasured}건 남음`
                       : "표본 축적 중"
@@ -75,8 +96,7 @@ export function HistoricalValidationPanel({
         {!history.length ? (
           <div className="rounded-[24px] border border-border/70 bg-secondary/20 px-5 py-6">
             <p className="text-sm leading-7 text-muted-foreground">
-              이 종목에 대해 종료된 공용 추적 이력은 아직 많지 않습니다. 지금은 검증 기준과 표본 수를 먼저 보고, 실제 사례가 더 쌓이는지 함께
-              지켜보는 편이 좋습니다.
+              이 종목의 과거 종료된 공용 추적 이력은 아직 많지 않습니다. 지금은 검증 기준과 표본 수를 먼저 보고, 실제 사례가 더 쌓이는지 계속 확인하는 편이 좋습니다.
             </p>
           </div>
         ) : null}
@@ -84,7 +104,7 @@ export function HistoricalValidationPanel({
         {history.length ? (
           <>
             <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
-              <MetricCard label="누적 사례" value={`${summary.total}건`} note="같은 종목 과거 신호 기준" />
+              <MetricCard label="누적 이력" value={`${summary.total}건`} note="같은 종목의 과거 신호 기준" />
               <MetricCard label="성공" value={`${summary.successCount}건`} note={`실패/무효화 ${summary.failedCount}건`} />
               <MetricCard label="진행중" value={`${summary.inProgressCount}건`} note="아직 종료되지 않은 사례" />
               <MetricCard label="평균 최대 이익" value={formatPercent(summary.avgMfe)} note="보유 중 최고 수익 구간" />
@@ -100,7 +120,7 @@ export function HistoricalValidationPanel({
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div>
                         <p className="text-sm font-semibold text-foreground">
-                          {item.signalDate} 신호 · {item.result}
+                          {item.signalDate} 신호 · {normalizeTrackingResult(item.result)}
                         </p>
                         <p className="mt-1 text-sm text-muted-foreground">
                           진입 점수 {item.entryScore} · 보유 {item.holdingDays}일 · 최대 이익 {formatPercent(item.mfe)} · 최대 손실 {formatPercent(item.mae)}
@@ -156,10 +176,10 @@ function resolveValidationInsight(
     headline: `${validationBasis} 기준 ${validation.sampleSize}건을 참고합니다.`,
     detail:
       validationBasis === "실측 기반"
-        ? `실측 이력 기준 적중률 ${validation.hitRate}% / 평균 수익 ${formatPercent(validation.avgReturn)}입니다.`
+        ? `실측 이력 기준 승률 ${validation.hitRate}% / 평균 수익 ${formatPercent(validation.avgReturn)}입니다.`
         : samplesToMeasured > 0
           ? `실측 전환 판단까지 참고 표본 ${samplesToMeasured}건 정도가 더 필요합니다.`
-          : "표본 수는 확보됐지만 아직 실측 기반보다는 참고 성격이 더 큽니다.",
+          : "표본 수는 어느 정도 쌓였지만 아직 실측 기반보다 참고 성격이 더 큽니다.",
     samplesToMeasured
   } as const;
 }

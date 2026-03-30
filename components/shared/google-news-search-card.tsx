@@ -14,7 +14,7 @@ export function GoogleNewsSearchCard({
   title = "관련 종목 뉴스 검색",
   company,
   ticker,
-  description = "서비스 안에서 외부 뉴스를 별도로 큐레이팅하지 않고, 필요할 때 구글 뉴스에서 직접 확인하도록 연결합니다."
+  description = "서비스 안에서 모든 뉴스를 별도로 큐레이션하기보다, 필요할 때 구글 뉴스에서 직접 흐름을 확인할 수 있도록 연결합니다."
 }: GoogleNewsSearchCardProps) {
   const searchUrl = buildGoogleNewsSearchUrl({ ticker, company });
 

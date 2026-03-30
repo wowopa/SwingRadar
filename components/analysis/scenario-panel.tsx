@@ -2,6 +2,16 @@ import type { Scenario } from "@/types/analysis";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
+const LABEL_ALIASES: Record<string, string> = {
+  湲곕낯: "기본",
+  媛뺤꽭: "강세",
+  "?쎌꽭": "약세"
+};
+
+function normalizeScenarioLabel(label: string) {
+  return LABEL_ALIASES[label] ?? label;
+}
+
 function getScenarioStatus(probability: number) {
   if (probability >= 50) {
     return {
@@ -34,10 +44,10 @@ export function ScenarioPanel({ scenarios }: { scenarios: Scenario[] }) {
           const status = getScenarioStatus(scenario.probability);
 
           return (
-            <div key={scenario.label} className="rounded-[24px] border border-border/70 bg-secondary/35 p-5">
+            <div key={`${scenario.label}-${scenario.trigger}`} className="rounded-[24px] border border-border/70 bg-secondary/35 p-5">
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <p className="text-lg font-semibold text-foreground">{scenario.label}</p>
+                  <p className="text-lg font-semibold text-foreground">{normalizeScenarioLabel(scenario.label)}</p>
                   <p className="mt-2 text-2xl font-semibold text-foreground">{scenario.probability}%</p>
                 </div>
                 <span className={cn("rounded-full px-3 py-1 text-xs font-medium whitespace-nowrap", status.tone)}>{status.label}</span>

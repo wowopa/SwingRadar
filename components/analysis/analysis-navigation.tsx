@@ -119,7 +119,7 @@ export function AnalysisNavigation({ currentTicker, readyItems, overview }: Anal
             ))
           ) : (
             <div className="rounded-2xl border border-dashed border-border/70 bg-secondary/20 px-4 py-5 text-sm text-muted-foreground">
-              최근에 읽어본 다른 분석 종목이 아직 없습니다.
+              최근에 둘러본 다른 분석 종목이 아직 없습니다.
             </div>
           )}
         </CardContent>

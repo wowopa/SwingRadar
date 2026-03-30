@@ -23,7 +23,7 @@ export function TrackingDiagnosticPanel({ diagnostic }: { diagnostic?: TrackingD
         </CardHeader>
         <CardContent>
           <p className="text-sm leading-7 text-muted-foreground">
-            공용 추적용 진단 데이터가 아직 준비되지 않았습니다. 다음 배치 이후에는 활성화 점수와 부족한 조건을 함께 확인할 수 있습니다.
+            공용 추적 진단 데이터가 아직 준비되지 않았습니다. 다음 배치 이후에는 활성화 점수와 부족한 조건을 함께 볼 수 있습니다.
           </p>
         </CardContent>
       </Card>
@@ -40,9 +40,9 @@ export function TrackingDiagnosticPanel({ diagnostic }: { diagnostic?: TrackingD
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid gap-3 sm:grid-cols-3">
-          <MetricCard label="활성화 점수" value={`${formatScore(diagnostic.activationScore)}점`} note="공용 추적 선별용 점수" />
+          <MetricCard label="활성화 점수" value={`${formatScore(diagnostic.activationScore)}점`} note="공용 추적 단계 판단 점수" />
           <MetricCard label="자동 감시 기준" value={`${formatScore(diagnostic.watchThreshold)}점`} note="자동 감시 시작 최소 기준" />
-          <MetricCard label="진입 기준" value={`${formatScore(diagnostic.entryThreshold)}점`} note="진입 추적 최소 기준" />
+          <MetricCard label="진입 추적 기준" value={`${formatScore(diagnostic.entryThreshold)}점`} note="진입 추적 시작 최소 기준" />
         </div>
 
         <div className="grid gap-4 md:grid-cols-2">
@@ -52,7 +52,7 @@ export function TrackingDiagnosticPanel({ diagnostic }: { diagnostic?: TrackingD
               {diagnostic.supports.length ? (
                 diagnostic.supports.map((item) => <li key={item}>{item}</li>)
               ) : (
-                <li>현재는 눈에 띄는 강점이 아직 충분하지 않습니다.</li>
+                <li>현재 단계에서 뚜렷한 강점은 아직 충분하지 않습니다.</li>
               )}
             </ul>
           </div>
