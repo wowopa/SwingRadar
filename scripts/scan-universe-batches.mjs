@@ -8,7 +8,11 @@ import { fileURLToPath } from "node:url";
 import pg from "pg";
 
 import { loadLocalEnv } from "./load-env.mjs";
-import { calculateCandidateScore, getLiquidityAdjustment } from "./lib/candidate-score-utils.mjs";
+import {
+  buildSwingCandidateProfile,
+  calculateCandidateScore,
+  getLiquidityAdjustment
+} from "./lib/candidate-score-utils.mjs";
 import { getRuntimePaths } from "./lib/runtime-paths.mjs";
 
 const { Client } = pg;
@@ -260,7 +264,7 @@ function shouldExcludeCandidate(currentPrice, averageTurnover20, thresholds) {
   return false;
 }
 
-function meetsCandidateGate({ item, market, candidateScore, thresholds }) {
+function meetsCandidateGate({ item, market, candidateScore, thresholds, swingProfile }) {
   const validation = item.validation ?? {};
   const hitRate = Number(validation.hitRate ?? 0);
   const sampleSize = Number(validation.sampleSize ?? 0);
@@ -291,6 +295,14 @@ function meetsCandidateGate({ item, market, candidateScore, thresholds }) {
     return false;
   }
 
+  if ((swingProfile?.riskPercent ?? 0) > thresholds.maxInvalidationRiskPercent) {
+    return false;
+  }
+
+  if ((swingProfile?.chasePercent ?? 0) > thresholds.maxChasePercentFromConfirmation) {
+    return false;
+  }
+
   return true;
 }
 
@@ -312,17 +324,30 @@ function scoreCandidates(recommendations, analysis, marketItemsByTicker, batchIn
 
     const eventCoverage = detail?.dataQuality.find((entry) => entry.label === "커버리지")?.value ?? "취약";
     const liquidity = getLiquidityAdjustment(averageTurnover20);
+    const swingProfile = buildSwingCandidateProfile({
+      currentPrice,
+      confirmationPrice: market?.confirmationPrice ?? null,
+      expansionPrice: market?.expansionPrice ?? null,
+      invalidationPrice: market?.invalidationPrice ?? null,
+      invalidationDistance: item.invalidationDistance,
+      observationWindow: item.observationWindow
+    });
     const candidateScore = calculateCandidateScore({
       score: item.score,
       validation: item.validation,
       validationBasis: item.validationBasis,
       averageTurnover20,
       currentPrice,
+      confirmationPrice: market?.confirmationPrice ?? null,
+      expansionPrice: market?.expansionPrice ?? null,
+      invalidationPrice: market?.invalidationPrice ?? null,
+      invalidationDistance: item.invalidationDistance,
+      observationWindow: item.observationWindow,
       volumeRatio,
       signalTone: item.signalTone
     });
 
-    if (!meetsCandidateGate({ item, market, candidateScore, thresholds })) {
+    if (!meetsCandidateGate({ item, market, candidateScore, thresholds, swingProfile })) {
       return [];
     }
 
@@ -345,7 +370,10 @@ function scoreCandidates(recommendations, analysis, marketItemsByTicker, batchIn
       validationSummary: item.validationSummary,
       observationWindow: item.observationWindow,
       rationale: item.rationale,
-      eventCoverage
+      eventCoverage,
+      chasePercentFromConfirmation: swingProfile.chasePercent,
+      invalidationRiskPercent: swingProfile.riskPercent,
+      targetRunwayPercent: swingProfile.runwayPercent
     }];
   });
 }
@@ -675,7 +703,15 @@ async function runBatch(batch, index, tempRoot, options) {
     minCandidateScore: normalizePositiveNumber(process.env.SWING_RADAR_CANDIDATE_MIN_CANDIDATE_SCORE ?? "24", 24),
     minValidationHitRate: normalizePositiveNumber(process.env.SWING_RADAR_CANDIDATE_MIN_HIT_RATE ?? "48", 48),
     minValidationSampleSize: normalizePositiveNumber(process.env.SWING_RADAR_CANDIDATE_MIN_SAMPLE_SIZE ?? "8", 8),
-    minQualityScore: normalizePositiveNumber(process.env.SWING_RADAR_CANDIDATE_MIN_QUALITY_SCORE ?? "10", 10)
+    minQualityScore: normalizePositiveNumber(process.env.SWING_RADAR_CANDIDATE_MIN_QUALITY_SCORE ?? "10", 10),
+    maxInvalidationRiskPercent: normalizePositiveNumber(
+      process.env.SWING_RADAR_CANDIDATE_MAX_INVALIDATION_RISK_PERCENT ?? "11.5",
+      11.5
+    ),
+    maxChasePercentFromConfirmation: normalizePositiveNumber(
+      process.env.SWING_RADAR_CANDIDATE_MAX_CHASE_PERCENT_FROM_CONFIRMATION ?? "7",
+      7
+    )
   };
   const candidates = scoreCandidates(recommendations, analysis, marketItemsByTicker, index, thresholds);
 
@@ -805,7 +841,21 @@ async function main() {
       });
     }
 
-    const sorted = [...allCandidates].sort((left, right) => right.candidateScore - left.candidateScore);
+    const sorted = [...allCandidates].sort((left, right) => {
+      if (right.candidateScore !== left.candidateScore) {
+        return right.candidateScore - left.candidateScore;
+      }
+
+      const leftRisk = Number(left.invalidationRiskPercent ?? Number.POSITIVE_INFINITY);
+      const rightRisk = Number(right.invalidationRiskPercent ?? Number.POSITIVE_INFINITY);
+      if (leftRisk !== rightRisk) {
+        return leftRisk - rightRisk;
+      }
+
+      const leftChase = Number(left.chasePercentFromConfirmation ?? Number.POSITIVE_INFINITY);
+      const rightChase = Number(right.chasePercentFromConfirmation ?? Number.POSITIVE_INFINITY);
+      return leftChase - rightChase;
+    });
     const topCandidatesLimit = normalizePositiveInteger(options.topCandidatesLimit, 100);
     const document = {
       generatedAt: new Date().toISOString(),
