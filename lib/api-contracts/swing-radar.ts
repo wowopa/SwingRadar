@@ -127,6 +127,8 @@ export interface DailyCandidateDto {
   observationWindow: string;
   rationale: string;
   eventCoverage: string;
+  actionBucket?: RecommendationActionBucketDto;
+  tradePlan?: RecommendationTradePlanDto;
 }
 
 export interface FailedUniverseBatchDto {

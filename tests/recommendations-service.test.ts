@@ -119,6 +119,12 @@ describe("listRecommendations", () => {
       actionBucket: "buy_now"
     });
     expect(result.items[0]?.tradePlan?.entryLabel).toContain("43,500원");
+    expect(result.dailyScan?.topCandidates[0]).toMatchObject({
+      ticker: "BBB001",
+      actionBucket: "buy_now"
+    });
+    expect(result.dailyScan?.topCandidates[0]?.tradePlan?.entryLabel).toContain("43,500원");
+    expect(result.dailyScan?.topCandidates[0]?.tradePlan?.stopLabel).toBe("41,000원");
     expect(result.todaySummary?.bucketCounts.buy_now).toBe(1);
   });
 

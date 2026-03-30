@@ -1,4 +1,8 @@
-import type { RecommendationListItemDto, RecommendationsResponseDto } from "@/lib/api-contracts/swing-radar";
+import type {
+  DailyCandidateDto,
+  RecommendationListItemDto,
+  RecommendationsResponseDto
+} from "@/lib/api-contracts/swing-radar";
 import { getDataProvider } from "@/lib/providers";
 import { getDailyCandidates, type DailyCandidate } from "@/lib/repositories/daily-candidates";
 import {
@@ -8,6 +12,7 @@ import {
   resolveRecommendationActionBucket
 } from "@/lib/recommendations/action-plan";
 import type { RecommendationsQuery } from "@/lib/server/query-schemas";
+import { formatPrice } from "@/lib/utils";
 
 function toNullableNumber(value: unknown): number | null {
   return typeof value === "number" && Number.isFinite(value) ? value : null;
@@ -29,6 +34,10 @@ function formatRiskRewardRatio(entryPrice?: number | null, targetPrice?: number 
   }
 
   return `1 : ${Math.max(0.1, rewardDistance / riskDistance).toFixed(2)}`;
+}
+
+function formatCandidateCheckpoint(value: number | null | undefined, fallback: string) {
+  return typeof value === "number" && Number.isFinite(value) ? formatPrice(value) : fallback;
 }
 
 function enrichRecommendationItem(item: RecommendationListItemDto, dailyCandidate?: DailyCandidate | null): RecommendationListItemDto {
@@ -56,6 +65,46 @@ function enrichRecommendationItem(item: RecommendationListItemDto, dailyCandidat
         }),
         candidate: dailyCandidate
       })
+  };
+}
+
+function enrichDailyCandidateItem(candidate: DailyCandidate, sourceItem?: RecommendationListItemDto): DailyCandidateDto {
+  const activationScore = sourceItem?.activationScore ?? candidate.activationScore;
+  const riskRewardRatio =
+    formatRiskRewardRatio(
+      toNullableNumber(candidate.confirmationPrice),
+      toNullableNumber(candidate.expansionPrice),
+      toNullableNumber(candidate.invalidationPrice)
+    ) ?? sourceItem?.riskRewardRatio;
+  const actionBucket = resolveRecommendationActionBucket({
+    signalTone: candidate.signalTone,
+    score: candidate.score,
+    activationScore,
+    trackingDiagnostic: sourceItem?.trackingDiagnostic
+  });
+
+  return {
+    ...candidate,
+    activationScore,
+    actionBucket,
+    tradePlan: buildRecommendationTradePlan({
+      item: {
+        signalTone: candidate.signalTone,
+        score: candidate.score,
+        activationScore,
+        trackingDiagnostic: sourceItem?.trackingDiagnostic,
+        actionBucket,
+        invalidation: candidate.invalidation,
+        checkpoints: [
+          candidate.invalidation,
+          formatCandidateCheckpoint(candidate.confirmationPrice, "확인 가격 재설정 필요"),
+          formatCandidateCheckpoint(candidate.expansionPrice, "목표 가격 재설정 필요")
+        ],
+        observationWindow: candidate.observationWindow,
+        riskRewardRatio
+      },
+      candidate
+    })
   };
 }
 
@@ -165,10 +214,9 @@ export async function listRecommendations(query: RecommendationsQuery): Promise<
           totalBatches: dailyCandidates.totalBatches,
           succeededBatches: dailyCandidates.succeededBatches,
           failedBatches: dailyCandidates.failedBatches,
-          topCandidates: dailyCandidates.topCandidates.map((candidate) => ({
-            ...candidate,
-            activationScore: sourceByTicker.get(candidate.ticker)?.activationScore ?? candidate.activationScore
-          }))
+          topCandidates: dailyCandidates.topCandidates.map((candidate) =>
+            enrichDailyCandidateItem(candidate, sourceByTicker.get(candidate.ticker))
+          )
         }
       : null,
     todaySummary: buildTodayOperatingSummary(items)
