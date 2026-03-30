@@ -1,3 +1,4 @@
+import { TodayOperatingSummary } from "@/components/recommendations/today-operating-summary";
 import { DailyCandidatesPanel } from "@/components/recommendations/daily-candidates-panel";
 import { RecommendationExplorer } from "@/components/recommendations/recommendation-explorer";
 import { PageHeader } from "@/components/shared/page-header";
@@ -22,6 +23,9 @@ export default async function RecommendationsPage() {
         description="오늘 신규 매수를 얼마나 열 수 있는지와 먼저 볼 종목을 빠르게 정리하는 화면입니다."
       />
       <PublicDataStatusBarGroup summaries={statusSummaries} />
+      <section className="mb-6">
+        <TodayOperatingSummary items={response.items} />
+      </section>
       <section className="mb-6">
         <DailyCandidatesPanel dailyScan={response.dailyScan} />
       </section>

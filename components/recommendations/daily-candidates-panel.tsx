@@ -1,8 +1,10 @@
 import Link from "next/link";
 
+import { ActionBucketBadge } from "@/components/recommendations/action-bucket-badge";
 import type { DailyScanSummaryDto } from "@/lib/api-contracts/swing-radar";
 import { SignalToneBadge } from "@/components/shared/signal-tone-badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { resolveRecommendationActionBucket } from "@/lib/recommendations/action-plan";
 
 function formatTurnover(value?: number | null) {
   if (!value || value <= 0) {
@@ -34,7 +36,7 @@ export function DailyCandidatesPanel({ dailyScan }: { dailyScan: DailyScanSummar
       <CardHeader className="flex flex-row items-start justify-between gap-4">
         <div>
           <CardTitle>오늘 먼저 볼 종목</CardTitle>
-          <p className="mt-2 text-sm text-muted-foreground">최신 유니버스 스캔에서 지금 우선 확인할 종목만 추려서 정리했습니다.</p>
+          <p className="mt-2 text-sm text-muted-foreground">최신 유니버스 스캔에서 지금 우선 확인할 종목만 추려서 정리했습니다. 이 목록 전체가 곧바로 매수 대상은 아닙니다.</p>
         </div>
         <div className="rounded-2xl border border-border/70 bg-secondary/35 px-4 py-3 text-sm text-muted-foreground">
           배치 {dailyScan.succeededBatches}/{dailyScan.totalBatches} 성공
@@ -57,7 +59,15 @@ export function DailyCandidatesPanel({ dailyScan }: { dailyScan: DailyScanSummar
                         {item.ticker} · {item.sector}
                       </p>
                     </div>
-                    <SignalToneBadge tone={item.signalTone} />
+                    <div className="flex flex-col items-end gap-2">
+                      <ActionBucketBadge
+                        bucket={resolveRecommendationActionBucket({
+                          signalTone: item.signalTone,
+                          activationScore: item.activationScore
+                        })}
+                      />
+                      <SignalToneBadge tone={item.signalTone} />
+                    </div>
                   </div>
                   <div className="mt-4 grid grid-cols-3 gap-3 text-sm">
                     <div className="rounded-xl border border-border/70 px-3 py-2">
