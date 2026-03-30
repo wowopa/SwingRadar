@@ -7,7 +7,7 @@ import type {
 } from "@/lib/api-contracts/swing-radar";
 
 const signalTone = z.enum(["긍정", "중립", "주의"]);
-const resultStatus = z.enum(["진행중", "성공", "실패", "무효화"]);
+const resultStatus = z.enum(["감시중", "진행중", "성공", "실패", "무효화"]);
 const riskStatus = z.enum(["양호", "확인 필요", "주의"]);
 const scenarioLabel = z.enum(["기본", "강세", "약세"]);
 const validationBasis = z.enum(["실측 기반", "공용 추적 참고", "유사 업종 참고", "유사 흐름 참고", "보수 계산"]);
@@ -25,7 +25,7 @@ const validationInsightSchema = z.object({
   samplesToMeasured: z.number().optional()
 });
 const trackingDiagnosticSchema = z.object({
-  stage: z.enum(["진입 추적 가능", "감시 편입 가능", "조건 보강 필요"]),
+  stage: z.enum(["진입 추적 가능", "자동 감시 가능", "조건 보강 필요"]),
   activationScore: z.number(),
   watchThreshold: z.number(),
   entryThreshold: z.number(),
@@ -164,7 +164,9 @@ const trackingResponseSchema = z.object({
       metrics: z.array(z.object({ label: z.string(), value: z.string(), note: z.string() })),
       chartSnapshot: z.array(z.object({ label: z.string(), price: z.number() })),
       historicalNews: z.array(z.object({ id: z.string(), date: z.string(), headline: z.string(), impact: signalTone, note: z.string() })),
-      scoreLog: z.array(z.object({ timestamp: z.string(), factor: z.string(), delta: z.number(), reason: z.string() }))
+      scoreLog: z.array(
+        z.object({ timestamp: z.string(), factor: z.string(), delta: z.number(), reason: z.string(), scoreAfter: z.number().optional() })
+      )
     })
   )
 });

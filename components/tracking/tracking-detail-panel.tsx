@@ -213,7 +213,7 @@ export function TrackingDetailPanel({ history, details }: TrackingDetailPanelPro
                 />
                 <SummaryMetric label="보유일" value={`${activeEntry.holdingDays}일`} />
               </CardContent>
-              <CardContent className="grid gap-4 pt-0 md:grid-cols-3">
+              <CardContent className="grid gap-4 pt-0 md:grid-cols-2 xl:grid-cols-4">
                 {activeDetail.metrics.map((metric) => (
                   <div key={metric.label} className="rounded-2xl border border-border/70 bg-secondary/35 p-4">
                     <p className="text-xs text-muted-foreground">{metric.label}</p>

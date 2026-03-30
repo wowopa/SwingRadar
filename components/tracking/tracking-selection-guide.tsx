@@ -29,7 +29,7 @@ export function TrackingSelectionGuide(props: TrackingSelectionGuideProps) {
         <CardTitle>공용 추적 선정 기준</CardTitle>
         <p className="text-sm leading-6 text-muted-foreground">
           공용 추적은 오늘 랭킹 후보를 그대로 보여주지 않고, 반복 등장 이력과 유동성, 가격 구조를 한 번 더 확인해 자동 감시 시작과
-          진입 추적으로 나눠 관리합니다.
+          진입 추적으로 나눠 관리합니다. 단기 급등 뒤 과열 신호가 강한 종목은 추격하지 않도록 별도 억제 조건도 함께 적용합니다.
         </p>
       </CardHeader>
       <CardContent className="grid gap-4 xl:grid-cols-3">
@@ -40,6 +40,7 @@ export function TrackingSelectionGuide(props: TrackingSelectionGuideProps) {
             <li>20일 평균 거래대금 {formatEok(props.minAverageTurnover20)} 이상</li>
             <li>현재가가 무효화 가격 위에 있어야 함</li>
             <li>최근 상위 후보 등장 이력 1회 이상</li>
+            <li>RSI 과열, 20일선 과도 이격, 거래량 급증이 겹치면 자동 감시도 보류</li>
             <li>자동 감시 상태는 최대 {props.maxWatchDays}거래일 유지</li>
           </ul>
         </div>
@@ -51,6 +52,7 @@ export function TrackingSelectionGuide(props: TrackingSelectionGuideProps) {
             <li>20일 평균 거래대금 {formatEok(props.minEntryAverageTurnover20)} 이상</li>
             <li>최근 상위 후보 등장 이력 {props.minEntryAppearances}회 이상</li>
             <li>확인 가격 근처 돌파, 거래량, 추세, RSI 조건 확인</li>
+            <li>단기 과열 신호가 남아 있으면 추격 진입 대신 자동 감시 단계 유지</li>
             <li>확인 가격의 {formatPercent(props.confirmationBufferRatio)} 위에서 구조가 유지되면 진입 추적으로 승격</li>
           </ul>
         </div>

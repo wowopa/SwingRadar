@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 const signalToneSchema = z.enum(["긍정", "중립", "주의"]);
-const trackingResultSchema = z.enum(["진행중", "성공", "실패", "무효화"]);
+const trackingResultSchema = z.enum(["감시중", "진행중", "성공", "실패", "무효화"]);
 const sortSchema = z.enum(["score_desc", "updatedAt_desc", "hitRate_desc"]);
 
 export const recommendationsQuerySchema = z.object({

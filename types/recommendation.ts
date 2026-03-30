@@ -18,7 +18,7 @@ export interface ValidationInsight {
 }
 
 export interface TrackingDiagnostic {
-  stage: "진입 추적 가능" | "감시 편입 가능" | "조건 보강 필요";
+  stage: "진입 추적 가능" | "자동 감시 가능" | "조건 보강 필요";
   activationScore: number;
   watchThreshold: number;
   entryThreshold: number;

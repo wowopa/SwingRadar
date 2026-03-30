@@ -1,5 +1,7 @@
 import type { SignalTone } from "@/types/recommendation";
 
+export type TrackingResult = "감시중" | "진행중" | "성공" | "실패" | "무효화";
+
 export interface SignalHistoryEntry {
   id: string;
   ticker: string;
@@ -10,7 +12,7 @@ export interface SignalHistoryEntry {
   closedReason?: string | null;
   signalTone: SignalTone;
   entryScore: number;
-  result: "감시중" | "진행중" | "성공" | "실패" | "무효화";
+  result: TrackingResult;
   mfe: number;
   mae: number;
   currentReturn?: number;
@@ -40,6 +42,7 @@ export interface ScoreLogEntry {
   factor: string;
   delta: number;
   reason: string;
+  scoreAfter?: number;
 }
 
 export interface TrackingMetric {

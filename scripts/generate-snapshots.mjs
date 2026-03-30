@@ -1465,6 +1465,7 @@ function buildTrackingSelectionContext({ recommendation, marketItem, stateEntry,
   const appearances = stateEntry?.appearances ?? 0;
   const consecutiveAppearances = stateEntry?.consecutiveAppearances ?? 0;
   const latestRank = stateEntry?.latestRank ?? null;
+  const selectionRankingStat = { appearances, consecutiveAppearances, latestRank };
   const activationScore = roundNumber(Number(stateEntry?.activationScore ?? 0), 1) ?? 0;
   const activationThreshold = stage === "진입 추적" ? config.minEntryActivationScore : config.minWatchActivationScore;
   const averageTurnover20 = marketItem ? getAverageTurnover20(marketItem) : 0;
@@ -1475,12 +1476,21 @@ function buildTrackingSelectionContext({ recommendation, marketItem, stateEntry,
   const turnoverLabel = formatTrackingAmount(averageTurnover20);
   const currentPrice = Number(marketItem?.currentPrice ?? stateEntry?.currentPrice ?? 0);
   const invalidationPrice = Number(stateEntry?.invalidationPrice ?? marketItem?.invalidationPrice ?? 0);
+  const chaseRisk = marketItem ? buildActivationScoreContext(marketItem, selectionRankingStat).chaseRisk : null;
   const structureNote =
     currentPrice > 0 && invalidationPrice > 0
       ? currentPrice > invalidationPrice
         ? `현재 가격 ${formatTrackingPrice(currentPrice)}이(가) 무효화 기준 ${formatTrackingPrice(invalidationPrice)} 위에 있어 구조를 유지하고 있습니다.`
         : `현재 가격이 무효화 기준 ${formatTrackingPrice(invalidationPrice)}에 가까워 추가 확인이 필요합니다.`
       : "가격 구조 확인 데이터는 계속 보강 중입니다.";
+  const chaseNote =
+    chaseRisk?.level === "높음"
+      ? "단기 급등 이후 과열 신호가 강해 공용 추적은 추격 매수 대신 냉각 확인을 우선합니다."
+      : chaseRisk?.level === "경계"
+        ? "단기 과열 신호가 일부 있어 추격 진입보다 자동 감시 단계에서 눌림 확인을 우선합니다."
+        : chaseRisk
+          ? "단기 급등 추격 신호가 낮아 과열 종목을 그대로 쫓지 않도록 한 번 더 걸렀습니다."
+          : "단기 급등 추격 방지 판단 데이터는 계속 보강 중입니다.";
   const toneNote =
     signalTone === KO.neutral
       ? "현재 추천 톤은 중립이지만, 공용 추적은 즉시 매수 신호보다 반복 등장, 유동성, 가격 구조 확인을 우선합니다."
@@ -1490,14 +1500,15 @@ function buildTrackingSelectionContext({ recommendation, marketItem, stateEntry,
 
   const selectionReason =
     stage === "진입 추적"
-      ? `${company}는 최근 상위 후보에 ${appearanceLabel} 등장했고 최신 순위는 ${rankLabel}입니다. 20일 평균 거래대금 ${turnoverLabel}, 활성화 점수 ${activationScore}점으로 진입 추적 기준 ${activationThreshold}점을 충족해 공용 추적 진행 대상으로 승격했습니다. ${toneNote} ${structureNote}`
-      : `${company}는 최근 상위 후보에 ${appearanceLabel} 등장했고 최신 순위는 ${rankLabel}입니다. ${consecutiveLabel}. 20일 평균 거래대금 ${turnoverLabel}, 활성화 점수 ${activationScore}점으로 자동 감시 기준 ${activationThreshold}점을 충족해 공용 추적의 자동 감시를 시작합니다. ${toneNote} ${structureNote}`;
+      ? `${company}는 최근 상위 후보에 ${appearanceLabel} 등장했고 최신 순위는 ${rankLabel}입니다. 20일 평균 거래대금 ${turnoverLabel}, 활성화 점수 ${activationScore}점으로 진입 추적 기준 ${activationThreshold}점을 충족해 공용 추적 진행 대상으로 승격했습니다. ${toneNote} ${chaseNote} ${structureNote}`
+      : `${company}는 최근 상위 후보에 ${appearanceLabel} 등장했고 최신 순위는 ${rankLabel}입니다. ${consecutiveLabel}. 20일 평균 거래대금 ${turnoverLabel}, 활성화 점수 ${activationScore}점으로 자동 감시 기준 ${activationThreshold}점을 충족해 공용 추적의 자동 감시를 시작합니다. ${toneNote} ${chaseNote} ${structureNote}`;
 
   const selectionHighlights = [
     `최근 상위 후보 ${appearanceLabel}, 최신 순위 ${rankLabel}`,
     consecutiveLabel,
     `활성화 점수 ${activationScore}점 / ${stage === "진입 추적" ? "진입" : "자동 감시"} 기준 ${activationThreshold}점`,
     `20일 평균 거래대금 ${turnoverLabel}`,
+    chaseRisk?.highlight ?? "단기 급등 추격 위험 데이터 보강 중",
     signalTone === KO.neutral
       ? "현재 톤은 중립이지만, 공용 추적은 톤보다 반복 등장과 유동성, 가격 구조를 우선합니다."
       : signalTone === KO.positive
@@ -1514,7 +1525,8 @@ function buildTrackingSelectionContext({ recommendation, marketItem, stateEntry,
   return {
     selectionStage: stage,
     selectionReason,
-    selectionHighlights
+    selectionHighlights,
+    chaseRisk
   };
 }
 
@@ -1557,7 +1569,7 @@ function buildReviewChecklist(item) {
   ];
 }
 
-function buildTrackingMetrics(item, coverage) {
+function buildTrackingMetrics(item, coverage, chaseRisk = null) {
   const outcome =
     item.result === "성공"
       ? "기준 상회"
@@ -1584,7 +1596,12 @@ function buildTrackingMetrics(item, coverage) {
   return [
     { label: "결과 요약", value: outcome, note: `현재 상태 ${item.result}` },
     { label: "흐름 안정감", value: efficiency, note: `오른 폭 ${formatPercent(item.mfe)} / 밀린 폭 ${formatPercent(item.mae)}` },
-    { label: "이슈 참고도", value: eventFlow, note: `공시 ${coverage.disclosure}건 / 운영 메모 ${coverage.curated}건 / 기사 ${coverage.externalNews}건` }
+    { label: "이슈 참고도", value: eventFlow, note: `공시 ${coverage.disclosure}건 / 운영 메모 ${coverage.curated}건 / 기사 ${coverage.externalNews}건` },
+    {
+      label: "추격 억제",
+      value: chaseRisk?.level === "높음" ? "보류" : chaseRisk?.level === "경계" ? "경계" : "양호",
+      note: chaseRisk?.notes?.[0] ?? "단기 급등 추격보다 반복 등장과 가격 구조를 우선 확인했습니다."
+    }
   ];
 }
 
@@ -1612,28 +1629,136 @@ function buildChartSnapshot(item, basePrice) {
   });
 }
 
-function buildScoreLog(item, recommendation) {
+function buildFallbackScoreLog(item, recommendation) {
   const score = recommendation?.score ?? item.entryScore;
   return [
     {
       timestamp: `${item.signalDate} 09:00`,
       factor: "초기 구조",
       delta: Math.round(score / 12),
-      reason: `초기 진입 점수 ${score}점 기반`
+      reason: `초기 진입 점수 ${score}점 기반`,
+      scoreAfter: Math.round(score / 12)
     },
     {
       timestamp: `${item.signalDate} 13:00`,
       factor: "사후 경로",
       delta: Math.round(item.mfe / 2),
-      reason: `최대 유리구간 ${formatPercent(item.mfe)} 반영`
+      reason: `최대 유리구간 ${formatPercent(item.mfe)} 반영`,
+      scoreAfter: Math.round(score / 12) + Math.round(item.mfe / 2)
     },
     {
       timestamp: `${item.signalDate} 15:00`,
       factor: "리스크 반영",
       delta: -Math.round(Math.abs(item.mae) / 2),
-      reason: `최대 불리구간 ${formatPercent(item.mae)} 반영`
+      reason: `최대 불리구간 ${formatPercent(item.mae)} 반영`,
+      scoreAfter: Math.round(score / 12) + Math.round(item.mfe / 2) - Math.round(Math.abs(item.mae) / 2)
     }
   ];
+}
+
+function buildScoreLogTechnicalReason(indicators, technicalAdjustment) {
+  const parts = [];
+
+  if (typeof indicators.rsi14 === "number") {
+    parts.push(`RSI ${indicators.rsi14}`);
+  }
+  if (typeof indicators.macdHistogram === "number") {
+    parts.push(`MACD 히스토그램 ${indicators.macdHistogram}`);
+  }
+  if (typeof indicators.volumeRatio20 === "number") {
+    parts.push(`거래량 ${indicators.volumeRatio20}배`);
+  }
+
+  const description = parts.length ? parts.join(" · ") : "기술 지표";
+  return `${description}를 바탕으로 기술 조정 ${roundNumber(technicalAdjustment, 1)}점을 반영했습니다.`;
+}
+
+function buildScoreLog({ item, recommendation, marketItem, rankingStat, config, marketRelativeStrengthMap }) {
+  if (!marketItem) {
+    return buildFallbackScoreLog(item, recommendation);
+  }
+
+  const activationContext = buildActivationScoreContext(marketItem, rankingStat, marketRelativeStrengthMap);
+  const averageTurnover20 = getAverageTurnover20(marketItem);
+  let scoreAfter = 0;
+  const entries = [];
+  const appendEntry = (time, factor, delta, reason) => {
+    const roundedDelta = roundNumber(delta, 1) ?? delta;
+    scoreAfter = roundNumber(scoreAfter + roundedDelta, 1) ?? scoreAfter + roundedDelta;
+    entries.push({
+      timestamp: `${item.signalDate} ${time}`,
+      factor,
+      delta: roundedDelta,
+      reason,
+      scoreAfter
+    });
+  };
+
+  appendEntry(
+    "08:50",
+    "핵심 스윙 점수",
+    activationContext.contributions.core,
+    `추세 ${marketItem.trendScore} / 수급 ${marketItem.flowScore} / 품질 ${marketItem.qualityScore} / 변동성 ${marketItem.volatilityScore}를 함께 반영했습니다.`
+  );
+  appendEntry(
+    "08:55",
+    "기술 구조",
+    activationContext.contributions.technical,
+    buildScoreLogTechnicalReason(activationContext.indicators, activationContext.technicalAdjustment)
+  );
+
+  if (activationContext.contributions.history !== 0) {
+    appendEntry(
+      "09:00",
+      "반복 등장",
+      activationContext.contributions.history,
+      `최근 상위 후보 ${rankingStat?.appearances ?? 0}회, 연속 ${rankingStat?.consecutiveAppearances ?? 0}회 등장을 가산했습니다.`
+    );
+  }
+
+  if (activationContext.contributions.rank !== 0) {
+    appendEntry(
+      "09:03",
+      "순위 우위",
+      activationContext.contributions.rank,
+      `최신 순위 ${rankingStat?.latestRank ?? "-"}위를 반영해 우선순위를 조정했습니다.`
+    );
+  }
+
+  if (activationContext.contributions.liquidity !== 0) {
+    appendEntry(
+      "09:06",
+      "유동성",
+      activationContext.contributions.liquidity,
+      `20일 평균 거래대금 ${formatTrackingAmount(averageTurnover20)}에 따른 가산점입니다.`
+    );
+  }
+
+  appendEntry(
+    "09:10",
+    "가격 구조",
+    activationContext.contributions.structure,
+    marketItem.currentPrice > marketItem.invalidationPrice
+      ? `현재가 ${formatTrackingPrice(marketItem.currentPrice)}가 무효화 가격 ${formatTrackingPrice(marketItem.invalidationPrice)} 위에 있습니다.`
+      : `현재가가 무효화 가격 ${formatTrackingPrice(marketItem.invalidationPrice)} 아래라 구조 점수를 깎았습니다.`
+  );
+
+  appendEntry(
+    "09:14",
+    "추격 억제",
+    -activationContext.chaseRisk.penalty,
+    activationContext.chaseRisk.notes[0] ?? activationContext.chaseRisk.summary
+  );
+
+  entries.push({
+    timestamp: `${item.signalDate} 09:18`,
+    factor: "최종 판정",
+    delta: 0,
+    reason: `활성화 점수 ${activationContext.total}점 / 자동 감시 기준 ${config.minWatchActivationScore}점 / 진입 기준 ${config.minEntryActivationScore}점`,
+    scoreAfter: activationContext.total
+  });
+
+  return entries;
 }
 
 function getServiceTrackingStatePath() {
@@ -1724,24 +1849,141 @@ function getTrackingConfig() {
   };
 }
 
-function buildActivationScore(item, rankingStat, marketRelativeStrengthMap = null) {
+function evaluateTrackingChaseRisk(item, indicators, rankingStat) {
+  const currentPrice = Number(item.currentPrice ?? item.entryPrice ?? 0);
+  const notes = [];
+  let penalty = 0;
+  let signalCount = 0;
+  let blockerSignals = 0;
+
+  const addSignal = (nextPenalty, note, blocked = false) => {
+    penalty += nextPenalty;
+    signalCount += 1;
+    if (blocked) {
+      blockerSignals += 1;
+    }
+    notes.push(note);
+  };
+
+  if (currentPrice > 0 && Number(indicators.sma20 ?? 0) > 0) {
+    const distanceToSma20 = ((currentPrice - Number(indicators.sma20)) / Number(indicators.sma20)) * 100;
+
+    if (distanceToSma20 >= 20) {
+      addSignal(5.5, `현재가가 20일선 대비 ${roundNumber(distanceToSma20, 1)}% 높아 단기 이격이 큽니다.`, true);
+    } else if (distanceToSma20 >= 14) {
+      addSignal(3, `현재가가 20일선 대비 ${roundNumber(distanceToSma20, 1)}% 높아 눌림 확인이 더 필요합니다.`);
+    }
+  }
+
+  if (currentPrice > 0 && Number(indicators.bollingerUpper ?? 0) > 0 && currentPrice > Number(indicators.bollingerUpper)) {
+    const overUpperBand = ((currentPrice - Number(indicators.bollingerUpper)) / Number(indicators.bollingerUpper)) * 100;
+
+    if (overUpperBand >= 4) {
+      addSignal(4, `볼린저 상단을 ${roundNumber(overUpperBand, 1)}% 웃돌아 단기 확장 폭이 큽니다.`, true);
+    } else if (overUpperBand >= 1.5) {
+      addSignal(2, `볼린저 상단 위에서 움직여 추격 진입은 보수적으로 봅니다.`);
+    }
+  }
+
+  if (typeof indicators.rsi14 === "number") {
+    if (indicators.rsi14 >= 74) {
+      addSignal(4.5, `RSI ${indicators.rsi14}로 과열권 진입 신호가 강합니다.`, true);
+    } else if (indicators.rsi14 >= 68) {
+      addSignal(2.5, `RSI ${indicators.rsi14}로 단기 과열 신호가 일부 나타납니다.`);
+    }
+  }
+
+  if (typeof indicators.volumeRatio20 === "number") {
+    if (indicators.volumeRatio20 >= 3.4) {
+      addSignal(3.5, `거래량이 20일 평균의 ${indicators.volumeRatio20}배로 급증했습니다.`, true);
+    } else if (indicators.volumeRatio20 >= 2.2) {
+      addSignal(2, `거래량이 20일 평균의 ${indicators.volumeRatio20}배로 단기 과열 가능성을 높입니다.`);
+    }
+  }
+
+  if (typeof indicators.roc20 === "number") {
+    if (indicators.roc20 >= 28) {
+      addSignal(3.5, `20일 가격 탄력이 ${formatPercent(indicators.roc20)}로 급등 구간에 가깝습니다.`, true);
+    } else if (indicators.roc20 >= 18) {
+      addSignal(2, `20일 가격 탄력이 ${formatPercent(indicators.roc20)}로 높은 편입니다.`);
+    }
+  }
+
+  const appearances = rankingStat?.appearances ?? 0;
+  const consecutiveAppearances = rankingStat?.consecutiveAppearances ?? 0;
+
+  if (penalty > 0 && (appearances >= 3 || consecutiveAppearances >= 2)) {
+    penalty = Math.max(0, penalty - 2);
+    notes.push(`최근 상위 후보 ${appearances}회, 연속 ${consecutiveAppearances}회 등장으로 일회성 급등 가능성은 일부 낮췄습니다.`);
+  } else if (signalCount >= 2 && appearances <= 1) {
+    penalty += 1.5;
+    notes.push("반복 등장 확인이 부족한 상태라 단기 급등 추격 위험을 더 보수적으로 반영했습니다.");
+  }
+
+  const roundedPenalty = roundNumber(penalty, 1) ?? penalty;
+  const level = blockerSignals >= 2 || roundedPenalty >= 8.5 ? "높음" : blockerSignals >= 1 || roundedPenalty >= 4.5 ? "경계" : "낮음";
+  const blocksWatch = level === "높음";
+  const blocksEntry = level === "높음" || (level === "경계" && signalCount >= 2);
+  const primaryNote = notes[0] ?? "단기 급등 추격 신호가 낮습니다.";
+  const summary =
+    level === "높음"
+      ? "단기 급등 이후 과열 신호가 강해 공용 추적 편입을 보류합니다."
+      : level === "경계"
+        ? "단기 과열 신호가 있어 추격 진입보다 자동 감시에서 눌림 확인을 우선합니다."
+        : "단기 급등 추격 신호가 낮아 과열 종목을 그대로 쫓지 않도록 한 번 더 걸렀습니다.";
+  const highlight =
+    level === "낮음" ? "단기 급등 추격 위험 낮음" : `단기 급등 추격 위험 ${level} · ${primaryNote}`;
+
+  return {
+    level,
+    penalty: roundedPenalty,
+    signalCount,
+    blocksWatch,
+    blocksEntry,
+    summary,
+    primaryNote,
+    highlight,
+    notes: notes.slice(0, 3)
+  };
+}
+
+function buildActivationScoreContext(item, rankingStat, marketRelativeStrengthMap = null) {
   const historyBonus = (rankingStat?.appearances ?? 0) * 1.5;
   const rankBonus = rankingStat?.latestRank ? Math.max(0, 24 - rankingStat.latestRank) * 0.9 : 0;
   const liquidityBonus = getAverageTurnover20(item) >= 10000000000 ? 4 : getAverageTurnover20(item) >= 5000000000 ? 2 : 0;
   const structureBonus = item.currentPrice > item.invalidationPrice ? 6 : -8;
-  const technicalAdjustment = calculateTechnicalAdjustment(calculateTechnicalIndicators(item, marketRelativeStrengthMap), item);
-
-  return (
-    item.trendScore * 1.1 +
-    item.flowScore * 1.05 +
-    item.qualityScore +
-    item.volatilityScore * 0.45 +
-    technicalAdjustment * 1.05 +
+  const indicators = calculateTechnicalIndicators(item, marketRelativeStrengthMap);
+  const technicalAdjustment = calculateTechnicalAdjustment(indicators, item);
+  const coreContribution = item.trendScore * 1.1 + item.flowScore * 1.05 + item.qualityScore + item.volatilityScore * 0.45;
+  const technicalContribution = technicalAdjustment * 1.05;
+  const chaseRisk = evaluateTrackingChaseRisk(item, indicators, rankingStat);
+  const total =
+    coreContribution +
+    technicalContribution +
     historyBonus +
     rankBonus +
     liquidityBonus +
-    structureBonus
-  );
+    structureBonus -
+    chaseRisk.penalty;
+
+  return {
+    indicators,
+    technicalAdjustment,
+    chaseRisk,
+    contributions: {
+      core: roundNumber(coreContribution, 1) ?? coreContribution,
+      technical: roundNumber(technicalContribution, 1) ?? technicalContribution,
+      history: roundNumber(historyBonus, 1) ?? historyBonus,
+      rank: roundNumber(rankBonus, 1) ?? rankBonus,
+      liquidity: roundNumber(liquidityBonus, 1) ?? liquidityBonus,
+      structure: roundNumber(structureBonus, 1) ?? structureBonus
+    },
+    total: roundNumber(total, 1) ?? total
+  };
+}
+
+function buildActivationScore(item, rankingStat, marketRelativeStrengthMap = null) {
+  return buildActivationScoreContext(item, rankingStat, marketRelativeStrengthMap).total;
 }
 
 function buildTrackingEntryPlan(item) {
@@ -1835,17 +2077,25 @@ function resolveTrackingOutcome(entry, config) {
   };
 }
 
-function isWatchCandidateEligible(item, activationScore, rankingStat, config) {
+function resolveTrackingChaseRisk(item, rankingStat) {
+  return evaluateTrackingChaseRisk(item, calculateTechnicalIndicators(item), rankingStat);
+}
+
+function isWatchCandidateEligible(item, activationScore, rankingStat, config, chaseRisk = null) {
+  const resolvedChaseRisk = chaseRisk ?? resolveTrackingChaseRisk(item, rankingStat);
+
   return (
     activationScore >= config.minWatchActivationScore &&
     getAverageTurnover20(item) >= config.minAverageTurnover20 &&
     item.currentPrice > item.invalidationPrice &&
-    (rankingStat?.appearances ?? 0) >= 1
+    (rankingStat?.appearances ?? 0) >= 1 &&
+    !resolvedChaseRisk.blocksWatch
   );
 }
 
-function isEntryCandidateEligible(item, activationScore, rankingStat, config) {
+function isEntryCandidateEligible(item, activationScore, rankingStat, config, chaseRisk = null) {
   const entryPlan = buildTrackingEntryPlan(item);
+  const resolvedChaseRisk = chaseRisk ?? resolveTrackingChaseRisk(item, rankingStat);
   const confirmationBuffer = item.confirmationPrice * config.confirmationBufferRatio;
   const rankEligible = (rankingStat?.latestRank ?? Number.POSITIVE_INFINITY) <= config.forceEntryMaxRank;
   const structureEligible =
@@ -1856,16 +2106,19 @@ function isEntryCandidateEligible(item, activationScore, rankingStat, config) {
     activationScore >= config.minEntryActivationScore &&
     getAverageTurnover20(item) >= config.minEntryAverageTurnover20 &&
     structureEligible &&
-    (rankingStat?.appearances ?? 0) >= config.minEntryAppearances
+    (rankingStat?.appearances ?? 0) >= config.minEntryAppearances &&
+    !resolvedChaseRisk.blocksEntry
   );
 }
 
-function buildTrackingDiagnostic(item, activationScore, rankingStat, config) {
+function buildTrackingDiagnostic(item, activationContext, rankingStat, config) {
   const entryPlan = buildTrackingEntryPlan(item);
   const averageTurnover20 = getAverageTurnover20(item);
   const appearances = rankingStat?.appearances ?? 0;
-  const watchEligible = isWatchCandidateEligible(item, activationScore, rankingStat, config);
-  const entryEligible = isEntryCandidateEligible(item, activationScore, rankingStat, config);
+  const activationScore = activationContext.total;
+  const chaseRisk = activationContext.chaseRisk;
+  const watchEligible = isWatchCandidateEligible(item, activationScore, rankingStat, config, chaseRisk);
+  const entryEligible = isEntryCandidateEligible(item, activationScore, rankingStat, config, chaseRisk);
   const blockers = [];
   const supports = [];
 
@@ -1885,6 +2138,12 @@ function buildTrackingDiagnostic(item, activationScore, rankingStat, config) {
     supports.push(`최근 상위 후보에 ${appearances}회 등장했습니다.`);
   } else {
     blockers.push("최근 상위 후보 등장 이력이 아직 없습니다.");
+  }
+
+  if (chaseRisk.level === "낮음") {
+    supports.push(chaseRisk.summary);
+  } else {
+    blockers.push(chaseRisk.summary);
   }
 
   if (entryPlan.aboveInvalidation) {
@@ -1951,7 +2210,8 @@ function buildTrackingState({ generatedAt, candidateEntries, marketByTicker, pre
     const lowestPrice = Math.min(entry.lowestPrice ?? entry.entryPrice, currentPrice);
     const holdingDays = diffDays(parseDateOnly(entry.signalDate), parseDateOnly(today)) + 1;
     const rankingStat = rankingStats.get(entry.ticker);
-    const activationScore = roundNumber(buildActivationScore(marketItem, rankingStat, marketRelativeStrengthMap), 1) ?? entry.activationScore ?? 0;
+    const activationContext = buildActivationScoreContext(marketItem, rankingStat, marketRelativeStrengthMap);
+    const activationScore = activationContext.total ?? entry.activationScore ?? 0;
 
     const updated = {
       ...entry,
@@ -1977,7 +2237,7 @@ function buildTrackingState({ generatedAt, candidateEntries, marketByTicker, pre
         updated.closedReason = outcome.closedReason;
       }
     } else if (entry.status === "watch") {
-      if (isEntryCandidateEligible(marketItem, activationScore, rankingStat, config)) {
+      if (isEntryCandidateEligible(marketItem, activationScore, rankingStat, config, activationContext.chaseRisk)) {
         const entryPlan = buildTrackingEntryPlan(marketItem);
         updated.status = "active";
         updated.startedAt = generatedAt;
@@ -1988,10 +2248,15 @@ function buildTrackingState({ generatedAt, candidateEntries, marketByTicker, pre
         updated.targetPrice = entryPlan.targetPrice;
         updated.closedAt = null;
         updated.closedReason = null;
-      } else if (!isWatchCandidateEligible(marketItem, activationScore, rankingStat, config) || updated.holdingDays > config.maxWatchDays) {
+      } else if (
+        !isWatchCandidateEligible(marketItem, activationScore, rankingStat, config, activationContext.chaseRisk) ||
+        updated.holdingDays > config.maxWatchDays
+      ) {
         updated.status = "closed_timeout";
         updated.closedAt = generatedAt;
-        updated.closedReason = !isWatchCandidateEligible(marketItem, activationScore, rankingStat, config) ? "감시 기준 이탈" : "감시 기간 종료";
+        updated.closedReason = !isWatchCandidateEligible(marketItem, activationScore, rankingStat, config, activationContext.chaseRisk)
+          ? "감시 기준 이탈"
+          : "감시 기간 종료";
       } else if (
         updated.holdingDays >= config.forceEntryMinHoldingDays &&
         (rankingStat?.latestRank ?? Number.POSITIVE_INFINITY) <= config.forceEntryMaxRank &&
@@ -2023,23 +2288,24 @@ function buildTrackingState({ generatedAt, candidateEntries, marketByTicker, pre
       .filter(Boolean)
       .map((item) => {
         const rankingStat = rankingStats.get(item.ticker);
-        const activationScore = roundNumber(buildActivationScore(item, rankingStat, marketRelativeStrengthMap), 1) ?? 0;
+        const activationContext = buildActivationScoreContext(item, rankingStat, marketRelativeStrengthMap);
         const lastClosed = latestClosedByTicker.get(item.ticker);
         const cooldownDays = lastClosed?.closedAt ? diffDays(parseDateOnly(lastClosed.signalDate), parseDateOnly(today)) : null;
 
         return {
           item,
-          activationScore,
+          activationScore: activationContext.total,
+          activationContext,
           rankingStat,
           inCooldown: cooldownDays !== null && cooldownDays < config.cooldownDays
         };
       })
-      .filter(({ item, activationScore, rankingStat, inCooldown }) => {
+      .filter(({ item, activationScore, activationContext, rankingStat, inCooldown }) => {
         if (liveTickers.has(item.ticker) || inCooldown) {
           return false;
         }
 
-        return isWatchCandidateEligible(item, activationScore, rankingStat, config);
+        return isWatchCandidateEligible(item, activationScore, rankingStat, config, activationContext.chaseRisk);
       })
       .sort((left, right) => {
         if (right.activationScore !== left.activationScore) {
@@ -2085,16 +2351,21 @@ function buildTrackingState({ generatedAt, candidateEntries, marketByTicker, pre
       .map((entry) => {
         const item = marketByTicker.get(entry.ticker);
         const rankingStat = rankingStats.get(entry.ticker);
-        const activationScore = item ? roundNumber(buildActivationScore(item, rankingStat, marketRelativeStrengthMap), 1) ?? entry.activationScore ?? 0 : entry.activationScore ?? 0;
+        const activationContext = item ? buildActivationScoreContext(item, rankingStat, marketRelativeStrengthMap) : null;
+        const activationScore = activationContext?.total ?? entry.activationScore ?? 0;
 
         return {
           entry,
           item,
           activationScore,
+          activationContext,
           rankingStat
         };
       })
-      .filter(({ item, activationScore, rankingStat }) => item && isEntryCandidateEligible(item, activationScore, rankingStat, config))
+      .filter(
+        ({ item, activationScore, activationContext, rankingStat }) =>
+          item && isEntryCandidateEligible(item, activationScore, rankingStat, config, activationContext?.chaseRisk)
+      )
       .sort((left, right) => {
         if (right.activationScore !== left.activationScore) {
           return right.activationScore - left.activationScore;
@@ -2276,7 +2547,8 @@ async function main() {
     const technicalIndicators = calculateTechnicalIndicators(item, marketRelativeStrengthMap);
     const technicalAdjustment = calculateTechnicalAdjustment(technicalIndicators, item);
     const rankingStat = rankingStats.get(item.ticker);
-    const activationScore = roundNumber(buildActivationScore(item, rankingStat, marketRelativeStrengthMap), 1) ?? 0;
+    const activationContext = buildActivationScoreContext(item, rankingStat, marketRelativeStrengthMap);
+    const activationScore = activationContext.total;
     const baseScore = getSwingBaseScore(item);
     const score = clamp(roundNumber(baseScore + technicalAdjustment, 1) ?? baseScore, 0, 100);
     const invalidationDistance = Number((((item.invalidationPrice - item.currentPrice) / item.currentPrice) * 100).toFixed(1));
@@ -2285,7 +2557,7 @@ async function main() {
     const quality = buildQualityValue(item, validationItem);
     const marketQuality = buildMarketDataQuality(item);
     const technicalNotes = buildTechnicalNotes(technicalIndicators);
-    const trackingDiagnostic = buildTrackingDiagnostic(item, activationScore, rankingStat, trackingConfig);
+    const trackingDiagnostic = buildTrackingDiagnostic(item, activationContext, rankingStat, trackingConfig);
     const validationInsight = buildValidationInsight(validationItem);
 
     recommendations.push({
@@ -2448,6 +2720,7 @@ async function main() {
       const coverage = summarizeEventCoverage(tickerNews);
       const stateEntry = trackingStateById.get(item.historyId);
       const marketItem = marketByTicker.get(item.ticker);
+      const rankingStat = rankingStats.get(item.ticker);
       const basePrice = stateEntry?.entryPrice ?? marketByTicker.get(item.ticker)?.currentPrice ?? 100000;
       const selection = buildTrackingSelectionContext({
         recommendation,
@@ -2467,10 +2740,17 @@ async function main() {
           invalidationReview: buildInvalidationReview(history, recommendation),
           afterActionReview: buildAfterActionReview(history, validationItem),
           reviewChecklist: buildReviewChecklist(history),
-          metrics: buildTrackingMetrics(history, coverage),
+          metrics: buildTrackingMetrics(history, coverage, selection.chaseRisk),
           chartSnapshot: buildChartSnapshot(history, basePrice),
           historicalNews: buildTrackingNews(tickerNews),
-          scoreLog: buildScoreLog(history, recommendation)
+          scoreLog: buildScoreLog({
+            item: history,
+            recommendation,
+            marketItem,
+            rankingStat,
+            config: trackingConfig,
+            marketRelativeStrengthMap
+          })
         }
       ];
     })

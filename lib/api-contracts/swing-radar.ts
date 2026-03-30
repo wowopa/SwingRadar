@@ -25,7 +25,7 @@ export interface ValidationInsightDto {
 }
 
 export interface TrackingDiagnosticDto {
-  stage: "진입 추적 가능" | "감시 편입 가능" | "조건 보강 필요";
+  stage: "진입 추적 가능" | "자동 감시 가능" | "조건 보강 필요";
   activationScore: number;
   watchThreshold: number;
   entryThreshold: number;
@@ -252,7 +252,7 @@ export interface TrackingDetailDto {
   metrics: TrackingMetricDto[];
   chartSnapshot: Array<{ label: string; price: number }>;
   historicalNews: TrackingEventDto[];
-  scoreLog: Array<{ timestamp: string; factor: string; delta: number; reason: string }>;
+  scoreLog: Array<{ timestamp: string; factor: string; delta: number; reason: string; scoreAfter?: number }>;
 }
 
 export interface TrackingResponseDto {
