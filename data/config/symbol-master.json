@@ -285,7 +285,7 @@
     "sector": "중견기업부",
     "market": "KOSDAQ",
     "region": "KR",
-    "status": "ready"
+    "status": "pending"
   },
   {
     "ticker": "000270",
@@ -537,7 +537,7 @@
     "sector": "주권",
     "market": "KOSPI",
     "region": "KR",
-    "status": "ready"
+    "status": "pending"
   },
   {
     "ticker": "000670",
@@ -1542,7 +1542,7 @@
       "EehwaConstruction",
       "이화공영"
     ],
-    "sector": "투자주의환기종목(소속부없음)",
+    "sector": "중견기업부",
     "market": "KOSDAQ",
     "region": "KR",
     "status": "pending"
@@ -2373,7 +2373,7 @@
     "sector": "주권",
     "market": "KOSPI",
     "region": "KR",
-    "status": "pending"
+    "status": "ready"
   },
   {
     "ticker": "003300",
@@ -3489,7 +3489,7 @@
     "sector": "주권",
     "market": "KOSPI",
     "region": "KR",
-    "status": "ready"
+    "status": "pending"
   },
   {
     "ticker": "005110",
@@ -3621,7 +3621,7 @@
     "sector": "주권",
     "market": "KOSPI",
     "region": "KR",
-    "status": "ready"
+    "status": "pending"
   },
   {
     "ticker": "005385",
@@ -3921,7 +3921,7 @@
     "sector": "우량기업부",
     "market": "KOSDAQ",
     "region": "KR",
-    "status": "ready"
+    "status": "pending"
   },
   {
     "ticker": "005870",
@@ -3957,7 +3957,7 @@
     "sector": "주권",
     "market": "KOSPI",
     "region": "KR",
-    "status": "ready"
+    "status": "pending"
   },
   {
     "ticker": "005935",
@@ -4221,7 +4221,7 @@
     "sector": "주권",
     "market": "KOSPI",
     "region": "KR",
-    "status": "pending"
+    "status": "ready"
   },
   {
     "ticker": "006370",
@@ -4461,7 +4461,7 @@
     "sector": "중견기업부",
     "market": "KOSDAQ",
     "region": "KR",
-    "status": "ready"
+    "status": "pending"
   },
   {
     "ticker": "006980",
@@ -4938,7 +4938,19 @@
       "WonpungMulsan",
       "원풍물산"
     ],
-    "sector": "중견기업부",
+    "sector": "투자주의환기종목(소속부없음)",
+    "market": "KOSDAQ",
+    "region": "KR",
+    "status": "pending"
+  },
+  {
+    "ticker": "0082N0",
+    "company": "카나프테라퓨틱스",
+    "aliases": [
+      "Kanaph Therapeutics Inc.",
+      "카나프테라퓨틱스"
+    ],
+    "sector": "기술성장기업부",
     "market": "KOSDAQ",
     "region": "KR",
     "status": "pending"
@@ -5119,6 +5131,18 @@
       "메리츠제1호기업인수목적"
     ],
     "sector": "SPAC(소속부없음)",
+    "market": "KOSDAQ",
+    "region": "KR",
+    "status": "pending"
+  },
+  {
+    "ticker": "0088M0",
+    "company": "메쥬",
+    "aliases": [
+      "MEZOO Co., Ltd.",
+      "메쥬"
+    ],
+    "sector": "기술성장기업부",
     "market": "KOSDAQ",
     "region": "KR",
     "status": "pending"
@@ -5673,7 +5697,7 @@
     "sector": "주권",
     "market": "KOSPI",
     "region": "KR",
-    "status": "pending"
+    "status": "ready"
   },
   {
     "ticker": "010100",
@@ -5697,7 +5721,7 @@
     "sector": "주권",
     "market": "KOSPI",
     "region": "KR",
-    "status": "pending"
+    "status": "ready"
   },
   {
     "ticker": "010130",
@@ -5733,7 +5757,7 @@
     "sector": "중견기업부",
     "market": "KOSDAQ",
     "region": "KR",
-    "status": "ready"
+    "status": "pending"
   },
   {
     "ticker": "0101C0",
@@ -5889,7 +5913,7 @@
     "sector": "주권",
     "market": "KOSPI",
     "region": "KR",
-    "status": "ready"
+    "status": "pending"
   },
   {
     "ticker": "010950",
@@ -6402,7 +6426,7 @@
       "NUIN TEK CO., LTD",
       "뉴인텍"
     ],
-    "sector": "벤처기업부",
+    "sector": "투자주의환기종목(소속부없음)",
     "market": "KOSDAQ",
     "region": "KR",
     "status": "pending"
@@ -7089,7 +7113,7 @@
     "sector": "우량기업부",
     "market": "KOSDAQ",
     "region": "KR",
-    "status": "ready"
+    "status": "pending"
   },
   {
     "ticker": "015760",
@@ -7686,7 +7710,7 @@
       "Barunson",
       "바른손"
     ],
-    "sector": "중견기업부",
+    "sector": "투자주의환기종목(소속부없음)",
     "market": "KOSDAQ",
     "region": "KR",
     "status": "pending"
@@ -8166,7 +8190,7 @@
       "J Steel Company Holdings",
       "제이스코홀딩스"
     ],
-    "sector": "중견기업부",
+    "sector": "관리종목(소속부없음)",
     "market": "KOSDAQ",
     "region": "KR",
     "status": "pending"
@@ -8550,7 +8574,7 @@
       "DHAUTOWARE",
       "디에이치오토웨어"
     ],
-    "sector": "중견기업부",
+    "sector": "투자주의환기종목(소속부없음)",
     "market": "KOSDAQ",
     "region": "KR",
     "status": "pending"
@@ -8814,7 +8838,7 @@
       "SEOUL ELECTRONICS & TELECOM",
       "서울전자통신"
     ],
-    "sector": "관리종목(소속부없음)",
+    "sector": "중견기업부",
     "market": "KOSDAQ",
     "region": "KR",
     "status": "pending"
@@ -9273,7 +9297,7 @@
     "sector": "우량기업부",
     "market": "KOSDAQ",
     "region": "KR",
-    "status": "ready"
+    "status": "pending"
   },
   {
     "ticker": "032080",
@@ -9477,7 +9501,7 @@
     "sector": "벤처기업부",
     "market": "KOSDAQ",
     "region": "KR",
-    "status": "ready"
+    "status": "pending"
   },
   {
     "ticker": "032830",
@@ -10065,7 +10089,7 @@
     "sector": "주권",
     "market": "KOSPI",
     "region": "KR",
-    "status": "ready"
+    "status": "pending"
   },
   {
     "ticker": "035460",
@@ -10110,7 +10134,7 @@
       "SOLBORN, Inc.",
       "솔본"
     ],
-    "sector": "벤처기업부",
+    "sector": "투자주의환기종목(소속부없음)",
     "market": "KOSDAQ",
     "region": "KR",
     "status": "pending"
@@ -10255,18 +10279,6 @@
       "에이치엠넥스"
     ],
     "sector": "중견기업부",
-    "market": "KOSDAQ",
-    "region": "KR",
-    "status": "pending"
-  },
-  {
-    "ticker": "036180",
-    "company": "지더블유바이텍",
-    "aliases": [
-      "GW Vitek CO.,LTD.",
-      "지더블유바이텍"
-    ],
-    "sector": "투자주의환기종목(소속부없음)",
     "market": "KOSDAQ",
     "region": "KR",
     "status": "pending"
@@ -10470,7 +10482,7 @@
       "SIMMTECH HOLDINGS Co., Ltd.",
       "심텍홀딩스"
     ],
-    "sector": "투자주의환기종목(소속부없음)",
+    "sector": "중견기업부",
     "market": "KOSDAQ",
     "region": "KR",
     "status": "pending"
@@ -10605,7 +10617,7 @@
     "sector": "우량기업부",
     "market": "KOSDAQ",
     "region": "KR",
-    "status": "ready"
+    "status": "pending"
   },
   {
     "ticker": "037370",
@@ -11154,7 +11166,7 @@
       "CreoSG",
       "크레오에스지"
     ],
-    "sector": "투자주의환기종목(소속부없음)",
+    "sector": "중견기업부",
     "market": "KOSDAQ",
     "region": "KR",
     "status": "pending"
@@ -11190,7 +11202,7 @@
       "ICD Co., Ltd.",
       "아이씨디"
     ],
-    "sector": "투자주의환기종목(소속부없음)",
+    "sector": "중견기업부",
     "market": "KOSDAQ",
     "region": "KR",
     "status": "pending"
@@ -11262,7 +11274,7 @@
       "ELC",
       "이엘씨"
     ],
-    "sector": "중견기업부",
+    "sector": "투자주의환기종목(소속부없음)",
     "market": "KOSDAQ",
     "region": "KR",
     "status": "pending"
@@ -11481,7 +11493,7 @@
     "sector": "주권",
     "market": "KOSPI",
     "region": "KR",
-    "status": "ready"
+    "status": "pending"
   },
   {
     "ticker": "042940",
@@ -11997,7 +12009,7 @@
     "sector": "벤처기업부",
     "market": "KOSDAQ",
     "region": "KR",
-    "status": "pending"
+    "status": "ready"
   },
   {
     "ticker": "047040",
@@ -12009,7 +12021,7 @@
     "sector": "주권",
     "market": "KOSPI",
     "region": "KR",
-    "status": "ready"
+    "status": "pending"
   },
   {
     "ticker": "047050",
@@ -12477,7 +12489,7 @@
     "sector": "우량기업부",
     "market": "KOSDAQ",
     "region": "KR",
-    "status": "pending"
+    "status": "ready"
   },
   {
     "ticker": "050960",
@@ -12966,7 +12978,7 @@
       "NE Neungyule, Inc.",
       "엔이능률"
     ],
-    "sector": "투자주의환기종목(소속부없음)",
+    "sector": "중견기업부",
     "market": "KOSDAQ",
     "region": "KR",
     "status": "pending"
@@ -13521,7 +13533,7 @@
     "sector": "우량기업부",
     "market": "KOSDAQ",
     "region": "KR",
-    "status": "ready"
+    "status": "pending"
   },
   {
     "ticker": "058610",
@@ -14370,7 +14382,7 @@
       "Hyper Corporation",
       "하이퍼코퍼레이션"
     ],
-    "sector": "관리종목(소속부없음)",
+    "sector": "중견기업부",
     "market": "KOSDAQ",
     "region": "KR",
     "status": "pending"
@@ -14490,7 +14502,7 @@
       "BUCKET STUDIO Co.,Ltd.",
       "버킷스튜디오"
     ],
-    "sector": "관리종목(소속부없음)",
+    "sector": "투자주의환기종목(소속부없음)",
     "market": "KOSDAQ",
     "region": "KR",
     "status": "pending"
@@ -14598,7 +14610,7 @@
       "DAP Co., Ltd",
       "디에이피"
     ],
-    "sector": "중견기업부",
+    "sector": "관리종목(소속부없음)",
     "market": "KOSDAQ",
     "region": "KR",
     "status": "pending"
@@ -14886,7 +14898,7 @@
       "DAWONSYS Co., LTD",
       "다원시스"
     ],
-    "sector": "벤처기업부",
+    "sector": "관리종목(소속부없음)",
     "market": "KOSDAQ",
     "region": "KR",
     "status": "pending"
@@ -14901,7 +14913,7 @@
     "sector": "주권",
     "market": "KOSPI",
     "region": "KR",
-    "status": "ready"
+    "status": "pending"
   },
   {
     "ticker": "068290",
@@ -15426,7 +15438,7 @@
       "DUOBACK CO., LTD.",
       "듀오백"
     ],
-    "sector": "중견기업부",
+    "sector": "투자주의환기종목(소속부없음)",
     "market": "KOSDAQ",
     "region": "KR",
     "status": "pending"
@@ -15453,7 +15465,7 @@
     "sector": "우량기업부",
     "market": "KOSDAQ",
     "region": "KR",
-    "status": "pending"
+    "status": "ready"
   },
   {
     "ticker": "073540",
@@ -15789,7 +15801,7 @@
     "sector": "우량기업부",
     "market": "KOSDAQ",
     "region": "KR",
-    "status": "ready"
+    "status": "pending"
   },
   {
     "ticker": "078860",
@@ -15921,7 +15933,7 @@
     "sector": "주권",
     "market": "KOSPI",
     "region": "KR",
-    "status": "ready"
+    "status": "pending"
   },
   {
     "ticker": "079650",
@@ -15978,7 +15990,7 @@
       "INVENIA Co.,Ltd.",
       "인베니아"
     ],
-    "sector": "중견기업부",
+    "sector": "관리종목(소속부없음)",
     "market": "KOSDAQ",
     "region": "KR",
     "status": "pending"
@@ -16194,7 +16206,7 @@
       "OPTRONTEC Inc.",
       "옵트론텍"
     ],
-    "sector": "투자주의환기종목(소속부없음)",
+    "sector": "중견기업부",
     "market": "KOSDAQ",
     "region": "KR",
     "status": "pending"
@@ -16377,7 +16389,7 @@
     "sector": "중견기업부",
     "market": "KOSDAQ",
     "region": "KR",
-    "status": "ready"
+    "status": "pending"
   },
   {
     "ticker": "083660",
@@ -16605,7 +16617,7 @@
     "sector": "주권",
     "market": "KOSPI",
     "region": "KR",
-    "status": "ready"
+    "status": "pending"
   },
   {
     "ticker": "085660",
@@ -16833,7 +16845,7 @@
     "sector": "기술성장기업부",
     "market": "KOSDAQ",
     "region": "KR",
-    "status": "ready"
+    "status": "pending"
   },
   {
     "ticker": "087260",
@@ -16902,7 +16914,7 @@
       "EWON COMFORTECH CO., LTD",
       "이원컴포텍"
     ],
-    "sector": "중견기업부",
+    "sector": "관리종목(소속부없음)",
     "market": "KOSDAQ",
     "region": "KR",
     "status": "pending"
@@ -17454,7 +17466,7 @@
       "SEOUL VIOSYS CO., LTD.",
       "서울바이오시스"
     ],
-    "sector": "중견기업부",
+    "sector": "투자주의환기종목(소속부없음)",
     "market": "KOSDAQ",
     "region": "KR",
     "status": "pending"
@@ -17538,7 +17550,7 @@
       "NC& Co., Ltd.",
       "앤씨앤"
     ],
-    "sector": "관리종목(소속부없음)",
+    "sector": "벤처기업부",
     "market": "KOSDAQ",
     "region": "KR",
     "status": "pending"
@@ -17682,7 +17694,7 @@
       "Korea Robot Manufacturing",
       "케이알엠"
     ],
-    "sector": "투자주의환기종목(소속부없음)",
+    "sector": "중견기업부",
     "market": "KOSDAQ",
     "region": "KR",
     "status": "pending"
@@ -19437,7 +19449,7 @@
     "sector": "벤처기업부",
     "market": "KOSDAQ",
     "region": "KR",
-    "status": "ready"
+    "status": "pending"
   },
   {
     "ticker": "115310",
@@ -19554,7 +19566,7 @@
       "Alphachips",
       "알파칩스"
     ],
-    "sector": "관리종목(소속부없음)",
+    "sector": "중견기업부",
     "market": "KOSDAQ",
     "region": "KR",
     "status": "pending"
@@ -19746,7 +19758,7 @@
       "KOYJ.CO.,LTD",
       "코이즈"
     ],
-    "sector": "벤처기업부",
+    "sector": "투자주의환기종목(소속부없음)",
     "market": "KOSDAQ",
     "region": "KR",
     "status": "pending"
@@ -19974,7 +19986,7 @@
       "NUON",
       "뉴온"
     ],
-    "sector": "관리종목(소속부없음)",
+    "sector": "투자주의환기종목(소속부없음)",
     "market": "KOSDAQ",
     "region": "KR",
     "status": "pending"
@@ -20673,7 +20685,7 @@
     "sector": "벤처기업부",
     "market": "KOSDAQ",
     "region": "KR",
-    "status": "ready"
+    "status": "pending"
   },
   {
     "ticker": "138360",
@@ -20802,7 +20814,7 @@
       "Mezzion Pharma Co., Ltd.",
       "메지온"
     ],
-    "sector": "중견기업부",
+    "sector": "투자주의환기종목(소속부없음)",
     "market": "KOSDAQ",
     "region": "KR",
     "status": "pending"
@@ -21198,7 +21210,7 @@
       "Hironic Co.,Ltd",
       "하이로닉"
     ],
-    "sector": "관리종목(소속부없음)",
+    "sector": "중견기업부",
     "market": "KOSDAQ",
     "region": "KR",
     "status": "pending"
@@ -21390,7 +21402,7 @@
       "HIGEN RNM Co., Ltd",
       "하이젠알앤엠"
     ],
-    "sector": "중견기업부",
+    "sector": "투자주의환기종목(소속부없음)",
     "market": "KOSDAQ",
     "region": "KR",
     "status": "pending"
@@ -21546,7 +21558,7 @@
       "Naturalendo Tech Co., Ltd",
       "내츄럴엔도텍"
     ],
-    "sector": "벤처기업부",
+    "sector": "투자주의환기종목(소속부없음)",
     "market": "KOSDAQ",
     "region": "KR",
     "status": "pending"
@@ -21702,7 +21714,7 @@
       "AbClon Inc.",
       "앱클론 주식회사"
     ],
-    "sector": "관리종목(소속부없음)",
+    "sector": "중견기업부",
     "market": "KOSDAQ",
     "region": "KR",
     "status": "pending"
@@ -21762,7 +21774,7 @@
       "Vessel Co., Ltd",
       "베셀"
     ],
-    "sector": "벤처기업부",
+    "sector": "투자주의환기종목(소속부없음)",
     "market": "KOSDAQ",
     "region": "KR",
     "status": "pending"
@@ -21801,7 +21813,7 @@
     "sector": "벤처기업부",
     "market": "KOSDAQ",
     "region": "KR",
-    "status": "ready"
+    "status": "pending"
   },
   {
     "ticker": "178780",
@@ -21858,7 +21870,7 @@
       "UTI INC.",
       "유티아이"
     ],
-    "sector": "벤처기업부",
+    "sector": "투자주의환기종목(소속부없음)",
     "market": "KOSDAQ",
     "region": "KR",
     "status": "pending"
@@ -21925,10 +21937,10 @@
   },
   {
     "ticker": "182400",
-    "company": "엔케이맥스",
+    "company": "엔케이젠바이오텍코리아",
     "aliases": [
-      "NKMAX Co., Ltd.",
-      "엔케이맥스"
+      "NKGenBiotechKorea",
+      "엔케이젠바이오텍코리아"
     ],
     "sector": "관리종목(소속부없음)",
     "market": "KOSDAQ",
@@ -21966,7 +21978,7 @@
       "ENZYCHEM LIFESCIENCES CORPORATION",
       "엔지켐생명과학"
     ],
-    "sector": "기술성장기업부",
+    "sector": "관리종목(소속부없음)",
     "market": "KOSDAQ",
     "region": "KR",
     "status": "pending"
@@ -22057,15 +22069,15 @@
   },
   {
     "ticker": "187660",
-    "company": "현대ADM",
+    "company": "페니트리움바이오",
     "aliases": [
-      "Hyundai ADM Bio",
-      "현대에이디엠바이오"
+      "PenetriumBio",
+      "페니트리움바이오"
     ],
     "sector": "중견기업부",
     "market": "KOSDAQ",
     "region": "KR",
-    "status": "ready"
+    "status": "pending"
   },
   {
     "ticker": "187790",
@@ -22110,7 +22122,7 @@
       "SANIGEN Co., Ltd.",
       "세니젠"
     ],
-    "sector": "투자주의환기종목(소속부없음)",
+    "sector": "관리종목(소속부없음)",
     "market": "KOSDAQ",
     "region": "KR",
     "status": "pending"
@@ -22158,7 +22170,7 @@
       "SEOJEON ELECTRIC MACHINERY Co.,Ltd.",
       "서전기전"
     ],
-    "sector": "투자주의환기종목(소속부없음)",
+    "sector": "중견기업부",
     "market": "KOSDAQ",
     "region": "KR",
     "status": "pending"
@@ -22278,7 +22290,7 @@
       "ONEUL E&M",
       "오늘이엔엠"
     ],
-    "sector": "투자주의환기종목(소속부없음)",
+    "sector": "중견기업부",
     "market": "KOSDAQ",
     "region": "KR",
     "status": "pending"
@@ -22410,7 +22422,7 @@
       "Abpro Bio Co., Ltd.",
       "에이비프로바이오"
     ],
-    "sector": "투자주의환기종목(소속부없음)",
+    "sector": "관리종목(소속부없음)",
     "market": "KOSDAQ",
     "region": "KR",
     "status": "pending"
@@ -22819,18 +22831,6 @@
       "글로벌텍스프리"
     ],
     "sector": "중견기업부",
-    "market": "KOSDAQ",
-    "region": "KR",
-    "status": "pending"
-  },
-  {
-    "ticker": "204630",
-    "company": "스튜디오산타클로스",
-    "aliases": [
-      "STUDIO SANTA CLAUS ENTERTAINMENT Co., Ltd.",
-      "스튜디오 산타클로스 엔터테인먼트"
-    ],
-    "sector": "관리종목(소속부없음)",
     "market": "KOSDAQ",
     "region": "KR",
     "status": "pending"
@@ -23286,7 +23286,7 @@
       "RollingStone",
       "롤링스톤"
     ],
-    "sector": "투자주의환기종목(소속부없음)",
+    "sector": "관리종목(소속부없음)",
     "market": "KOSDAQ",
     "region": "KR",
     "status": "pending"
@@ -23373,7 +23373,7 @@
     "sector": "벤처기업부",
     "market": "KOSDAQ",
     "region": "KR",
-    "status": "ready"
+    "status": "pending"
   },
   {
     "ticker": "215480",
@@ -23478,7 +23478,7 @@
       "SD BIOTECHNOLOGIES CO., LTD.",
       "에스디생명공학"
     ],
-    "sector": "관리종목(소속부없음)",
+    "sector": "투자주의환기종목(소속부없음)",
     "market": "KOSDAQ",
     "region": "KR",
     "status": "pending"
@@ -23565,7 +23565,7 @@
     "sector": "우량기업부",
     "market": "KOSDAQ",
     "region": "KR",
-    "status": "ready"
+    "status": "pending"
   },
   {
     "ticker": "219130",
@@ -23661,7 +23661,7 @@
     "sector": "기술성장기업부",
     "market": "KOSDAQ",
     "region": "KR",
-    "status": "ready"
+    "status": "pending"
   },
   {
     "ticker": "221840",
@@ -23670,7 +23670,7 @@
       "HIZEAERO Co.,Ltd.",
       "하이즈항공"
     ],
-    "sector": "투자주의환기종목(소속부없음)",
+    "sector": "중견기업부",
     "market": "KOSDAQ",
     "region": "KR",
     "status": "pending"
@@ -23755,18 +23755,6 @@
       "심텍"
     ],
     "sector": "우량기업부",
-    "market": "KOSDAQ",
-    "region": "KR",
-    "status": "pending"
-  },
-  {
-    "ticker": "222810",
-    "company": "세토피아",
-    "aliases": [
-      "Setopia",
-      "세토피아"
-    ],
-    "sector": "관리종목(소속부없음)",
     "market": "KOSDAQ",
     "region": "KR",
     "status": "pending"
@@ -23973,7 +23961,7 @@
     "sector": "기술성장기업부",
     "market": "KOSDAQ",
     "region": "KR",
-    "status": "ready"
+    "status": "pending"
   },
   {
     "ticker": "227100",
@@ -24081,7 +24069,7 @@
     "sector": "기술성장기업부",
     "market": "KOSDAQ",
     "region": "KR",
-    "status": "ready"
+    "status": "pending"
   },
   {
     "ticker": "229640",
@@ -24225,7 +24213,7 @@
     "sector": "우량기업부",
     "market": "KOSDAQ",
     "region": "KR",
-    "status": "ready"
+    "status": "pending"
   },
   {
     "ticker": "234690",
@@ -24678,7 +24666,7 @@
       "ASTA Co., Ltd.",
       "아스타"
     ],
-    "sector": "벤처기업부",
+    "sector": "관리종목(소속부없음)",
     "market": "KOSDAQ",
     "region": "KR",
     "status": "pending"
@@ -25554,7 +25542,7 @@
       "APTN",
       "앱튼"
     ],
-    "sector": "벤처기업부",
+    "sector": "투자주의환기종목(소속부없음)",
     "market": "KOSDAQ",
     "region": "KR",
     "status": "pending"
@@ -25653,7 +25641,7 @@
     "sector": "주권",
     "market": "KOSPI",
     "region": "KR",
-    "status": "ready"
+    "status": "pending"
   },
   {
     "ticker": "272290",
@@ -25770,7 +25758,7 @@
       "HanWool & Jeju",
       "한울앤제주"
     ],
-    "sector": "기술성장기업부",
+    "sector": "투자주의환기종목(소속부없음)",
     "market": "KOSDAQ",
     "region": "KR",
     "status": "pending"
@@ -26034,7 +26022,7 @@
       "NanoSilikhan Advanced Materials",
       "나노실리칸첨단소재"
     ],
-    "sector": "기술성장기업부",
+    "sector": "투자주의환기종목(소속부없음)",
     "market": "KOSDAQ",
     "region": "KR",
     "status": "pending"
@@ -26190,7 +26178,7 @@
       "Shindo Eng. Lab., Ltd.",
       "신도기연"
     ],
-    "sector": "투자주의환기종목(소속부없음)",
+    "sector": "중견기업부",
     "market": "KOSDAQ",
     "region": "KR",
     "status": "pending"
@@ -26205,7 +26193,7 @@
     "sector": "우량기업부",
     "market": "KOSDAQ",
     "region": "KR",
-    "status": "ready"
+    "status": "pending"
   },
   {
     "ticker": "290560",
@@ -26274,7 +26262,7 @@
       "FOODNAMOO, INC.",
       "푸드나무"
     ],
-    "sector": "투자주의환기종목(소속부없음)",
+    "sector": "중견기업부",
     "market": "KOSDAQ",
     "region": "KR",
     "status": "pending"
@@ -26406,7 +26394,7 @@
       "LEMON COMPANY LIMITED",
       "레몬"
     ],
-    "sector": "중견기업부",
+    "sector": "관리종목(소속부없음)",
     "market": "KOSDAQ",
     "region": "KR",
     "status": "pending"
@@ -26478,7 +26466,7 @@
       "CS BEARING Co., Ltd.",
       "씨에스베어링"
     ],
-    "sector": "중견기업부",
+    "sector": "투자주의환기종목(소속부없음)",
     "market": "KOSDAQ",
     "region": "KR",
     "status": "pending"
@@ -27057,7 +27045,7 @@
     "sector": "기술성장기업부",
     "market": "KOSDAQ",
     "region": "KR",
-    "status": "ready"
+    "status": "pending"
   },
   {
     "ticker": "310870",
@@ -27114,7 +27102,7 @@
       "A.F.W Co., Ltd",
       "에이에프더블류"
     ],
-    "sector": "벤처기업부",
+    "sector": "투자주의환기종목(소속부없음)",
     "market": "KOSDAQ",
     "region": "KR",
     "status": "pending"
@@ -27489,7 +27477,7 @@
     "sector": "주권",
     "market": "KOSPI",
     "region": "KR",
-    "status": "ready"
+    "status": "pending"
   },
   {
     "ticker": "322180",
@@ -27609,7 +27597,7 @@
     "sector": "벤처기업부",
     "market": "KOSDAQ",
     "region": "KR",
-    "status": "ready"
+    "status": "pending"
   },
   {
     "ticker": "328130",
@@ -28050,7 +28038,7 @@
       "DAVOLINK",
       "다보링크"
     ],
-    "sector": "중견기업부",
+    "sector": "투자주의환기종목(소속부없음)",
     "market": "KOSDAQ",
     "region": "KR",
     "status": "pending"
@@ -29298,7 +29286,7 @@
       "BITMAX",
       "비트맥스"
     ],
-    "sector": "기술성장기업부",
+    "sector": "관리종목(소속부없음)",
     "market": "KOSDAQ",
     "region": "KR",
     "status": "pending"
@@ -29442,7 +29430,7 @@
       "OptiCore",
       "옵티코어"
     ],
-    "sector": "벤처기업부",
+    "sector": "관리종목(소속부없음)",
     "market": "KOSDAQ",
     "region": "KR",
     "status": "pending"
@@ -29721,7 +29709,7 @@
     "sector": "기술성장기업부",
     "market": "KOSDAQ",
     "region": "KR",
-    "status": "ready"
+    "status": "pending"
   },
   {
     "ticker": "389140",
@@ -29886,7 +29874,7 @@
       "NEXTCHIP Co., Ltd.",
       "넥스트칩"
     ],
-    "sector": "투자주의환기종목(소속부없음)",
+    "sector": "벤처기업부",
     "market": "KOSDAQ",
     "region": "KR",
     "status": "pending"
@@ -30090,7 +30078,7 @@
       "Plasmapp Co., Ltd.",
       "플라즈맵"
     ],
-    "sector": "관리종목(소속부없음)",
+    "sector": "중견기업부",
     "market": "KOSDAQ",
     "region": "KR",
     "status": "pending"
@@ -30139,6 +30127,18 @@
       "꿈비"
     ],
     "sector": "벤처기업부",
+    "market": "KOSDAQ",
+    "region": "KR",
+    "status": "pending"
+  },
+  {
+    "ticker": "408470",
+    "company": "한패스",
+    "aliases": [
+      "HANPASS CO.,Ltd.",
+      "한패스"
+    ],
+    "sector": "중견기업부",
     "market": "KOSDAQ",
     "region": "KR",
     "status": "pending"
@@ -30366,7 +30366,7 @@
       "OBZEN Inc.",
       "오브젠"
     ],
-    "sector": "투자주의환기종목(소속부없음)",
+    "sector": "벤처기업부",
     "market": "KOSDAQ",
     "region": "KR",
     "status": "pending"
@@ -31254,7 +31254,7 @@
       "Shinhan 11th Special Purpose Acquisition Company",
       "신한제11호기업인수목적"
     ],
-    "sector": "SPAC(소속부없음)",
+    "sector": "관리종목(소속부없음)",
     "market": "KOSDAQ",
     "region": "KR",
     "status": "pending"
@@ -31445,18 +31445,6 @@
     "aliases": [
       "Daishin Balance No.16 Special Purpose Acquisition Company",
       "대신밸런스제16호기업인수목적"
-    ],
-    "sector": "관리종목(소속부없음)",
-    "market": "KOSDAQ",
-    "region": "KR",
-    "status": "pending"
-  },
-  {
-    "ticker": "457940",
-    "company": "에스케이증권제10호스팩",
-    "aliases": [
-      "SK Securities No.10 Special Purpose Acquisition Company",
-      "에스케이증권제10호기업인수목적"
     ],
     "sector": "관리종목(소속부없음)",
     "market": "KOSDAQ",
@@ -32928,6 +32916,18 @@
     "status": "pending"
   },
   {
+    "ticker": "493280",
+    "company": "아이엠바이오로직스",
+    "aliases": [
+      "IMBiologics Corp.",
+      "아이엠바이오로직스"
+    ],
+    "sector": "기술성장기업부",
+    "market": "KOSDAQ",
+    "region": "KR",
+    "status": "pending"
+  },
+  {
     "ticker": "493330",
     "company": "지에프아이",
     "aliases": [
@@ -33177,7 +33177,7 @@
     "sector": "외국기업(소속부없음)",
     "market": "KOSDAQ",
     "region": "KR",
-    "status": "pending"
+    "status": "ready"
   },
   {
     "ticker": "950170",
