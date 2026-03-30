@@ -8,7 +8,9 @@ This document reconstructs the working sprint history from the current codebase 
 - The ETL layer can fetch market, news, and disclosure data from external sources and regenerate live snapshots.
 - Admin APIs and an admin dashboard exist for operational workflows.
 - Universe scan automation scripts exist and can score watchlist candidates in batches.
-- The project is beyond prototype stage and is now in an operational hardening and data-platform transition stage.
+- The project is beyond prototype stage and is now balancing two priorities:
+  - operational hardening
+  - product repositioning from analysis-heavy UI toward an action-first swing operating system
 
 ## Sprint status
 
@@ -142,19 +144,37 @@ Suggested scope:
 - Validate deployment and recovery procedures against the current Postgres mode.
 - Remove text encoding issues from user-facing Korean copy.
 
+### Sprint 9: Action-first product repositioning
+Status: Not started
+
+Target outcome:
+- Reframe the app around daily decisions, portfolio rules, and plain-language guidance.
+
+Suggested scope:
+- Redesign the recommendations surface into a daily operating home.
+- Define action buckets such as `Buy now`, `Watch only`, `Manage open position`, and `Avoid for now`.
+- Add trade-plan fields such as entry zone, stop, first target, and expected hold window.
+- Add market-regime and portfolio-cap metadata so the app can limit daily actions intentionally.
+- Rewrite onboarding and guide copy around user decisions rather than internal scoring vocabulary.
+
+Reference:
+- `docs/service-operating-model.md`
+- `docs/action-first-ux-roadmap.md`
+
 ## Recommended next sprint
-Recommended focus: Sprint 5 hardening
+Recommended focus: Sprint 9 action-first product repositioning
 
 Why this is the best next step:
-- The admin surface is already built, so hardening it will unlock safer day-to-day operation.
-- It reduces risk before we scale universe scans or normalize the data model.
-- It gives us a clear place to fix broken copy, workflow gaps, and missing tests.
+- The strongest user feedback is about clarity, actionability, and decision confidence rather than missing infrastructure.
+- Product trust will improve more by reducing ambiguity than by adding more analysis detail.
+- A clear operating model is now needed before further UI or scoring iteration.
+- This sprint still complements later hardening work because it will define the new source of truth for labels, screen hierarchy, and portfolio behavior.
 
 ## Suggested immediate tasks
-1. Fix broken text encoding in admin-facing pages and docs.
-2. Verify admin ingest, publish, rollback, and watchlist flows end-to-end.
-3. Add tests for provider fallback and health/admin service behavior.
-4. Confirm whether universe scan results should appear in the admin UI.
+1. Rewrite user-facing language around action buckets, entry, stop, and target.
+2. Redesign `/recommendations` into a daily operating summary with visible action limits.
+3. Extend data contracts to support regime, trade-plan, and portfolio-cap fields.
+4. Rework `/guide` into a short onboarding flow that explains how many names to act on and why.
 
 ## Notes
 - `docs/postgres-provider.md` and some app copy currently show corrupted Korean text and should be normalized before they become the source of truth.

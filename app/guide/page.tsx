@@ -5,9 +5,7 @@ import {
   CheckCircle2,
   Compass,
   HandHeart,
-  Medal,
   Radar,
-  Search,
   ShieldAlert,
   Sparkles
 } from "lucide-react";
@@ -17,122 +15,102 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 const serviceFlow = [
   {
-    title: "1. 후보 보드에서 오늘 후보 확인",
-    description:
-      "매일 정리된 오늘의 후보를 먼저 보고, 지금 시장에서 어떤 종목을 우선 확인하면 좋을지 빠르게 훑습니다.",
+    title: "1. 오늘의 운영 요약 확인",
+    description: "먼저 오늘 신규 매수를 몇 개까지 볼 수 있는지, 지금이 공격 구간인지 관찰 구간인지부터 확인합니다.",
     href: "/recommendations",
-    label: "후보 보드 보기",
+    label: "오늘의 운영 요약 보기",
     icon: Sparkles
   },
   {
-    title: "2. 개별 분석에서 가격 구조 읽기",
-    description:
-      "차트, 핵심 가격대, 보조지표, 검증 메모를 같이 보며 진입 기준과 위험 가격을 확인합니다.",
+    title: "2. 매수 계획이 있는 종목만 확인",
+    description: "종목을 볼 때는 점수보다 매수 구간, 손절 기준, 1차 목표가가 함께 있는지부터 봅니다.",
     href: "/recommendations",
-    label: "후보 보드에서 종목 선택하기",
+    label: "오늘 먼저 볼 종목 보기",
     icon: Compass
   },
   {
-    title: "3. 추천 랭킹과 공용 추적으로 좁혀 보기",
-    description:
-      "오늘 상위 후보와 반복적으로 올라오는 종목, 공용 추적에 들어간 종목을 보며 우선순위를 더 줄입니다.",
-    href: "/ranking",
-    label: "추천 랭킹 보기",
-    icon: Medal
+    title: "3. 보유와 관찰을 따로 관리",
+    description: "이미 추적 중인 종목은 계속 들고 갈지, 관찰만 할지, 지금은 쉬어야 할지 분리해서 봅니다.",
+    href: "/tracking",
+    label: "보유/관찰 관리 보기",
+    icon: Activity
   }
 ] as const;
 
-const dailyUpdateNotes = [
-  "오전 8시에 종목 데이터를 갱신합니다.",
-  "오전 8시 30분에 갱신된 데이터를 바탕으로 후보와 분석 내용을 다시 정리합니다.",
-  "이 서비스는 실시간 시세 서비스가 아니라, 영업일 기준으로 구조를 다시 정리해 보여주는 데일리 서비스입니다."
+const operatingPrinciples = [
+  "이 서비스는 좋은 종목을 많이 나열하는 서비스가 아니라, 오늘 실제로 행동할 종목 수를 줄여주는 서비스입니다.",
+  "좋아 보이는 종목이 많아도 모두 사는 것이 아니라, 규칙상 허용된 수만 봐야 합니다.",
+  "매수 전에는 반드시 손절 기준과 목표 구간을 먼저 확인해야 합니다.",
+  "관찰 종목과 매수 가능 종목은 다릅니다. 관찰은 준비 단계이고, 매수 가능은 조건이 확인된 상태입니다."
 ] as const;
 
-const analysisSignals = [
+const actionBuckets = [
   {
-    title: "추세 구조",
-    description: "중기 이동평균선 위에서 가격이 버티는지, 방향성이 유지되는지를 먼저 봅니다."
+    title: "오늘 매수 가능",
+    description: "지금 진입을 검토할 수 있는 종목입니다. 매수 구간, 손절 기준, 목표 구간을 함께 확인합니다."
   },
   {
-    title: "거래대금",
-    description: "거래량보다 실제 거래대금이 충분한지, 감시하기에 유동성이 받쳐주는지 확인합니다."
+    title: "관찰만",
+    description: "흐름은 좋지만 아직 조건이 덜 갖춰진 종목입니다. 지금 바로 추격하기보다 대기합니다."
   },
   {
-    title: "무효화 가격",
-    description: "아이디어가 틀렸다고 볼 기준 가격입니다. 위험 관리의 중심이 되는 값입니다."
+    title: "보유 관리",
+    description: "이미 추적 중인 종목입니다. 추가 매수보다 보유 유지, 손절, 부분 익절 여부를 봅니다."
   },
   {
-    title: "보조지표",
-    description: "RSI, MACD, ADX, MFI 같은 지표는 추세와 힘을 보조적으로 읽는 참고 자료입니다."
-  },
-  {
-    title: "검증 메모",
-    description: "과거 유사 흐름이 어떤 성과를 냈는지, 표본이 충분한지 함께 읽어야 합니다."
-  },
-  {
-    title: "검증 신뢰도",
-    description: "실측 기반인지, 유사 흐름 참고인지, 아직 보수 계산 단계인지를 구분해 해석 강도를 조절합니다."
-  },
-  {
-    title: "공용 추적 진단",
-    description: "활성화 점수와 거래대금, 확인 가격, 반복 등장 조건이 공용 추적 기준을 넘는지 바로 보여줍니다."
-  },
-  {
-    title: "시나리오",
-    description: "지금 구간에서 가능한 흐름을 보수, 기준, 확장 시나리오로 나눠서 살펴봅니다."
+    title: "보류 또는 추격 금지",
+    description: "단기 과열이나 구조 훼손 때문에 지금은 손대지 않는 종목입니다. 놓친 종목을 억지로 따라가지 않습니다."
   }
 ] as const;
 
-const scoreSystemNotes = [
-  {
-    title: "기본 신호",
-    description:
-      "개별 종목의 추세, 수급, 변동성, 품질, 보조지표를 바탕으로 계산한 기본 분석 점수입니다. 개별 종목 분석에서 가장 먼저 읽는 중심 점수입니다."
-  },
-  {
-    title: "랭킹 점수",
-    description:
-      "기본 신호에 검증 품질, 유동성, 거래량 상태, 가격 구조를 더해 오늘의 후보를 다시 정렬한 점수입니다. 추천 랭킹과 오늘의 후보에서 우선순위를 볼 때 사용합니다."
-  },
-  {
-    title: "활성화 점수",
-    description:
-      "공용 추적에 올릴지 판단하는 별도 점수입니다. 최근 상위 후보 반복 등장, 거래대금, 기술 구조, 가격 위치까지 함께 반영해 자동 감시 시작이나 진입 추적 조건을 넘는지 확인합니다."
-  }
-] as const;
-
-const cautions = [
-  "점수가 높아도 무효화 가격이 너무 가깝거나 거래대금이 약하면 보수적으로 보는 편이 좋습니다.",
-  "후보 수가 많다고 다 좋은 종목은 아닙니다. 가격 구조와 거래대금이 같이 받쳐주는지가 더 중요합니다.",
-  "뉴스는 서비스 안에서 큐레이션하지 않습니다. 필요할 때만 종목별 뉴스 검색 버튼으로 직접 확인하는 구조입니다.",
-  "공용 추적은 개인 기록장이 아니라 서비스가 공통 기준으로 지켜보는 공용 추적 목록입니다."
+const tradeChecklist = [
+  "지금 사는 종목인가, 아니면 관찰만 하는 종목인가?",
+  "어디 가격대에서 들어갈 것인가?",
+  "틀리면 어디서 바로 끊을 것인가?",
+  "맞으면 어디서 먼저 일부 이익을 챙길 것인가?",
+  "오늘 전체 포트폴리오에서 몇 개까지만 새로 살 것인가?"
 ] as const;
 
 const pageRoles = [
   {
-    title: "후보 보드",
+    title: "오늘의 운영 요약",
     icon: Radar,
-    description: "지금 차분히 볼 만한 후보를 빠르게 훑는 시작 화면입니다."
+    description: "오늘 시장을 공격적으로 볼지, 보수적으로 볼지와 먼저 볼 종목 수를 정리하는 시작 화면입니다."
   },
   {
-    title: "추천 랭킹",
-    icon: Medal,
-    description: "오늘 상위 후보와 자주 올라온 종목을 우선순위 중심으로 보는 화면입니다."
-  },
-  {
-    title: "공용 추적",
+    title: "보유/관찰 관리",
     icon: Activity,
-    description: "서비스 기준으로 계속 지켜볼 만하다고 본 종목의 진행 경과를 모아둔 화면입니다."
+    description: "서비스가 계속 추적하는 종목을 보며 유지, 관찰, 종료 판단을 정리하는 화면입니다."
   },
   {
-    title: "개별 분석",
-    icon: Search,
-    description: "차트와 가격 기준, 판단 메모를 바탕으로 실제 매매 판단을 돕는 화면입니다."
+    title: "종목별 상세 분석",
+    icon: Compass,
+    description: "한 종목을 자세히 볼 때 매수 구간, 손절 기준, 목표 구간, 차트 구조를 확인하는 화면입니다."
+  },
+  {
+    title: "이용 가이드",
+    icon: BookOpenText,
+    description: "이 서비스가 무엇을 해주는지와 사용자가 어떤 순서로 판단하면 되는지 빠르게 익히는 화면입니다."
   },
   {
     title: "운영 후원",
     icon: HandHeart,
-    description: "서비스가 도움이 되셨다면 토스로 1회성 운영 후원을 보낼 수 있는 화면입니다."
+    description: "서비스 운영을 응원하고 싶은 사용자를 위한 안내 화면입니다."
+  }
+] as const;
+
+const scoreNotes = [
+  {
+    title: "점수는 우선순위입니다",
+    description: "점수는 어떤 종목을 먼저 볼지 정리하는 보조 정보입니다. 점수만 높다고 바로 매수하는 것은 아닙니다."
+  },
+  {
+    title: "행동 문장이 더 중요합니다",
+    description: "기본 화면에서는 점수보다 오늘 매수 가능인지, 관찰만 해야 하는지가 먼저 보여야 합니다."
+  },
+  {
+    title: "세부 로그는 확인용입니다",
+    description: "점수 로그와 세부 지표는 왜 이런 판단이 나왔는지 확인하는 용도이며, 처음부터 모두 읽을 필요는 없습니다."
   }
 ] as const;
 
@@ -142,7 +120,7 @@ export default function GuidePage() {
       <PageHeader
         eyebrow="Guide"
         title="서비스 이용 가이드"
-        description="지금 서비스가 어떤 순서로 데이터를 정리하고, 각 화면이 무엇을 의미하는지 현재 기준에 맞춰 다시 정리했습니다."
+        description="복잡한 점수보다 오늘 무엇을 어떻게 판단해야 하는지 중심으로 서비스를 이해할 수 있게 정리했습니다."
       />
 
       <section className="grid gap-6 xl:grid-cols-3">
@@ -176,12 +154,12 @@ export default function GuidePage() {
         <Card className="border-border/70 bg-white/82 shadow-sm">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-xl text-foreground">
-              <BookOpenText className="h-5 w-5 text-primary" />
-              데일리 갱신 흐름
+              <CheckCircle2 className="h-5 w-5 text-primary" />
+              먼저 이해해야 할 운영 원칙
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            {dailyUpdateNotes.map((item) => (
+            {operatingPrinciples.map((item) => (
               <div key={item} className="flex items-start gap-3 rounded-[24px] border border-border/70 bg-secondary/45 p-4">
                 <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
                 <p className="text-sm leading-6 text-foreground/82">{item}</p>
@@ -193,8 +171,8 @@ export default function GuidePage() {
         <Card className="border-border/70 bg-white/82 shadow-sm">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-xl text-foreground">
-              <Compass className="h-5 w-5 text-primary" />
-              각 화면의 역할
+              <Radar className="h-5 w-5 text-primary" />
+              각 화면이 하는 일
             </CardTitle>
           </CardHeader>
           <CardContent className="grid gap-3 sm:grid-cols-2">
@@ -219,11 +197,11 @@ export default function GuidePage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-xl text-foreground">
               <Sparkles className="h-5 w-5 text-primary" />
-              분석에서 먼저 보는 항목
+              화면에서 먼저 볼 행동 구분
             </CardTitle>
           </CardHeader>
           <CardContent className="grid gap-4 sm:grid-cols-2">
-            {analysisSignals.map((item) => (
+            {actionBuckets.map((item) => (
               <div key={item.title} className="rounded-[24px] border border-border/70 bg-secondary/45 p-4">
                 <p className="text-sm font-semibold text-foreground">{item.title}</p>
                 <p className="mt-2 text-sm leading-6 text-foreground/78">{item.description}</p>
@@ -236,11 +214,11 @@ export default function GuidePage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-xl text-foreground">
               <ShieldAlert className="h-5 w-5 text-primary" />
-              이렇게 읽으면 더 좋습니다
+              종목을 볼 때 꼭 확인할 질문
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            {cautions.map((item) => (
+            {tradeChecklist.map((item) => (
               <div key={item} className="flex items-start gap-3 rounded-[24px] border border-border/70 bg-secondary/45 p-4">
                 <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
                 <p className="text-sm leading-6 text-foreground/82">{item}</p>
@@ -254,12 +232,12 @@ export default function GuidePage() {
         <Card className="border-border/70 bg-white/82 shadow-sm">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-xl text-foreground">
-              <Medal className="h-5 w-5 text-primary" />
-              점수 체계 읽는 법
+              <BookOpenText className="h-5 w-5 text-primary" />
+              점수는 이렇게 읽으면 충분합니다
             </CardTitle>
           </CardHeader>
           <CardContent className="grid gap-4 md:grid-cols-3">
-            {scoreSystemNotes.map((item) => (
+            {scoreNotes.map((item) => (
               <div key={item.title} className="rounded-[24px] border border-border/70 bg-secondary/45 p-4">
                 <p className="text-sm font-semibold text-foreground">{item.title}</p>
                 <p className="mt-2 text-sm leading-6 text-foreground/80">{item.description}</p>

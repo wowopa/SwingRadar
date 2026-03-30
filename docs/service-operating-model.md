@@ -1,78 +1,236 @@
 # SwingRadar Service Operating Model
 
-## 서비스 한 줄 정의
-SwingRadar는 사용자가 입력하지 않아도 시스템이 매일 시장을 스캔하고, 스윙 트레이딩 관점에서 볼 만한 종목을 고르고, 공용 감시와 공용 추적 결과까지 정리해 보여주는 공개형 투자 노트입니다.
+## Positioning
+SwingRadar should move from an analysis-heavy dashboard into an action-first swing trading service.
 
-## 서비스 목표
-1. 가입 없이도 오늘 시장에서 어떤 흐름이 중요한지 바로 볼 수 있어야 합니다.
-2. 추천 이유와 제외 이유가 함께 보여서 점수가 아니라 판단 과정을 이해할 수 있어야 합니다.
-3. 감시와 추적은 사용자가 직접 기록하지 않아도 시스템이 자동으로 운용해야 합니다.
-4. 단기 급등주 추격이 아니라 거래대금, 추세, 기준 이탈 관리가 가능한 종목을 우선해야 합니다.
-5. 추천으로 끝나지 않고, 이후 보유와 종료 결과까지 누적 기록으로 남겨야 합니다.
+The product should no longer feel like:
+- a long research report
+- an analyst workstation
+- a large feed of loosely ranked ideas
 
-## 사용자 관점
-사용자는 이 사이트를 직접 매매를 입력하는 도구로 보기보다, 시스템이 시장을 어떻게 읽고 있는지 보여주는 공개형 스윙 트레이딩 저널로 보면 됩니다.
+The product should feel like:
+- a daily decision system
+- a disciplined swing operating playbook
+- a portfolio-aware service that tells the user what deserves action now
 
-사용자가 기대해야 하는 화면 흐름은 아래와 같습니다.
-1. 추천: 오늘 시장에서 먼저 볼 만한 종목
-2. 분석: 왜 이 종목을 보는지, 어디서 다시 봐야 하는지
-3. 감시: 상위 후보 중 더 엄격한 기준을 통과한 종목
-4. 추적: 시스템이 실제로 공용 관찰 포지션으로 채택한 종목
-5. 결과: 왜 종료했고 결과가 어땠는지
+## Core user promise
+Every core screen should help the user answer five questions quickly:
+1. What should I do today?
+2. Which names are actionable now?
+3. Where is the entry zone?
+4. Where do I cut the loss if I am wrong?
+5. Where do I start taking profit if I am right?
 
-## 핵심 상태 정의
-- `candidate`: 당일 스캔에서 상위 후보로 올라온 종목
-- `watch`: 감시 기준을 통과해 계속 볼 종목
-- `active`: 공용 추적이 시작된 종목
-- `closed_win`: 목표 구간 도달로 종료된 종목
-- `closed_loss`: 기준 이탈로 종료된 종목
-- `closed_timeout`: 보유 기간이 지나 종료된 종목
+If a screen does not make one of those answers clearer, it is secondary.
 
-## 시스템이 자동으로 해야 하는 일
-### 1. 시장 스캔
-- 전체 유니버스를 매일 스캔
-- 거래대금, 유동성, 추세, 기술지표, 뉴스/이벤트를 함께 반영
-- 투자형 스윙 관점에 맞지 않는 종목은 점수에서 불리하게 처리
+## Product outcome
+The service should optimize for clarity and survivability, not idea volume.
 
-### 2. 추천 랭킹
-- 상위 100개 후보를 순위화
-- 단순 상승률이 아니라 추세 지속 가능성과 유동성 품질을 함께 반영
-- 추천 이유, 기준 이탈 가격, 검증 근거를 함께 제공
+Primary outcome:
+- show fewer names
+- make each name more actionable
+- reduce impulsive chase trades
+- guide users with portfolio rules, not only stock analysis
 
-### 3. 공용 감시
-- 상위 후보 중 더 엄격한 조건을 통과한 종목만 감시 리스트에 유지
-- 감시는 진입 전 단계이며, 무엇을 보고 있는지 공개적으로 설명
+Secondary outcome:
+- preserve expert depth for users who want to inspect the reasoning
+- keep rich diagnostics available through progressive disclosure
 
-### 4. 공용 추적
-- 감시 종목 중 자동 진입 조건을 통과한 종목만 추적 시작
-- 시작가, 기준 이탈가, 목표 구간, 보유 기간을 기록
-- 매일 가격과 점수, 뉴스, 상태 변화를 자동 누적
+## Experience principle
+The default user journey should be:
+1. Read today's operating summary.
+2. See whether the market is in attack, neutral, or defense mode.
+3. Review at most a small number of actionable ideas.
+4. Know exactly which names are buy now, watch only, manage, or avoid.
+5. Execute based on a clear risk budget and exit plan.
 
-### 5. 자동 종료
-- 기준 이탈
-- 목표 구간 도달
-- 최대 보유 기간 초과
-- 필요 시 이벤트 리스크 급증
+The app should never force the user to reverse-engineer its intent from raw scores.
 
-## 점수 철학
-- 강한 거래대금과 유동성이 있는 종목을 우선
-- 이동평균, RSI, MACD는 보조 판단용으로 사용
-- 과열, 과도한 상대 거래량, 기준 이탈에 취약한 구조는 감점
-- 뉴스는 방향을 확인하는 참고 재료이지, 단독 진입 사유가 아님
+## Decision hierarchy
+The system should make decisions in this order.
 
-## 추적 화면이 의미해야 하는 것
-추적 화면은 예시 차트 모음이 아니라, 시스템이 실제로 시작하고 종료한 공용 포지션 기록이어야 합니다.
+### 1. Market regime
+Each day starts with a regime call:
+- `attack`: broad participation, trend support, and risk-on conditions
+- `neutral`: mixed conditions, selective entries only
+- `defense`: poor breadth, failed breakouts, elevated downside risk
 
-따라서 추적 화면은 아래 질문에 답해야 합니다.
-1. 오늘 새로 추적을 시작한 종목은 무엇인가
-2. 지금 보유 중인 종목은 무엇인가
-3. 오늘 종료한 종목은 무엇인가
-4. 왜 시작했고 왜 종료했는가
-5. 결과는 어땠는가
+The regime should control how much new risk is allowed.
 
-## 개발 원칙
-1. 사용자가 입력해야만 동작하는 기능은 가능한 한 줄입니다.
-2. 시스템이 판단한 기준은 화면과 문서에서 같은 언어로 설명합니다.
-3. 자동화가 가능하면 운영자 개입보다 자동화를 우선합니다.
-4. 예시 데이터는 실제 공용 운용 흐름으로 빠르게 대체합니다.
-5. 새 기능은 항상 이 문서를 기준으로 서비스 정체성과 맞는지 점검합니다.
+### 2. Portfolio capacity
+Before selecting names, the app should determine:
+- how many new positions are allowed today
+- how many total positions can be open
+- whether the portfolio already has too much sector concentration
+
+This prevents "too many good ideas" from turning into overtrading.
+
+### 3. Action bucket
+Every candidate should be placed into one of four user-facing buckets:
+- `Buy now`
+- `Watch only`
+- `Manage open position`
+- `Avoid for now`
+
+The bucket is more important than the raw score.
+
+### 4. Trade plan
+Each actionable name should include:
+- entry zone
+- stop level
+- first take-profit area
+- expected holding window
+- recommended risk size
+
+### 5. Supporting diagnostics
+Only after the action plan is clear should the user see:
+- score logs
+- detailed factor notes
+- historical appearance counts
+- news and disclosure context
+
+## Portfolio operating rules
+The shared product should behave more like a disciplined model portfolio than a scanner.
+
+### Exposure rules
+- Default concurrent positions: `4 to 6`
+- Default same-sector cap: `2`
+- Daily new entries:
+  - `attack`: up to `2 or 3`
+  - `neutral`: up to `1`
+  - `defense`: `0 or 1`, usually watch only
+
+### Risk rules
+- Risk per position should be based on portfolio loss tolerance, not cash split.
+- Suggested shared baseline: `0.5% to 1.0%` of portfolio risk per idea
+- Position size formula:
+  - `position size = allowed portfolio loss / stop distance`
+
+### Entry rules
+An idea should only move into `Buy now` when:
+- structure is intact
+- liquidity is sufficient
+- chase-risk is acceptable
+- a defined trigger is present
+
+Preferred trigger types:
+- breakout through confirmation level
+- pullback into support with renewed demand
+- reclaim after controlled shakeout
+
+### Exit rules
+The product should make sell rules explicit:
+- hard stop at the invalidation level
+- time stop if expansion does not happen within the expected window
+- partial take-profit at the first reward target
+- trailing management for the remainder if trend persists
+
+### Replacement rules
+New ideas should not simply stack on top of existing ones.
+
+If the portfolio is full, the service should ask:
+- Is the new setup stronger?
+- Is the current holding stale?
+- Does the swap improve expected reward versus risk?
+
+This creates a replacement mindset instead of unlimited accumulation.
+
+## Language policy
+Internal operating vocabulary can remain in the system, but user-facing labels should be plain.
+
+| Internal term | User-facing term | Why |
+| --- | --- | --- |
+| Candidate board | Today page | Puts the day first |
+| Ranking score | Priority | Easier to interpret |
+| Activation score | Watch priority | Describes the use |
+| Public tracking | Service watchlist | Sounds operational, not technical |
+| Entry tracking | Buy now | Tells the user what it means |
+| Invalidation price | Stop level | Common trading language |
+| Recommendation tone | Judgment | More human and direct |
+
+Rule:
+- show action words by default
+- keep scoring terms in expandable detail only
+
+## Screen intent
+Each major screen should have a single job.
+
+### `/recommendations`
+This should become the daily operating home.
+
+It should answer:
+- How aggressive should I be today?
+- How many new names can I act on?
+- Which few names deserve attention first?
+
+### `/tracking`
+This should become the position and watch management surface.
+
+It should answer:
+- What am I already managing?
+- Which names are still watchable?
+- Which names should be avoided because they are extended or broken?
+
+### `/ranking`
+This should become the advanced explorer, not the default starting point.
+
+It is useful for power users, but it should not carry the burden of making the primary decision.
+
+### `/analysis/[ticker]`
+This should become a decision memo for one name.
+
+It should lead with:
+- action bucket
+- entry zone
+- stop level
+- first target
+- why now versus why not now
+
+### `/guide`
+This should become a 60-second onboarding page.
+
+It should explain:
+- this is not a service that tells you to buy everything
+- the service narrows the field into a small number of disciplined actions
+- scores are inputs, not the final instruction
+
+## Premium path
+The same operating model can support premium expansion later.
+
+### Phase 1: shared action-first service
+- shared regime call
+- shared buy now and watch lists
+- shared exit framework
+
+### Phase 2: model portfolios by capital band
+- small account template
+- medium account template
+- large account template
+
+### Phase 3: personalized risk templates
+- user-defined max positions
+- user-defined risk per trade
+- account-specific position sizing
+
+### Phase 4: premium managed guidance
+- personalized model allocation
+- risk alerts based on current holdings
+- replacement suggestions based on capital usage
+
+## Success metrics
+The product should be measured by decision quality, not content volume.
+
+Key measures:
+- users can explain today's action plan in under 30 seconds
+- users know how many names they are allowed to act on
+- average visible actionable names stays low and intentional
+- chase-trade inclusion rate keeps falling
+- time from landing to first confident decision goes down
+- users can explain stop and take-profit levels without reading long notes
+
+## Operating standard
+When there is a conflict between more analysis and more clarity, default to clarity.
+
+When there is a conflict between more ideas and better risk control, default to risk control.
+
+SwingRadar should earn trust by being selective, legible, and disciplined.

@@ -1,4 +1,4 @@
-﻿import Link from "next/link";
+import Link from "next/link";
 
 import type { DailyScanSummaryDto } from "@/lib/api-contracts/swing-radar";
 import { SignalToneBadge } from "@/components/shared/signal-tone-badge";
@@ -18,10 +18,10 @@ export function DailyCandidatesPanel({ dailyScan }: { dailyScan: DailyScanSummar
     return (
       <Card>
         <CardHeader>
-          <CardTitle>오늘의 후보</CardTitle>
+          <CardTitle>오늘 먼저 볼 종목</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-muted-foreground">아직 유니버스 스캔 결과가 없습니다. 배치 스캔이 실행되면 이 영역에 오늘의 후보가 자동 반영됩니다.</p>
+          <p className="text-sm text-muted-foreground">아직 유니버스 스캔 결과가 없습니다. 배치 스캔이 실행되면 이 영역에 오늘 먼저 볼 종목이 자동 반영됩니다.</p>
         </CardContent>
       </Card>
     );
@@ -33,8 +33,8 @@ export function DailyCandidatesPanel({ dailyScan }: { dailyScan: DailyScanSummar
     <Card>
       <CardHeader className="flex flex-row items-start justify-between gap-4">
         <div>
-          <CardTitle>오늘의 후보</CardTitle>
-          <p className="mt-2 text-sm text-muted-foreground">최신 유니버스 스캔에서 먼저 볼 만한 후보를 정리한 결과입니다.</p>
+          <CardTitle>오늘 먼저 볼 종목</CardTitle>
+          <p className="mt-2 text-sm text-muted-foreground">최신 유니버스 스캔에서 지금 우선 확인할 종목만 추려서 정리했습니다.</p>
         </div>
         <div className="rounded-2xl border border-border/70 bg-secondary/35 px-4 py-3 text-sm text-muted-foreground">
           배치 {dailyScan.succeededBatches}/{dailyScan.totalBatches} 성공
@@ -61,11 +61,11 @@ export function DailyCandidatesPanel({ dailyScan }: { dailyScan: DailyScanSummar
                   </div>
                   <div className="mt-4 grid grid-cols-3 gap-3 text-sm">
                     <div className="rounded-xl border border-border/70 px-3 py-2">
-                      <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">랭킹 점수</p>
+                      <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">우선순위</p>
                       <p className="mt-1 font-semibold text-foreground">{item.candidateScore}</p>
                     </div>
                     <div className="rounded-xl border border-border/70 px-3 py-2">
-                      <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">활성화</p>
+                      <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">관찰 우선순위</p>
                       <p className="mt-1 font-semibold text-foreground">
                         {typeof item.activationScore === "number" ? item.activationScore : "계산 중"}
                       </p>
@@ -80,7 +80,7 @@ export function DailyCandidatesPanel({ dailyScan }: { dailyScan: DailyScanSummar
               ))}
             </div>
             <div className="rounded-2xl border border-border/70 bg-secondary/25 p-4 text-sm text-muted-foreground">
-              총 {dailyScan.totalTickers}개 종목을 점검한 뒤 먼저 볼 만한 후보를 자동 정렬했습니다.{" "}
+              총 {dailyScan.totalTickers}개 종목을 점검한 뒤 오늘 먼저 볼 종목만 자동 정렬했습니다.{" "}
               <Link className="font-medium text-primary hover:text-primary/80" href="/ranking">
                 전체 랭킹 보기
               </Link>

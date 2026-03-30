@@ -17,9 +17,9 @@ export default async function RecommendationsPage() {
   return (
     <main>
       <PageHeader
-        eyebrow="Recommendations"
-        title="후보 보드"
-        description="지금 먼저 볼 만한 후보와 가격 기준, 참고 이유를 한눈에 정리해두는 페이지입니다."
+        eyebrow="Today"
+        title="오늘의 운영 요약"
+        description="오늘 신규 매수를 얼마나 열 수 있는지와 먼저 볼 종목을 빠르게 정리하는 화면입니다."
       />
       <PublicDataStatusBarGroup summaries={statusSummaries} />
       <section className="mb-6">

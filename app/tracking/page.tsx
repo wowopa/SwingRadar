@@ -28,8 +28,8 @@ export default async function TrackingPage() {
     <main className="space-y-8 pb-10">
       <PageHeader
         eyebrow="Tracking"
-        title="공용 추적 워크스페이스"
-        description="서비스가 감시하고 실제로 추적 중인 종목의 흐름, 결과, 종료 이유를 한 화면에서 확인합니다."
+        title="보유/관찰 관리"
+        description="서비스가 관찰 중인 종목과 이미 추적에 들어간 종목을 다음 행동 기준과 함께 보여줍니다."
       />
       <PublicDataStatusBar summary={statusSummary} />
       <TrackingSelectionGuide {...trackingConfig} />
