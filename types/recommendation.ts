@@ -70,6 +70,13 @@ export interface TodayOperatingWorkflow {
   openingChecklist: OpeningChecklistItem[];
 }
 
+export type OpeningRecheckStatus = "pending" | "passed" | "watch" | "avoid" | "excluded";
+
+export interface OpeningRecheckDecision {
+  status: OpeningRecheckStatus;
+  updatedAt: string;
+}
+
 export interface RecommendationTradePlan {
   currentPrice?: number | null;
   currentPriceLabel: string;

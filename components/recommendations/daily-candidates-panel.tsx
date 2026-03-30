@@ -1,10 +1,23 @@
+"use client";
+
 import Link from "next/link";
+import { RotateCcw } from "lucide-react";
 
 import { ActionBucketBadge } from "@/components/recommendations/action-bucket-badge";
 import { SignalToneBadge } from "@/components/shared/signal-tone-badge";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { DailyScanSummaryDto } from "@/lib/api-contracts/swing-radar";
+import {
+  getOpeningRecheckStatusMeta,
+  OPENING_RECHECK_DECISION_STATUSES,
+  OPENING_RECHECK_STATUSES
+} from "@/lib/recommendations/opening-recheck";
 import { resolveRecommendationActionBucket } from "@/lib/recommendations/action-plan";
+import { useOpeningRecheck } from "@/lib/use-opening-recheck";
+import { cn, formatDateTimeShort } from "@/lib/utils";
+import type { OpeningRecheckStatus } from "@/types/recommendation";
 
 function formatTurnover(value?: number | null) {
   if (!value || value <= 0) {
@@ -32,6 +45,11 @@ export function DailyCandidatesPanel({ dailyScan }: { dailyScan: DailyScanSummar
   }
 
   const hasCandidates = dailyScan.topCandidates.length > 0;
+  const visibleCandidates = dailyScan.topCandidates.slice(0, 6);
+  const { counts, clearAll, getDecision, getStatus, setStatus } = useOpeningRecheck({
+    scanKey: dailyScan.generatedAt,
+    tickers: visibleCandidates.map((item) => item.ticker)
+  });
 
   return (
     <Card>
@@ -50,10 +68,39 @@ export function DailyCandidatesPanel({ dailyScan }: { dailyScan: DailyScanSummar
         <div className="rounded-2xl border border-primary/20 bg-primary/8 p-4 text-sm leading-6 text-foreground/82">
           장 시작 후 5~10분 동안 시초가 갭, 손절 기준과의 거리, 확인 가격 반응을 다시 본 뒤에만 당일 행동 후보로 옮겨야 합니다.
         </div>
+        <div className="rounded-2xl border border-border/70 bg-secondary/20 p-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-sm font-semibold text-foreground">장초 재판정 보드</p>
+              <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                현재 노출 {visibleCandidates.length}개 기준입니다. 판정 결과는 이 브라우저에 저장되며, 마지막 스캔 시각은 {formatDateTimeShort(dailyScan.generatedAt)}입니다.
+              </p>
+            </div>
+            <Button type="button" variant="ghost" size="sm" onClick={clearAll}>
+              <RotateCcw className="h-4 w-4" />
+              오늘 재판정 초기화
+            </Button>
+          </div>
+          <div className="mt-4 grid gap-3 md:grid-cols-5">
+            {OPENING_RECHECK_STATUSES.map((status) => {
+              const meta = getOpeningRecheckStatusMeta(status);
+
+              return (
+                <div key={status} className="rounded-2xl border border-border/70 bg-background/80 px-4 py-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-sm font-medium text-foreground">{meta.label}</p>
+                    <Badge variant={meta.variant}>{counts[status]}개</Badge>
+                  </div>
+                  <p className="mt-2 text-xs leading-5 text-muted-foreground">{meta.description}</p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
         {hasCandidates ? (
           <>
             <div className="grid gap-4 xl:grid-cols-3">
-              {dailyScan.topCandidates.slice(0, 6).map((item, index) => {
+              {visibleCandidates.map((item, index) => {
                 const actionBucket =
                   item.actionBucket ??
                   resolveRecommendationActionBucket({
@@ -61,13 +108,12 @@ export function DailyCandidatesPanel({ dailyScan }: { dailyScan: DailyScanSummar
                     score: item.score,
                     activationScore: item.activationScore
                   });
+                const recheckStatus = getStatus(item.ticker);
+                const recheckMeta = getOpeningRecheckStatusMeta(recheckStatus);
+                const recheckDecision = getDecision(item.ticker);
 
                 return (
-                  <Link
-                    key={`${item.ticker}-${index}`}
-                    href={`/analysis/${item.ticker}`}
-                    className="rounded-2xl border border-border/70 bg-secondary/35 p-4 transition hover:border-primary/40 hover:bg-secondary/50"
-                  >
+                  <div key={`${item.ticker}-${index}`} className="rounded-2xl border border-border/70 bg-secondary/35 p-4">
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <p className="text-sm font-semibold text-foreground">{item.company}</p>
@@ -79,6 +125,7 @@ export function DailyCandidatesPanel({ dailyScan }: { dailyScan: DailyScanSummar
                         <span className="rounded-full border border-border/70 bg-background/80 px-2.5 py-1 text-[11px] font-medium text-foreground/72">
                           장전 후보
                         </span>
+                        <Badge variant={recheckMeta.variant}>{recheckMeta.label}</Badge>
                         <ActionBucketBadge bucket={actionBucket} />
                         <SignalToneBadge tone={item.signalTone} />
                       </div>
@@ -119,8 +166,60 @@ export function DailyCandidatesPanel({ dailyScan }: { dailyScan: DailyScanSummar
                       </div>
                     ) : null}
 
+                    <div className="mt-4 rounded-2xl border border-border/70 bg-background/80 p-4">
+                      <div className="flex items-center justify-between gap-3">
+                        <div>
+                          <p className="text-sm font-semibold text-foreground">장초 재판정</p>
+                          <p className="mt-1 text-xs leading-5 text-muted-foreground">{recheckMeta.description}</p>
+                        </div>
+                        {recheckDecision ? (
+                          <span className="text-xs text-muted-foreground">최근 판정 {formatDateTimeShort(recheckDecision.updatedAt)}</span>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">아직 판정 전</span>
+                        )}
+                      </div>
+                      <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                        {OPENING_RECHECK_DECISION_STATUSES.map((status) => {
+                          const meta = getOpeningRecheckStatusMeta(status);
+                          const isActive = recheckStatus === status;
+
+                          return (
+                            <Button
+                              key={`${item.ticker}-${status}`}
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              className={cn(
+                                "justify-start rounded-2xl px-3 text-left",
+                                getStatusButtonClasses(status, isActive)
+                              )}
+                              onClick={() => setStatus(item.ticker, status)}
+                            >
+                              {meta.label}
+                            </Button>
+                          );
+                        })}
+                      </div>
+                      {recheckStatus !== "pending" ? (
+                        <div className="mt-3 flex justify-end">
+                          <Button type="button" variant="ghost" size="sm" onClick={() => setStatus(item.ticker, "pending")}>
+                            판정 취소
+                          </Button>
+                        </div>
+                      ) : null}
+                    </div>
+
                     <p className="mt-4 line-clamp-3 text-sm leading-6 text-muted-foreground">{item.rationale}</p>
-                  </Link>
+                    <div className="mt-4 flex items-center justify-between gap-3">
+                      <p className="text-xs text-muted-foreground">점수와 계획보다 실제 행동은 재판정 결과가 우선입니다.</p>
+                      <Link
+                        href={`/analysis/${item.ticker}`}
+                        className="inline-flex items-center rounded-full border border-border/70 bg-background/90 px-4 py-2 text-sm font-medium text-foreground transition hover:border-primary/35 hover:text-primary"
+                      >
+                        상세 분석 보기
+                      </Link>
+                    </div>
+                  </div>
                 );
               })}
             </div>
@@ -152,4 +251,24 @@ export function DailyCandidatesPanel({ dailyScan }: { dailyScan: DailyScanSummar
       </CardContent>
     </Card>
   );
+}
+
+function getStatusButtonClasses(status: OpeningRecheckStatus, isActive: boolean) {
+  if (!isActive) {
+    return "bg-background/80 text-foreground/80 hover:bg-background";
+  }
+
+  if (status === "passed") {
+    return "border-positive/35 bg-positive/10 text-positive hover:bg-positive/15";
+  }
+
+  if (status === "watch") {
+    return "border-neutral/35 bg-neutral/10 text-neutral hover:bg-neutral/15";
+  }
+
+  if (status === "avoid") {
+    return "border-caution/35 bg-caution/10 text-caution hover:bg-caution/15";
+  }
+
+  return "border-border/80 bg-secondary/40 text-foreground hover:bg-secondary/50";
 }
