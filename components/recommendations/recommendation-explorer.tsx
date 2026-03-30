@@ -7,6 +7,11 @@ import { RecommendationCard } from "@/components/recommendations/recommendation-
 import { RecommendationFramework } from "@/components/recommendations/recommendation-framework";
 import { RecommendationTable } from "@/components/recommendations/recommendation-table";
 import { Input } from "@/components/ui/input";
+import {
+  getRecommendationActionMeta,
+  resolveRecommendationActionBucket,
+  type RecommendationActionBucket
+} from "@/lib/recommendations/action-plan";
 import { formatPercent } from "@/lib/utils";
 import { useFavoriteTickers } from "@/lib/use-favorite-tickers";
 import type { Recommendation, ValidationBasis } from "@/types/recommendation";
@@ -25,6 +30,8 @@ const VALIDATION_BASIS_OPTIONS: ValidationBasis[] = [
   "보수 계산"
 ];
 
+const ACTION_BUCKET_ORDER: RecommendationActionBucket[] = ["buy_now", "watch_only", "avoid"];
+
 function resolveValidationBasis(item: Recommendation): ValidationBasis {
   if (item.validationBasis) {
     return item.validationBasis;
@@ -37,47 +44,62 @@ function resolveValidationBasis(item: Recommendation): ValidationBasis {
   return "보수 계산";
 }
 
-function getCandidateLabel(item: Recommendation) {
-  if ((item.featuredRank ?? Number.MAX_SAFE_INTEGER) <= 5 || item.signalTone === "긍정") {
-    return "오늘 바로 볼 후보";
-  }
-  if ((item.featuredRank ?? Number.MAX_SAFE_INTEGER) <= 12 || item.validation.hitRate >= 55) {
-    return "관심 있게 볼 후보";
-  }
-  return "조건 확인이 더 필요한 후보";
+function getActionBucket(item: Recommendation) {
+  return (
+    item.actionBucket ??
+    resolveRecommendationActionBucket({
+      signalTone: item.signalTone,
+      score: item.score,
+      activationScore: item.activationScore,
+      featuredRank: item.featuredRank,
+      trackingDiagnostic: item.trackingDiagnostic
+    })
+  );
 }
 
 function buildReasons(item: Recommendation) {
-  const reasons = [];
+  const reasons: string[] = [];
 
-  if ((item.featuredRank ?? Number.MAX_SAFE_INTEGER) <= 10) {
-    reasons.push(`오늘 후보 상위권 #${item.featuredRank}`);
+  if (item.tradePlan?.entryLabel) {
+    reasons.push(`진입 구간 ${item.tradePlan.entryLabel}`);
+  }
+  if (item.tradePlan?.stopLabel) {
+    reasons.push(`손절 기준 ${item.tradePlan.stopLabel}`);
   }
   if (item.validation.hitRate >= 58) {
-    reasons.push(`유사 사례 적중률 ${item.validation.hitRate}%`);
+    reasons.push(`유사 흐름 확률 ${item.validation.hitRate}%`);
   }
   if (item.validation.avgReturn >= 4) {
     reasons.push(`평균 수익 ${formatPercent(item.validation.avgReturn)}`);
   }
-  if (item.invalidationDistance <= -8) {
-    reasons.push(`무효화 여유 ${formatPercent(item.invalidationDistance)}`);
-  }
-  if (item.validation.sampleSize >= 12) {
-    reasons.push(`검증 표본 ${item.validation.sampleSize}건`);
+  if ((item.featuredRank ?? Number.MAX_SAFE_INTEGER) <= 10) {
+    reasons.push(`오늘 후보 상위권 #${item.featuredRank}`);
   }
 
   return reasons.slice(0, 3);
 }
 
-function getToneClasses(tone: "emerald" | "sky" | "teal" | "amber") {
+function getToneClasses(tone: "emerald" | "sky" | "amber" | "stone") {
   const tones = {
     emerald: "border-emerald-200 bg-emerald-50 text-emerald-700",
     sky: "border-sky-200 bg-sky-50 text-sky-700",
-    teal: "border-teal-200 bg-teal-50 text-teal-700",
-    amber: "border-amber-200 bg-amber-50 text-amber-700"
+    amber: "border-amber-200 bg-amber-50 text-amber-700",
+    stone: "border-stone-200 bg-stone-50 text-stone-700"
   };
 
   return tones[tone];
+}
+
+function getDefaultCardLimit(bucket: RecommendationActionBucket) {
+  if (bucket === "buy_now") {
+    return 3;
+  }
+
+  if (bucket === "watch_only") {
+    return 4;
+  }
+
+  return 2;
 }
 
 export function RecommendationExplorer({ items }: { items: Recommendation[] }) {
@@ -128,8 +150,15 @@ export function RecommendationExplorer({ items }: { items: Recommendation[] }) {
       if (sort === "score_asc") {
         return left.score - right.score;
       }
+
       if (sort === "name") {
         return left.company.localeCompare(right.company, "ko");
+      }
+
+      const leftBucket = ACTION_BUCKET_ORDER.indexOf(getActionBucket(left));
+      const rightBucket = ACTION_BUCKET_ORDER.indexOf(getActionBucket(right));
+      if (leftBucket !== rightBucket) {
+        return leftBucket - rightBucket;
       }
 
       const leftRank = left.featuredRank ?? Number.MAX_SAFE_INTEGER;
@@ -137,6 +166,7 @@ export function RecommendationExplorer({ items }: { items: Recommendation[] }) {
       if (leftRank !== rightRank) {
         return leftRank - rightRank;
       }
+
       return right.score - left.score;
     });
 
@@ -159,9 +189,32 @@ export function RecommendationExplorer({ items }: { items: Recommendation[] }) {
     );
   }, [filteredItems]);
 
-  const shortlist = useMemo(() => filteredItems.slice(0, 12), [filteredItems]);
-  const additionalCount = Math.max(filteredItems.length - shortlist.length, 0);
-  const shortlistCount = shortlist.length;
+  const bucketedItems = useMemo(() => {
+    return filteredItems.reduce<Record<RecommendationActionBucket, Recommendation[]>>(
+      (acc, item) => {
+        acc[getActionBucket(item)].push(item);
+        return acc;
+      },
+      {
+        buy_now: [],
+        watch_only: [],
+        avoid: []
+      }
+    );
+  }, [filteredItems]);
+
+  const cardSections = useMemo(
+    () =>
+      ACTION_BUCKET_ORDER.map((bucket) => ({
+        bucket,
+        meta: getRecommendationActionMeta(bucket),
+        items: bucketedItems[bucket].slice(0, getDefaultCardLimit(bucket)),
+        hiddenCount: Math.max(bucketedItems[bucket].length - getDefaultCardLimit(bucket), 0)
+      })),
+    [bucketedItems]
+  );
+
+  const actionableCount = bucketedItems.buy_now.length + bucketedItems.watch_only.length;
   const enoughInvalidationCount = filteredItems.filter((item) => item.invalidationDistance <= -6).length;
   const verifiedCount = filteredItems.filter((item) => resolveValidationBasis(item) !== "보수 계산").length;
   const countsMatchAll = filteredItems.length === items.length;
@@ -195,7 +248,7 @@ export function RecommendationExplorer({ items }: { items: Recommendation[] }) {
           <option value="all">전체</option>
           <option value="favorites">즐겨찾기만</option>
         </FilterSelect>
-        <FilterSelect label="검증 근거" value={trustFilter} onChange={setTrustFilter}>
+        <FilterSelect label="검증 기준" value={trustFilter} onChange={setTrustFilter}>
           <option value="all">전체</option>
           {VALIDATION_BASIS_OPTIONS.map((basis) => (
             <option key={basis} value={basis}>
@@ -204,31 +257,25 @@ export function RecommendationExplorer({ items }: { items: Recommendation[] }) {
           ))}
         </FilterSelect>
         <FilterSelect label="정렬" value={sort} onChange={setSort}>
-          <option value="score_desc">점수 높은 순</option>
+          <option value="score_desc">행동 우선순위</option>
           <option value="score_asc">점수 낮은 순</option>
-          <option value="name">종목명 순</option>
+          <option value="name">종목명순</option>
         </FilterSelect>
       </section>
 
-      <section className="grid gap-4 xl:grid-cols-[minmax(0,1.3fr)_minmax(0,0.9fr)]">
+      <section className="grid gap-4 xl:grid-cols-[minmax(0,1.25fr)_minmax(0,0.95fr)]">
         <div className="space-y-4 rounded-3xl border border-border/70 bg-card/40 p-5">
           <div className="border-b border-border/60 pb-4">
-            <p className="text-sm font-semibold text-foreground">오늘은 이 후보부터 보면 됩니다</p>
+            <p className="text-sm font-semibold text-foreground">행동 중심으로 먼저 봅니다</p>
             <p className="mt-2 text-sm leading-6 text-muted-foreground">
-              이 화면은 가능한 많은 종목을 나열하기보다, 지금 볼 만한 후보를 먼저 추리고 그 이유와 리스크를 빠르게 읽는 데
-              맞춰져 있습니다.
+              이 화면은 종목을 많이 나열하는 대신, 지금 행동할 수 있는 종목과 더 봐야 하는 종목을 먼저 나눠서 보여줍니다.
             </p>
           </div>
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            <SummaryCard label="현재 후보" value={`${filteredItems.length}개`} detail="필터 기준으로 남은 후보" tone="emerald" />
-            <SummaryCard label="우선 볼 종목" value={`${shortlistCount}개`} detail="아래 카드에서 먼저 확인할 후보 기준" tone="sky" />
-            <SummaryCard label="검증 근거 확보" value={`${verifiedCount}개`} detail="보수 계산만으로 보지 않은 후보" tone="teal" />
-            <SummaryCard
-              label="무효화 여유"
-              value={`${enoughInvalidationCount}개`}
-              detail="무효화 거리 -6% 이하"
-              tone="amber"
-            />
+            <SummaryCard label="행동 후보" value={`${actionableCount}개`} detail="매수 가능 + 관찰만" tone="emerald" />
+            <SummaryCard label="오늘 매수 가능" value={`${bucketedItems.buy_now.length}개`} detail="바로 계획을 세울 수 있는 후보" tone="sky" />
+            <SummaryCard label="관찰만" value={`${bucketedItems.watch_only.length}개`} detail="확인 가격과 반응을 더 볼 후보" tone="amber" />
+            <SummaryCard label="보류" value={`${bucketedItems.avoid.length}개`} detail="기본 카드에서는 뒤로 미룹니다" tone="stone" />
           </div>
         </div>
 
@@ -238,12 +285,12 @@ export function RecommendationExplorer({ items }: { items: Recommendation[] }) {
               <p className="text-sm font-semibold text-foreground">검증 근거 분포</p>
               <p className="mt-2 text-sm leading-6 text-muted-foreground">
                 {countsMatchAll
-                  ? "필터가 적용되지 않은 기본 상태라 현재 분포와 전체 분포가 같습니다."
+                  ? "필터를 적용하지 않은 기본 상태라 현재 분포와 전체 분포가 같습니다."
                   : "현재 필터 결과와 전체 후보의 검증 근거를 한 번에 비교합니다."}
               </p>
             </div>
             <div className="rounded-2xl border border-border/70 bg-secondary/35 px-3 py-2 text-sm text-muted-foreground">
-              {countsMatchAll ? `현재와 전체 동일 ${items.length}개` : `현재 ${filteredItems.length}개 / 전체 ${items.length}개`}
+              {countsMatchAll ? `현재는 전체 동일 ${items.length}개` : `현재 ${filteredItems.length}개 / 전체 ${items.length}개`}
             </div>
           </div>
           <div className="mt-4 space-y-3">
@@ -256,45 +303,75 @@ export function RecommendationExplorer({ items }: { items: Recommendation[] }) {
               />
             ))}
           </div>
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            <SummaryCard label="손절 여유" value={`${enoughInvalidationCount}개`} detail="손절 거리 -6% 이하" tone="amber" />
+            <SummaryCard label="실측 외 검증" value={`${verifiedCount}개`} detail="보수 계산만으로 보지 않는 후보" tone="sky" />
+          </div>
         </div>
       </section>
 
-      {shortlist.length ? (
+      {filteredItems.length ? (
         <>
-          <section className="flex flex-wrap items-end justify-between gap-3">
-            <div>
-              <h2 className="text-xl font-semibold text-foreground">우선 볼 후보</h2>
-              <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                카드에서는 종목별 핵심 판단만 먼저 보고, 더 넓은 비교는 아래 표에서 이어서 보면 됩니다.
-              </p>
+          <section className="space-y-4">
+            <div className="flex flex-wrap items-end justify-between gap-3">
+              <div>
+                <h2 className="text-xl font-semibold text-foreground">행동 후보 카드</h2>
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                  기본 카드 영역은 지금 행동 가능한 후보부터 보여줍니다. 보류 종목은 표에서 비교하되, 카드에서는 과도하게 앞세우지 않습니다.
+                </p>
+              </div>
+              <div className="rounded-2xl border border-border/70 bg-secondary/35 px-4 py-3 text-sm text-muted-foreground">
+                매수 가능 {bucketedItems.buy_now.length}개 · 관찰만 {bucketedItems.watch_only.length}개 · 보류 {bucketedItems.avoid.length}개
+              </div>
             </div>
-            <div className="rounded-2xl border border-border/70 bg-secondary/35 px-4 py-3 text-sm text-muted-foreground">
-              {additionalCount > 0 ? `나머지 ${additionalCount}개 후보는 아래 비교표에서 확인` : "현재 필터 기준 모든 후보를 카드로 보여주고 있습니다."}
+
+            <div className="space-y-8">
+              {cardSections.map((section) => (
+                <div key={section.bucket} className="space-y-4">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <h3 className="text-lg font-semibold text-foreground">{section.meta.label}</h3>
+                      <p className="mt-1 text-sm leading-6 text-muted-foreground">{section.meta.description}</p>
+                    </div>
+                    <div className="rounded-2xl border border-border/70 bg-secondary/25 px-3 py-2 text-sm text-muted-foreground">
+                      {bucketedItems[section.bucket].length}개 중 기본 카드 {section.items.length}개 노출
+                    </div>
+                  </div>
+
+                  {section.items.length ? (
+                    <div className="grid gap-6 xl:grid-cols-2">
+                      {section.items.map((item) => (
+                        <RecommendationCard
+                          key={item.ticker}
+                          item={item}
+                          summaryLabel={section.meta.label}
+                          summaryReasons={buildReasons(item)}
+                          isFavorite={isFavorite(item.ticker)}
+                          onToggleFavorite={toggleFavorite}
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="rounded-3xl border border-border/70 bg-card/40 p-6 text-sm leading-6 text-muted-foreground">
+                      현재 필터 기준으로 이 구간에 해당하는 종목은 없습니다.
+                    </div>
+                  )}
+
+                  {section.hiddenCount > 0 ? (
+                    <div className="rounded-2xl border border-border/70 bg-secondary/25 px-4 py-3 text-sm text-muted-foreground">
+                      이 구간에는 추가로 {section.hiddenCount}개가 더 있습니다. 전체 비교는 아래 표에서 확인할 수 있습니다.
+                    </div>
+                  ) : null}
+                </div>
+              ))}
             </div>
-          </section>
-
-          <section className="grid gap-6 xl:grid-cols-2">
-            {shortlist.map((item) => {
-              const reasons = buildReasons(item);
-
-              return (
-                <RecommendationCard
-                  key={item.ticker}
-                  item={item}
-                  summaryLabel={getCandidateLabel(item)}
-                  summaryReasons={reasons}
-                  isFavorite={isFavorite(item.ticker)}
-                  onToggleFavorite={toggleFavorite}
-                />
-              );
-            })}
           </section>
 
           <section className="space-y-4">
             <div>
               <h2 className="text-lg font-semibold text-foreground">전체 후보 비교표</h2>
               <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                카드에서 먼저 본 후보를 다른 종목과 비교하거나, 필터 결과 전체를 한 줄씩 빠르게 훑을 때 쓰는 표입니다.
+                카드에서 먼저 행동 후보를 고른 뒤, 나머지 종목과 비교하거나 필터 결과 전체를 빠르게 읽을 때 쓰는 표입니다.
               </p>
             </div>
             <RecommendationTable items={filteredItems} favorites={favorites} onToggleFavorite={toggleFavorite} />
@@ -304,7 +381,7 @@ export function RecommendationExplorer({ items }: { items: Recommendation[] }) {
         <section className="rounded-3xl border border-border/70 bg-card/40 p-8 text-center">
           <p className="text-lg font-semibold text-foreground">조건에 맞는 후보가 없습니다.</p>
           <p className="mt-3 text-sm leading-6 text-muted-foreground">
-            검색어나 톤, 섹터, 검증 근거 조건을 조금 더 넓히면 더 많은 종목을 볼 수 있습니다.
+            검색어 또는 섹터, 검증 기준 조건을 조금 더 넓히면 더 많은 종목을 볼 수 있습니다.
           </p>
         </section>
       )}
@@ -350,7 +427,7 @@ function SummaryCard({
   label: string;
   value: string;
   detail: string;
-  tone: "emerald" | "sky" | "teal" | "amber";
+  tone: "emerald" | "sky" | "amber" | "stone";
 }) {
   return (
     <div className={`rounded-3xl border px-4 py-4 ${getToneClasses(tone)}`}>
@@ -376,7 +453,7 @@ function BasisRow({
     <div className="flex items-center justify-between gap-4 rounded-2xl border border-border/70 bg-background/50 px-4 py-3">
       <div>
         <p className="text-sm font-medium text-foreground">{label}</p>
-        <p className="text-xs text-muted-foreground">{isSame ? "현재와 전체 기준이 동일합니다." : "현재 필터와 전체 기준 분포"}</p>
+        <p className="text-xs text-muted-foreground">{isSame ? "현재와 전체 기준이 동일합니다." : "현재 필터와 전체 기준 비교"}</p>
       </div>
       <div className="flex items-center gap-2 text-sm">
         {isSame ? (
