@@ -10,6 +10,7 @@ import { ScoreLogPanel } from "@/components/tracking/score-log-panel";
 import { TrackingOverview } from "@/components/tracking/tracking-overview";
 import { TrackingReviewPanel } from "@/components/tracking/tracking-review-panel";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -180,78 +181,99 @@ export function TrackingDetailPanel({ history, details }: TrackingDetailPanelPro
             )}
           </CardContent>
         </Card>
-
-        {activeEntry && activeDetail ? (
-          <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <div className="flex items-center gap-2">
-                  <CardTitle>
-                    {activeCompany} {activeEntry.ticker} 공용 추적 상세
-                  </CardTitle>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <button className="rounded-full p-1 text-muted-foreground transition hover:bg-accent hover:text-foreground" type="button">
-                        <Info className="h-4 w-4" />
-                      </button>
-                    </TooltipTrigger>
-                    <TooltipContent>시작 상태, 가격 흐름, 이벤트, 점수 변화를 한 번에 확인합니다.</TooltipContent>
-                  </Tooltip>
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  {activeSector} · 시작일 {activeEntry.signalDate} · {favorites.includes(activeEntry.ticker) ? "즐겨찾기 등록 종목" : "공용 추적 종목"}
-                </p>
-              </CardHeader>
-              <CardContent className="grid gap-4 md:grid-cols-5">
-                <SummaryMetric label="현재 상태" value={formatStatusLabel(activeEntry)} />
-                <SummaryMetric label="최대 상승" value={formatPercent(activeEntry.mfe)} emphasis="text-positive" />
-                <SummaryMetric label="최대 하락" value={formatPercent(activeEntry.mae)} emphasis="text-caution" />
-                <SummaryMetric
-                  label="현재 수익률"
-                  value={activeCurrentReturn === null ? "-" : formatPercent(activeCurrentReturn)}
-                  emphasis={getCurrentReturnTone(activeCurrentReturn)}
-                />
-                <SummaryMetric label="보유일" value={`${activeEntry.holdingDays}일`} />
-              </CardContent>
-              <CardContent className="grid gap-4 pt-0 md:grid-cols-2 xl:grid-cols-4">
-                {activeDetail.metrics.map((metric) => (
-                  <div key={metric.label} className="rounded-2xl border border-border/70 bg-secondary/35 p-4">
-                    <p className="text-xs text-muted-foreground">{metric.label}</p>
-                    <p className="mt-2 text-lg font-semibold text-foreground">{metric.value}</p>
-                    <p className="mt-2 text-sm leading-6 text-muted-foreground">{metric.note}</p>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-
-            <Tabs defaultValue="review" className="w-full">
-              <TabsList>
-                <TabsTrigger value="review">메모</TabsTrigger>
-                <TabsTrigger value="chart">가격 흐름</TabsTrigger>
-                <TabsTrigger value="news">뉴스 검색</TabsTrigger>
-                <TabsTrigger value="log">점수 로그</TabsTrigger>
-              </TabsList>
-              <TabsContent value="review">
-                <TrackingReviewPanel detail={activeDetail} />
-              </TabsContent>
-              <TabsContent value="chart">
-                <ChartSnapshot points={activeDetail.chartSnapshot} />
-              </TabsContent>
-              <TabsContent value="news">
-                <NewsHistoryCards ticker={activeEntry.ticker} company={activeCompany ?? activeEntry.company} />
-              </TabsContent>
-              <TabsContent value="log">
-                <ScoreLogPanel items={activeDetail.scoreLog} />
-              </TabsContent>
-            </Tabs>
-          </div>
-        ) : filteredHistory.length ? (
+        {filteredHistory.length ? (
           <Card>
             <CardContent className="p-6 text-sm leading-6 text-muted-foreground">
-              공용 워크스페이스에서는 목록을 먼저 훑고, 필요한 기록만 선택해 상세를 읽어보면 됩니다.
+              목록에서 필요한 기록만 고른 뒤 <span className="font-medium text-foreground">상세 보기</span>를 누르면 팝업에서 메모, 차트, 뉴스 검색,
+              점수 로그를 한 번에 읽을 수 있습니다.
             </CardContent>
           </Card>
         ) : null}
+
+        <Dialog
+          open={Boolean(activeEntry && activeDetail)}
+          onOpenChange={(open) => {
+            if (!open) {
+              setActiveId("");
+            }
+          }}
+        >
+          {activeEntry && activeDetail ? (
+            <DialogContent className="max-h-[88vh] max-w-6xl overflow-hidden border-border/70 bg-card p-0">
+              <div className="flex max-h-[88vh] flex-col">
+                <DialogHeader className="border-b border-border/70 px-6 pb-5 pt-6">
+                  <div className="flex items-start gap-3 pr-10">
+                    <div className="min-w-0 flex-1">
+                      <DialogTitle className="text-xl leading-tight text-foreground">
+                        {activeCompany} {activeEntry.ticker} 공용 추적 상세
+                      </DialogTitle>
+                      <DialogDescription className="mt-2 text-sm leading-6">
+                        {activeSector} · 시작일 {activeEntry.signalDate} ·{" "}
+                        {favorites.includes(activeEntry.ticker) ? "즐겨찾기 등록 종목" : "공용 추적 종목"}
+                      </DialogDescription>
+                    </div>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button className="rounded-full p-1 text-muted-foreground transition hover:bg-accent hover:text-foreground" type="button">
+                          <Info className="h-4 w-4" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent>시작 상태, 가격 흐름, 이벤트, 점수 변화를 한 번에 확인합니다.</TooltipContent>
+                    </Tooltip>
+                  </div>
+                </DialogHeader>
+
+                <div className="flex-1 overflow-y-auto px-6 pb-6 pt-5">
+                  <div className="space-y-6">
+                    <Card>
+                      <CardContent className="grid gap-4 pt-6 md:grid-cols-5">
+                        <SummaryMetric label="현재 상태" value={formatStatusLabel(activeEntry)} />
+                        <SummaryMetric label="최대 상승" value={formatPercent(activeEntry.mfe)} emphasis="text-positive" />
+                        <SummaryMetric label="최대 하락" value={formatPercent(activeEntry.mae)} emphasis="text-caution" />
+                        <SummaryMetric
+                          label="현재 수익률"
+                          value={activeCurrentReturn === null ? "-" : formatPercent(activeCurrentReturn)}
+                          emphasis={getCurrentReturnTone(activeCurrentReturn)}
+                        />
+                        <SummaryMetric label="보유일" value={`${activeEntry.holdingDays}일`} />
+                      </CardContent>
+                      <CardContent className="grid gap-4 pt-0 md:grid-cols-2 xl:grid-cols-4">
+                        {activeDetail.metrics.map((metric) => (
+                          <div key={metric.label} className="rounded-2xl border border-border/70 bg-secondary/35 p-4">
+                            <p className="text-xs text-muted-foreground">{metric.label}</p>
+                            <p className="mt-2 text-lg font-semibold text-foreground">{metric.value}</p>
+                            <p className="mt-2 text-sm leading-6 text-muted-foreground">{metric.note}</p>
+                          </div>
+                        ))}
+                      </CardContent>
+                    </Card>
+
+                    <Tabs defaultValue="review" className="w-full">
+                      <TabsList className="flex w-full flex-wrap justify-start">
+                        <TabsTrigger value="review">메모</TabsTrigger>
+                        <TabsTrigger value="chart">가격 흐름</TabsTrigger>
+                        <TabsTrigger value="news">뉴스 검색</TabsTrigger>
+                        <TabsTrigger value="log">점수 로그</TabsTrigger>
+                      </TabsList>
+                      <TabsContent value="review">
+                        <TrackingReviewPanel detail={activeDetail} />
+                      </TabsContent>
+                      <TabsContent value="chart">
+                        <ChartSnapshot points={activeDetail.chartSnapshot} />
+                      </TabsContent>
+                      <TabsContent value="news">
+                        <NewsHistoryCards ticker={activeEntry.ticker} company={activeCompany ?? activeEntry.company} />
+                      </TabsContent>
+                      <TabsContent value="log">
+                        <ScoreLogPanel items={activeDetail.scoreLog} />
+                      </TabsContent>
+                    </Tabs>
+                  </div>
+                </div>
+              </div>
+            </DialogContent>
+          ) : null}
+        </Dialog>
       </div>
     </TooltipProvider>
   );
