@@ -1,11 +1,14 @@
 import type { DailyCandidate } from "@/lib/repositories/daily-candidates";
 import { formatPrice } from "@/lib/utils";
 import type {
+  OpeningChecklistItem,
+  OperatingStage,
   Recommendation,
   RecommendationActionBucket,
   RecommendationTradePlan,
   SignalTone,
   TodayActionSummary,
+  TodayOperatingWorkflow,
   TrackingDiagnostic
 } from "@/types/recommendation";
 
@@ -45,18 +48,23 @@ export interface ActionBucketMeta {
 }
 
 export type TodayOperatingSummary = TodayActionSummary;
+export type DailyOperatingWorkflow = TodayOperatingWorkflow;
+
+const OPENING_RECHECK_WINDOW_LABEL = "장 시작 후 5~10분";
+const MAX_ACCEPTABLE_GAP_PERCENT = 3;
+const MIN_STOP_BUFFER_PERCENT = 1.5;
 
 const ACTION_BUCKET_META: Record<RecommendationActionBucket, ActionBucketMeta> = {
   buy_now: {
-    label: "오늘 매수 가능",
-    shortLabel: "매수 가능",
-    description: "조건이 맞으면 오늘 실제 진입까지 검토할 수 있는 종목입니다.",
+    label: "장초 통과 시 매수 검토",
+    shortLabel: "장초 매수 검토",
+    description: "전일 기준 우선순위가 높고, 장초 재판정만 통과하면 오늘 매수까지 볼 수 있는 종목입니다.",
     variant: "positive"
   },
   watch_only: {
     label: "관찰만",
     shortLabel: "관찰만",
-    description: "흐름은 좋지만 확인 가격과 거래 반응을 더 봐야 하는 종목입니다.",
+    description: "흐름은 좋지만 장초 재판정에서 확인 가격과 거래 반응을 더 봐야 하는 종목입니다.",
     variant: "neutral"
   },
   avoid: {
@@ -151,18 +159,18 @@ function formatRiskRewardLabel(
 function buildNextStep(bucket: RecommendationActionBucket, confirmationPrice: number | null, stopPrice: number | null) {
   if (bucket === "buy_now") {
     if (confirmationPrice !== null) {
-      return `${formatPrice(confirmationPrice)} 돌파 또는 지지 확인 뒤에 분할 진입을 검토합니다.`;
+      return `${OPENING_RECHECK_WINDOW_LABEL} 동안 ${formatPrice(confirmationPrice)} 돌파 또는 지지 반응을 다시 본 뒤 분할 진입을 검토합니다.`;
     }
 
-    return "확인 가격과 거래량이 함께 붙는지 먼저 보고 진입 여부를 결정합니다.";
+    return `${OPENING_RECHECK_WINDOW_LABEL} 동안 확인 가격과 거래량이 함께 붙는지 먼저 보고 진입 여부를 결정합니다.`;
   }
 
   if (bucket === "watch_only") {
     if (confirmationPrice !== null) {
-      return `${formatPrice(confirmationPrice)} 전후 반응을 볼 때까지는 관찰만 유지합니다.`;
+      return `${OPENING_RECHECK_WINDOW_LABEL} 안에 ${formatPrice(confirmationPrice)} 전후 반응을 볼 때까지는 관찰만 유지합니다.`;
     }
 
-    return "확인 가격과 거래 반응이 다시 살아나는지 기다립니다.";
+    return `${OPENING_RECHECK_WINDOW_LABEL} 안에 확인 가격과 거래 반응이 다시 살아나는지 기다립니다.`;
   }
 
   if (stopPrice !== null) {
@@ -287,11 +295,11 @@ export function buildTodayOperatingSummary(items: RecommendationActionItem[]): T
     return {
       marketStance: "attack",
       marketStanceLabel: "공격 가능",
-      summary: "오늘은 조건이 맞는 종목이 여러 개 보이지만, 상위 1~2개만 선별해 진입을 검토하는 날입니다.",
+      summary: "오늘은 장초 재판정만 통과하면 매수 검토까지 볼 수 있는 종목이 몇 개 있습니다. 그래도 상위 1~2개만 선별해서 보는 날입니다.",
       maxNewPositions: 2,
       maxConcurrentPositions: 5,
       bucketCounts,
-      focusNote: `매수 가능 ${bucketCounts.buy_now}개, 관찰 ${bucketCounts.watch_only}개입니다. 보류 ${bucketCounts.avoid}개는 추격보다 제외에 가깝습니다.`
+      focusNote: `장초 매수 검토 ${bucketCounts.buy_now}개, 관찰 ${bucketCounts.watch_only}개입니다. 보류 ${bucketCounts.avoid}개는 추격보다 제외에 가깝습니다.`
     };
   }
 
@@ -299,22 +307,85 @@ export function buildTodayOperatingSummary(items: RecommendationActionItem[]): T
     return {
       marketStance: "selective",
       marketStanceLabel: "선별 매수",
-      summary: "오늘은 강하게 넓게 사는 날이 아니라, 가장 좋은 1개만 신중하게 보는 날입니다.",
+      summary: "오늘은 장초 재판정을 통과한 종목 1개 정도만 신중하게 볼 만한 날입니다.",
       maxNewPositions: 1,
       maxConcurrentPositions: 4,
       bucketCounts,
-      focusNote: `매수 가능 ${bucketCounts.buy_now}개만 우선 검토하고, 나머지 ${bucketCounts.watch_only}개는 관찰 위주로 대응합니다.`
+      focusNote: `장초 매수 검토 ${bucketCounts.buy_now}개만 우선 검토하고, 나머지 ${bucketCounts.watch_only}개는 관찰 위주로 대응합니다.`
     };
   }
 
   return {
     marketStance: "watch",
     marketStanceLabel: "관찰 우위",
-    summary: "오늘은 신규 매수보다 기존 보유 관리와 관찰에 무게를 두는 편이 좋습니다.",
+    summary: "오늘은 장초 재판정을 통과해도 신규 매수를 공격적으로 늘리지 않고, 기존 보유 관리와 관찰에 무게를 두는 편이 좋습니다.",
     maxNewPositions: 0,
     maxConcurrentPositions: 4,
     bucketCounts,
     focusNote: `관찰 후보 ${bucketCounts.watch_only}개가 있어도 보류 ${bucketCounts.avoid}개가 많아 추격 매수는 피하는 편이 좋습니다.`
+  };
+}
+
+export function buildTodayOperatingWorkflow(summary: TodayOperatingSummary): DailyOperatingWorkflow {
+  const actionDetail =
+    summary.maxNewPositions > 0
+      ? `장초 재판정을 통과한 종목만 최대 ${summary.maxNewPositions}개까지 분할 진입을 검토합니다. 동시 관리 종목은 총 ${summary.maxConcurrentPositions}개를 넘기지 않습니다.`
+      : `오늘은 신규 매수보다 기존 보유 관리와 관찰 유지가 우선입니다. 동시 관리 종목은 총 ${summary.maxConcurrentPositions}개 기준으로 통제합니다.`;
+
+  const steps: OperatingStage[] = [
+    {
+      key: "preopen_candidates",
+      title: "장전 후보",
+      summary: "전일 종가 기준으로 오늘 먼저 볼 종목만 좁힙니다.",
+      detail: `매수 검토 ${summary.maxNewPositions}개 내외, 관찰 ${summary.bucketCounts.watch_only}개 중심으로 계획을 세웁니다. 이 단계의 종목은 아직 실제 매수 신호가 아닙니다.`
+    },
+    {
+      key: "opening_recheck",
+      title: "장초 재판정",
+      summary: `${OPENING_RECHECK_WINDOW_LABEL} 동안 갭과 구조를 다시 확인합니다.`,
+      detail: `시초가가 계획 진입가보다 ${MAX_ACCEPTABLE_GAP_PERCENT}% 이상 높게 뜨면 추격 금지로 돌리고, 손절 기준과 너무 가까우면 후보에서 제외합니다.`
+    },
+    {
+      key: "today_action",
+      title: "당일 행동",
+      summary: "재판정 통과 종목만 실제 행동 후보로 옮깁니다.",
+      detail: actionDetail
+    }
+  ];
+
+  const openingChecklist: OpeningChecklistItem[] = [
+    {
+      key: "gap",
+      title: "시초가가 계획 진입가보다 너무 높게 뜨지 않았는가",
+      passLabel: `${MAX_ACCEPTABLE_GAP_PERCENT}% 이내면 재판정 계속`,
+      failLabel: `${MAX_ACCEPTABLE_GAP_PERCENT}%를 넘겨 갭상승하면 추격 금지`
+    },
+    {
+      key: "stop_buffer",
+      title: "시초가와 손절 기준 사이에 최소한의 여유가 있는가",
+      passLabel: `손절까지 ${MIN_STOP_BUFFER_PERCENT}% 이상 여유가 있으면 유지`,
+      failLabel: "손절과 너무 가까우면 후보 제외"
+    },
+    {
+      key: "confirmation",
+      title: "장초 5~10분 안에 확인 가격과 거래 반응이 함께 붙는가",
+      passLabel: "확인 가격 유지/돌파와 거래량 확인 시 매수 검토",
+      failLabel: "반응이 약하면 관찰만 유지"
+    },
+    {
+      key: "position_limit",
+      title: "오늘 신규 매수 한도 안에 드는 종목인가",
+      passLabel: `상위 ${Math.max(summary.maxNewPositions, 1)}개 안이면 행동 후보 유지`,
+      failLabel: "한도를 넘기면 나머지는 보류"
+    }
+  ];
+
+  return {
+    basisLabel: "전일 종가 기준 장전 계획",
+    staleDataNote: "오전 8시경 수신한 전일 데이터 기준입니다. 장초 재판정 전까지는 실제 매수 신호가 아니라 장전 계획으로 해석해야 합니다.",
+    recheckWindowLabel: OPENING_RECHECK_WINDOW_LABEL,
+    steps,
+    openingChecklist
   };
 }
 

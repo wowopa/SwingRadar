@@ -95,8 +95,8 @@ function buildCautionPoints(analysis: TickerAnalysis) {
 function buildActionTexts(bucket: RecommendationActionBucket) {
   if (bucket === "buy_now") {
     return {
-      title: "지금은 매수 계획까지 볼 수 있는 구간입니다",
-      summary: "아무 가격에 추격 매수하는 뜻은 아닙니다. 확인 가격과 손절 기준을 지키는 계획형 진입이 필요합니다."
+      title: "장초 재판정을 통과하면 매수 계획까지 볼 수 있는 구간입니다",
+      summary: "아무 가격에 추격 매수하는 뜻은 아닙니다. 장 시작 후 확인 가격과 손절 기준을 다시 점검한 뒤 계획형 진입이 필요합니다."
     };
   }
 
@@ -116,18 +116,18 @@ function buildActionTexts(bucket: RecommendationActionBucket) {
 function buildNextStep(bucket: RecommendationActionBucket, confirmationPrice: number | null, stopPrice: number | null) {
   if (bucket === "buy_now") {
     if (confirmationPrice !== null) {
-      return `${formatPrice(confirmationPrice)} 전후의 지지 또는 돌파 반응을 보고 분할 진입을 검토합니다.`;
+      return `장 시작 후 5~10분 동안 ${formatPrice(confirmationPrice)} 전후의 지지 또는 돌파 반응을 다시 본 뒤 분할 진입을 검토합니다.`;
     }
 
-    return "확인 가격과 거래량이 함께 붙는지 본 뒤에만 진입을 검토합니다.";
+    return "장 시작 후 5~10분 동안 확인 가격과 거래량이 함께 붙는지 본 뒤에만 진입을 검토합니다.";
   }
 
   if (bucket === "watch_only") {
     if (confirmationPrice !== null) {
-      return `${formatPrice(confirmationPrice)} 반응이 확인될 때까지는 관찰만 유지합니다.`;
+      return `장 시작 후 5~10분 동안 ${formatPrice(confirmationPrice)} 반응이 확인될 때까지는 관찰만 유지합니다.`;
     }
 
-    return "확인 가격이 다시 살아나는지 먼저 기다립니다.";
+    return "장 시작 후 5~10분 동안 확인 가격이 다시 살아나는지 먼저 기다립니다.";
   }
 
   if (stopPrice !== null) {

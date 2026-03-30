@@ -126,6 +126,9 @@ describe("listRecommendations", () => {
     expect(result.dailyScan?.topCandidates[0]?.tradePlan?.entryLabel).toContain("43,500원");
     expect(result.dailyScan?.topCandidates[0]?.tradePlan?.stopLabel).toBe("41,000원");
     expect(result.todaySummary?.bucketCounts.buy_now).toBe(1);
+    expect(result.operatingWorkflow?.steps).toHaveLength(3);
+    expect(result.operatingWorkflow?.steps[0]?.title).toBe("장전 후보");
+    expect(result.operatingWorkflow?.openingChecklist[1]?.title).toContain("손절 기준");
   });
 
   it("filters by signal tone and limit", async () => {

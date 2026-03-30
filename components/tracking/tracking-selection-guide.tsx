@@ -28,14 +28,14 @@ export function TrackingSelectionGuide(props: TrackingSelectionGuideProps) {
       <CardHeader>
         <CardTitle>공용 추적 운영 기준</CardTitle>
         <p className="text-sm leading-6 text-muted-foreground">
-          공용 추적은 상위 후보를 모두 나열하는 화면이 아니라, 반복 등장 이력과 가격 구조를 확인해 계속 관찰할 종목과 실제
-          매수 검토까지 볼 종목을 가려내는 영역입니다. 단기 급등이나 과열 신호가 강한 종목은 추격하지 않도록 별도 억제 조건을
-          함께 적용합니다.
+          공용 추적은 상위 후보를 모두 나열하는 화면이 아니라, 전일 종가 기준 장전 후보를 만든 뒤 장초 재판정을 거쳐 실제
+          행동 후보만 남기는 영역입니다. 단기 급등이나 과열 신호가 강한 종목은 추격하지 않도록 별도 억제 조건을 함께 적용합니다.
         </p>
       </CardHeader>
       <CardContent className="grid gap-4 xl:grid-cols-3">
         <div className="rounded-2xl border border-border/70 bg-secondary/25 p-4">
-          <p className="text-sm font-semibold text-foreground">관찰에 올라오는 경우</p>
+          <p className="text-sm font-semibold text-foreground">1. 장전 후보</p>
+          <p className="mt-2 text-sm leading-6 text-muted-foreground">오전 8시경 수신한 전일 데이터로 오늘 먼저 볼 종목을 좁히는 단계입니다.</p>
           <ul className="mt-3 space-y-2 text-sm leading-6 text-muted-foreground">
             <li>관찰 우선순위가 {props.minWatchActivationScore}점 이상일 때</li>
             <li>20일 평균 거래대금이 {formatEok(props.minAverageTurnover20)} 이상일 때</li>
@@ -47,7 +47,8 @@ export function TrackingSelectionGuide(props: TrackingSelectionGuideProps) {
         </div>
 
         <div className="rounded-2xl border border-border/70 bg-secondary/25 p-4">
-          <p className="text-sm font-semibold text-foreground">매수 검토로 올라가는 경우</p>
+          <p className="text-sm font-semibold text-foreground">2. 장초 재판정</p>
+          <p className="mt-2 text-sm leading-6 text-muted-foreground">장 시작 후 5~10분 동안 갭과 확인 가격 반응을 다시 보고 매수 검토 여부를 정합니다.</p>
           <ul className="mt-3 space-y-2 text-sm leading-6 text-muted-foreground">
             <li>관찰 우선순위가 {props.minEntryActivationScore}점 이상일 때</li>
             <li>20일 평균 거래대금이 {formatEok(props.minEntryAverageTurnover20)} 이상일 때</li>
@@ -59,7 +60,8 @@ export function TrackingSelectionGuide(props: TrackingSelectionGuideProps) {
         </div>
 
         <div className="rounded-2xl border border-border/70 bg-secondary/25 p-4">
-          <p className="text-sm font-semibold text-foreground">운용 제한</p>
+          <p className="text-sm font-semibold text-foreground">3. 당일 행동과 보유 관리</p>
+          <p className="mt-2 text-sm leading-6 text-muted-foreground">재판정을 통과한 종목만 실제 행동 후보로 옮기고, 나머지는 관찰 또는 보류로 둡니다.</p>
           <ul className="mt-3 space-y-2 text-sm leading-6 text-muted-foreground">
             <li>추적 중인 종목은 최대 {props.maxActive}개까지만 유지</li>
             <li>관찰 포함 전체 live 종목은 최대 {props.maxWatch}개까지만 유지</li>

@@ -24,7 +24,7 @@ export default async function RecommendationsPage() {
       />
       <PublicDataStatusBarGroup summaries={statusSummaries} />
       <section className="mb-6">
-        <TodayOperatingSummary items={response.items} summary={response.todaySummary} />
+        <TodayOperatingSummary items={response.items} summary={response.todaySummary} workflow={response.operatingWorkflow} />
       </section>
       <section className="mb-6">
         <DailyCandidatesPanel dailyScan={response.dailyScan} />

@@ -14,7 +14,7 @@ export function ActionBucketBadge({
   return (
     <Badge
       variant={meta.variant}
-      className={cn("inline-flex min-w-[78px] shrink-0 items-center justify-center whitespace-nowrap rounded-full px-3 py-1 text-xs font-medium", className)}
+      className={cn("inline-flex min-w-[96px] shrink-0 items-center justify-center whitespace-nowrap rounded-full px-3 py-1 text-xs font-medium", className)}
     >
       {meta.shortLabel}
     </Badge>

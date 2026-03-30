@@ -21,6 +21,30 @@ export interface TodayActionSummaryDto {
   focusNote: string;
 }
 
+export type OperatingStageKeyDto = "preopen_candidates" | "opening_recheck" | "today_action";
+
+export interface OperatingStageDto {
+  key: OperatingStageKeyDto;
+  title: string;
+  summary: string;
+  detail: string;
+}
+
+export interface OpeningChecklistItemDto {
+  key: "gap" | "stop_buffer" | "confirmation" | "position_limit";
+  title: string;
+  passLabel: string;
+  failLabel: string;
+}
+
+export interface TodayOperatingWorkflowDto {
+  basisLabel: string;
+  staleDataNote: string;
+  recheckWindowLabel: string;
+  steps: OperatingStageDto[];
+  openingChecklist: OpeningChecklistItemDto[];
+}
+
 export interface ValidationStatsDto {
   hitRate: number;
   avgReturn: number;
@@ -155,6 +179,7 @@ export interface RecommendationsResponseDto {
   items: RecommendationListItemDto[];
   dailyScan: DailyScanSummaryDto | null;
   todaySummary?: TodayActionSummaryDto;
+  operatingWorkflow?: TodayOperatingWorkflowDto;
 }
 
 export interface AnalysisSummaryMetricDto {

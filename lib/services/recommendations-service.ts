@@ -7,6 +7,7 @@ import { getDataProvider } from "@/lib/providers";
 import { getDailyCandidates, type DailyCandidate } from "@/lib/repositories/daily-candidates";
 import {
   buildRecommendationTradePlan,
+  buildTodayOperatingWorkflow,
   buildTodayOperatingSummary,
   createRecommendationTradePlanInput,
   resolveRecommendationActionBucket
@@ -201,6 +202,8 @@ export async function listRecommendations(query: RecommendationsQuery): Promise<
     items = items.slice(0, query.limit);
   }
 
+  const todaySummary = buildTodayOperatingSummary(items);
+
   return {
     generatedAt: dailyCandidates?.generatedAt ?? source.generatedAt,
     items,
@@ -219,6 +222,7 @@ export async function listRecommendations(query: RecommendationsQuery): Promise<
           )
         }
       : null,
-    todaySummary: buildTodayOperatingSummary(items)
+    todaySummary,
+    operatingWorkflow: buildTodayOperatingWorkflow(todaySummary)
   };
 }

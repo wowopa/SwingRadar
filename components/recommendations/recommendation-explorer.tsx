@@ -268,12 +268,12 @@ export function RecommendationExplorer({ items }: { items: Recommendation[] }) {
           <div className="border-b border-border/60 pb-4">
             <p className="text-sm font-semibold text-foreground">행동 중심으로 먼저 봅니다</p>
             <p className="mt-2 text-sm leading-6 text-muted-foreground">
-              이 화면은 종목을 많이 나열하는 대신, 지금 행동할 수 있는 종목과 더 봐야 하는 종목을 먼저 나눠서 보여줍니다.
+              이 화면은 종목을 많이 나열하는 대신, 장초 재판정을 통과하면 행동할 수 있는 종목과 더 봐야 하는 종목을 먼저 나눠서 보여줍니다.
             </p>
           </div>
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            <SummaryCard label="행동 후보" value={`${actionableCount}개`} detail="매수 가능 + 관찰만" tone="emerald" />
-            <SummaryCard label="오늘 매수 가능" value={`${bucketedItems.buy_now.length}개`} detail="바로 계획을 세울 수 있는 후보" tone="sky" />
+            <SummaryCard label="행동 후보" value={`${actionableCount}개`} detail="장초 통과 후보 + 관찰만" tone="emerald" />
+            <SummaryCard label="장초 통과 후보" value={`${bucketedItems.buy_now.length}개`} detail="재판정 통과 시 매수 검토할 후보" tone="sky" />
             <SummaryCard label="관찰만" value={`${bucketedItems.watch_only.length}개`} detail="확인 가격과 반응을 더 볼 후보" tone="amber" />
             <SummaryCard label="보류" value={`${bucketedItems.avoid.length}개`} detail="기본 카드에서는 뒤로 미룹니다" tone="stone" />
           </div>
@@ -317,11 +317,11 @@ export function RecommendationExplorer({ items }: { items: Recommendation[] }) {
               <div>
                 <h2 className="text-xl font-semibold text-foreground">행동 후보 카드</h2>
                 <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                  기본 카드 영역은 지금 행동 가능한 후보부터 보여줍니다. 보류 종목은 표에서 비교하되, 카드에서는 과도하게 앞세우지 않습니다.
+                  기본 카드 영역은 장초 재판정을 통과하면 행동할 수 있는 후보부터 보여줍니다. 보류 종목은 표에서 비교하되, 카드에서는 과도하게 앞세우지 않습니다.
                 </p>
               </div>
               <div className="rounded-2xl border border-border/70 bg-secondary/35 px-4 py-3 text-sm text-muted-foreground">
-                매수 가능 {bucketedItems.buy_now.length}개 · 관찰만 {bucketedItems.watch_only.length}개 · 보류 {bucketedItems.avoid.length}개
+                장초 통과 후보 {bucketedItems.buy_now.length}개 · 관찰만 {bucketedItems.watch_only.length}개 · 보류 {bucketedItems.avoid.length}개
               </div>
             </div>
 

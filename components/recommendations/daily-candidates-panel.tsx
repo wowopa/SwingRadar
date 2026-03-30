@@ -39,7 +39,7 @@ export function DailyCandidatesPanel({ dailyScan }: { dailyScan: DailyScanSummar
         <div>
           <CardTitle>오늘 먼저 볼 종목</CardTitle>
           <p className="mt-2 text-sm text-muted-foreground">
-            최신 유니버스 스캔에서 지금 우선 확인할 종목만 추려서 정리했습니다. 이 목록 전체가 곧바로 매수 대상은 아닙니다.
+            최신 유니버스 스캔에서 지금 우선 확인할 종목만 추려서 정리했습니다. 이 목록은 전일 종가 기준 장전 후보이며, 장초 재판정 전까지는 실제 매수 신호가 아닙니다.
           </p>
         </div>
         <div className="rounded-2xl border border-border/70 bg-secondary/35 px-4 py-3 text-sm text-muted-foreground">
@@ -47,6 +47,9 @@ export function DailyCandidatesPanel({ dailyScan }: { dailyScan: DailyScanSummar
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
+        <div className="rounded-2xl border border-primary/20 bg-primary/8 p-4 text-sm leading-6 text-foreground/82">
+          장 시작 후 5~10분 동안 시초가 갭, 손절 기준과의 거리, 확인 가격 반응을 다시 본 뒤에만 당일 행동 후보로 옮겨야 합니다.
+        </div>
         {hasCandidates ? (
           <>
             <div className="grid gap-4 xl:grid-cols-3">
@@ -73,6 +76,9 @@ export function DailyCandidatesPanel({ dailyScan }: { dailyScan: DailyScanSummar
                         </p>
                       </div>
                       <div className="flex flex-col items-end gap-2">
+                        <span className="rounded-full border border-border/70 bg-background/80 px-2.5 py-1 text-[11px] font-medium text-foreground/72">
+                          장전 후보
+                        </span>
                         <ActionBucketBadge bucket={actionBucket} />
                         <SignalToneBadge tone={item.signalTone} />
                       </div>
@@ -119,7 +125,7 @@ export function DailyCandidatesPanel({ dailyScan }: { dailyScan: DailyScanSummar
               })}
             </div>
             <div className="rounded-2xl border border-border/70 bg-secondary/25 p-4 text-sm text-muted-foreground">
-              총 {dailyScan.totalTickers}개 종목을 스캔했고, 그중 오늘 먼저 볼 종목만 자동 정렬했습니다.{" "}
+              총 {dailyScan.totalTickers}개 종목을 스캔했고, 그중 오늘 먼저 볼 종목만 자동 정렬했습니다. 장초 재판정이 끝나기 전까지는 이 목록 전체를 곧바로 실행 신호로 보지 않습니다.{" "}
               <Link className="font-medium text-primary hover:text-primary/80" href="/ranking">
                 전체 랭킹 보기
               </Link>

@@ -46,6 +46,30 @@ export interface TodayActionSummary {
   focusNote: string;
 }
 
+export type OperatingStageKey = "preopen_candidates" | "opening_recheck" | "today_action";
+
+export interface OperatingStage {
+  key: OperatingStageKey;
+  title: string;
+  summary: string;
+  detail: string;
+}
+
+export interface OpeningChecklistItem {
+  key: "gap" | "stop_buffer" | "confirmation" | "position_limit";
+  title: string;
+  passLabel: string;
+  failLabel: string;
+}
+
+export interface TodayOperatingWorkflow {
+  basisLabel: string;
+  staleDataNote: string;
+  recheckWindowLabel: string;
+  steps: OperatingStage[];
+  openingChecklist: OpeningChecklistItem[];
+}
+
 export interface RecommendationTradePlan {
   currentPrice?: number | null;
   currentPriceLabel: string;
