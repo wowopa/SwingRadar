@@ -14,6 +14,14 @@ function updateNumber(value: string) {
   return Number.isFinite(parsed) && parsed >= 0 ? parsed : 0;
 }
 
+function toManwonValue(value: number) {
+  return String(Math.round(value / 10000));
+}
+
+function fromManwonValue(value: string) {
+  return Math.round(updateNumber(value)) * 10000;
+}
+
 export function PortfolioProfileTab({
   profile,
   setProfile,
@@ -46,23 +54,25 @@ export function PortfolioProfileTab({
       </CardHeader>
       <CardContent className="space-y-5">
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          <Field label="총 자산">
+          <Field label="총 자산 (만원)">
             <Input
               type="number"
               min={0}
-              value={String(profile.totalCapital)}
+              step="1"
+              value={toManwonValue(profile.totalCapital)}
               onChange={(event) =>
-                setProfile((current) => ({ ...current, totalCapital: updateNumber(event.target.value) }))
+                setProfile((current) => ({ ...current, totalCapital: fromManwonValue(event.target.value) }))
               }
             />
           </Field>
-          <Field label="가용 현금">
+          <Field label="가용 현금 (만원)">
             <Input
               type="number"
               min={0}
-              value={String(profile.availableCash)}
+              step="1"
+              value={toManwonValue(profile.availableCash)}
               onChange={(event) =>
-                setProfile((current) => ({ ...current, availableCash: updateNumber(event.target.value) }))
+                setProfile((current) => ({ ...current, availableCash: fromManwonValue(event.target.value) }))
               }
             />
           </Field>
@@ -106,7 +116,8 @@ export function PortfolioProfileTab({
         </div>
 
         <div className="rounded-[24px] border border-border/70 bg-secondary/35 p-4 text-sm leading-6 text-muted-foreground">
-          저장 후에는 내 포트폴리오 스냅샷, 보유 관리 보드, 오늘 행동 보드가 이 기준으로 다시 계산됩니다.
+          총 자산과 가용 현금은 만원 단위로 입력합니다. 저장 후에는 내 포트폴리오 스냅샷, 보유 관리 보드, 오늘 행동
+          보드가 이 기준으로 다시 계산됩니다.
         </div>
 
         <div className="space-y-4 rounded-[28px] border border-border/70 bg-background/40 p-5">
