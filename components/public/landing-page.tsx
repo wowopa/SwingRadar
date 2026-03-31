@@ -14,14 +14,17 @@ const promiseStrip = [
 
 const painNarrative = [
   {
+    number: "01",
     title: "종목이 많을수록 결정은 더 어려워집니다.",
     body: "좋아 보이는 종목이 열 개 보여도 실제로 매수할 수 있는 종목은 많지 않습니다. 그래서 서비스는 후보를 늘리는 대신, 오늘 실제로 검토할 소수의 종목만 남겨야 합니다."
   },
   {
+    number: "02",
     title: "전일 강했던 종목이 오늘도 좋은 종목은 아닙니다.",
     body: "장전 후보는 계획일 뿐입니다. 시초가가 과하게 뜨거나 손절 여유가 얕아지면 그 종목은 바로 추격 금지 또는 관찰 유지로 내려가야 합니다."
   },
   {
+    number: "03",
     title: "사용자가 궁금한 건 설명이 아니라 행동입니다.",
     body: "그래서 SWING-RADAR는 점수와 분석을 앞세우지 않습니다. 오늘 뭘 볼지, 무엇을 보류할지, 얼마까지 살 수 있을지를 먼저 보여주는 방식으로 바뀌었습니다."
   }
@@ -81,61 +84,64 @@ const faqs = [
   }
 ] as const;
 
+const heroBoardItems = [
+  ["ISC", "오늘 매수 검토", "진입 87,000 ~ 88,200 / 손절 83,400"],
+  ["DN오토모티브", "관찰 유지", "시초가 반응이 약하면 더 지켜보기"],
+  ["씨에스윈드", "추격 금지", "갭상승 과열로 오늘은 보류"]
+] as const;
+
 export function LandingPage() {
   return (
-    <main className="space-y-24 pb-16">
-      <ScrollReveal>
-        <section className="relative overflow-hidden rounded-[42px] border border-[hsl(220_18%_16%_/_0.08)] bg-[linear-gradient(145deg,hsl(220_26%_12%),hsl(210_18%_18%)_42%,hsl(38_32%_22%)_100%)] px-6 py-8 text-white shadow-[0_40px_120px_hsl(220_22%_12%_/_0.22)] sm:px-8 sm:py-10 lg:px-10 lg:py-12">
-          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,hsl(40_84%_70%_/_0.18),transparent_26%),radial-gradient(circle_at_80%_20%,hsl(202_72%_62%_/_0.18),transparent_24%),linear-gradient(180deg,transparent,rgba(255,255,255,0.02))]" />
-          <div className="public-pan pointer-events-none absolute -right-12 top-10 h-44 w-44 rounded-full bg-[radial-gradient(circle,hsl(40_82%_72%_/_0.18),transparent_70%)] blur-3xl" />
-          <div className="public-float-delayed pointer-events-none absolute left-10 top-20 h-24 w-24 rounded-full bg-[radial-gradient(circle,hsl(197_88%_74%_/_0.18),transparent_72%)] blur-2xl" />
+    <main className="space-y-28 pb-16">
+      <section className="relative overflow-hidden rounded-[44px] border border-white/10 bg-[linear-gradient(160deg,hsl(218_28%_12%)_0%,hsl(217_20%_16%)_46%,hsl(34_30%_22%)_100%)] px-6 py-7 text-white shadow-[0_50px_140px_hsl(220_32%_8%_/_0.26)] sm:px-8 sm:py-9 lg:px-10 lg:py-10">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_12%_12%,hsl(39_80%_72%_/_0.18),transparent_24%),radial-gradient(circle_at_84%_18%,hsl(196_94%_72%_/_0.14),transparent_20%),radial-gradient(circle_at_68%_82%,hsl(34_88%_62%_/_0.16),transparent_18%)]" />
+        <div className="public-pan pointer-events-none absolute right-[-4rem] top-10 h-60 w-60 rounded-full bg-[radial-gradient(circle,hsl(39_78%_72%_/_0.16),transparent_72%)] blur-3xl" />
+        <div className="public-float-delayed pointer-events-none absolute left-16 top-20 h-28 w-28 rounded-full bg-[radial-gradient(circle,hsl(197_88%_74%_/_0.12),transparent_72%)] blur-3xl" />
 
-          <div className="relative grid gap-10 xl:grid-cols-[minmax(0,1.02fr)_minmax(520px,0.98fr)] xl:items-end">
-            <div className="space-y-8">
-              <ScrollReveal delay={80}>
-                <div className="space-y-5">
-                  <Badge className="border-white/12 bg-white/8 text-white hover:bg-white/8" variant="secondary">
-                    Action-first swing operating system
-                  </Badge>
-                  <div className="space-y-6">
-                    <h1 className="max-w-5xl text-balance text-[clamp(4.2rem,10vw,8rem)] font-semibold leading-[0.9] tracking-[-0.1em] text-white">
-                      오늘 무엇을 해야 하는지
-                      <br />
-                      먼저 답하는 스윙 서비스.
-                    </h1>
-                    <p className="max-w-3xl text-[clamp(1.05rem,1.8vw,1.32rem)] leading-8 text-white/72">
-                      SWING-RADAR는 종목을 많이 나열하는 대신, 장전 후보를 만들고 장초에 다시 확인한 뒤 실제로 검토할 0~2개의
-                      행동만 남기는 개인 운용 대시보드입니다.
-                    </p>
-                  </div>
+        <ScrollReveal>
+          <div className="relative">
+            <div className="max-w-[980px] space-y-8 pb-8 lg:pb-[23rem]">
+              <div className="space-y-5">
+                <Badge className="border-white/12 bg-white/8 text-white hover:bg-white/8" variant="secondary">
+                  Action-first swing operating system
+                </Badge>
+                <div className="space-y-6">
+                  <h1 className="max-w-[980px] text-[clamp(4.4rem,11vw,9.4rem)] font-semibold leading-[0.86] tracking-[-0.11em] text-white">
+                    <span className="block">오늘 무엇을</span>
+                    <span className="block">해야 하는지</span>
+                    <span className="block">먼저 답하는</span>
+                    <span className="block">스윙 서비스.</span>
+                  </h1>
+                  <p className="max-w-[760px] text-[clamp(1.05rem,1.6vw,1.28rem)] leading-8 text-white/72">
+                    SWING-RADAR는 종목을 많이 나열하는 대신, 장전 후보를 만들고 장초에 다시 확인한 뒤 실제로 검토할 0~2개의
+                    행동만 남기는 개인 운용 대시보드입니다.
+                  </p>
                 </div>
-              </ScrollReveal>
+              </div>
 
-              <ScrollReveal delay={150}>
-                <div className="flex flex-wrap gap-3">
-                  <Button asChild size="lg" className="bg-white text-slate-950 hover:bg-white/92">
-                    <Link href="/auth">
-                      로그인하고 내 대시보드 열기
-                      <ArrowRight className="h-4 w-4" />
-                    </Link>
-                  </Button>
-                  <Button
-                    asChild
-                    size="lg"
-                    variant="ghost"
-                    className="border border-white/14 bg-white/6 text-white hover:bg-white/10 hover:text-white"
-                  >
-                    <Link href="#workflow">운용 흐름 보기</Link>
-                  </Button>
-                </div>
-              </ScrollReveal>
+              <div className="flex flex-wrap gap-3">
+                <Button asChild size="lg" className="bg-white text-slate-950 hover:bg-white/92">
+                  <Link href="/auth">
+                    로그인하고 내 대시보드 열기
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </Button>
+                <Button
+                  asChild
+                  size="lg"
+                  variant="ghost"
+                  className="border border-white/14 bg-white/6 text-white hover:bg-white/10 hover:text-white"
+                >
+                  <Link href="#workflow">운용 흐름 보기</Link>
+                </Button>
+              </div>
 
-              <div className="grid gap-3 md:grid-cols-3">
+              <div className="grid max-w-[780px] gap-3 md:grid-cols-3">
                 {promiseStrip.map((item, index) => (
-                  <ScrollReveal key={item.label} delay={220 + index * 70}>
+                  <ScrollReveal key={item.label} delay={120 + index * 70}>
                     <div className="rounded-[28px] border border-white/10 bg-white/6 px-4 py-4 backdrop-blur-sm">
                       <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-white/48">{item.label}</p>
-                      <p className="mt-3 text-[clamp(2rem,3vw,2.7rem)] font-semibold leading-none tracking-[-0.08em] text-white">
+                      <p className="mt-3 text-[clamp(2rem,3vw,2.8rem)] font-semibold leading-none tracking-[-0.08em] text-white">
                         {item.value}
                       </p>
                       <p className="mt-2 text-sm leading-6 text-white/62">{item.note}</p>
@@ -146,14 +152,14 @@ export function LandingPage() {
             </div>
 
             <ScrollReveal delay={220} axis="x">
-              <div className="relative public-float">
-                <div className="absolute -inset-x-8 -top-8 h-32 rounded-full bg-[radial-gradient(circle,hsl(39_84%_72%_/_0.18),transparent_68%)] blur-3xl" />
-                <div className="relative rounded-[36px] border border-white/12 bg-[linear-gradient(180deg,rgba(255,255,255,0.16),rgba(255,255,255,0.08))] p-4 backdrop-blur-xl sm:p-5">
-                  <div className="rounded-[30px] border border-white/12 bg-[linear-gradient(180deg,rgba(16,23,37,0.94),rgba(22,29,44,0.98))] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
+              <div className="relative public-float lg:absolute lg:bottom-2 lg:right-0 lg:w-[31rem] xl:w-[34rem]">
+                <div className="absolute -inset-x-6 -inset-y-6 rounded-[42px] bg-[radial-gradient(circle_at_center,hsl(37_80%_68%_/_0.14),transparent_72%)] blur-3xl" />
+                <div className="relative rounded-[34px] border border-white/12 bg-[linear-gradient(180deg,rgba(255,255,255,0.17),rgba(255,255,255,0.08))] p-4 backdrop-blur-xl sm:p-5">
+                  <div className="rounded-[30px] border border-white/12 bg-[linear-gradient(180deg,rgba(16,23,37,0.96),rgba(22,29,44,0.99))] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
                     <div className="flex items-center justify-between gap-3 border-b border-white/8 pb-4">
                       <div>
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-white/40">Today board</p>
-                        <p className="mt-2 text-[clamp(1.9rem,3vw,2.9rem)] font-semibold tracking-[-0.07em] text-white">
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-white/38">Today board</p>
+                        <p className="mt-2 text-[clamp(2.2rem,3vw,3.15rem)] font-semibold tracking-[-0.08em] text-white">
                           오늘 실제 행동 2개
                         </p>
                       </div>
@@ -170,7 +176,7 @@ export function LandingPage() {
                       ].map(([label, value]) => (
                         <div key={label} className="rounded-[22px] border border-white/8 bg-white/5 px-4 py-4">
                           <p className="text-xs font-medium text-white/48">{label}</p>
-                          <p className="mt-2 text-[clamp(1.7rem,2.4vw,2.5rem)] font-semibold tracking-[-0.07em] text-white">
+                          <p className="mt-2 text-[clamp(1.8rem,2.4vw,2.5rem)] font-semibold tracking-[-0.07em] text-white">
                             {value}
                           </p>
                         </div>
@@ -178,11 +184,7 @@ export function LandingPage() {
                     </div>
 
                     <div className="mt-4 space-y-3">
-                      {[
-                        ["ISC", "오늘 매수 검토", "진입 87,000 ~ 88,200 / 손절 83,400"],
-                        ["DN오토모티브", "관찰 유지", "시초가 반응이 약하면 더 지켜보기"],
-                        ["씨에스윈드", "추격 금지", "갭상승 과열로 오늘은 보류"]
-                      ].map(([name, state, note], index) => (
+                      {heroBoardItems.map(([name, state, note], index) => (
                         <div
                           key={name}
                           className="rounded-[24px] border border-white/8 bg-white/[0.045] px-4 py-4 transition duration-300 hover:bg-white/[0.075]"
@@ -213,78 +215,89 @@ export function LandingPage() {
               </div>
             </ScrollReveal>
           </div>
-        </section>
-      </ScrollReveal>
+        </ScrollReveal>
+      </section>
 
-      <section id="overview" className="grid gap-8 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
-        <ScrollReveal className="space-y-4 lg:sticky lg:top-28 lg:self-start">
+      <section id="overview" className="space-y-8">
+        <ScrollReveal className="space-y-4">
           <p className="eyebrow-label">Overview</p>
-          <h2 className="max-w-xl text-balance text-[clamp(3rem,6vw,5.2rem)] font-semibold leading-[0.94] tracking-[-0.08em] text-foreground">
-            분석 리포트처럼 길게 읽지 않아도 되게 바꿨습니다.
+          <h2 className="max-w-[900px] text-[clamp(3.2rem,8vw,6.4rem)] font-semibold leading-[0.9] tracking-[-0.1em] text-foreground">
+            <span className="block">분석 리포트처럼</span>
+            <span className="block">길게 읽지 않아도</span>
+            <span className="block">되게 바꿨습니다.</span>
           </h2>
-          <p className="max-w-lg text-[clamp(1rem,1.4vw,1.18rem)] leading-8 text-muted-foreground">
-            Stripe가 큰 문장과 명확한 정보 계층으로 제품 약속을 바로 전달하고, RH Design이 강한 타이포와 넓은 여백으로 장면을
-            분리하듯이, 이 랜딩도 한 섹션에 하나의 메시지만 남기도록 다시 구성했습니다.
-          </p>
         </ScrollReveal>
 
-        <div className="space-y-4">
-          {painNarrative.map((item, index) => (
-            <ScrollReveal key={item.title} delay={index * 90}>
-              <article className="rounded-[34px] border border-border/70 bg-white/76 p-6 shadow-[0_24px_80px_hsl(33_22%_26%_/_0.06)] backdrop-blur-xl sm:p-8">
-                <div className="flex items-start gap-4">
-                  <span className="mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-primary/15 bg-primary/8 text-sm font-semibold text-primary">
-                    0{index + 1}
-                  </span>
-                  <div className="space-y-3">
-                    <h3 className="text-[clamp(1.8rem,2.8vw,2.7rem)] font-semibold leading-[1] tracking-[-0.06em] text-foreground">
-                      {item.title}
-                    </h3>
-                    <p className="max-w-2xl text-base leading-8 text-muted-foreground">{item.body}</p>
+        <div className="grid gap-8 xl:grid-cols-[minmax(0,0.82fr)_minmax(0,1.18fr)] xl:items-start">
+          <ScrollReveal delay={80}>
+            <div className="rounded-[34px] border border-border/70 bg-white/68 p-6 shadow-[0_24px_80px_hsl(33_22%_26%_/_0.06)] backdrop-blur-xl sm:p-8">
+              <p className="max-w-[520px] text-[clamp(1rem,1.4vw,1.16rem)] leading-8 text-muted-foreground">
+                참고하신 랜딩처럼, 큰 문장이 다른 영역에 눌리지 않고 먼저 서게 만드는 것이 중요했습니다. 그래서 이 섹션부터는
+                헤딩을 위로 빼고, 설명과 사례 카드는 아래로 내려 타이포가 충분한 호흡을 갖도록 구조를 바꿨습니다.
+              </p>
+            </div>
+          </ScrollReveal>
+
+          <div className="space-y-4">
+            {painNarrative.map((item, index) => (
+              <ScrollReveal key={item.title} delay={index * 90}>
+                <article className="rounded-[34px] border border-border/70 bg-white/76 p-6 shadow-[0_24px_80px_hsl(33_22%_26%_/_0.06)] backdrop-blur-xl sm:p-8">
+                  <div className="flex items-start gap-4">
+                    <span className="mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-primary/15 bg-primary/8 text-sm font-semibold text-primary">
+                      {item.number}
+                    </span>
+                    <div className="space-y-3">
+                      <h3 className="max-w-[780px] text-[clamp(1.9rem,3vw,3.15rem)] font-semibold leading-[0.96] tracking-[-0.08em] text-foreground">
+                        {item.title}
+                      </h3>
+                      <p className="max-w-2xl text-base leading-8 text-muted-foreground">{item.body}</p>
+                    </div>
                   </div>
-                </div>
-              </article>
-            </ScrollReveal>
-          ))}
+                </article>
+              </ScrollReveal>
+            ))}
+          </div>
         </div>
       </section>
 
-      <section id="workflow" className="space-y-6">
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:items-end">
-          <ScrollReveal className="space-y-4">
-            <p className="eyebrow-label">Workflow</p>
-            <h2 className="max-w-3xl text-balance text-[clamp(3rem,6vw,5rem)] font-semibold leading-[0.94] tracking-[-0.08em] text-foreground">
-              장전 후보에서 끝나지 않습니다.
-              <br />
-              장초 확인을 거쳐야 오늘 행동이 됩니다.
-            </h2>
-          </ScrollReveal>
-          <ScrollReveal delay={100}>
-            <div className="rounded-[30px] border border-border/70 bg-white/72 px-5 py-5 text-[1.02rem] leading-8 text-muted-foreground shadow-[0_18px_56px_hsl(33_22%_24%_/_0.05)] backdrop-blur-xl sm:px-6">
+      <section id="workflow" className="space-y-8">
+        <ScrollReveal className="space-y-4">
+          <p className="eyebrow-label">Workflow</p>
+          <h2 className="max-w-[1060px] text-[clamp(3.2rem,8vw,6.2rem)] font-semibold leading-[0.9] tracking-[-0.1em] text-foreground">
+            <span className="block">장전 후보에서 끝나지 않습니다.</span>
+            <span className="block">장초 확인을 거쳐야</span>
+            <span className="block">오늘 행동이 됩니다.</span>
+          </h2>
+        </ScrollReveal>
+
+        <div className="grid gap-6 xl:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] xl:items-start">
+          <ScrollReveal delay={90}>
+            <div className="rounded-[32px] border border-border/70 bg-white/72 px-5 py-5 text-[1.02rem] leading-8 text-muted-foreground shadow-[0_18px_56px_hsl(33_22%_24%_/_0.05)] backdrop-blur-xl sm:px-6">
               전일 데이터로 계획을 세우고, 장 시작 후 5~10분 동안 실제 행동 가능 여부를 다시 확인합니다. 이 짧은 점검이 실시간
               추격과 차분한 스윙을 가르는 핵심 단계입니다.
             </div>
           </ScrollReveal>
-        </div>
 
-        <ScrollReveal delay={120}>
-          <LandingWorkflowDemo />
-        </ScrollReveal>
+          <ScrollReveal delay={130}>
+            <LandingWorkflowDemo />
+          </ScrollReveal>
+        </div>
       </section>
 
       <section id="product" className="space-y-8">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <ScrollReveal className="space-y-4">
-            <p className="eyebrow-label">Product</p>
-            <h2 className="max-w-3xl text-balance text-[clamp(3rem,6vw,5rem)] font-semibold leading-[0.94] tracking-[-0.08em] text-foreground">
-              로그인 후에는 설명이 아니라
-              <br />
-              개인 운용 대시보드가 열립니다.
-            </h2>
-          </ScrollReveal>
-          <ScrollReveal delay={110}>
-            <div className="max-w-xl rounded-[28px] border border-border/70 bg-white/72 px-5 py-5 text-[1.02rem] leading-8 text-muted-foreground shadow-[0_18px_56px_hsl(33_22%_24%_/_0.05)] backdrop-blur-xl">
+        <ScrollReveal className="space-y-4">
+          <p className="eyebrow-label">Product</p>
+          <h2 className="max-w-[980px] text-[clamp(3.1rem,8vw,6rem)] font-semibold leading-[0.9] tracking-[-0.1em] text-foreground">
+            <span className="block">로그인 후에는 설명이 아니라</span>
+            <span className="block">개인 운용 대시보드가 열립니다.</span>
+          </h2>
+        </ScrollReveal>
+
+        <div className="flex justify-start">
+          <ScrollReveal delay={70}>
+            <div className="max-w-[760px] rounded-[28px] border border-border/70 bg-white/72 px-5 py-5 text-[1.02rem] leading-8 text-muted-foreground shadow-[0_18px_56px_hsl(33_22%_24%_/_0.05)] backdrop-blur-xl">
               공개 영역은 서비스 철학과 흐름만 보여주고, 실제 기능은 모두 로그인 후 대시보드 안쪽에서만 보이게 바꾸었습니다.
+              이제 랜딩은 설득의 역할을, 앱은 실행의 역할을 분리해서 가져갑니다.
             </div>
           </ScrollReveal>
         </div>
@@ -294,12 +307,12 @@ export function LandingPage() {
             const Icon = item.icon;
 
             return (
-              <ScrollReveal key={item.title} delay={index * 80} className={item.span}>
+              <ScrollReveal key={item.title} delay={index * 70} className={item.span}>
                 <section className="h-full rounded-[34px] border border-border/70 bg-white/78 p-6 shadow-[0_24px_80px_hsl(33_22%_26%_/_0.06)] backdrop-blur-xl">
                   <div className="flex items-start justify-between gap-4">
                     <div className="space-y-3">
                       <p className="eyebrow-label">{item.eyebrow}</p>
-                      <h3 className="text-[clamp(1.8rem,2.4vw,2.5rem)] font-semibold leading-[1] tracking-[-0.06em] text-foreground">
+                      <h3 className="text-[clamp(1.95rem,2.4vw,2.8rem)] font-semibold leading-[0.96] tracking-[-0.07em] text-foreground">
                         {item.title}
                       </h3>
                       <p className="max-w-xl text-sm leading-7 text-muted-foreground">{item.description}</p>
@@ -310,12 +323,8 @@ export function LandingPage() {
                   </div>
 
                   <div className="mt-6 space-y-3">
-                    {item.bullets.map((bullet, bulletIndex) => (
-                      <div
-                        key={bullet}
-                        className="rounded-[22px] border border-border/70 bg-secondary/20 px-4 py-3 text-sm text-foreground/80"
-                        style={{ transitionDelay: `${bulletIndex * 60}ms` }}
-                      >
+                    {item.bullets.map((bullet) => (
+                      <div key={bullet} className="rounded-[22px] border border-border/70 bg-secondary/20 px-4 py-3 text-sm text-foreground/80">
                         {bullet}
                       </div>
                     ))}
@@ -363,48 +372,42 @@ export function LandingPage() {
         </div>
       </section>
 
-      <ScrollReveal>
-        <section
-          id="faq"
-          className="rounded-[40px] border border-border/70 bg-[linear-gradient(180deg,hsl(35_23%_98%_/_0.92),hsl(33_18%_95%_/_0.98))] px-6 py-8 shadow-[0_30px_100px_hsl(33_22%_24%_/_0.07)] sm:px-8 sm:py-10"
-        >
-          <div className="grid gap-10 xl:grid-cols-[minmax(0,0.86fr)_minmax(0,1.14fr)]">
-            <div className="space-y-4">
-              <p className="eyebrow-label">FAQ</p>
-              <h2 className="max-w-xl text-balance text-[clamp(2.8rem,5vw,4.6rem)] font-semibold leading-[0.96] tracking-[-0.08em] text-foreground">
-                사용자가 바로 묻는 질문부터
-                <br />
-                짧고 분명하게 답합니다.
-              </h2>
-              <p className="max-w-lg text-[clamp(1rem,1.4vw,1.18rem)] leading-8 text-muted-foreground">
-                로그인 전에는 서비스가 어떤 원리로 종목 수를 줄이는지 이해하고, 로그인 후에는 내 기준의 운용 화면으로 바로
-                이어지게 만드는 것이 목표입니다.
-              </p>
-              <div className="pt-2">
-                <Button asChild size="lg">
-                  <Link href="/auth">
-                    내 기준으로 시작하기
-                    <ArrowRight className="h-4 w-4" />
-                  </Link>
-                </Button>
-              </div>
+      <section id="faq" className="rounded-[42px] border border-border/70 bg-[linear-gradient(180deg,hsl(35_23%_98%_/_0.92),hsl(33_18%_95%_/_0.98))] px-6 py-8 shadow-[0_30px_100px_hsl(33_22%_24%_/_0.07)] sm:px-8 sm:py-10">
+        <div className="grid gap-10 xl:grid-cols-[minmax(0,0.86fr)_minmax(0,1.14fr)]">
+          <ScrollReveal className="space-y-4">
+            <p className="eyebrow-label">FAQ</p>
+            <h2 className="max-w-[720px] text-[clamp(3rem,7vw,5.4rem)] font-semibold leading-[0.9] tracking-[-0.1em] text-foreground">
+              <span className="block">사용자가 바로 묻는</span>
+              <span className="block">질문부터 답합니다.</span>
+            </h2>
+            <p className="max-w-lg text-[clamp(1rem,1.4vw,1.18rem)] leading-8 text-muted-foreground">
+              로그인 전에는 서비스가 어떤 원리로 종목 수를 줄이는지 이해하고, 로그인 후에는 내 기준의 운용 화면으로 바로
+              이어지게 만드는 것이 목표입니다.
+            </p>
+            <div className="pt-2">
+              <Button asChild size="lg">
+                <Link href="/auth">
+                  내 기준으로 시작하기
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              </Button>
             </div>
+          </ScrollReveal>
 
-            <div className="space-y-3">
-              {faqs.map((item, index) => (
-                <ScrollReveal key={item.question} delay={index * 70}>
-                  <article className="rounded-[26px] border border-border/70 bg-white/82 px-5 py-5">
-                    <h3 className="text-[clamp(1.15rem,1.8vw,1.45rem)] font-semibold leading-[1.08] tracking-[-0.04em] text-foreground">
-                      {item.question}
-                    </h3>
-                    <p className="mt-3 text-sm leading-7 text-muted-foreground">{item.answer}</p>
-                  </article>
-                </ScrollReveal>
-              ))}
-            </div>
+          <div className="space-y-3">
+            {faqs.map((item, index) => (
+              <ScrollReveal key={item.question} delay={index * 70}>
+                <article className="rounded-[28px] border border-border/70 bg-white/82 px-5 py-5">
+                  <h3 className="text-[clamp(1.2rem,1.8vw,1.55rem)] font-semibold leading-[1.08] tracking-[-0.05em] text-foreground">
+                    {item.question}
+                  </h3>
+                  <p className="mt-3 text-sm leading-7 text-muted-foreground">{item.answer}</p>
+                </article>
+              </ScrollReveal>
+            ))}
           </div>
-        </section>
-      </ScrollReveal>
+        </div>
+      </section>
     </main>
   );
 }
