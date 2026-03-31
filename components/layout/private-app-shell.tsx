@@ -35,7 +35,7 @@ export function PrivateAppShell({
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  <span className="data-chip">장전 후보 선별</span>
+                  <span className="data-chip">오늘 볼 종목 선별</span>
                   <span className="data-chip">장초 확인 기록</span>
                   <span className="data-chip">포트폴리오 슬롯 제한</span>
                   <span className="data-chip">보유 종목 관리 보드</span>

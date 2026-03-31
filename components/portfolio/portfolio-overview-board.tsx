@@ -104,7 +104,7 @@ export function PortfolioOverviewBoard({
             <div>
               <CardTitle className="text-xl text-foreground">내 포트폴리오 스냅샷</CardTitle>
               <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
-                이 화면은 공용 추적이 아니라, 내 계정에 입력한 보유 종목과 현금 기준으로 현재 포트폴리오를 관리하는
+                이 화면은 공용 관찰이 아니라, 내 계정에 입력한 보유 종목과 현금 기준으로 현재 포트폴리오를 관리하는
                 용도입니다.
               </p>
             </div>
@@ -119,7 +119,7 @@ export function PortfolioOverviewBoard({
                 </Button>
               )}
               <Button asChild variant="ghost">
-                <Link href="/tracking">공용 추적 보기</Link>
+                <Link href="/tracking">공용 관찰 보기</Link>
               </Button>
             </div>
           </div>

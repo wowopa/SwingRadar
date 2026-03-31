@@ -4,6 +4,7 @@ import { ActionBucketBadge } from "@/components/recommendations/action-bucket-ba
 import { FavoriteTickerButton } from "@/components/shared/favorite-ticker-button";
 import { SignalToneBadge } from "@/components/shared/signal-tone-badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { getFeaturedRankLabel, getValidationBasisDisplayLabel, normalizeActionLanguage } from "@/lib/copy/action-language";
 import {
   buildRecommendationTradePlan,
   createRecommendationTradePlanInput,
@@ -95,7 +96,7 @@ function buildWhyNow(item: Recommendation, reasons?: string[]) {
     next.push(`진입 구간은 ${item.tradePlan.entryLabel}입니다.`);
   }
   if (item.featuredRank) {
-    next.push(`오늘 후보 상위권 #${item.featuredRank} 안에 들어 있습니다.`);
+    next.push(`오늘 우선순위 ${item.featuredRank}위 안에 들어 있습니다.`);
   }
   if (item.validation.hitRate >= 55) {
     next.push(`유사 흐름 확률이 ${item.validation.hitRate}%로 비교적 안정적입니다.`);
@@ -124,7 +125,7 @@ function buildWatchouts(item: Recommendation, validationBasis: ValidationBasis) 
     watchouts.push("손절 기준이 가까워서 진입 시 리스크 관리가 더 중요합니다.");
   }
   if (item.trackingDiagnostic?.blockers.length) {
-    watchouts.push(...item.trackingDiagnostic.blockers.slice(0, 2));
+    watchouts.push(...item.trackingDiagnostic.blockers.slice(0, 2).map((entry) => normalizeActionLanguage(entry)));
   }
 
   if (!watchouts.length) {
@@ -179,11 +180,11 @@ export function RecommendationCard({
             <div className="flex flex-wrap items-center gap-2">
               <ActionBucketBadge bucket={actionBucket} />
               <SignalToneBadge tone={item.signalTone} />
-              {item.featuredRank ? (
-                <span className="rounded-full border border-primary/30 bg-primary/10 px-2 py-1 text-[11px] font-medium text-primary">
-                  오늘 후보 #{item.featuredRank}
-                </span>
-              ) : null}
+                  {item.featuredRank ? (
+                    <span className="rounded-full border border-primary/30 bg-primary/10 px-2 py-1 text-[11px] font-medium text-primary">
+                      {getFeaturedRankLabel(item.featuredRank)}
+                    </span>
+                  ) : null}
             </div>
             <CardTitle className="mt-3 text-2xl text-foreground">
               {item.company} <span className="text-base font-medium text-muted-foreground">{item.ticker}</span>
@@ -237,19 +238,19 @@ export function RecommendationCard({
             <div className="flex flex-wrap items-center gap-2">
               <p className="text-sm font-semibold text-foreground">검증 메모</p>
               <span className={`rounded-full border px-2.5 py-1 text-[11px] font-medium ${getValidationToneClasses(validationBasis)}`}>
-                {validationBasis}
+                {getValidationBasisDisplayLabel(validationBasis)}
               </span>
               <span className={`rounded-full border px-2.5 py-1 text-[11px] font-medium ${getValidationLevelClasses(validationInsight.level)}`}>
                 신뢰도 {validationInsight.level}
               </span>
             </div>
-            <p className="mt-3 text-sm leading-7 text-foreground/80">{validationInsight.headline}</p>
-            <p className="mt-2 text-sm leading-7 text-muted-foreground">{validationInsight.detail}</p>
-            <p className="mt-2 line-clamp-4 text-sm leading-7 text-muted-foreground">{item.validationSummary}</p>
+            <p className="mt-3 text-sm leading-7 text-foreground/80">{normalizeActionLanguage(validationInsight.headline)}</p>
+            <p className="mt-2 text-sm leading-7 text-muted-foreground">{normalizeActionLanguage(validationInsight.detail)}</p>
+            <p className="mt-2 line-clamp-4 text-sm leading-7 text-muted-foreground">{normalizeActionLanguage(item.validationSummary)}</p>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
-            <CompactStat label="활성화 점수" value={typeof item.activationScore === "number" ? `${formatScore(item.activationScore)}점` : "계산 중"} />
+            <CompactStat label="관찰 점수" value={typeof item.activationScore === "number" ? `${formatScore(item.activationScore)}점` : "계산 중"} />
             <CompactStat label="손절 거리" value={formatPercent(item.invalidationDistance)} />
             <CompactStat label="기대 손익비" value={tradePlan.riskRewardLabel || item.riskRewardRatio} />
             <CompactStat label="업데이트" value={formatDateTimeShort(item.updatedAt)} />
@@ -261,23 +262,23 @@ export function RecommendationCard({
           <div className="mt-3 flex flex-wrap gap-2">
             {item.validationBasis ? (
               <span className="rounded-full border border-border/70 bg-background/80 px-3 py-1 text-xs text-foreground/80">
-                검증 기준 {item.validationBasis}
+                검증 기준 {getValidationBasisDisplayLabel(item.validationBasis)}
               </span>
             ) : null}
             {item.candidateScore ? (
               <span className="rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs text-primary">
-                후보 점수 {item.candidateScore}
+                우선순위 점수 {item.candidateScore}
               </span>
             ) : null}
             <span className="rounded-full border border-border/70 bg-background/80 px-3 py-1 text-xs text-foreground/80">
               관찰 기간 {tradePlan.holdWindowLabel}
             </span>
           </div>
-          <p className="mt-4 line-clamp-5 text-sm leading-7 text-foreground/80">{item.rationale}</p>
+          <p className="mt-4 line-clamp-5 text-sm leading-7 text-foreground/80">{normalizeActionLanguage(item.rationale)}</p>
         </section>
 
         <div className="flex items-center justify-between rounded-2xl border border-border/70 bg-secondary/45 px-4 py-3 text-sm text-muted-foreground">
-          <span>{item.signalLabel}</span>
+          <span>{normalizeActionLanguage(item.signalLabel)}</span>
           <Link className="font-medium text-primary transition hover:text-primary/80" href={`/analysis/${item.ticker}`}>
             상세 분석 보기
           </Link>

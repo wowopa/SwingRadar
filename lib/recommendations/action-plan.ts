@@ -519,7 +519,7 @@ export function buildTodayOperatingSummary(items: RecommendationActionItem[]): T
     maxNewPositions: 0,
     maxConcurrentPositions: 4,
     bucketCounts,
-    focusNote: `관찰 후보 ${bucketCounts.watch_only}개가 있어도 보류 ${bucketCounts.avoid}개가 많아 추격 매수는 피하는 편이 좋습니다.`
+    focusNote: `관찰 종목 ${bucketCounts.watch_only}개가 있어도 보류 ${bucketCounts.avoid}개가 많아 추격 매수는 피하는 편이 좋습니다.`
   };
 }
 
@@ -532,20 +532,20 @@ export function buildTodayOperatingWorkflow(summary: TodayOperatingSummary): Dai
   const steps: OperatingStage[] = [
     {
       key: "preopen_candidates",
-      title: "장전 후보",
-      summary: "전일 종가 기준으로 오늘 먼저 볼 종목만 좁힙니다.",
+      title: "오늘 먼저 볼 종목",
+      summary: "전일 종가 기준으로 오늘 먼저 확인할 종목만 좁힙니다.",
       detail: `매수 검토 ${summary.maxNewPositions}개 내외, 관찰 ${summary.bucketCounts.watch_only}개 중심으로 계획을 세웁니다. 이 단계의 종목은 아직 실제 매수 신호가 아닙니다.`
     },
     {
       key: "opening_recheck",
       title: "장초 확인",
       summary: `${OPENING_RECHECK_WINDOW_LABEL} 동안 갭과 구조를 다시 확인합니다.`,
-      detail: `시초가가 계획 진입가보다 ${MAX_ACCEPTABLE_GAP_PERCENT}% 이상 높게 뜨면 추격 금지로 돌리고, 손절 기준과 너무 가까우면 후보에서 제외합니다.`
+      detail: `시초가가 계획 진입가보다 ${MAX_ACCEPTABLE_GAP_PERCENT}% 이상 높게 뜨면 추격 금지로 돌리고, 손절 기준과 너무 가까우면 종목 목록에서 제외합니다.`
     },
     {
       key: "today_action",
       title: "당일 행동",
-      summary: "장초 확인 통과 종목만 실제 행동 후보로 옮깁니다.",
+      summary: "장초 확인 통과 종목만 실제 행동 종목으로 옮깁니다.",
       detail: actionDetail
     }
   ];
@@ -561,7 +561,7 @@ export function buildTodayOperatingWorkflow(summary: TodayOperatingSummary): Dai
       key: "stop_buffer",
       title: "시초가와 손절 기준 사이에 최소한의 여유가 있는가",
       passLabel: `손절까지 ${MIN_STOP_BUFFER_PERCENT}% 이상 여유가 있으면 유지`,
-      failLabel: "손절과 너무 가까우면 후보 제외"
+      failLabel: "손절과 너무 가까우면 목록에서 제외"
     },
     {
       key: "confirmation",
@@ -572,7 +572,7 @@ export function buildTodayOperatingWorkflow(summary: TodayOperatingSummary): Dai
     {
       key: "position_limit",
       title: "오늘 신규 매수 한도 안에 드는 종목인가",
-      passLabel: `상위 ${Math.max(summary.maxNewPositions, 1)}개 안이면 행동 후보 유지`,
+      passLabel: `상위 ${Math.max(summary.maxNewPositions, 1)}개 안이면 행동 종목 유지`,
       failLabel: "한도를 넘기면 나머지는 보류"
     }
   ];

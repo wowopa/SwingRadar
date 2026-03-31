@@ -41,7 +41,7 @@ const OPENING_RECHECK_STATUS_META: Record<OpeningRecheckStatus, OpeningRecheckSt
   },
   passed: {
     label: "통과",
-    description: "장초 확인을 통과해 오늘 행동 후보로 유지합니다.",
+    description: "장초 확인을 통과해 오늘 행동 종목으로 유지합니다.",
     variant: "positive"
   },
   watch: {
@@ -56,7 +56,7 @@ const OPENING_RECHECK_STATUS_META: Record<OpeningRecheckStatus, OpeningRecheckSt
   },
   excluded: {
     label: "제외",
-    description: "손절 기준 훼손 또는 구조 악화로 오늘 후보에서 뺍니다.",
+    description: "손절 기준 훼손 또는 구조 악화로 오늘 목록에서 뺍니다.",
     variant: "default"
   }
 };

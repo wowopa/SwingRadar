@@ -24,14 +24,14 @@ const navItems = [
   {
     href: "/tracking",
     label: "Watchlist",
-    description: "공용 추적",
+    description: "공용 관찰",
     icon: Binoculars,
     match: ["/tracking"]
   },
   {
     href: "/ranking",
     label: "Explore",
-    description: "후보 탐색",
+    description: "종목 탐색",
     icon: Compass,
     match: ["/ranking", "/analysis"]
   },

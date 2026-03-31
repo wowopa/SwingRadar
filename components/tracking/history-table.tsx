@@ -1,5 +1,6 @@
 import { FavoriteTickerButton } from "@/components/shared/favorite-ticker-button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { normalizeActionLanguage } from "@/lib/copy/action-language";
 import { getSymbolByTicker } from "@/lib/symbols/master";
 import { formatPercent } from "@/lib/utils";
 import type { SignalHistoryEntry, TrackingDetail } from "@/types/tracking";
@@ -51,7 +52,7 @@ export function HistoryTable({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>공용 추적 이력</CardTitle>
+        <CardTitle>공용 관찰 이력</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="w-full overflow-x-auto overscroll-x-contain pb-2 [webkit-overflow-scrolling:touch]">
@@ -95,8 +96,8 @@ export function HistoryTable({
                       <div className="text-xs text-muted-foreground">{item.ticker}</div>
                       {selectionReason ? (
                         <p className="mt-2 line-clamp-2 text-xs leading-5 text-muted-foreground">
-                          {selectionStage ? `${selectionStage}: ` : ""}
-                          {selectionReason}
+                          {selectionStage ? `${normalizeActionLanguage(selectionStage)}: ` : ""}
+                          {normalizeActionLanguage(selectionReason)}
                         </p>
                       ) : null}
                     </td>

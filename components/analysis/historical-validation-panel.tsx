@@ -1,4 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { getValidationBasisDisplayLabel, normalizeActionLanguage } from "@/lib/copy/action-language";
 import { formatPercent } from "@/lib/utils";
 import type { ValidationBasis, ValidationInsight, ValidationStats } from "@/types/recommendation";
 import type { TrackingDetail, SignalHistoryEntry } from "@/types/tracking";
@@ -73,8 +74,12 @@ export function HistoricalValidationPanel({
         {resolvedInsight ? (
           <>
             <div className="grid gap-3 md:grid-cols-3">
-              <MetricCard label="검증 기준" value={resolvedInsight.basis} note={resolvedInsight.headline} />
-              <MetricCard label="신뢰 수준" value={resolvedInsight.level} note={resolvedInsight.detail} />
+              <MetricCard
+                label="검증 기준"
+                value={getValidationBasisDisplayLabel(resolvedInsight.basis)}
+                note={normalizeActionLanguage(resolvedInsight.headline)}
+              />
+              <MetricCard label="신뢰 수준" value={resolvedInsight.level} note={normalizeActionLanguage(resolvedInsight.detail)} />
               <MetricCard
                 label="실측 전환"
                 value={
@@ -96,7 +101,7 @@ export function HistoricalValidationPanel({
         {!history.length ? (
           <div className="rounded-[24px] border border-border/70 bg-secondary/20 px-5 py-6">
             <p className="text-sm leading-7 text-muted-foreground">
-              이 종목의 과거 종료된 공용 추적 이력은 아직 많지 않습니다. 지금은 검증 기준과 표본 수를 먼저 보고, 실제 사례가 더 쌓이는지 계속 확인하는 편이 좋습니다.
+              이 종목의 과거 종료된 공용 관찰 이력은 아직 많지 않습니다. 지금은 검증 기준과 표본 수를 먼저 보고, 실제 사례가 더 쌓이는지 계속 확인하는 편이 좋습니다.
             </p>
           </div>
         ) : null}
@@ -132,8 +137,8 @@ export function HistoricalValidationPanel({
                     </div>
                     {detail ? (
                       <div className="mt-3 space-y-2 text-sm leading-7">
-                        <p className="text-foreground/82">{detail.summary}</p>
-                        <p className="text-muted-foreground">{detail.afterActionReview}</p>
+                        <p className="text-foreground/82">{normalizeActionLanguage(detail.summary)}</p>
+                        <p className="text-muted-foreground">{normalizeActionLanguage(detail.afterActionReview)}</p>
                       </div>
                     ) : null}
                   </div>

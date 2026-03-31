@@ -22,7 +22,7 @@ const bucketIcons = {
 const emptyMessages: Record<RecommendationActionBucket, string> = {
   buy_now: "장초 확인까지 볼 종목은 아직 없습니다.",
   watch_only: "추가 관찰이 필요한 종목은 많지 않습니다.",
-  avoid: "현재 상위 후보 중 즉시 보류로 보는 종목은 많지 않습니다."
+  avoid: "현재 상위 종목 중 즉시 보류로 보는 종목은 많지 않습니다."
 };
 
 const workflowIcons = {
@@ -85,9 +85,9 @@ export function TodayOperatingSummary({
             icon={WalletCards}
           />
           <SummaryMetric
-            title="장초 통과 후보"
+            title="오늘 매수 검토"
             value={`${resolvedSummary.bucketCounts.buy_now}개`}
-            note="장초 확인 통과 시 매수 검토할 종목"
+            note="장초 확인 통과 시 실제로 볼 종목"
             icon={LayoutDashboard}
           />
           <SummaryMetric

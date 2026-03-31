@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 
 import { RecommendationTable } from "@/components/recommendations/recommendation-table";
 import { Input } from "@/components/ui/input";
+import { getValidationBasisDisplayLabel } from "@/lib/copy/action-language";
 import {
   resolveRecommendationActionBucket,
   type RecommendationActionBucket
@@ -203,7 +204,7 @@ export function RecommendationExplorer({ items }: { items: Recommendation[] }) {
           <option value="all">전체</option>
           {VALIDATION_BASIS_OPTIONS.map((basis) => (
             <option key={basis} value={basis}>
-              {basis}
+              {getValidationBasisDisplayLabel(basis)}
             </option>
           ))}
         </FilterSelect>
@@ -223,9 +224,9 @@ export function RecommendationExplorer({ items }: { items: Recommendation[] }) {
             </p>
           </div>
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            <SummaryCard label="행동 후보" value={`${actionableCount}개`} detail="장초 통과 후보 + 관찰만" tone="emerald" />
-            <SummaryCard label="장초 통과 후보" value={`${bucketedItems.buy_now.length}개`} detail="장초 확인 통과 시 매수 검토할 후보" tone="sky" />
-            <SummaryCard label="관찰만" value={`${bucketedItems.watch_only.length}개`} detail="확인 가격과 반응을 더 볼 후보" tone="amber" />
+            <SummaryCard label="오늘 볼 종목" value={`${actionableCount}개`} detail="매수 검토 + 관찰 종목" tone="emerald" />
+            <SummaryCard label="오늘 매수 검토" value={`${bucketedItems.buy_now.length}개`} detail="장초 확인 통과 시 실제로 볼 종목" tone="sky" />
+            <SummaryCard label="조금 더 관찰" value={`${bucketedItems.watch_only.length}개`} detail="확인 가격과 반응을 더 볼 종목" tone="amber" />
             <SummaryCard label="보류" value={`${bucketedItems.avoid.length}개`} detail="기본 카드에서는 뒤로 미룹니다" tone="stone" />
           </div>
         </div>
@@ -237,7 +238,7 @@ export function RecommendationExplorer({ items }: { items: Recommendation[] }) {
               <p className="mt-2 text-sm leading-6 text-muted-foreground">
                 {countsMatchAll
                   ? "필터를 적용하지 않은 기본 상태라 현재 분포와 전체 분포가 같습니다."
-                  : "현재 필터 결과와 전체 후보의 검증 근거를 한 번에 비교합니다."}
+                  : "현재 필터 결과와 전체 종목의 검증 근거를 한 번에 비교합니다."}
               </p>
             </div>
             <div className="rounded-2xl border border-border/70 bg-secondary/35 px-3 py-2 text-sm text-muted-foreground">
@@ -265,20 +266,20 @@ export function RecommendationExplorer({ items }: { items: Recommendation[] }) {
         <section className="space-y-4">
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
-              <h2 className="text-lg font-semibold text-foreground">전체 후보 순위표</h2>
+              <h2 className="text-lg font-semibold text-foreground">전체 종목 순위표</h2>
               <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                이 화면은 카드보다 비교표 중심으로 봅니다. 필터와 정렬로 후보를 좁힌 뒤, 필요한 종목만 상세 분석으로 들어가면 됩니다.
+                이 화면은 카드보다 비교표 중심으로 봅니다. 필터와 정렬로 종목을 좁힌 뒤, 필요한 종목만 상세 분석으로 들어가면 됩니다.
               </p>
             </div>
             <div className="rounded-2xl border border-border/70 bg-secondary/35 px-4 py-3 text-sm text-muted-foreground">
-              장초 통과 후보 {bucketedItems.buy_now.length}개 · 관찰만 {bucketedItems.watch_only.length}개 · 보류 {bucketedItems.avoid.length}개
+              오늘 매수 검토 {bucketedItems.buy_now.length}개 · 관찰 {bucketedItems.watch_only.length}개 · 보류 {bucketedItems.avoid.length}개
             </div>
           </div>
           <RecommendationTable items={filteredItems} favorites={favorites} onToggleFavorite={toggleFavorite} />
         </section>
       ) : (
         <section className="rounded-3xl border border-border/70 bg-card/40 p-8 text-center">
-          <p className="text-lg font-semibold text-foreground">조건에 맞는 후보가 없습니다.</p>
+          <p className="text-lg font-semibold text-foreground">조건에 맞는 종목이 없습니다.</p>
           <p className="mt-3 text-sm leading-6 text-muted-foreground">
             검색어 또는 섹터, 검증 기준 조건을 조금 더 넓히면 더 많은 종목을 볼 수 있습니다.
           </p>
@@ -348,7 +349,7 @@ function BasisRow({
   return (
     <div className="flex items-center justify-between gap-4 rounded-2xl border border-border/70 bg-background/50 px-4 py-3">
       <div>
-        <p className="text-sm font-medium text-foreground">{label}</p>
+        <p className="text-sm font-medium text-foreground">{getValidationBasisDisplayLabel(label)}</p>
         <p className="text-xs text-muted-foreground">{isSame ? "현재와 전체 기준이 동일합니다." : "현재 필터와 전체 기준 비교"}</p>
       </div>
       <div className="flex items-center gap-2 text-sm">

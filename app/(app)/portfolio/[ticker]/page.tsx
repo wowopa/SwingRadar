@@ -64,7 +64,7 @@ export default async function PortfolioPositionPage({
       <PageHeader
         eyebrow="Portfolio Detail"
         title={`${company} 포지션`}
-        description="실제 체결 타임라인과 현재 운용 계획, 종료 회고, 장초 체크 기록까지 함께 보며 이 종목의 생애주기를 확인합니다."
+        description="실제 체결 타임라인과 현재 운용 계획, 종료 회고, 장초 확인 기록까지 함께 보며 이 종목의 생애주기를 확인합니다."
       />
       <PublicDataStatusBar summary={statusSummary} />
       <PositionDetailView

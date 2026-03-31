@@ -20,7 +20,7 @@ export default async function RecommendationsPage() {
       <PageHeader
         eyebrow="Dashboard"
         title="오늘의 행동"
-        description="오늘 매수 검토, 보유 우선 관리, 장초 확인 대기만 먼저 보여주는 메인 화면입니다."
+        description="오늘 매수 검토, 보유 우선 관리, 장초 확인만 먼저 보여주는 메인 화면입니다."
       />
       <PublicDataStatusBarGroup summaries={statusSummaries} />
 

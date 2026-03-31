@@ -15,16 +15,16 @@ const landingStatusToneClasses = {
 const stages = [
   {
     id: "preopen",
-    label: "장전 후보",
+    label: "오늘 먼저 볼 종목",
     eyebrow: "08:00",
     title: "먼저 볼 것만 남깁니다.",
     description:
-      "전일 데이터로 후보를 먼저 줄입니다. 이 단계는 매수 지시가 아니라, 오늘 아침에 먼저 확인할 목록을 만드는 단계입니다.",
-    bullets: ["매수 검토 0~3개", "관찰 후보 5~10개", "과열 종목 감점"],
-    panelTitle: "오늘 먼저 볼 후보",
+      "전일 데이터로 종목을 먼저 줄입니다. 이 단계는 매수 지시가 아니라, 오늘 아침에 먼저 확인할 목록을 만드는 단계입니다.",
+    bullets: ["매수 검토 0~3개", "관찰 종목 5~10개", "과열 종목 감점"],
+    panelTitle: "오늘 먼저 볼 종목",
     panelNote: "전일 종가 기준 장전 계획",
     boardItems: [
-      { name: "ISC", status: "매수 검토 후보", tone: "positive" as const },
+      { name: "ISC", status: "매수 검토", tone: "positive" as const },
       { name: "DN오토모티브", status: "관찰 우선", tone: "neutral" as const },
       { name: "씨에스윈드", status: "보류", tone: "caution" as const }
     ]

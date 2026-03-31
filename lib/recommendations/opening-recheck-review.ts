@@ -224,11 +224,11 @@ export function buildOpeningRecheckReview(
 
   return {
     summary: {
-      headline: `장초 체크 회고 ${summary.count}건`,
+      headline: `장초 확인 회고 ${summary.count}건`,
       note:
         summary.resolvedCount > 0
-          ? "장초 판단이 실제 추적 결과와 어떻게 이어졌는지 짧게 확인할 수 있습니다."
-          : "아직 진행 중인 장초 체크가 많아 결과가 더 쌓이면 판단 근거가 선명해집니다.",
+          ? "장초 판단이 실제 관찰 결과와 어떻게 이어졌는지 짧게 확인할 수 있습니다."
+          : "아직 진행 중인 장초 확인이 많아 결과가 더 쌓이면 판단 근거가 선명해집니다.",
       matchedCount: summary.count,
       resolvedCount: summary.resolvedCount,
       successCount: summary.successCount,

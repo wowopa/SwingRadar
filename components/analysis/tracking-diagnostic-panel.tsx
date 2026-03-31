@@ -1,4 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { normalizeActionLanguage } from "@/lib/copy/action-language";
 import { formatScore } from "@/lib/utils";
 import type { TrackingDiagnostic } from "@/types/recommendation";
 
@@ -19,11 +20,11 @@ export function TrackingDiagnosticPanel({ diagnostic }: { diagnostic?: TrackingD
     return (
       <Card>
         <CardHeader>
-          <CardTitle>공용 추적 진단</CardTitle>
+          <CardTitle>관찰 진단</CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-sm leading-7 text-muted-foreground">
-            공용 추적 진단 데이터가 아직 준비되지 않았습니다. 다음 배치 이후에는 활성화 점수와 부족한 조건을 함께 볼 수 있습니다.
+            관찰 진단 데이터가 아직 준비되지 않았습니다. 다음 배치 이후에는 관찰 점수와 부족한 조건을 함께 볼 수 있습니다.
           </p>
         </CardContent>
       </Card>
@@ -34,15 +35,17 @@ export function TrackingDiagnosticPanel({ diagnostic }: { diagnostic?: TrackingD
     <Card>
       <CardHeader>
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <CardTitle>공용 추적 진단</CardTitle>
-          <span className={`rounded-full border px-3 py-1 text-xs font-medium ${getStageTone(diagnostic)}`}>{diagnostic.stage}</span>
+          <CardTitle>관찰 진단</CardTitle>
+          <span className={`rounded-full border px-3 py-1 text-xs font-medium ${getStageTone(diagnostic)}`}>
+            {normalizeActionLanguage(diagnostic.stage)}
+          </span>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid gap-3 sm:grid-cols-3">
-          <MetricCard label="활성화 점수" value={`${formatScore(diagnostic.activationScore)}점`} note="공용 추적 단계 판단 점수" />
-          <MetricCard label="자동 감시 기준" value={`${formatScore(diagnostic.watchThreshold)}점`} note="자동 감시 시작 최소 기준" />
-          <MetricCard label="진입 추적 기준" value={`${formatScore(diagnostic.entryThreshold)}점`} note="진입 추적 시작 최소 기준" />
+          <MetricCard label="관찰 점수" value={`${formatScore(diagnostic.activationScore)}점`} note="공용 관찰 단계 판단 점수" />
+          <MetricCard label="관찰 시작 기준" value={`${formatScore(diagnostic.watchThreshold)}점`} note="관찰을 시작하는 최소 기준" />
+          <MetricCard label="매수 검토 기준" value={`${formatScore(diagnostic.entryThreshold)}점`} note="매수 검토로 올리는 최소 기준" />
         </div>
 
         <div className="grid gap-4 md:grid-cols-2">
@@ -50,7 +53,7 @@ export function TrackingDiagnosticPanel({ diagnostic }: { diagnostic?: TrackingD
             <p className="text-sm font-semibold text-foreground">충족한 조건</p>
             <ul className="mt-3 space-y-2 text-sm leading-6 text-foreground/82">
               {diagnostic.supports.length ? (
-                diagnostic.supports.map((item) => <li key={item}>{item}</li>)
+                diagnostic.supports.map((item) => <li key={item}>{normalizeActionLanguage(item)}</li>)
               ) : (
                 <li>현재 단계에서 뚜렷한 강점은 아직 충분하지 않습니다.</li>
               )}
@@ -60,9 +63,9 @@ export function TrackingDiagnosticPanel({ diagnostic }: { diagnostic?: TrackingD
             <p className="text-sm font-semibold text-foreground">보강이 필요한 조건</p>
             <ul className="mt-3 space-y-2 text-sm leading-6 text-foreground/82">
               {diagnostic.blockers.length ? (
-                diagnostic.blockers.map((item) => <li key={item}>{item}</li>)
+                diagnostic.blockers.map((item) => <li key={item}>{normalizeActionLanguage(item)}</li>)
               ) : (
-                <li>현재 공용 추적 기준은 대부분 충족하고 있습니다.</li>
+                <li>현재 공용 관찰 기준은 대부분 충족하고 있습니다.</li>
               )}
             </ul>
           </div>

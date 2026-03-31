@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 const supportReasons = [
   {
     title: "서버와 배치 운영",
-    description: "매일 아침 데이터 갱신과 후보 재정리, 공용 추적 운영에 들어가는 기본 비용을 꾸준히 감당합니다.",
+    description: "매일 아침 데이터 갱신과 종목 재정리, 공용 관찰 운영에 들어가는 기본 비용을 꾸준히 감당합니다.",
     icon: Server
   },
   {
@@ -61,7 +61,7 @@ export default function SupportPage() {
             <p className="eyebrow-label">Why Support</p>
             <h2 className="text-2xl font-semibold text-foreground">작고 꾸준한 후원이 서비스의 리듬을 지켜줍니다.</h2>
             <p className="max-w-4xl text-sm leading-7 text-foreground/80">
-              SWING-RADAR는 매일 아침 데이터를 다시 정리하고, 후보 흐름을 누적해서 보여주는 운영형 서비스입니다. 후원은 서버비와
+              SWING-RADAR는 매일 아침 데이터를 다시 정리하고, 종목 흐름을 누적해서 보여주는 운영형 서비스입니다. 후원은 서버비와
               데이터 운영비, 그리고 실제로 체감되는 화면 개선 작업에 우선적으로 사용됩니다.
             </p>
           </div>

@@ -13,6 +13,7 @@ import { OpeningCheckReviewCard } from "@/components/recommendations/opening-che
 import { SignalToneBadge } from "@/components/shared/signal-tone-badge";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { getFeaturedRankLabel } from "@/lib/copy/action-language";
 import type {
   DailyScanSummaryDto,
   HoldingActionBoardDto,
@@ -269,7 +270,7 @@ export function DashboardFocusBoard({
                             {item.company} <span className="text-xs font-medium text-muted-foreground">{item.ticker}</span>
                           </p>
                           <SignalToneBadge tone={item.signalTone} />
-                          {item.featuredRank ? <Badge variant="secondary">후보 #{item.featuredRank}</Badge> : null}
+                          {item.featuredRank ? <Badge variant="secondary">{getFeaturedRankLabel(item.featuredRank)}</Badge> : null}
                         </div>
                         <p className="mt-3 text-sm leading-6 text-foreground/82">{buildBuyReviewNote(item)}</p>
                         {buildBuyReviewSizing(item) ? (
@@ -404,13 +405,13 @@ export function DashboardFocusBoard({
           {
             href: "/tracking",
             title: "Watchlist",
-            description: "공용 추적과 관찰 기록 보기",
+            description: "공용 관찰 기록 보기",
             icon: Clock3
           },
           {
             href: "/ranking",
             title: "Explore",
-            description: "후보 비교와 상세 분석 보기",
+            description: "종목 비교와 상세 분석 보기",
             icon: Compass
           },
           {

@@ -2,6 +2,7 @@ import { Radar, ShieldCheck, Target } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { normalizeActionLanguage } from "@/lib/copy/action-language";
 import type { OpeningRecheckReviewDto } from "@/lib/api-contracts/swing-radar";
 
 function formatPercent(value?: number) {
@@ -22,9 +23,9 @@ export function OpeningCheckReviewCard({ review }: { review?: OpeningRecheckRevi
               <Radar className="h-4 w-4" />
             </div>
             <div>
-              <CardTitle className="text-base text-foreground">장초 체크 회고</CardTitle>
+              <CardTitle className="text-base text-foreground">장초 확인 회고</CardTitle>
               <p className="mt-1 text-sm text-muted-foreground">
-                장초 체크 결과가 조금 더 쌓이면 통과와 보류 판단이 실제 성과와 어떻게 연결되는지 보여줍니다.
+                장초 확인 결과가 조금 더 쌓이면 통과와 보류 판단이 실제 성과와 어떻게 연결되는지 보여줍니다.
               </p>
             </div>
           </div>
@@ -43,8 +44,8 @@ export function OpeningCheckReviewCard({ review }: { review?: OpeningRecheckRevi
                 <Radar className="h-4 w-4" />
               </div>
               <div>
-                <CardTitle className="text-base text-foreground">장초 체크 회고</CardTitle>
-                <p className="mt-1 text-sm text-muted-foreground">{review.summary.note}</p>
+                <CardTitle className="text-base text-foreground">장초 확인 회고</CardTitle>
+                <p className="mt-1 text-sm text-muted-foreground">{normalizeActionLanguage(review.summary.note)}</p>
               </div>
             </div>
           </div>
@@ -57,7 +58,7 @@ export function OpeningCheckReviewCard({ review }: { review?: OpeningRecheckRevi
           <div className="rounded-[22px] border border-border/70 bg-secondary/20 p-4">
             <p className="text-xs font-medium tracking-[0.12em] text-muted-foreground">매칭 완료</p>
             <p className="mt-2 text-2xl font-semibold text-foreground">{review.summary.matchedCount}건</p>
-            <p className="mt-2 text-xs leading-5 text-muted-foreground">장초 체크와 추적 결과가 함께 남은 종목</p>
+            <p className="mt-2 text-xs leading-5 text-muted-foreground">장초 확인과 관찰 결과가 함께 남은 종목</p>
           </div>
           <div className="rounded-[22px] border border-border/70 bg-secondary/20 p-4">
             <p className="text-xs font-medium tracking-[0.12em] text-muted-foreground">결과 확정</p>
@@ -67,7 +68,7 @@ export function OpeningCheckReviewCard({ review }: { review?: OpeningRecheckRevi
           <div className="rounded-[22px] border border-border/70 bg-secondary/20 p-4">
             <p className="text-xs font-medium tracking-[0.12em] text-muted-foreground">통과 승률</p>
             <p className="mt-2 text-2xl font-semibold text-foreground">{formatPercent(review.summary.passedWinRate)}</p>
-            <p className="mt-2 text-xs leading-5 text-muted-foreground">장초 체크를 통과시킨 종목의 확정 성과</p>
+            <p className="mt-2 text-xs leading-5 text-muted-foreground">장초 확인을 통과시킨 종목의 확정 성과</p>
           </div>
           <div className="rounded-[22px] border border-border/70 bg-secondary/20 p-4">
             <p className="text-xs font-medium tracking-[0.12em] text-muted-foreground">피한 종목 위험 적중</p>

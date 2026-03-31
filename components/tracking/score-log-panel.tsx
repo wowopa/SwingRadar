@@ -1,4 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { normalizeActionLanguage } from "@/lib/copy/action-language";
 import { formatScore } from "@/lib/utils";
 import type { ScoreLogEntry } from "@/types/tracking";
 
@@ -33,8 +34,8 @@ export function ScoreLogPanel({ items }: { items: ScoreLogEntry[] }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>점수 계산 로그</CardTitle>
-        <p className="text-sm leading-6 text-muted-foreground">활성화 점수의 가산·감산 흐름과 단기 급등 추격 억제 판단을 함께 보여줍니다.</p>
+        <CardTitle>관찰 점수 계산 로그</CardTitle>
+        <p className="text-sm leading-6 text-muted-foreground">관찰 점수의 가산·감산 흐름과 단기 급등 추격 억제 판단을 함께 보여줍니다.</p>
       </CardHeader>
       <CardContent className="space-y-4">
         {items.length ? (
@@ -46,7 +47,7 @@ export function ScoreLogPanel({ items }: { items: ScoreLogEntry[] }) {
         ) : null}
         {chaseGuardEntry ? (
           <div className="rounded-2xl border border-border/70 bg-secondary/30 p-4 text-sm leading-6 text-muted-foreground">
-            <span className="font-medium text-foreground">추격 억제:</span> {chaseGuardEntry.reason}
+            <span className="font-medium text-foreground">추격 억제:</span> {normalizeActionLanguage(chaseGuardEntry.reason)}
           </div>
         ) : null}
         {items.length ? (
@@ -66,7 +67,7 @@ export function ScoreLogPanel({ items }: { items: ScoreLogEntry[] }) {
                 </div>
                 <p className={`font-semibold ${getDeltaTone(item.delta)}`}>{formatPointDelta(item.delta)}</p>
               </div>
-              <p className="mt-2 text-sm leading-6 text-muted-foreground">{item.reason}</p>
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">{normalizeActionLanguage(item.reason)}</p>
             </div>
           ))
         ) : (

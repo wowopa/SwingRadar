@@ -37,14 +37,14 @@ function buildOutcomeCopy(outcome?: OpeningRecheckReviewOutcome, statusLabel?: s
   if (outcome === "success") {
     return {
       outcomeLabel: "성공 종료",
-      outcomeNote: `${statusLabel ?? "이 판단"} 뒤 실제 추적 결과가 성공으로 마감됐습니다.`
+      outcomeNote: `${statusLabel ?? "이 판단"} 뒤 실제 관찰 결과가 성공으로 마감됐습니다.`
     };
   }
 
   if (outcome === "failure") {
     return {
       outcomeLabel: "실패 또는 무효화",
-      outcomeNote: `${statusLabel ?? "이 판단"} 뒤 실제 추적 결과가 실패/무효화로 끝났습니다.`
+      outcomeNote: `${statusLabel ?? "이 판단"} 뒤 실제 관찰 결과가 실패/무효화로 끝났습니다.`
     };
   }
 
@@ -57,7 +57,7 @@ function buildOutcomeCopy(outcome?: OpeningRecheckReviewOutcome, statusLabel?: s
 
   return {
     outcomeLabel: undefined,
-    outcomeNote: "장초 체크 판단 근거만 남아 있고, 연결된 추적 결과는 아직 없습니다."
+    outcomeNote: "장초 확인 판단 근거만 남아 있고, 연결된 관찰 결과는 아직 없습니다."
   };
 }
 

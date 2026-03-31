@@ -2,6 +2,7 @@ import { Clock3 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { normalizeActionLanguage } from "@/lib/copy/action-language";
 import type { OpeningRecheckTickerInsight } from "@/types/recommendation";
 
 export function OpeningCheckInsightCard({
@@ -20,9 +21,9 @@ export function OpeningCheckInsightCard({
               <Clock3 className="h-4 w-4" />
             </div>
             <div>
-              <CardTitle className="text-base text-foreground">장초 체크 기록</CardTitle>
+              <CardTitle className="text-base text-foreground">장초 확인 기록</CardTitle>
               <p className="mt-1 text-sm text-muted-foreground">
-                {emptyMessage ?? "이 종목과 연결된 장초 체크 기록이 아직 없습니다."}
+                {emptyMessage ?? "이 종목과 연결된 장초 확인 기록이 아직 없습니다."}
               </p>
             </div>
           </div>
@@ -40,9 +41,9 @@ export function OpeningCheckInsightCard({
               <Clock3 className="h-4 w-4" />
             </div>
             <div>
-              <CardTitle className="text-base text-foreground">장초 체크 기록</CardTitle>
+              <CardTitle className="text-base text-foreground">장초 확인 기록</CardTitle>
               <p className="mt-1 text-sm text-muted-foreground">
-                {insight.signalDate} 기준 장초 체크 · {insight.matchedBy === "signal_date" ? "같은 날짜 매칭" : "최근 기록 매칭"}
+                {insight.signalDate} 기준 장초 확인 · {insight.matchedBy === "signal_date" ? "같은 날짜 매칭" : "최근 기록 매칭"}
               </p>
             </div>
           </div>
@@ -55,7 +56,7 @@ export function OpeningCheckInsightCard({
       <CardContent className="space-y-4">
         <div className="rounded-[20px] border border-border/70 bg-secondary/20 px-4 py-4">
           <p className="text-sm font-semibold text-foreground">{insight.statusDescription}</p>
-          <p className="mt-2 text-sm leading-6 text-muted-foreground">{insight.outcomeNote}</p>
+          <p className="mt-2 text-sm leading-6 text-muted-foreground">{normalizeActionLanguage(insight.outcomeNote)}</p>
         </div>
 
         {(insight.gapLabel || insight.confirmationLabel || insight.actionLabel) ? (
@@ -69,7 +70,7 @@ export function OpeningCheckInsightCard({
         {insight.note ? (
           <div className="rounded-[20px] border border-border/70 bg-background/80 px-4 py-4">
             <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">기록 메모</p>
-            <p className="mt-2 text-sm leading-6 text-muted-foreground">{insight.note}</p>
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">{normalizeActionLanguage(insight.note)}</p>
           </div>
         ) : null}
       </CardContent>

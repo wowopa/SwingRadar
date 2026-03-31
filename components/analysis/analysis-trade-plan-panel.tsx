@@ -4,6 +4,7 @@ import { ActionBucketBadge } from "@/components/recommendations/action-bucket-ba
 import { SignalToneBadge } from "@/components/shared/signal-tone-badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { buildAnalysisTradePlan } from "@/lib/analysis/action-plan";
+import { getFeaturedRankLabel } from "@/lib/copy/action-language";
 import type { DailyCandidate } from "@/lib/repositories/daily-candidates";
 import type { TickerAnalysis } from "@/types/analysis";
 
@@ -33,7 +34,7 @@ export function AnalysisTradePlanPanel({
             <SignalToneBadge tone={analysis.signalTone} />
             {featuredRank ? (
               <span className="rounded-full border border-border/70 bg-secondary/35 px-3 py-1 text-xs font-medium text-foreground/76">
-                오늘 후보 #{featuredRank}
+                {getFeaturedRankLabel(featuredRank)}
               </span>
             ) : null}
           </div>

@@ -192,7 +192,7 @@ export function PositionDetailView({
         <div className="space-y-6">
           <OpeningCheckInsightCard
             insight={openingCheckInsight}
-            emptyMessage="이 종목은 아직 장초 체크와 연결된 기록이 없거나, 장전 후보에서 벗어나 바로 포트폴리오에 들어왔습니다."
+            emptyMessage="이 종목은 아직 장초 확인과 연결된 기록이 없거나, 오늘 먼저 볼 종목에서 벗어나 바로 포트폴리오에 들어왔습니다."
           />
 
           <Card className="border-border/70 bg-white/82 shadow-sm">

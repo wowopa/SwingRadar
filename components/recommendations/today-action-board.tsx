@@ -4,6 +4,7 @@ import { ArrowUpRight, Binoculars, CircleOff, Clock3, ShieldX } from "lucide-rea
 import { SignalToneBadge } from "@/components/shared/signal-tone-badge";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { getFeaturedRankLabel } from "@/lib/copy/action-language";
 import type { TodayActionBoardDto, TodayActionBoardStatusDto } from "@/lib/api-contracts/swing-radar";
 import { formatDateTimeShort, formatPrice } from "@/lib/utils";
 
@@ -172,7 +173,7 @@ export function TodayActionBoard({ board }: { board?: TodayActionBoardDto }) {
                           <SignalToneBadge tone={item.signalTone} />
                           {item.featuredRank ? (
                             <span className="rounded-full border border-primary/20 bg-primary/10 px-2.5 py-1 text-[11px] font-medium text-primary">
-                              후보 #{item.featuredRank}
+                              {getFeaturedRankLabel(item.featuredRank)}
                             </span>
                           ) : null}
                           {item.portfolioNote ? <Badge variant="secondary">{item.portfolioNote}</Badge> : null}

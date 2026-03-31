@@ -120,9 +120,9 @@ export function TrackingDetailPanel({ history, details }: TrackingDetailPanelPro
         <Card>
           <CardHeader className="flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div>
-              <CardTitle>공용 추적 기록 찾기</CardTitle>
+              <CardTitle>공용 관찰 기록 찾기</CardTitle>
               <p className="mt-2 text-sm text-muted-foreground">
-                종목, 상태, 업종, 즐겨찾기 기준으로 공용 추적 기록을 빠르게 고를 수 있습니다.
+                종목, 상태, 업종, 즐겨찾기 기준으로 공용 관찰 기록을 빠르게 고를 수 있습니다.
               </p>
             </div>
             <div className="grid w-full gap-3 lg:max-w-5xl lg:grid-cols-[1fr_180px_180px_180px]">
@@ -176,7 +176,7 @@ export function TrackingDetailPanel({ history, details }: TrackingDetailPanelPro
               />
             ) : (
               <div className="rounded-2xl border border-border/70 bg-secondary/20 px-4 py-6 text-sm leading-6 text-muted-foreground">
-                조건에 맞는 공용 추적 기록이 아직 없습니다. 검색어와 상태, 업종 필터를 조금 넓혀 보세요.
+                조건에 맞는 공용 관찰 기록이 아직 없습니다. 검색어와 상태, 업종 필터를 조금 넓혀 보세요.
               </div>
             )}
           </CardContent>
@@ -205,11 +205,11 @@ export function TrackingDetailPanel({ history, details }: TrackingDetailPanelPro
                   <div className="flex items-start gap-3 pr-10">
                     <div className="min-w-0 flex-1">
                       <DialogTitle className="text-xl leading-tight text-foreground">
-                        {activeCompany} {activeEntry.ticker} 공용 추적 상세
+                        {activeCompany} {activeEntry.ticker} 공용 관찰 상세
                       </DialogTitle>
                       <DialogDescription className="mt-2 text-sm leading-6">
                         {activeSector} · 시작일 {activeEntry.signalDate} ·{" "}
-                        {favorites.includes(activeEntry.ticker) ? "즐겨찾기 등록 종목" : "공용 추적 종목"}
+                        {favorites.includes(activeEntry.ticker) ? "즐겨찾기 등록 종목" : "공용 관찰 종목"}
                       </DialogDescription>
                     </div>
                     <Tooltip>

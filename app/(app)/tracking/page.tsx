@@ -28,8 +28,8 @@ export default async function TrackingPage() {
     <main className="space-y-8 pb-10">
       <PageHeader
         eyebrow="Watchlist"
-        title="공용 추적과 관찰 기록"
-        description="서비스가 추적한 공용 후보와 관찰 기록을 보는 화면입니다. 내 실제 포트폴리오와는 분리된 공용 히스토리입니다."
+        title="공용 관찰 기록"
+        description="서비스가 먼저 본 종목과 관찰 기록을 보는 화면입니다. 내 실제 포트폴리오와는 분리된 공용 히스토리입니다."
       />
       <PublicDataStatusBar summary={statusSummary} />
       <TrackingSelectionGuide {...trackingConfig} />

@@ -16,7 +16,7 @@ const bodyFont = Noto_Sans_KR({
 
 export const metadata: Metadata = {
   title: "SWING-RADAR",
-  description: "장전 후보, 장초 확인, 당일 행동까지 연결하는 KRX 스윙 운용 대시보드"
+  description: "오늘 먼저 볼 종목, 장초 확인, 당일 행동까지 연결하는 KRX 스윙 운용 대시보드"
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

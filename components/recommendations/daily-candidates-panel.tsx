@@ -304,7 +304,7 @@ export function DailyCandidatesPanel({ dailyScan }: { dailyScan: DailyScanSummar
         input.status === "pending"
           ? getOpeningRecheckStatusMeta("pending")
           : getOpeningRecheckStatusMeta(input.status as OpeningDecisionStatus);
-      setBoardMessage(`${input.ticker} 장초 체크를 ${resolvedMeta.label}로 저장했습니다.`);
+      setBoardMessage(`${input.ticker} 장초 확인을 ${resolvedMeta.label}로 저장했습니다.`);
       startTransition(() => {
         router.refresh();
       });
@@ -392,11 +392,11 @@ export function DailyCandidatesPanel({ dailyScan }: { dailyScan: DailyScanSummar
         <CardHeader>
           <CardTitle>오늘 먼저 볼 종목</CardTitle>
         </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground">
-            아직 유니버스 스캔 결과가 없습니다. 배치 스캔이 끝나면 오늘 장전 후보가 여기에 반영됩니다.
-          </p>
-        </CardContent>
+          <CardContent>
+            <p className="text-sm text-muted-foreground">
+              아직 유니버스 스캔 결과가 없습니다. 배치 스캔이 끝나면 오늘 먼저 볼 종목이 여기에 반영됩니다.
+            </p>
+          </CardContent>
       </Card>
     );
   }
@@ -407,7 +407,7 @@ export function DailyCandidatesPanel({ dailyScan }: { dailyScan: DailyScanSummar
         <div>
           <CardTitle>오늘 먼저 볼 종목</CardTitle>
           <p className="mt-2 text-sm text-muted-foreground">
-            최신 유니버스 스캔에서 지금 먼저 확인할 종목만 추렸습니다. 이 목록은 전일 종가 기준 장전 후보이며, 장초
+            최신 유니버스 스캔에서 지금 먼저 확인할 종목만 추렸습니다. 이 목록은 전일 종가 기준 장전 관찰 목록이며, 장초
             확인을 통과하기 전까지는 실제 매수 신호가 아닙니다.
           </p>
         </div>
@@ -482,11 +482,11 @@ export function DailyCandidatesPanel({ dailyScan }: { dailyScan: DailyScanSummar
                   <>
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div>
-                        <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">장초 체크 포커스</p>
+                        <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">장초 확인</p>
                         <div className="mt-2 flex flex-wrap items-center gap-2">
                           <p className="text-xl font-semibold text-foreground">{focusedCandidate.company}</p>
                           <span className="rounded-full border border-border/70 bg-background/80 px-3 py-1 text-xs text-muted-foreground">
-                            {focusedCandidate.ticker} · 장전 후보{" "}
+                            {focusedCandidate.ticker} · 오늘 먼저 볼 종목{" "}
                             {visibleCandidates.findIndex((item) => item.ticker === focusedCandidate.ticker) + 1}
                           </span>
                         </div>
@@ -496,7 +496,7 @@ export function DailyCandidatesPanel({ dailyScan }: { dailyScan: DailyScanSummar
                         <Badge
                           variant={resolvedStatus ? getOpeningRecheckStatusMeta(resolvedStatus).variant : "secondary"}
                         >
-                          {resolvedStatus ? getOpeningRecheckStatusMeta(resolvedStatus).label : "체크 필요"}
+                          {resolvedStatus ? getOpeningRecheckStatusMeta(resolvedStatus).label : "확인 필요"}
                         </Badge>
                         <ActionBucketBadge
                           bucket={
@@ -766,7 +766,7 @@ export function DailyCandidatesPanel({ dailyScan }: { dailyScan: DailyScanSummar
                   </>
                 ) : (
                   <div className="rounded-2xl border border-border/70 bg-background/70 p-5 text-sm text-muted-foreground">
-                    장초 체크할 후보가 없습니다.
+                    장초 확인할 종목이 없습니다.
                   </div>
                 )}
               </div>
@@ -774,7 +774,7 @@ export function DailyCandidatesPanel({ dailyScan }: { dailyScan: DailyScanSummar
               <div className="rounded-3xl border border-border/70 bg-background/80 p-5">
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <p className="text-sm font-semibold text-foreground">장초 체크 큐</p>
+                    <p className="text-sm font-semibold text-foreground">장초 확인 목록</p>
                     <p className="mt-1 text-xs leading-5 text-muted-foreground">
                       한 종목씩 체크한 뒤 저장 후 다음으로 넘어가면 아침 루틴이 훨씬 짧아집니다.
                     </p>
@@ -864,13 +864,13 @@ export function DailyCandidatesPanel({ dailyScan }: { dailyScan: DailyScanSummar
               총 {dailyScan.totalTickers}개 종목을 스캔했고, 그중 오늘 먼저 볼 종목만 자동 정렬했습니다. 장초 확인이 끝나기
               전까지는 이 목록 전체를 곧바로 실행 신호로 보지 않는 편이 안전합니다.{" "}
               <Link className="font-medium text-primary hover:text-primary/80" href="/ranking">
-                전체 후보 순위 보기
+                전체 종목 순위 보기
               </Link>
             </div>
           </>
         ) : (
           <div className="rounded-2xl border border-caution/30 bg-caution/10 p-4 text-sm text-caution">
-            아직 장전 후보가 생성되지 않았습니다. 스캔이 끝나지 않았거나 데이터 수집에 실패했을 수 있습니다.
+            아직 오늘 먼저 볼 종목이 생성되지 않았습니다. 스캔이 끝나지 않았거나 데이터 수집에 실패했을 수 있습니다.
           </div>
         )}
 

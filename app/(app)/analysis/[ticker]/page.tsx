@@ -15,6 +15,7 @@ import { GoogleNewsSearchCard } from "@/components/shared/google-news-search-car
 import { PageHeader } from "@/components/shared/page-header";
 import { PublicDataStatusBar } from "@/components/shared/public-data-status-bar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { getFeaturedRankLabel } from "@/lib/copy/action-language";
 import type { DataQualityItem } from "@/types/analysis";
 import { getAnalysisByTicker } from "@/lib/repositories/analysis";
 import { getDailyCandidates } from "@/lib/repositories/daily-candidates";
@@ -129,7 +130,7 @@ export default async function AnalysisPage({ params }: { params: Promise<{ ticke
   );
   const headerTitle =
     featuredRank >= 0
-      ? `${analysis.company} (${analysis.ticker}) - 오늘 후보 #${featuredRank + 1}`
+      ? `${analysis.company} (${analysis.ticker}) - ${getFeaturedRankLabel(featuredRank + 1)}`
       : `${analysis.company} (${analysis.ticker})`;
   const fetchedOverviewLines = (await getCompanyOverviewLines(analysis.ticker)).slice(0, 3);
   const overview = {
