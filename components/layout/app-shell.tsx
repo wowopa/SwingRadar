@@ -2,12 +2,14 @@ import type { Route } from "next";
 import Link from "next/link";
 import { ChartNoAxesCombined, HandHeart, Medal, ShieldCheck, Sparkles } from "lucide-react";
 
+import { AuthCta } from "@/components/layout/auth-cta";
 import { BrandSignature } from "@/components/layout/brand-signature";
 import { GlobalSymbolSearch } from "@/components/layout/global-symbol-search";
 import { RouteScrollReset } from "@/components/layout/route-scroll-reset";
 import { ScrollToTopButton } from "@/components/layout/scroll-to-top-button";
 import { SitePopupNotice } from "@/components/layout/site-popup-notice";
 import { SiteVisitTracker } from "@/components/layout/site-visit-tracker";
+import { getCurrentUserSession } from "@/lib/server/user-auth";
 import { cn } from "@/lib/utils";
 
 const navItems = [
@@ -18,8 +20,9 @@ const navItems = [
   { href: "/support", label: "후원", mobileLabel: "후원", icon: HandHeart }
 ] as const;
 
-export function AppShell({ children }: { children: React.ReactNode }) {
+export async function AppShell({ children }: { children: React.ReactNode }) {
   const currentYear = new Date().getFullYear();
+  const session = await getCurrentUserSession();
 
   return (
     <div className="min-h-screen">
@@ -45,7 +48,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               </div>
             </div>
 
-            <div className="w-full max-w-xl xl:min-w-[420px]">
+            <div className="w-full max-w-xl space-y-3 xl:min-w-[420px]">
+              <div className="flex justify-end">
+                <AuthCta session={session} />
+              </div>
               <GlobalSymbolSearch />
             </div>
           </div>

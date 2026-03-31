@@ -7,7 +7,12 @@ import { getSymbolByTicker, resolveTicker } from "@/lib/symbols/master";
 import type { PortfolioProfile, PortfolioProfilePosition } from "@/types/recommendation";
 
 const PORTFOLIO_PROFILE_DOCUMENT_NAME = "portfolio-profile";
+const USER_PORTFOLIO_PROFILES_DOCUMENT_NAME = "user-portfolio-profiles";
 const DEFAULT_PROFILE_UPDATED_AT = new Date(0).toISOString();
+
+interface UserPortfolioProfilesDocument {
+  profiles: Record<string, PortfolioProfile>;
+}
 
 export function createEmptyPortfolioProfile(): PortfolioProfile {
   return {
@@ -27,6 +32,12 @@ function getPortfolioProfilePath() {
   return process.env.SWING_RADAR_PORTFOLIO_PROFILE_FILE
     ? path.resolve(process.env.SWING_RADAR_PORTFOLIO_PROFILE_FILE)
     : path.join(getRuntimePaths().adminDir, "portfolio-profile.json");
+}
+
+function getUserPortfolioProfilesPath() {
+  return process.env.SWING_RADAR_USER_PORTFOLIO_PROFILES_FILE
+    ? path.resolve(process.env.SWING_RADAR_USER_PORTFOLIO_PROFILES_FILE)
+    : path.join(getRuntimePaths().usersDir, "portfolio-profiles.json");
 }
 
 function normalizeOptionalString(value: unknown) {
@@ -146,6 +157,24 @@ function normalizePortfolioProfile(value: unknown): PortfolioProfile {
   };
 }
 
+function normalizeUserPortfolioProfilesDocument(value: unknown): UserPortfolioProfilesDocument {
+  if (!value || typeof value !== "object") {
+    return { profiles: {} };
+  }
+
+  const payload = value as Record<string, unknown>;
+  const profilesPayload = payload.profiles;
+  if (!profilesPayload || typeof profilesPayload !== "object") {
+    return { profiles: {} };
+  }
+
+  return {
+    profiles: Object.fromEntries(
+      Object.entries(profilesPayload).map(([userId, profileValue]) => [userId, normalizePortfolioProfile(profileValue)])
+    )
+  };
+}
+
 export function isPortfolioProfileConfigured(profile: PortfolioProfile | null | undefined) {
   const empty = createEmptyPortfolioProfile();
   if (!profile) {
@@ -175,10 +204,44 @@ export async function loadPortfolioProfileDocument(): Promise<PortfolioProfile> 
   }
 }
 
+async function loadUserPortfolioProfilesDocument() {
+  try {
+    const content = await readFile(getUserPortfolioProfilesPath(), "utf8");
+    return normalizeUserPortfolioProfilesDocument(JSON.parse(content.replace(/^\uFEFF/, "")));
+  } catch {
+    const runtimeDocument = await loadRuntimeDocument<UserPortfolioProfilesDocument>(USER_PORTFOLIO_PROFILES_DOCUMENT_NAME);
+    return normalizeUserPortfolioProfilesDocument(runtimeDocument);
+  }
+}
+
+async function saveUserPortfolioProfilesDocument(document: UserPortfolioProfilesDocument) {
+  const normalized = normalizeUserPortfolioProfilesDocument(document);
+  await mkdir(path.dirname(getUserPortfolioProfilesPath()), { recursive: true });
+  await writeFile(getUserPortfolioProfilesPath(), `${JSON.stringify(normalized, null, 2)}\n`, "utf8");
+  await saveRuntimeDocument(USER_PORTFOLIO_PROFILES_DOCUMENT_NAME, normalized);
+  return normalized;
+}
+
 export async function savePortfolioProfileDocument(profile: unknown) {
   const normalized = normalizePortfolioProfile(profile);
   await mkdir(path.dirname(getPortfolioProfilePath()), { recursive: true });
   await writeFile(getPortfolioProfilePath(), `${JSON.stringify(normalized, null, 2)}\n`, "utf8");
   await saveRuntimeDocument(PORTFOLIO_PROFILE_DOCUMENT_NAME, normalized);
   return normalized;
+}
+
+export async function loadPortfolioProfileForUser(userId?: string | null) {
+  if (!userId) {
+    return loadPortfolioProfileDocument();
+  }
+
+  const document = await loadUserPortfolioProfilesDocument();
+  return normalizePortfolioProfile(document.profiles[userId]);
+}
+
+export async function savePortfolioProfileForUser(userId: string, profile: unknown) {
+  const document = await loadUserPortfolioProfilesDocument();
+  document.profiles[userId] = normalizePortfolioProfile(profile);
+  await saveUserPortfolioProfilesDocument(document);
+  return document.profiles[userId];
 }

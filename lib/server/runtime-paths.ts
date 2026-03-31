@@ -32,6 +32,7 @@ export function getRuntimePaths(projectRoot = process.cwd()) {
     trackingDir: path.join(runtimeRoot, "tracking"),
     historyDir: path.join(runtimeRoot, "history"),
     adminDir: path.join(runtimeRoot, "admin"),
+    usersDir: path.join(runtimeRoot, "users"),
     runtimeConfigDir: path.join(runtimeRoot, "config")
   };
 }

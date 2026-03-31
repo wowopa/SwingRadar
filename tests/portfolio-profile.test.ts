@@ -8,17 +8,22 @@ import {
   createEmptyPortfolioProfile,
   isPortfolioProfileConfigured,
   loadPortfolioProfileDocument,
+  loadPortfolioProfileForUser,
   savePortfolioProfileDocument
+  ,
+  savePortfolioProfileForUser
 } from "@/lib/server/portfolio-profile";
 
 describe("portfolio profile storage", () => {
   let tempDir = "";
   const previousProfileFile = process.env.SWING_RADAR_PORTFOLIO_PROFILE_FILE;
+  const previousUserProfilesFile = process.env.SWING_RADAR_USER_PORTFOLIO_PROFILES_FILE;
   const previousDatabaseUrl = process.env.SWING_RADAR_DATABASE_URL;
 
   beforeEach(async () => {
     tempDir = await mkdtemp(path.join(os.tmpdir(), "swing-radar-portfolio-profile-"));
     process.env.SWING_RADAR_PORTFOLIO_PROFILE_FILE = path.join(tempDir, "portfolio-profile.json");
+    process.env.SWING_RADAR_USER_PORTFOLIO_PROFILES_FILE = path.join(tempDir, "user-portfolio-profiles.json");
     delete process.env.SWING_RADAR_DATABASE_URL;
   });
 
@@ -27,6 +32,12 @@ describe("portfolio profile storage", () => {
       delete process.env.SWING_RADAR_PORTFOLIO_PROFILE_FILE;
     } else {
       process.env.SWING_RADAR_PORTFOLIO_PROFILE_FILE = previousProfileFile;
+    }
+
+    if (previousUserProfilesFile === undefined) {
+      delete process.env.SWING_RADAR_USER_PORTFOLIO_PROFILES_FILE;
+    } else {
+      process.env.SWING_RADAR_USER_PORTFOLIO_PROFILES_FILE = previousUserProfilesFile;
     }
 
     if (previousDatabaseUrl === undefined) {
@@ -90,5 +101,37 @@ describe("portfolio profile storage", () => {
     expect(saved.positions[0]?.sector).toBeTruthy();
     expect(loaded).toEqual(saved);
     expect(isPortfolioProfileConfigured(loaded)).toBe(true);
+  });
+
+  it("stores portfolio profiles separately for each user", async () => {
+    const saved = await savePortfolioProfileForUser("user-1", {
+      name: "개인 포트폴리오",
+      totalCapital: 20_000_000,
+      availableCash: 5_000_000,
+      maxRiskPerTradePercent: 1,
+      maxConcurrentPositions: 3,
+      sectorLimit: 2,
+      positions: [
+        {
+          ticker: "005930",
+          quantity: 5,
+          averagePrice: 70_000,
+          enteredAt: "2026-03-20"
+        }
+      ],
+      updatedAt: "2026-03-31T00:00:00.000Z",
+      updatedBy: "tester@example.com"
+    });
+
+    const loadedUser = await loadPortfolioProfileForUser("user-1");
+    const loadedOtherUser = await loadPortfolioProfileForUser("user-2");
+
+    expect(saved.name).toBe("개인 포트폴리오");
+    expect(loadedUser.positions).toHaveLength(1);
+    expect(loadedUser.positions[0]).toMatchObject({
+      ticker: "005930",
+      enteredAt: "2026-03-20"
+    });
+    expect(loadedOtherUser).toEqual(createEmptyPortfolioProfile());
   });
 });

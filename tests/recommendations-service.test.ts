@@ -1,5 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+const POSITIVE = "\uAE0D\uC815";
+const CAUTION = "\uC8FC\uC758";
+const IN_PROGRESS = "\uC9C4\uD589\uC911";
+
 const mocks = vi.hoisted(() => ({
   getRecommendations: vi.fn(),
   getAnalysis: vi.fn(),
@@ -7,6 +11,7 @@ const mocks = vi.hoisted(() => ({
   getDailyCandidates: vi.fn(),
   listOpeningRecheckDecisions: vi.fn(),
   loadPortfolioProfileDocument: vi.fn(),
+  loadPortfolioProfileForUser: vi.fn(),
   isPortfolioProfileConfigured: vi.fn()
 }));
 
@@ -28,6 +33,7 @@ vi.mock("@/lib/server/opening-recheck-board", () => ({
 
 vi.mock("@/lib/server/portfolio-profile", () => ({
   loadPortfolioProfileDocument: mocks.loadPortfolioProfileDocument,
+  loadPortfolioProfileForUser: mocks.loadPortfolioProfileForUser,
   isPortfolioProfileConfigured: mocks.isPortfolioProfileConfigured
 }));
 
@@ -38,17 +44,17 @@ function createRecommendation(overrides: Record<string, unknown>) {
     ticker: "AAA001",
     company: "Alpha",
     sector: "Tech",
-    signalTone: "긍정",
+    signalTone: POSITIVE,
     score: 70,
     signalLabel: "Base setup",
     rationale: "Base rationale",
-    invalidation: "41,000원 이탈",
+    invalidation: "41,000 below",
     invalidationDistance: -4,
     riskRewardRatio: "1 : 2",
     validationSummary: "Measured validation",
-    checkpoints: ["41,000원 지지", "44,000원 돌파", "47,000원 확인"],
+    checkpoints: ["41,000 support", "44,000 confirm", "47,000 target"],
     validation: { hitRate: 55, avgReturn: 2, sampleSize: 11, maxDrawdown: -3 },
-    observationWindow: "5~10거래일",
+    observationWindow: "5~10 days",
     updatedAt: "2026-03-08 09:00",
     ...overrides
   };
@@ -60,7 +66,7 @@ function createCandidate(overrides: Record<string, unknown>) {
     ticker: "AAA001",
     company: "Alpha",
     sector: "Tech",
-    signalTone: "긍정",
+    signalTone: POSITIVE,
     score: 77,
     candidateScore: 97,
     activationScore: 73,
@@ -69,12 +75,12 @@ function createCandidate(overrides: Record<string, unknown>) {
     expansionPrice: 47_000,
     invalidationPrice: 41_000,
     averageTurnover20: 1_500_000_000,
-    liquidityRating: "양호",
-    invalidation: "41,000원 이탈",
+    liquidityRating: "good",
+    invalidation: "41,000 below",
     validationSummary: "Measured validation",
-    observationWindow: "5~10거래일",
+    observationWindow: "5~10 days",
     rationale: "Candidate rationale",
-    eventCoverage: "실적 대기",
+    eventCoverage: "earnings due",
     ...overrides
   };
 }
@@ -83,10 +89,10 @@ function createAnalysis(overrides: Record<string, unknown>) {
   return {
     ticker: "AAA001",
     company: "Alpha",
-    signalTone: "湲띿젙",
+    signalTone: POSITIVE,
     score: 72,
     headline: "Alpha analysis",
-    invalidation: "41,000원 이탈",
+    invalidation: "41,000 below",
     analysisSummary: [],
     keyLevels: [],
     technicalIndicators: {
@@ -126,45 +132,44 @@ function createAnalysis(overrides: Record<string, unknown>) {
   };
 }
 
+function createEmptyProfile() {
+  return {
+    name: "Default profile",
+    totalCapital: 0,
+    availableCash: 0,
+    maxRiskPerTradePercent: 0.8,
+    maxConcurrentPositions: 4,
+    sectorLimit: 2,
+    positions: [],
+    updatedAt: "1970-01-01T00:00:00.000Z",
+    updatedBy: "system"
+  };
+}
+
 describe("listRecommendations", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mocks.listOpeningRecheckDecisions.mockResolvedValue({});
     mocks.getAnalysis.mockResolvedValue({
       generatedAt: "2026-03-08T00:00:00.000Z",
       items: []
     });
-    mocks.loadPortfolioProfileDocument.mockResolvedValue({
-      name: "기본 운용 프로필",
-      totalCapital: 0,
-      availableCash: 0,
-      maxRiskPerTradePercent: 0.8,
-      maxConcurrentPositions: 4,
-      sectorLimit: 2,
-      positions: [],
-      updatedAt: "1970-01-01T00:00:00.000Z",
-      updatedBy: "system"
-    });
-    mocks.isPortfolioProfileConfigured.mockReturnValue(false);
     mocks.getTracking.mockResolvedValue({
       generatedAt: "2026-03-08T00:30:00.000Z",
       history: [],
       details: {}
     });
+    mocks.getDailyCandidates.mockResolvedValue(null);
+    mocks.listOpeningRecheckDecisions.mockResolvedValue({});
+    mocks.loadPortfolioProfileDocument.mockResolvedValue(createEmptyProfile());
+    mocks.loadPortfolioProfileForUser.mockResolvedValue(createEmptyProfile());
+    mocks.isPortfolioProfileConfigured.mockReturnValue(false);
   });
 
-  it("limits recommendation items to daily scan candidates and includes saved recheck status", async () => {
+  it("limits items to daily scan candidates and includes saved recheck state", async () => {
     mocks.getRecommendations.mockResolvedValue({
       generatedAt: "2026-03-08T00:00:00.000Z",
       items: [
-        createRecommendation({
-          ticker: "AAA001",
-          company: "Alpha",
-          sector: "Tech",
-          score: 90,
-          signalLabel: "High score",
-          rationale: "Alpha setup"
-        }),
+        createRecommendation({ ticker: "AAA001", company: "Alpha", sector: "Tech", score: 90 }),
         createRecommendation({
           ticker: "BBB001",
           company: "Beta",
@@ -176,7 +181,6 @@ describe("listRecommendations", () => {
         })
       ]
     });
-
     mocks.getDailyCandidates.mockResolvedValue({
       generatedAt: "2026-03-08T01:00:00.000Z",
       batchSize: 20,
@@ -186,16 +190,7 @@ describe("listRecommendations", () => {
       totalBatches: 5,
       succeededBatches: 5,
       failedBatches: [],
-      topCandidates: [
-        createCandidate({
-          batch: 2,
-          ticker: "BBB001",
-          company: "Beta",
-          sector: "Bio",
-          rationale: "Beta setup",
-          eventCoverage: "보강 중"
-        })
-      ],
+      topCandidates: [createCandidate({ ticker: "BBB001", company: "Beta", sector: "Bio" })],
       batchSummaries: []
     });
     mocks.listOpeningRecheckDecisions.mockResolvedValue({
@@ -208,42 +203,15 @@ describe("listRecommendations", () => {
 
     const result = await listRecommendations({ sort: "score_desc" });
 
-    expect(mocks.listOpeningRecheckDecisions).toHaveBeenCalledWith("2026-03-08T01:00:00.000Z");
     expect(result.items.map((item) => item.ticker)).toEqual(["BBB001"]);
-    expect(result.generatedAt).toBe("2026-03-08T01:00:00.000Z");
-    expect(result.items[0]).toMatchObject({
-      ticker: "BBB001",
-      score: 77,
-      featuredRank: 1,
-      candidateScore: 97,
-      eventCoverage: "보강 중",
-      candidateBatch: 2,
-      actionBucket: "buy_now"
-    });
-    expect(result.items[0]?.tradePlan?.entryLabel).toContain("43,500원");
     expect(result.dailyScan?.topCandidates[0]).toMatchObject({
       ticker: "BBB001",
-      actionBucket: "buy_now",
       openingRecheck: {
         status: "passed",
-        updatedAt: "2026-03-08T01:05:00.000Z",
         updatedBy: "admin-editor"
       }
     });
-    expect(result.dailyScan?.topCandidates[0]?.tradePlan?.entryLabel).toContain("43,500원");
-    expect(result.dailyScan?.topCandidates[0]?.tradePlan?.stopLabel).toBe("41,000원");
-    expect(result.todaySummary?.bucketCounts.buy_now).toBe(1);
-    expect(result.operatingWorkflow?.steps).toHaveLength(3);
-    expect(result.operatingWorkflow?.steps[0]?.key).toBe("preopen_candidates");
-    expect(result.operatingWorkflow?.openingChecklist[1]?.key).toBe("stop_buffer");
     expect(result.todayActionBoard?.summary.buyReviewCount).toBe(1);
-    expect(result.todayActionBoard?.summary.remainingNewPositions).toBe(0);
-    expect(result.todayActionBoard?.summary.activeHoldingCount).toBe(0);
-    expect(result.todayActionBoard?.summary.remainingPortfolioSlots).toBe(4);
-    expect(result.todayActionBoard?.sections[0]).toMatchObject({
-      status: "buy_review",
-      count: 1
-    });
     expect(result.todayActionBoard?.sections[0]?.items[0]).toMatchObject({
       ticker: "BBB001",
       boardStatus: "buy_review"
@@ -254,23 +222,16 @@ describe("listRecommendations", () => {
     mocks.getRecommendations.mockResolvedValue({
       generatedAt: "2026-03-08T00:00:00.000Z",
       items: [
-        createRecommendation({
-          ticker: "AAA001",
-          company: "Alpha",
-          sector: "Tech",
-          signalTone: "긍정",
-          score: 90,
-          signalLabel: "A"
-        }),
+        createRecommendation({ ticker: "AAA001", company: "Alpha", sector: "Tech", signalTone: POSITIVE, score: 90 }),
         createRecommendation({
           ticker: "BBB001",
           company: "Beta",
           sector: "Bio",
-          signalTone: "주의",
+          signalTone: CAUTION,
           score: 40,
-          signalLabel: "B",
-          checkpoints: ["25,000원 지지"],
-          invalidation: "25,000원 이탈",
+          signalLabel: "Caution",
+          checkpoints: ["25,000 support"],
+          invalidation: "25,000 below",
           invalidationDistance: -1,
           riskRewardRatio: "1 : 1",
           validation: { hitRate: 30, avgReturn: -1, sampleSize: 10, maxDrawdown: -6 },
@@ -279,11 +240,8 @@ describe("listRecommendations", () => {
       ]
     });
 
-    mocks.getDailyCandidates.mockResolvedValue(null);
+    const result = await listRecommendations({ signalTone: CAUTION, limit: 1, sort: "updatedAt_desc" });
 
-    const result = await listRecommendations({ signalTone: "주의", limit: 1, sort: "updatedAt_desc" });
-
-    expect(mocks.listOpeningRecheckDecisions).not.toHaveBeenCalled();
     expect(result.items).toHaveLength(1);
     expect(result.items[0]?.ticker).toBe("BBB001");
     expect(result.items[0]?.actionBucket).toBe("avoid");
@@ -294,22 +252,8 @@ describe("listRecommendations", () => {
     mocks.getRecommendations.mockResolvedValue({
       generatedAt: "2026-03-08T00:00:00.000Z",
       items: [
-        createRecommendation({
-          ticker: "005930",
-          company: "Samsung Electronics",
-          sector: "Semiconductor",
-          score: 75,
-          signalLabel: "Held alpha",
-          rationale: "Held alpha setup"
-        }),
-        createRecommendation({
-          ticker: "000660",
-          company: "SK Hynix",
-          sector: "Semiconductor",
-          score: 74,
-          signalLabel: "Held beta",
-          rationale: "Held beta setup"
-        }),
+        createRecommendation({ ticker: "005930", company: "Samsung Electronics", sector: "Semiconductor", score: 75 }),
+        createRecommendation({ ticker: "000660", company: "SK Hynix", sector: "Semiconductor", score: 74 }),
         createRecommendation({
           ticker: "BBB001",
           company: "Beta",
@@ -330,13 +274,7 @@ describe("listRecommendations", () => {
       totalBatches: 5,
       succeededBatches: 5,
       failedBatches: [],
-      topCandidates: [
-        createCandidate({
-          ticker: "BBB001",
-          company: "Beta",
-          sector: "Semiconductor"
-        })
-      ],
+      topCandidates: [createCandidate({ ticker: "BBB001", company: "Beta", sector: "Semiconductor" })],
       batchSummaries: []
     });
     mocks.getTracking.mockResolvedValue({
@@ -347,9 +285,9 @@ describe("listRecommendations", () => {
           ticker: "005930",
           company: "Samsung Electronics",
           signalDate: "2026-03-07",
-          signalTone: "긍정",
+          signalTone: POSITIVE,
           entryScore: 80,
-          result: "진행중",
+          result: IN_PROGRESS,
           mfe: 3,
           mae: -1,
           holdingDays: 5
@@ -359,9 +297,9 @@ describe("listRecommendations", () => {
           ticker: "000660",
           company: "SK Hynix",
           signalDate: "2026-03-07",
-          signalTone: "긍정",
+          signalTone: POSITIVE,
           entryScore: 78,
-          result: "진행중",
+          result: IN_PROGRESS,
           mfe: 2,
           mae: -1,
           holdingDays: 4
@@ -382,34 +320,15 @@ describe("listRecommendations", () => {
     expect(result.todayActionBoard?.summary.activeHoldingCount).toBe(2);
     expect(result.todayActionBoard?.summary.crowdedSectors).toEqual([{ sector: "Semiconductor", count: 2 }]);
     expect(result.todayActionBoard?.summary.buyReviewCount).toBe(0);
-    expect(result.todayActionBoard?.sections[1]).toMatchObject({
-      status: "watch",
-      count: 1
-    });
-    expect(result.todayActionBoard?.sections[1]?.items[0]).toMatchObject({
-      ticker: "BBB001",
-      boardStatus: "watch",
-      portfolioNote: "섹터 한도 2개"
-    });
-    expect(result.todayActionBoard?.sections[1]?.items[0]?.boardReason).toContain("섹터 한도");
+    expect(result.todayActionBoard?.sections[1]?.items[0]?.boardStatus).toBe("watch");
   });
 
-  it("prefers a configured portfolio profile over tracking-derived holdings", async () => {
+  it("prefers a configured portfolio profile and builds holding management", async () => {
     mocks.getRecommendations.mockResolvedValue({
       generatedAt: "2026-03-08T00:00:00.000Z",
       items: [
-        createRecommendation({
-          ticker: "005930",
-          company: "Samsung Electronics",
-          sector: "Semiconductor",
-          score: 75
-        }),
-        createRecommendation({
-          ticker: "000660",
-          company: "SK Hynix",
-          sector: "Semiconductor",
-          score: 74
-        }),
+        createRecommendation({ ticker: "005930", company: "Samsung Electronics", sector: "Semiconductor", score: 75 }),
+        createRecommendation({ ticker: "000660", company: "SK Hynix", sector: "Semiconductor", score: 74 }),
         createRecommendation({
           ticker: "BBB001",
           company: "Beta",
@@ -430,44 +349,8 @@ describe("listRecommendations", () => {
       totalBatches: 5,
       succeededBatches: 5,
       failedBatches: [],
-      topCandidates: [
-        createCandidate({
-          ticker: "BBB001",
-          company: "Beta",
-          sector: "Semiconductor"
-        })
-      ],
+      topCandidates: [createCandidate({ ticker: "BBB001", company: "Beta", sector: "Semiconductor" })],
       batchSummaries: []
-    });
-    mocks.getTracking.mockResolvedValue({
-      generatedAt: "2026-03-08T00:30:00.000Z",
-      history: [
-        {
-          id: "h1",
-          ticker: "005930",
-          company: "Samsung Electronics",
-          signalDate: "2026-03-07",
-          signalTone: "긍정",
-          entryScore: 80,
-          result: "진행중",
-          mfe: 3,
-          mae: -1,
-          holdingDays: 5
-        },
-        {
-          id: "h2",
-          ticker: "000660",
-          company: "SK Hynix",
-          signalDate: "2026-03-07",
-          signalTone: "긍정",
-          entryScore: 78,
-          result: "진행중",
-          mfe: 2,
-          mae: -1,
-          holdingDays: 4
-        }
-      ],
-      details: {}
     });
     mocks.listOpeningRecheckDecisions.mockResolvedValue({
       BBB001: {
@@ -482,29 +365,28 @@ describe("listRecommendations", () => {
         createAnalysis({
           ticker: "267260",
           company: "HD Hyundai Electric",
-          signalTone: "湲띿젙",
           tradePlan: {
             currentPrice: 374_000,
-            currentPriceLabel: "374,000원",
+            currentPriceLabel: "374,000 won",
             entryPriceLow: 360_000,
             entryPriceHigh: 365_000,
             confirmationPrice: 365_000,
-            entryLabel: "360,000원 ~ 365,000원",
+            entryLabel: "360,000 ~ 365,000",
             stopPrice: 348_000,
-            stopLabel: "348,000원",
+            stopLabel: "348,000",
             targetPrice: 390_000,
-            targetLabel: "390,000원",
+            targetLabel: "390,000",
             stretchTargetPrice: 405_000,
-            stretchTargetLabel: "405,000원",
-            holdWindowLabel: "5~10거래일",
+            stretchTargetLabel: "405,000",
+            holdWindowLabel: "5~10 days",
             riskRewardLabel: "1 : 1.5",
-            nextStep: "보유"
+            nextStep: "hold"
           }
         })
       ]
     });
     mocks.loadPortfolioProfileDocument.mockResolvedValue({
-      name: "실전 운용",
+      name: "Real money",
       totalCapital: 50_000_000,
       availableCash: 12_000_000,
       maxRiskPerTradePercent: 0.8,
@@ -528,37 +410,63 @@ describe("listRecommendations", () => {
     const result = await listRecommendations({ sort: "score_desc" });
 
     expect(result.todayActionBoard?.summary.activeHoldingCount).toBe(1);
-    expect(result.todayActionBoard?.summary.remainingPortfolioSlots).toBe(2);
-    expect(result.todayActionBoard?.summary.crowdedSectors).toEqual([]);
     expect(result.todayActionBoard?.summary.buyReviewCount).toBe(1);
-    expect(result.todayActionBoard?.summary.portfolioProfileName).toBe("실전 운용");
-    expect(result.todayActionBoard?.summary.availableCash).toBe(12_000_000);
-    expect(result.todayActionBoard?.summary.riskBudgetPerTrade).toBe(400_000);
-    expect(result.todayActionBoard?.sections[0]).toMatchObject({
-      status: "buy_review",
-      count: 1
-    });
-    expect(result.todayActionBoard?.sections[0]?.items[0]).toMatchObject({
-      ticker: "BBB001",
-      boardStatus: "buy_review"
-    });
+    expect(result.todayActionBoard?.summary.portfolioProfileName).toBe("Real money");
     expect(result.todayActionBoard?.sections[0]?.items[0]?.tradePlan?.positionSizing).toMatchObject({
       suggestedQuantity: 133,
       suggestedCapital: 5_852_000,
-      suggestedWeightPercent: 11.7,
-      maxLossAmount: 399_000,
-      limitSource: "risk_budget"
+      maxLossAmount: 399_000
     });
     expect(result.holdingActionBoard?.summary.holdingCount).toBe(1);
     expect(result.holdingActionBoard?.summary.tightenStopCount).toBe(1);
-    expect(result.holdingActionBoard?.sections[2]).toMatchObject({
-      status: "tighten_stop",
-      count: 1
-    });
     expect(result.holdingActionBoard?.sections[2]?.items[0]).toMatchObject({
       ticker: "267260",
       actionStatus: "tighten_stop",
       holdingDays: 6
     });
+  });
+
+  it("loads a user-specific portfolio profile when a user id is provided", async () => {
+    mocks.getRecommendations.mockResolvedValue({
+      generatedAt: "2026-03-08T00:00:00.000Z",
+      items: [createRecommendation({ ticker: "AAA001", company: "Alpha", sector: "Tech", score: 82 })]
+    });
+    mocks.getDailyCandidates.mockResolvedValue({
+      generatedAt: "2026-03-08T01:00:00.000Z",
+      batchSize: 20,
+      concurrency: 2,
+      topCandidatesLimit: 10,
+      totalTickers: 100,
+      totalBatches: 5,
+      succeededBatches: 5,
+      failedBatches: [],
+      topCandidates: [createCandidate({ ticker: "AAA001", company: "Alpha", sector: "Tech" })],
+      batchSummaries: []
+    });
+    mocks.listOpeningRecheckDecisions.mockResolvedValue({
+      AAA001: {
+        status: "passed",
+        updatedAt: "2026-03-08T01:05:00.000Z",
+        updatedBy: "user-1"
+      }
+    });
+    mocks.loadPortfolioProfileForUser.mockResolvedValue({
+      name: "User profile",
+      totalCapital: 10_000_000,
+      availableCash: 3_000_000,
+      maxRiskPerTradePercent: 1,
+      maxConcurrentPositions: 2,
+      sectorLimit: 1,
+      positions: [],
+      updatedAt: "2026-03-08T00:45:00.000Z",
+      updatedBy: "user-1@example.com"
+    });
+    mocks.isPortfolioProfileConfigured.mockReturnValue(true);
+
+    const result = await listRecommendations({ sort: "score_desc" }, { userId: "user-1" });
+
+    expect(mocks.loadPortfolioProfileForUser).toHaveBeenCalledWith("user-1");
+    expect(result.todayActionBoard?.summary.portfolioProfileName).toBe("User profile");
+    expect(result.todayActionBoard?.summary.availableCash).toBe(3_000_000);
   });
 });

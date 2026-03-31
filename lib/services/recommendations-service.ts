@@ -19,7 +19,8 @@ import { buildHoldingActionBoard } from "@/lib/recommendations/holding-managemen
 import { listOpeningRecheckDecisions } from "@/lib/server/opening-recheck-board";
 import {
   isPortfolioProfileConfigured,
-  loadPortfolioProfileDocument
+  loadPortfolioProfileDocument,
+  loadPortfolioProfileForUser
 } from "@/lib/server/portfolio-profile";
 import type { RecommendationsQuery } from "@/lib/server/query-schemas";
 import { getSymbolByTicker } from "@/lib/symbols/master";
@@ -175,14 +176,17 @@ function enrichAnalysisItem(
   };
 }
 
-export async function listRecommendations(query: RecommendationsQuery): Promise<RecommendationsResponseDto> {
+export async function listRecommendations(
+  query: RecommendationsQuery,
+  options?: { userId?: string | null }
+): Promise<RecommendationsResponseDto> {
   const provider = getDataProvider();
   const [source, analysisSource, dailyCandidates, tracking, portfolioProfile] = await Promise.all([
     provider.getRecommendations(),
     provider.getAnalysis().catch(() => null),
     getDailyCandidates(),
     provider.getTracking(),
-    loadPortfolioProfileDocument()
+    options?.userId ? loadPortfolioProfileForUser(options.userId) : loadPortfolioProfileDocument()
   ]);
   const openingRecheckByTicker = dailyCandidates
     ? await listOpeningRecheckDecisions(dailyCandidates.generatedAt)
