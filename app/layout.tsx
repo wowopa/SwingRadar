@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
 import { Noto_Sans_KR } from "next/font/google";
 
-import { AppShell } from "@/components/layout/app-shell";
+import { RouteScrollReset } from "@/components/layout/route-scroll-reset";
+import { ScrollToTopButton } from "@/components/layout/scroll-to-top-button";
+import { SitePopupNotice } from "@/components/layout/site-popup-notice";
+import { SiteVisitTracker } from "@/components/layout/site-visit-tracker";
 
 import "./globals.css";
 
@@ -13,14 +16,18 @@ const bodyFont = Noto_Sans_KR({
 
 export const metadata: Metadata = {
   title: "SWING-RADAR",
-  description: "국내 스윙 후보 선정, 무효화 기준, 히스토리 검증을 한 화면에서 읽는 기술 중심 스윙 시그널 워크스페이스"
+  description: "장전 후보, 장초 재판정, 당일 행동까지 연결하는 KRX 스윙 운용 대시보드"
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ko" className="dark">
       <body className={bodyFont.variable}>
-        <AppShell>{children}</AppShell>
+        <RouteScrollReset />
+        <SitePopupNotice />
+        <SiteVisitTracker />
+        {children}
+        <ScrollToTopButton />
       </body>
     </html>
   );

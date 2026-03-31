@@ -9,6 +9,7 @@ export const dynamic = "force-dynamic";
 
 export default async function AccountPage() {
   const session = await getCurrentUserSession();
+
   if (!session) {
     redirect("/auth?next=%2Faccount");
   }
@@ -18,9 +19,9 @@ export default async function AccountPage() {
   return (
     <main className="space-y-6">
       <PageHeader
-        eyebrow="My Account"
-        title={`${session.user.displayName}님의 포트폴리오`}
-        description="총 자산, 가용 현금, 보유 종목, 진입일을 입력하면 오늘 행동 보드와 보유 관리 보드가 내 계좌 기준으로 계산됩니다."
+        eyebrow="Account"
+        title={`${session.user.displayName}님의 포트폴리오 설정`}
+        description="총 자산, 가용 현금, 보유 종목, 진입일을 저장하면 대시보드가 내 계정 기준으로 오늘 행동 보드와 보유 관리 보드를 계산합니다."
       />
       <AccountPortfolioPanel
         initialProfile={{
