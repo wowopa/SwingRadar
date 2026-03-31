@@ -13,7 +13,7 @@ export function AuthCta({ session }: { session: AuthSession | null }) {
     await fetch("/api/auth/logout", {
       method: "POST"
     });
-    router.push("/auth");
+    router.push("/");
     router.refresh();
   }
 
@@ -21,7 +21,7 @@ export function AuthCta({ session }: { session: AuthSession | null }) {
     return (
       <div className="flex flex-wrap items-center gap-2">
         <Button asChild variant="secondary" size="sm">
-          <Link href="/auth">로그인 / 가입</Link>
+          <Link href="/?auth=login">로그인 / 가입</Link>
         </Button>
       </div>
     );

@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 
+import { PublicAuthDialog } from "@/components/auth/public-auth-dialog";
 import { BrandSignature } from "@/components/layout/brand-signature";
 import { Button } from "@/components/ui/button";
 
@@ -39,16 +40,18 @@ export function PublicShell({ children }: { children: ReactNode }) {
 
               <div className="flex items-center gap-2">
                 <Button asChild variant="ghost" className="hidden border-white/10 bg-white/4 text-white hover:bg-white/8 sm:inline-flex">
-                  <Link href="/auth">로그인</Link>
+                  <Link href="/?auth=login">로그인</Link>
                 </Button>
                 <Button asChild className="bg-white text-slate-950 hover:bg-white/92">
-                  <Link href="/auth">시작하기</Link>
+                  <Link href="/?auth=signup">시작하기</Link>
                 </Button>
               </div>
             </div>
           </header>
         </div>
       </div>
+
+      <PublicAuthDialog />
 
       <div className="mx-auto min-h-screen w-full max-w-[1680px] px-4 pb-12 pt-[108px] sm:px-6 sm:pt-[116px] lg:px-8 lg:pt-[124px]">
         <main className="pt-2 sm:pt-4">{children}</main>

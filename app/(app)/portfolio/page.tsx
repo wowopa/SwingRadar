@@ -14,7 +14,7 @@ export default async function PortfolioPage() {
   const session = await getCurrentUserSession();
 
   if (!session) {
-    redirect("/auth?next=%2Fportfolio");
+    redirect("/?auth=login&next=%2Fportfolio");
   }
 
   const [profile, response] = await Promise.all([

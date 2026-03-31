@@ -140,7 +140,7 @@ export function LandingPage() {
 
               <div className="flex flex-wrap gap-3">
                 <Button asChild size="lg" className="bg-white text-slate-950 hover:bg-white/92">
-                  <Link href="/auth">
+                  <Link href="/?auth=login">
                     로그인하고 내 대시보드 열기
                     <ArrowRight className="h-4 w-4" />
                   </Link>
@@ -356,7 +356,7 @@ export function LandingPage() {
             </h2>
             <div className="pt-2">
               <Button asChild size="lg">
-                <Link href="/auth">
+                <Link href="/?auth=signup">
                   내 기준으로 시작하기
                   <ArrowRight className="h-4 w-4" />
                 </Link>

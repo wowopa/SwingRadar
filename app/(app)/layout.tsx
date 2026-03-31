@@ -10,7 +10,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   const session = await getCurrentUserSession();
 
   if (!session) {
-    redirect("/auth");
+    redirect("/?auth=login");
   }
 
   return <PrivateAppShell session={session}>{children}</PrivateAppShell>;

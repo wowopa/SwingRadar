@@ -14,7 +14,7 @@ export default async function AccountPage() {
   const session = await getCurrentUserSession();
 
   if (!session) {
-    redirect("/auth?next=%2Faccount");
+    redirect("/?auth=login&next=%2Faccount");
   }
 
   const profile = await loadPortfolioProfileForUser(session.user.id);
