@@ -85,10 +85,12 @@ function buildActionMap(board?: HoldingActionBoardDto) {
 
 export function PortfolioOverviewBoard({
   profile,
-  holdingActionBoard
+  holdingActionBoard,
+  onOpenSettings
 }: {
   profile: PortfolioProfile;
   holdingActionBoard?: HoldingActionBoardDto;
+  onOpenSettings?: () => void;
 }) {
   const actionMap = buildActionMap(holdingActionBoard);
   const riskBudget = Math.round((profile.totalCapital * profile.maxRiskPerTradePercent) / 100);
@@ -107,9 +109,15 @@ export function PortfolioOverviewBoard({
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
-              <Button asChild variant="outline">
-                <Link href="/account">포트폴리오 설정</Link>
-              </Button>
+              {onOpenSettings ? (
+                <Button type="button" variant="outline" onClick={onOpenSettings}>
+                  자산 설정
+                </Button>
+              ) : (
+                <Button asChild variant="outline">
+                  <Link href="/account">자산 설정</Link>
+                </Button>
+              )}
               <Button asChild variant="ghost">
                 <Link href="/tracking">공용 추적 보기</Link>
               </Button>
@@ -236,7 +244,7 @@ export function PortfolioOverviewBoard({
             </div>
           ) : (
             <div className="rounded-[24px] border border-border/70 bg-secondary/20 px-5 py-6 text-sm leading-6 text-muted-foreground">
-              아직 등록된 보유 종목이 없습니다. 먼저 Account 화면에서 포트폴리오 프로필과 보유 종목을 입력해 주세요.
+              아직 등록된 보유 종목이 없습니다. 먼저 자산 설정에서 보유 종목과 현금 기준을 입력해 주세요.
             </div>
           )}
         </CardContent>

@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation";
 
-import { AccountPortfolioPanel } from "@/components/account/account-portfolio-panel";
-import { PortfolioOverviewBoard } from "@/components/portfolio/portfolio-overview-board";
+import { PortfolioWorkspace } from "@/components/portfolio/portfolio-workspace";
 import { PageHeader } from "@/components/shared/page-header";
 import { PublicDataStatusBar } from "@/components/shared/public-data-status-bar";
 import { buildPublicDataStatusSummary } from "@/lib/server/public-data-status";
@@ -32,8 +31,7 @@ export default async function PortfolioPage() {
         description="내가 실제로 보유 중인 종목과 자산 기준으로 보유 관리와 자산 설정을 함께 다루는 화면입니다."
       />
       <PublicDataStatusBar summary={statusSummary} />
-      <PortfolioOverviewBoard profile={profile} holdingActionBoard={response.holdingActionBoard} />
-      <AccountPortfolioPanel
+      <PortfolioWorkspace
         initialProfile={{
           ...profile,
           name:
@@ -41,6 +39,7 @@ export default async function PortfolioPage() {
               ? profile.name
               : `${session.user.displayName} 포트폴리오`
         }}
+        holdingActionBoard={response.holdingActionBoard}
       />
     </main>
   );

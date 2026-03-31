@@ -1,19 +1,27 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import type { PortfolioProfilePayload } from "@/components/admin/dashboard-types";
 import { PortfolioProfileTab } from "@/components/admin/portfolio-profile-tab";
 
 export function AccountPortfolioPanel({
-  initialProfile
+  initialProfile,
+  onSaved,
+  saveButtonLabel
 }: {
   initialProfile: PortfolioProfilePayload;
+  onSaved?: (profile: PortfolioProfilePayload) => void;
+  saveButtonLabel?: string;
 }) {
   const [profile, setProfile] = useState(initialProfile);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setProfile(initialProfile);
+  }, [initialProfile]);
 
   async function saveProfile() {
     setLoading(true);
@@ -44,9 +52,10 @@ export function AccountPortfolioPanel({
       }
 
       setProfile(payload.profile);
-      setMessage("내 포트폴리오 프로필을 저장했습니다.");
+      setMessage("자산 설정을 저장했습니다.");
+      onSaved?.(payload.profile);
     } catch (saveError) {
-      setError(saveError instanceof Error ? saveError.message : "프로필 저장에 실패했습니다.");
+      setError(saveError instanceof Error ? saveError.message : "자산 설정 저장에 실패했습니다.");
     } finally {
       setLoading(false);
     }
@@ -69,6 +78,7 @@ export function AccountPortfolioPanel({
         setProfile={(updater) => setProfile((current) => updater(current))}
         onSave={() => void saveProfile()}
         disabled={loading}
+        saveButtonLabel={saveButtonLabel}
       />
     </section>
   );
