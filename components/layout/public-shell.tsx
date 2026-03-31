@@ -4,42 +4,55 @@ import Link from "next/link";
 import { BrandSignature } from "@/components/layout/brand-signature";
 import { Button } from "@/components/ui/button";
 
+const navItems = [
+  { href: "/#overview", label: "Overview" },
+  { href: "/#workflow", label: "Workflow" },
+  { href: "/#product", label: "Product" },
+  { href: "/#faq", label: "FAQ" }
+] as const;
+
 export function PublicShell({ children }: { children: ReactNode }) {
   const currentYear = new Date().getFullYear();
 
   return (
     <div className="min-h-screen">
-      <div className="mx-auto flex min-h-screen w-full max-w-[1480px] flex-col px-4 pb-12 pt-5 sm:px-6 lg:px-8">
-        <header className="surface-panel relative overflow-hidden rounded-[36px] px-5 py-6 sm:px-7 sm:py-7">
-          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,hsl(38_38%_74%_/_0.18),transparent_32%),linear-gradient(135deg,hsl(38_20%_82%_/_0.18),transparent_42%)]" />
-          <div className="relative flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
-            <div className="max-w-4xl space-y-4">
-              <BrandSignature />
-              <div className="max-w-3xl">
-                <p className="text-base leading-7 text-muted-foreground sm:text-lg">
-                  많은 종목을 나열하는 대신, 오늘 실제로 검토할 0~2개의 행동만 남기는 스윙 운용 경험으로 재구성했습니다.
-                </p>
-              </div>
-            </div>
+      <div className="mx-auto min-h-screen w-full max-w-[1520px] px-4 pb-12 pt-4 sm:px-6 lg:px-8">
+        <header className="sticky top-4 z-40">
+          <div className="mx-auto flex items-center justify-between gap-4 rounded-full border border-border/70 bg-white/72 px-4 py-3 shadow-[0_24px_70px_hsl(33_24%_22%_/_0.08)] backdrop-blur-xl sm:px-5">
+            <Link href="/" className="min-w-0">
+              <BrandSignature compact className="gap-3" />
+            </Link>
 
-            <div className="flex flex-wrap items-center gap-3">
-              <Button asChild variant="secondary">
+            <nav className="hidden items-center gap-6 lg:flex">
+              {navItems.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className="text-sm font-medium text-foreground/72 transition hover:text-foreground"
+                >
+                  {item.label}
+                </Link>
+              ))}
+            </nav>
+
+            <div className="flex items-center gap-2">
+              <Button asChild variant="ghost" className="hidden sm:inline-flex">
                 <Link href="/auth">로그인</Link>
               </Button>
               <Button asChild>
-                <Link href="/auth">가입하고 시작하기</Link>
+                <Link href="/auth">시작하기</Link>
               </Button>
             </div>
           </div>
         </header>
 
-        <main className="mt-8 flex-1">{children}</main>
+        <main className="pt-6 sm:pt-8">{children}</main>
 
-        <footer className="mt-12 border-t border-border/75 px-2 pt-6 text-center">
-          <p className="text-xs tracking-[0.18em] text-muted-foreground">Copyright {currentYear} SWING-RADAR. All rights reserved.</p>
-          <p className="mt-2 text-sm text-muted-foreground">
-            로그인 전에는 서비스 철학과 운영 방식을 먼저 설명하고, 로그인 후에만 개인 대시보드를 엽니다.
-          </p>
+        <footer className="mt-16 border-t border-border/70 px-2 pt-6">
+          <div className="flex flex-col gap-3 text-sm text-muted-foreground md:flex-row md:items-center md:justify-between">
+            <p>SWING-RADAR는 로그인 전에는 설명을, 로그인 후에는 개인 운용 대시보드를 보여줍니다.</p>
+            <p className="text-xs tracking-[0.18em]">COPYRIGHT {currentYear} SWING-RADAR</p>
+          </div>
         </footer>
       </div>
     </div>
