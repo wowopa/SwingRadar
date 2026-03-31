@@ -108,6 +108,35 @@ export interface PortfolioProfile {
   updatedBy: string;
 }
 
+export type PortfolioTradeEventType =
+  | "buy"
+  | "add"
+  | "take_profit_partial"
+  | "exit_full"
+  | "stop_loss"
+  | "manual_exit";
+
+export interface PortfolioTradeEvent {
+  id: string;
+  ticker: string;
+  company: string;
+  sector: string;
+  type: PortfolioTradeEventType;
+  quantity: number;
+  price: number;
+  fees?: number;
+  tradedAt: string;
+  note?: string;
+  createdAt: string;
+  createdBy: string;
+}
+
+export interface PortfolioJournal {
+  events: PortfolioTradeEvent[];
+  updatedAt: string;
+  updatedBy: string;
+}
+
 export type PositionSizingLimitSource = "risk_budget" | "slot_budget" | "cash_budget";
 
 export interface PositionSizingPlan {
