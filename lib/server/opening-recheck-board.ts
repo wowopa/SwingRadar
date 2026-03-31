@@ -25,6 +25,12 @@ interface OpeningRecheckBoardScan {
   items: Record<string, OpeningRecheckBoardEntry>;
 }
 
+export interface OpeningRecheckScanSnapshot {
+  scanKey: string;
+  updatedAt: string;
+  items: Record<string, OpeningRecheckBoardEntry>;
+}
+
 interface OpeningRecheckBoardDocument {
   scans: Record<string, OpeningRecheckBoardScan>;
 }
@@ -168,6 +174,11 @@ function trimDocument(document: OpeningRecheckBoardDocument) {
 export async function listOpeningRecheckDecisions(scanKey: string) {
   const document = await loadDocument();
   return document.scans[scanKey]?.items ?? {};
+}
+
+export async function listOpeningRecheckScans(): Promise<OpeningRecheckScanSnapshot[]> {
+  const document = await loadDocument();
+  return Object.values(document.scans).sort((left, right) => right.updatedAt.localeCompare(left.updatedAt));
 }
 
 export async function saveOpeningRecheckDecision(input: {

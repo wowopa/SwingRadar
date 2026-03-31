@@ -29,6 +29,7 @@ export default async function RecommendationsPage() {
         todayActionBoard={response.todayActionBoard}
         holdingActionBoard={response.holdingActionBoard}
         dailyScan={response.dailyScan}
+        openingReview={response.openingReview}
       />
     </main>
   );

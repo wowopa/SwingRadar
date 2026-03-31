@@ -66,6 +66,48 @@ export interface OpeningRecheckDecisionDto {
   suggestedStatus?: Exclude<OpeningRecheckStatusDto, "pending">;
 }
 
+export type OpeningRecheckReviewOutcomeDto = "success" | "failure" | "active";
+
+export interface OpeningRecheckReviewSummaryDto {
+  headline: string;
+  note: string;
+  matchedCount: number;
+  resolvedCount: number;
+  successCount: number;
+  failureCount: number;
+  activeCount: number;
+  passedWinRate?: number;
+  avoidedFailureRate?: number;
+}
+
+export interface OpeningRecheckReviewStatusInsightDto {
+  status: Exclude<OpeningRecheckStatusDto, "pending">;
+  label: string;
+  count: number;
+  resolvedCount: number;
+  successCount: number;
+  failureCount: number;
+  activeCount: number;
+  note: string;
+}
+
+export interface OpeningRecheckReviewPatternDto {
+  id: string;
+  title: string;
+  count: number;
+  resolvedCount: number;
+  successCount: number;
+  failureCount: number;
+  activeCount: number;
+  note: string;
+}
+
+export interface OpeningRecheckReviewDto {
+  summary: OpeningRecheckReviewSummaryDto;
+  statusBreakdown: OpeningRecheckReviewStatusInsightDto[];
+  patterns: OpeningRecheckReviewPatternDto[];
+}
+
 export type TodayActionBoardStatusDto = "buy_review" | "watch" | "avoid" | "excluded" | "pending";
 
 export interface TodayActionBoardSectorLoadDto {
@@ -336,6 +378,7 @@ export interface RecommendationsResponseDto {
   operatingWorkflow?: TodayOperatingWorkflowDto;
   todayActionBoard?: TodayActionBoardDto;
   holdingActionBoard?: HoldingActionBoardDto;
+  openingReview?: OpeningRecheckReviewDto;
 }
 
 export interface AnalysisSummaryMetricDto {

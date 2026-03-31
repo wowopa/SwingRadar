@@ -10,6 +10,7 @@ const mocks = vi.hoisted(() => ({
   getTracking: vi.fn(),
   getDailyCandidates: vi.fn(),
   listOpeningRecheckDecisions: vi.fn(),
+  listOpeningRecheckScans: vi.fn(),
   loadPortfolioProfileDocument: vi.fn(),
   loadPortfolioProfileForUser: vi.fn(),
   isPortfolioProfileConfigured: vi.fn()
@@ -28,7 +29,8 @@ vi.mock("@/lib/repositories/daily-candidates", () => ({
 }));
 
 vi.mock("@/lib/server/opening-recheck-board", () => ({
-  listOpeningRecheckDecisions: mocks.listOpeningRecheckDecisions
+  listOpeningRecheckDecisions: mocks.listOpeningRecheckDecisions,
+  listOpeningRecheckScans: mocks.listOpeningRecheckScans
 }));
 
 vi.mock("@/lib/server/portfolio-profile", () => ({
@@ -160,6 +162,7 @@ describe("listRecommendations", () => {
     });
     mocks.getDailyCandidates.mockResolvedValue(null);
     mocks.listOpeningRecheckDecisions.mockResolvedValue({});
+    mocks.listOpeningRecheckScans.mockResolvedValue([]);
     mocks.loadPortfolioProfileDocument.mockResolvedValue(createEmptyProfile());
     mocks.loadPortfolioProfileForUser.mockResolvedValue(createEmptyProfile());
     mocks.isPortfolioProfileConfigured.mockReturnValue(false);

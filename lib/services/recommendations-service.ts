@@ -1,5 +1,6 @@
 import type {
   DailyCandidateDto,
+  OpeningRecheckDecisionDto,
   RecommendationListItemDto,
   RecommendationsResponseDto,
   TickerAnalysisDto
@@ -16,7 +17,8 @@ import {
   resolveRecommendationActionBucket
 } from "@/lib/recommendations/action-plan";
 import { buildHoldingActionBoard } from "@/lib/recommendations/holding-management";
-import { listOpeningRecheckDecisions } from "@/lib/server/opening-recheck-board";
+import { buildOpeningRecheckReview } from "@/lib/recommendations/opening-recheck-review";
+import { listOpeningRecheckDecisions, listOpeningRecheckScans } from "@/lib/server/opening-recheck-board";
 import {
   isPortfolioProfileConfigured,
   loadPortfolioProfileDocument,
@@ -181,6 +183,7 @@ export async function listRecommendations(
   options?: { userId?: string | null }
 ): Promise<RecommendationsResponseDto> {
   const provider = getDataProvider();
+  const emptyOpeningRecheckByTicker: Record<string, OpeningRecheckDecisionDto> = {};
   const [source, analysisSource, dailyCandidates, tracking, portfolioProfile] = await Promise.all([
     provider.getRecommendations(),
     provider.getAnalysis().catch(() => null),
@@ -188,9 +191,12 @@ export async function listRecommendations(
     provider.getTracking(),
     options?.userId ? loadPortfolioProfileForUser(options.userId) : loadPortfolioProfileDocument()
   ]);
-  const openingRecheckByTicker = dailyCandidates
-    ? await listOpeningRecheckDecisions(dailyCandidates.generatedAt)
-    : {};
+  const [openingRecheckByTicker, openingRecheckScans] = await Promise.all([
+    dailyCandidates
+      ? listOpeningRecheckDecisions(dailyCandidates.generatedAt)
+      : Promise.resolve(emptyOpeningRecheckByTicker),
+    listOpeningRecheckScans()
+  ]);
   const sourceByTicker = new Map(source.items.map((item) => [item.ticker, item]));
   const dailyCandidateByTicker = new Map((dailyCandidates?.topCandidates ?? []).map((candidate) => [candidate.ticker, candidate]));
   const featuredRankByTicker = new Map(
@@ -411,6 +417,7 @@ export async function listRecommendations(
           })
         })
       : undefined;
+  const openingReview = buildOpeningRecheckReview(openingRecheckScans, tracking.history);
 
   return {
     generatedAt: dailyCandidates?.generatedAt ?? source.generatedAt,
@@ -431,6 +438,7 @@ export async function listRecommendations(
     todaySummary,
     operatingWorkflow: buildTodayOperatingWorkflow(todaySummary),
     todayActionBoard,
-    holdingActionBoard
+    holdingActionBoard,
+    openingReview
   };
 }

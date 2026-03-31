@@ -91,6 +91,48 @@ export interface OpeningRecheckDecision {
   suggestedStatus?: Exclude<OpeningRecheckStatus, "pending">;
 }
 
+export type OpeningRecheckReviewOutcome = "success" | "failure" | "active";
+
+export interface OpeningRecheckReviewSummary {
+  headline: string;
+  note: string;
+  matchedCount: number;
+  resolvedCount: number;
+  successCount: number;
+  failureCount: number;
+  activeCount: number;
+  passedWinRate?: number;
+  avoidedFailureRate?: number;
+}
+
+export interface OpeningRecheckReviewStatusInsight {
+  status: Exclude<OpeningRecheckStatus, "pending">;
+  label: string;
+  count: number;
+  resolvedCount: number;
+  successCount: number;
+  failureCount: number;
+  activeCount: number;
+  note: string;
+}
+
+export interface OpeningRecheckReviewPattern {
+  id: string;
+  title: string;
+  count: number;
+  resolvedCount: number;
+  successCount: number;
+  failureCount: number;
+  activeCount: number;
+  note: string;
+}
+
+export interface OpeningRecheckReview {
+  summary: OpeningRecheckReviewSummary;
+  statusBreakdown: OpeningRecheckReviewStatusInsight[];
+  patterns: OpeningRecheckReviewPattern[];
+}
+
 export type TodayActionBoardStatus = "buy_review" | "watch" | "avoid" | "excluded" | "pending";
 
 export interface TodayActionBoardSectorLoad {

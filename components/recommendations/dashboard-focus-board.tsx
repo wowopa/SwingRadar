@@ -9,6 +9,7 @@ import {
   WalletCards
 } from "lucide-react";
 
+import { OpeningCheckReviewCard } from "@/components/recommendations/opening-check-review-card";
 import { SignalToneBadge } from "@/components/shared/signal-tone-badge";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,6 +17,7 @@ import type {
   DailyScanSummaryDto,
   HoldingActionBoardDto,
   HoldingActionStatusDto,
+  OpeningRecheckReviewDto,
   TodayActionBoardDto,
   TodayActionBoardItemDto,
   TodayActionSummaryDto
@@ -172,12 +174,14 @@ export function DashboardFocusBoard({
   summary,
   todayActionBoard,
   holdingActionBoard,
-  dailyScan
+  dailyScan,
+  openingReview
 }: {
   summary?: TodayActionSummaryDto;
   todayActionBoard?: TodayActionBoardDto;
   holdingActionBoard?: HoldingActionBoardDto;
   dailyScan: DailyScanSummaryDto | null;
+  openingReview?: OpeningRecheckReviewDto;
 }) {
   const buyReviewItems = getBuyReviewItems(todayActionBoard);
   const holdingAttentionItems = getHoldingAttentionItems(holdingActionBoard);
@@ -230,6 +234,8 @@ export function DashboardFocusBoard({
           </div>
         </CardContent>
       </Card>
+
+      <OpeningCheckReviewCard review={openingReview} />
 
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)]">
         <Card className="border-border/70 bg-white/82 shadow-sm">
