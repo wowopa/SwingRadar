@@ -16,9 +16,10 @@ export function PublicShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top,hsl(38_35%_24%_/_0.22),transparent_26%),linear-gradient(180deg,hsl(220_22%_11%)_0%,hsl(220_20%_14%)_18%,hsl(34_15%_92%)_46%,hsl(33_17%_95%)_100%)] text-foreground">
-      <div className="mx-auto min-h-screen w-full max-w-[1680px] px-4 pb-12 pt-4 sm:px-6 lg:px-8">
-        <header className="sticky top-4 z-40">
-          <div className="mx-auto flex items-center justify-between gap-4 rounded-full border border-white/10 bg-[linear-gradient(180deg,rgba(18,25,38,0.88),rgba(24,31,45,0.72))] px-4 py-3 shadow-[0_24px_70px_hsl(220_26%_8%_/_0.22)] backdrop-blur-xl sm:px-5">
+      <div className="mx-auto min-h-screen w-full max-w-[1680px] px-4 pb-12 sm:px-6 lg:px-8">
+        <header className="relative z-40 mb-8 overflow-hidden rounded-b-[32px] border-x border-b border-white/10 bg-[linear-gradient(180deg,rgba(16,22,35,0.96),rgba(23,31,46,0.9))] shadow-[0_22px_60px_hsl(220_26%_8%_/_0.18)] backdrop-blur-xl">
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_12%_10%,hsl(39_76%_70%_/_0.12),transparent_18%),radial-gradient(circle_at_88%_22%,hsl(196_90%_72%_/_0.08),transparent_20%)]" />
+          <div className="relative mx-auto flex min-h-[84px] items-center justify-between gap-4 px-4 py-4 sm:px-5 lg:px-6">
             <Link href="/" className="min-w-0">
               <BrandSignature compact className="gap-3" tone="light" />
             </Link>
@@ -46,7 +47,7 @@ export function PublicShell({ children }: { children: ReactNode }) {
           </div>
         </header>
 
-        <main className="pt-8 sm:pt-10">{children}</main>
+        <main className="pt-2 sm:pt-4">{children}</main>
 
         <footer className="mt-16 border-t border-border/60 px-2 pt-6">
           <div className="flex flex-col gap-3 text-sm md:flex-row md:items-center md:justify-between">
