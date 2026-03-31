@@ -54,6 +54,8 @@ export interface OpeningRecheckDecisionDto {
   note?: string;
 }
 
+export type TodayActionBoardStatusDto = "buy_review" | "watch" | "avoid" | "excluded" | "pending";
+
 export interface ValidationStatsDto {
   hitRate: number;
   avgReturn: number;
@@ -96,6 +98,47 @@ export interface RecommendationTradePlanDto {
   holdWindowLabel: string;
   riskRewardLabel: string;
   nextStep: string;
+}
+
+export interface TodayActionBoardItemDto {
+  ticker: string;
+  company: string;
+  sector: string;
+  signalTone: SignalToneDto;
+  featuredRank?: number;
+  candidateScore?: number;
+  activationScore?: number;
+  actionBucket?: RecommendationActionBucketDto;
+  tradePlan?: RecommendationTradePlanDto;
+  openingRecheck?: OpeningRecheckDecisionDto;
+  boardStatus: TodayActionBoardStatusDto;
+  boardReason: string;
+}
+
+export interface TodayActionBoardSummaryDto {
+  headline: string;
+  note: string;
+  maxNewPositions: number;
+  remainingNewPositions: number;
+  buyReviewCount: number;
+  watchCount: number;
+  avoidCount: number;
+  excludedCount: number;
+  pendingCount: number;
+}
+
+export interface TodayActionBoardSectionDto {
+  status: TodayActionBoardStatusDto;
+  label: string;
+  description: string;
+  count: number;
+  items: TodayActionBoardItemDto[];
+}
+
+export interface TodayActionBoardDto {
+  summary: TodayActionBoardSummaryDto;
+  sections: TodayActionBoardSectionDto[];
+  items: TodayActionBoardItemDto[];
 }
 
 export interface AnalysisTradePlanDto extends RecommendationTradePlanDto {
@@ -190,6 +233,7 @@ export interface RecommendationsResponseDto {
   dailyScan: DailyScanSummaryDto | null;
   todaySummary?: TodayActionSummaryDto;
   operatingWorkflow?: TodayOperatingWorkflowDto;
+  todayActionBoard?: TodayActionBoardDto;
 }
 
 export interface AnalysisSummaryMetricDto {

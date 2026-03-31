@@ -141,6 +141,16 @@ describe("listRecommendations", () => {
     expect(result.operatingWorkflow?.steps).toHaveLength(3);
     expect(result.operatingWorkflow?.steps[0]?.title).toBe("장전 후보");
     expect(result.operatingWorkflow?.openingChecklist[1]?.title).toContain("손절");
+    expect(result.todayActionBoard?.summary.buyReviewCount).toBe(1);
+    expect(result.todayActionBoard?.summary.remainingNewPositions).toBe(0);
+    expect(result.todayActionBoard?.sections[0]).toMatchObject({
+      status: "buy_review",
+      count: 1
+    });
+    expect(result.todayActionBoard?.sections[0]?.items[0]).toMatchObject({
+      ticker: "BBB001",
+      boardStatus: "buy_review"
+    });
   });
 
   it("filters by signal tone and limit when no daily scan exists", async () => {

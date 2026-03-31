@@ -79,6 +79,49 @@ export interface OpeningRecheckDecision {
   note?: string;
 }
 
+export type TodayActionBoardStatus = "buy_review" | "watch" | "avoid" | "excluded" | "pending";
+
+export interface TodayActionBoardItem {
+  ticker: string;
+  company: string;
+  sector: string;
+  signalTone: SignalTone;
+  featuredRank?: number;
+  candidateScore?: number;
+  activationScore?: number;
+  actionBucket?: RecommendationActionBucket;
+  tradePlan?: RecommendationTradePlan;
+  openingRecheck?: OpeningRecheckDecision;
+  boardStatus: TodayActionBoardStatus;
+  boardReason: string;
+}
+
+export interface TodayActionBoardSummary {
+  headline: string;
+  note: string;
+  maxNewPositions: number;
+  remainingNewPositions: number;
+  buyReviewCount: number;
+  watchCount: number;
+  avoidCount: number;
+  excludedCount: number;
+  pendingCount: number;
+}
+
+export interface TodayActionBoardSection {
+  status: TodayActionBoardStatus;
+  label: string;
+  description: string;
+  count: number;
+  items: TodayActionBoardItem[];
+}
+
+export interface TodayActionBoard {
+  summary: TodayActionBoardSummary;
+  sections: TodayActionBoardSection[];
+  items: TodayActionBoardItem[];
+}
+
 export interface RecommendationTradePlan {
   currentPrice?: number | null;
   currentPriceLabel: string;

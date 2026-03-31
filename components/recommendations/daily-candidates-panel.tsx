@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { Loader2, RotateCcw } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { startTransition, useEffect, useMemo, useState } from "react";
 
 import { ActionBucketBadge } from "@/components/recommendations/action-bucket-badge";
 import { SignalToneBadge } from "@/components/shared/signal-tone-badge";
@@ -73,6 +74,7 @@ async function parseResponse<T>(response: Response): Promise<T> {
 }
 
 export function DailyCandidatesPanel({ dailyScan }: { dailyScan: DailyScanSummaryDto | null }) {
+  const router = useRouter();
   const { authHeaders } = useAdminToken();
   const visibleCandidates = useMemo(() => dailyScan?.topCandidates.slice(0, 6) ?? [], [dailyScan]);
   const initialDecisions = useMemo(() => createInitialDecisions(visibleCandidates), [visibleCandidates]);
@@ -141,6 +143,9 @@ export function DailyCandidatesPanel({ dailyScan }: { dailyScan: DailyScanSummar
         return next;
       });
       setBoardMessage(`${ticker} 장초 재판정을 ${getOpeningRecheckStatusMeta(status).label}로 저장했습니다.`);
+      startTransition(() => {
+        router.refresh();
+      });
     } catch (error) {
       setBoardError(error instanceof Error ? error.message : "장초 재판정 저장에 실패했습니다.");
     } finally {
@@ -177,6 +182,9 @@ export function DailyCandidatesPanel({ dailyScan }: { dailyScan: DailyScanSummar
       await parseResponse<{ cleared: boolean }>(response);
       setDecisions({});
       setBoardMessage("오늘 장초 재판정 보드를 초기화했습니다.");
+      startTransition(() => {
+        router.refresh();
+      });
     } catch (error) {
       setBoardError(error instanceof Error ? error.message : "장초 재판정 초기화에 실패했습니다.");
     } finally {

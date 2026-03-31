@@ -1,12 +1,16 @@
 import type { DailyCandidate } from "@/lib/repositories/daily-candidates";
 import { formatPrice } from "@/lib/utils";
 import type {
+  OpeningRecheckDecision,
   OpeningChecklistItem,
   OperatingStage,
   Recommendation,
   RecommendationActionBucket,
   RecommendationTradePlan,
   SignalTone,
+  TodayActionBoard,
+  TodayActionBoardItem,
+  TodayActionBoardStatus,
   TodayActionSummary,
   TodayOperatingWorkflow,
   TrackingDiagnostic
@@ -50,9 +54,53 @@ export interface ActionBucketMeta {
 export type TodayOperatingSummary = TodayActionSummary;
 export type DailyOperatingWorkflow = TodayOperatingWorkflow;
 
+export interface TodayActionBoardCandidateInput {
+  ticker: string;
+  company: string;
+  sector: string;
+  signalTone: SignalTone;
+  featuredRank?: number | null;
+  candidateScore?: number | null;
+  activationScore?: number | null;
+  actionBucket?: RecommendationActionBucket | null;
+  tradePlan?: RecommendationTradePlan | null;
+  openingRecheck?: OpeningRecheckDecision | null;
+}
+
 const OPENING_RECHECK_WINDOW_LABEL = "장 시작 후 5~10분";
 const MAX_ACCEPTABLE_GAP_PERCENT = 3;
 const MIN_STOP_BUFFER_PERCENT = 1.5;
+
+const TODAY_ACTION_BOARD_SECTION_META: Record<
+  TodayActionBoardStatus,
+  {
+    label: string;
+    description: string;
+  }
+> = {
+  buy_review: {
+    label: "오늘 매수 검토",
+    description: "장초 재판정을 통과했고 오늘 신규 매수 한도 안에 들어온 종목입니다."
+  },
+  watch: {
+    label: "관찰 유지",
+    description: "구조는 살아 있지만 오늘은 더 지켜보거나 한도 때문에 뒤로 미룬 종목입니다."
+  },
+  avoid: {
+    label: "추격 금지",
+    description: "갭상승이나 과열 등으로 오늘은 따라붙지 않는 종목입니다."
+  },
+  excluded: {
+    label: "오늘 제외",
+    description: "손절 기준 훼손 또는 구조 악화로 오늘 행동 보드에서 뺀 종목입니다."
+  },
+  pending: {
+    label: "재판정 대기",
+    description: "장초 재판정 저장 전이라 아직 실제 행동 보드에 올리지 않은 종목입니다."
+  }
+};
+
+const TODAY_ACTION_BOARD_ORDER: TodayActionBoardStatus[] = ["buy_review", "watch", "avoid", "excluded", "pending"];
 
 const ACTION_BUCKET_META: Record<RecommendationActionBucket, ActionBucketMeta> = {
   buy_now: {
@@ -90,6 +138,28 @@ function comparePriority(left: RecommendationActionItem, right: RecommendationAc
 
   if (left.score !== right.score) {
     return right.score - left.score;
+  }
+
+  return left.company.localeCompare(right.company, "ko");
+}
+
+function compareActionBoardPriority(left: TodayActionBoardCandidateInput, right: TodayActionBoardCandidateInput) {
+  const leftRank = left.featuredRank ?? Number.MAX_SAFE_INTEGER;
+  const rightRank = right.featuredRank ?? Number.MAX_SAFE_INTEGER;
+  if (leftRank !== rightRank) {
+    return leftRank - rightRank;
+  }
+
+  const leftCandidate = left.candidateScore ?? Number.NEGATIVE_INFINITY;
+  const rightCandidate = right.candidateScore ?? Number.NEGATIVE_INFINITY;
+  if (leftCandidate !== rightCandidate) {
+    return rightCandidate - leftCandidate;
+  }
+
+  const leftActivation = left.activationScore ?? Number.NEGATIVE_INFINITY;
+  const rightActivation = right.activationScore ?? Number.NEGATIVE_INFINITY;
+  if (leftActivation !== rightActivation) {
+    return rightActivation - leftActivation;
   }
 
   return left.company.localeCompare(right.company, "ko");
@@ -386,6 +456,119 @@ export function buildTodayOperatingWorkflow(summary: TodayOperatingSummary): Dai
     recheckWindowLabel: OPENING_RECHECK_WINDOW_LABEL,
     steps,
     openingChecklist
+  };
+}
+
+export function buildTodayActionBoard(
+  candidates: TodayActionBoardCandidateInput[],
+  summary: Pick<TodayOperatingSummary, "maxNewPositions">
+): TodayActionBoard {
+  const orderedCandidates = [...candidates].sort(compareActionBoardPriority);
+  const passedCandidates = orderedCandidates.filter((candidate) => candidate.openingRecheck?.status === "passed");
+  const buyReviewLimit = Math.max(summary.maxNewPositions, 0);
+  const buyReviewTickers = new Set(passedCandidates.slice(0, buyReviewLimit).map((candidate) => candidate.ticker));
+
+  const items = orderedCandidates.map<TodayActionBoardItem>((candidate) => {
+    const openingRecheck = candidate.openingRecheck ?? undefined;
+    const rawStatus = openingRecheck?.status ?? "pending";
+
+    let boardStatus: TodayActionBoardStatus;
+    let boardReason: string;
+
+    if (rawStatus === "passed") {
+      if (buyReviewTickers.has(candidate.ticker) && buyReviewLimit > 0) {
+        boardStatus = "buy_review";
+        boardReason = "장초 재판정을 통과했고 오늘 신규 매수 한도 안에 들어 있습니다.";
+      } else {
+        boardStatus = "watch";
+        boardReason =
+          buyReviewLimit > 0
+            ? `장초 재판정은 통과했지만 오늘 신규 매수 한도 ${buyReviewLimit}개를 넘겨 관찰 유지로 남깁니다.`
+            : "재판정을 통과해도 오늘은 신규 매수 한도가 없어 관찰 유지로 남깁니다.";
+      }
+    } else if (rawStatus === "watch") {
+      boardStatus = "watch";
+      boardReason = "확인 가격과 거래 반응을 조금 더 확인한 뒤 다시 판단합니다.";
+    } else if (rawStatus === "avoid") {
+      boardStatus = "avoid";
+      boardReason = "갭상승 또는 과열 가능성이 있어 오늘은 추격하지 않습니다.";
+    } else if (rawStatus === "excluded") {
+      boardStatus = "excluded";
+      boardReason = "손절 기준 훼손 또는 구조 약화로 오늘 후보에서 제외합니다.";
+    } else {
+      boardStatus = "pending";
+      boardReason = "장초 재판정이 아직 저장되지 않아 실제 행동 후보로 확정하지 않았습니다.";
+    }
+
+    return {
+      ticker: candidate.ticker,
+      company: candidate.company,
+      sector: candidate.sector,
+      signalTone: candidate.signalTone,
+      featuredRank: candidate.featuredRank ?? undefined,
+      candidateScore: candidate.candidateScore ?? undefined,
+      activationScore: candidate.activationScore ?? undefined,
+      actionBucket: candidate.actionBucket ?? undefined,
+      tradePlan: candidate.tradePlan ?? undefined,
+      openingRecheck,
+      boardStatus,
+      boardReason
+    };
+  });
+
+  const sections = TODAY_ACTION_BOARD_ORDER.map((status) => {
+    const sectionItems = items.filter((item) => item.boardStatus === status);
+    const meta = TODAY_ACTION_BOARD_SECTION_META[status];
+
+    return {
+      status,
+      label: meta.label,
+      description: meta.description,
+      count: sectionItems.length,
+      items: sectionItems
+    };
+  });
+
+  const buyReviewCount = sections.find((section) => section.status === "buy_review")?.count ?? 0;
+  const watchCount = sections.find((section) => section.status === "watch")?.count ?? 0;
+  const avoidCount = sections.find((section) => section.status === "avoid")?.count ?? 0;
+  const excludedCount = sections.find((section) => section.status === "excluded")?.count ?? 0;
+  const pendingCount = sections.find((section) => section.status === "pending")?.count ?? 0;
+  const overflowPassedCount = Math.max(passedCandidates.length - buyReviewCount, 0);
+  const remainingNewPositions = Math.max(buyReviewLimit - buyReviewCount, 0);
+
+  let headline = `오늘 실제 매수 검토 ${buyReviewCount}개`;
+  let note = "손절 기준과 비중이 정리된 종목만 실제 매수 검토 대상으로 남깁니다.";
+
+  if (buyReviewCount === 0 && pendingCount > 0) {
+    headline = `아직 재판정 대기 ${pendingCount}개`;
+    note = "장초 재판정이 끝나기 전까지는 오늘 실제 매수 검토 종목을 확정하지 않습니다.";
+  } else if (buyReviewCount === 0 && watchCount > 0) {
+    headline = "오늘은 관찰 유지 우선";
+    note = "재판정을 통과한 종목보다 더 지켜봐야 할 종목이 많아 신규 매수보다 관찰이 우선입니다.";
+  } else if (buyReviewCount === 0 && avoidCount + excludedCount > 0) {
+    headline = "오늘은 신규 매수보다 방어 우선";
+    note = "보류 또는 제외 종목이 많아 오늘은 신규 매수를 공격적으로 늘리지 않는 편이 좋습니다.";
+  }
+
+  if (overflowPassedCount > 0) {
+    note = `재판정을 통과한 종목이 더 있지만 신규 매수 한도 ${buyReviewLimit}개를 넘는 ${overflowPassedCount}개는 관찰 유지로 남깁니다.`;
+  }
+
+  return {
+    summary: {
+      headline,
+      note,
+      maxNewPositions: buyReviewLimit,
+      remainingNewPositions,
+      buyReviewCount,
+      watchCount,
+      avoidCount,
+      excludedCount,
+      pendingCount
+    },
+    sections,
+    items
   };
 }
 

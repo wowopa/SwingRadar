@@ -1,5 +1,6 @@
 import { DailyCandidatesPanel } from "@/components/recommendations/daily-candidates-panel";
 import { RecommendationExplorer } from "@/components/recommendations/recommendation-explorer";
+import { TodayActionBoard } from "@/components/recommendations/today-action-board";
 import { TodayOperatingSummary } from "@/components/recommendations/today-operating-summary";
 import { PageHeader } from "@/components/shared/page-header";
 import { PublicDataStatusBarGroup } from "@/components/shared/public-data-status-bar";
@@ -26,6 +27,11 @@ export default async function RecommendationsPage() {
       <section className="mb-6">
         <TodayOperatingSummary items={response.items} summary={response.todaySummary} workflow={response.operatingWorkflow} />
       </section>
+      {response.todayActionBoard ? (
+        <section className="mb-6">
+          <TodayActionBoard board={response.todayActionBoard} />
+        </section>
+      ) : null}
       <section className="mb-6">
         <DailyCandidatesPanel dailyScan={response.dailyScan} />
       </section>

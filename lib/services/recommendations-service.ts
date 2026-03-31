@@ -6,6 +6,7 @@ import type {
 import { getDataProvider } from "@/lib/providers";
 import { getDailyCandidates, type DailyCandidate } from "@/lib/repositories/daily-candidates";
 import {
+  buildTodayActionBoard,
   buildRecommendationTradePlan,
   buildTodayOperatingWorkflow,
   buildTodayOperatingSummary,
@@ -212,11 +213,37 @@ export async function listRecommendations(query: RecommendationsQuery): Promise<
   }
 
   const todaySummary = buildTodayOperatingSummary(items);
+  const dailyScanCandidates = dailyCandidates
+    ? dailyCandidates.topCandidates.map((candidate) =>
+        enrichDailyCandidateItem(
+          candidate,
+          sourceByTicker.get(candidate.ticker),
+          openingRecheckByTicker[candidate.ticker]
+        )
+      )
+    : null;
+  const todayActionBoard = dailyScanCandidates
+    ? buildTodayActionBoard(
+        dailyScanCandidates.map((candidate, index) => ({
+          ticker: candidate.ticker,
+          company: candidate.company,
+          sector: candidate.sector,
+          signalTone: candidate.signalTone,
+          featuredRank: index + 1,
+          candidateScore: candidate.candidateScore,
+          activationScore: candidate.activationScore,
+          actionBucket: candidate.actionBucket,
+          tradePlan: candidate.tradePlan,
+          openingRecheck: candidate.openingRecheck
+        })),
+        todaySummary
+      )
+    : undefined;
 
   return {
     generatedAt: dailyCandidates?.generatedAt ?? source.generatedAt,
     items,
-    dailyScan: dailyCandidates
+    dailyScan: dailyCandidates && dailyScanCandidates
       ? {
           generatedAt: dailyCandidates.generatedAt,
           batchSize: dailyCandidates.batchSize,
@@ -226,16 +253,11 @@ export async function listRecommendations(query: RecommendationsQuery): Promise<
           totalBatches: dailyCandidates.totalBatches,
           succeededBatches: dailyCandidates.succeededBatches,
           failedBatches: dailyCandidates.failedBatches,
-          topCandidates: dailyCandidates.topCandidates.map((candidate) =>
-            enrichDailyCandidateItem(
-              candidate,
-              sourceByTicker.get(candidate.ticker),
-              openingRecheckByTicker[candidate.ticker]
-            )
-          )
+          topCandidates: dailyScanCandidates
         }
       : null,
     todaySummary,
-    operatingWorkflow: buildTodayOperatingWorkflow(todaySummary)
+    operatingWorkflow: buildTodayOperatingWorkflow(todaySummary),
+    todayActionBoard
   };
 }
