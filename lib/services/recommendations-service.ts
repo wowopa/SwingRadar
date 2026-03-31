@@ -1,8 +1,10 @@
 import type {
   DailyCandidateDto,
   RecommendationListItemDto,
-  RecommendationsResponseDto
+  RecommendationsResponseDto,
+  TickerAnalysisDto
 } from "@/lib/api-contracts/swing-radar";
+import { buildAnalysisTradePlan } from "@/lib/analysis/action-plan";
 import { getDataProvider } from "@/lib/providers";
 import { getDailyCandidates, type DailyCandidate } from "@/lib/repositories/daily-candidates";
 import {
@@ -13,6 +15,7 @@ import {
   createRecommendationTradePlanInput,
   resolveRecommendationActionBucket
 } from "@/lib/recommendations/action-plan";
+import { buildHoldingActionBoard } from "@/lib/recommendations/holding-management";
 import { listOpeningRecheckDecisions } from "@/lib/server/opening-recheck-board";
 import {
   isPortfolioProfileConfigured,
@@ -146,10 +149,37 @@ function enrichDailyCandidateItem(
   };
 }
 
+function enrichAnalysisItem(
+  analysisItem: TickerAnalysisDto,
+  dailyCandidate?: DailyCandidate | null,
+  featuredRank?: number
+) {
+  const score = dailyCandidate?.score ?? analysisItem.score;
+  const activationScore = dailyCandidate?.activationScore ?? analysisItem.activationScore;
+
+  return {
+    ...analysisItem,
+    score,
+    activationScore,
+    tradePlan:
+      analysisItem.tradePlan ??
+      buildAnalysisTradePlan({
+        analysis: {
+          ...analysisItem,
+          score,
+          activationScore
+        },
+        dailyCandidate,
+        featuredRank
+      })
+  };
+}
+
 export async function listRecommendations(query: RecommendationsQuery): Promise<RecommendationsResponseDto> {
   const provider = getDataProvider();
-  const [source, dailyCandidates, tracking, portfolioProfile] = await Promise.all([
+  const [source, analysisSource, dailyCandidates, tracking, portfolioProfile] = await Promise.all([
     provider.getRecommendations(),
+    provider.getAnalysis().catch(() => null),
     getDailyCandidates(),
     provider.getTracking(),
     loadPortfolioProfileDocument()
@@ -159,6 +189,10 @@ export async function listRecommendations(query: RecommendationsQuery): Promise<
     : {};
   const sourceByTicker = new Map(source.items.map((item) => [item.ticker, item]));
   const dailyCandidateByTicker = new Map((dailyCandidates?.topCandidates ?? []).map((candidate) => [candidate.ticker, candidate]));
+  const featuredRankByTicker = new Map(
+    (dailyCandidates?.topCandidates ?? []).map((candidate, index) => [candidate.ticker, index + 1])
+  );
+  const analysisByTicker = new Map((analysisSource?.items ?? []).map((item) => [item.ticker, item]));
 
   const featuredCandidateMap = new Map(
     (dailyCandidates?.topCandidates ?? []).map((candidate, index) => [
@@ -309,6 +343,70 @@ export async function listRecommendations(query: RecommendationsQuery): Promise<
         }
       )
     : undefined;
+  const holdingActionBoard =
+    isPortfolioProfileConfigured(portfolioProfile) && portfolioProfile.positions.length
+      ? buildHoldingActionBoard({
+          generatedAt: dailyCandidates?.generatedAt ?? analysisSource?.generatedAt ?? source.generatedAt,
+          profileName: portfolioProfile.name,
+          positions: portfolioProfile.positions.map((position) => {
+            const dailyCandidate = dailyCandidateByTicker.get(position.ticker);
+            const featuredRank = featuredRankByTicker.get(position.ticker);
+            const analysisItem = analysisByTicker.get(position.ticker);
+
+            if (analysisItem) {
+              const enrichedAnalysis = enrichAnalysisItem(analysisItem, dailyCandidate, featuredRank);
+
+              return {
+                ...position,
+                signalTone: enrichedAnalysis.signalTone,
+                tradePlan: enrichedAnalysis.tradePlan
+              };
+            }
+
+            const sourceItem = sourceByTicker.get(position.ticker);
+            if (sourceItem) {
+              const mergedItem = dailyCandidate
+                ? {
+                    ...sourceItem,
+                    score: dailyCandidate.score ?? sourceItem.score,
+                    riskRewardRatio:
+                      formatRiskRewardRatio(
+                        toNullableNumber(dailyCandidate.confirmationPrice),
+                        toNullableNumber(dailyCandidate.expansionPrice),
+                        toNullableNumber(dailyCandidate.invalidationPrice)
+                      ) ?? sourceItem.riskRewardRatio,
+                    featuredRank,
+                    candidateScore: dailyCandidate.candidateScore,
+                    activationScore: sourceItem.activationScore ?? dailyCandidate.activationScore,
+                    eventCoverage: dailyCandidate.eventCoverage,
+                    candidateBatch: dailyCandidate.batch
+                  }
+                : sourceItem;
+              const enrichedItem = enrichRecommendationItem(mergedItem, dailyCandidate);
+
+              return {
+                ...position,
+                signalTone: enrichedItem.signalTone,
+                tradePlan: enrichedItem.tradePlan
+              };
+            }
+
+            if (dailyCandidate) {
+              const enrichedCandidate = enrichDailyCandidateItem(dailyCandidate);
+
+              return {
+                ...position,
+                signalTone: dailyCandidate.signalTone,
+                tradePlan: enrichedCandidate.tradePlan
+              };
+            }
+
+            return {
+              ...position
+            };
+          })
+        })
+      : undefined;
 
   return {
     generatedAt: dailyCandidates?.generatedAt ?? source.generatedAt,
@@ -328,6 +426,7 @@ export async function listRecommendations(query: RecommendationsQuery): Promise<
       : null,
     todaySummary,
     operatingWorkflow: buildTodayOperatingWorkflow(todaySummary),
-    todayActionBoard
+    todayActionBoard,
+    holdingActionBoard
   };
 }

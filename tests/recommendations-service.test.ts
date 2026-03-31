@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   getRecommendations: vi.fn(),
+  getAnalysis: vi.fn(),
   getTracking: vi.fn(),
   getDailyCandidates: vi.fn(),
   listOpeningRecheckDecisions: vi.fn(),
@@ -12,6 +13,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock("@/lib/providers", () => ({
   getDataProvider: () => ({
     getRecommendations: mocks.getRecommendations,
+    getAnalysis: mocks.getAnalysis,
     getTracking: mocks.getTracking
   })
 }));
@@ -77,10 +79,61 @@ function createCandidate(overrides: Record<string, unknown>) {
   };
 }
 
+function createAnalysis(overrides: Record<string, unknown>) {
+  return {
+    ticker: "AAA001",
+    company: "Alpha",
+    signalTone: "湲띿젙",
+    score: 72,
+    headline: "Alpha analysis",
+    invalidation: "41,000원 이탈",
+    analysisSummary: [],
+    keyLevels: [],
+    technicalIndicators: {
+      sma20: null,
+      sma60: null,
+      ema20: null,
+      rsi14: null,
+      macd: null,
+      macdSignal: null,
+      macdHistogram: null,
+      bollingerUpper: null,
+      bollingerMiddle: null,
+      bollingerLower: null,
+      volumeRatio20: null,
+      atr14: null,
+      natr14: null,
+      adx14: null,
+      plusDi14: null,
+      minusDi14: null,
+      stochasticK: null,
+      stochasticD: null,
+      mfi14: null,
+      roc20: null,
+      cci20: null,
+      cmf20: null,
+      marketRelativeStrength20: null,
+      marketRelativeSpread20: null
+    },
+    chartSeries: [],
+    decisionNotes: [],
+    scoreBreakdown: [],
+    scenarios: [],
+    riskChecklist: [],
+    newsImpact: [],
+    dataQuality: [],
+    ...overrides
+  };
+}
+
 describe("listRecommendations", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.listOpeningRecheckDecisions.mockResolvedValue({});
+    mocks.getAnalysis.mockResolvedValue({
+      generatedAt: "2026-03-08T00:00:00.000Z",
+      items: []
+    });
     mocks.loadPortfolioProfileDocument.mockResolvedValue({
       name: "기본 운용 프로필",
       totalCapital: 0,
@@ -423,6 +476,33 @@ describe("listRecommendations", () => {
         updatedBy: "admin-editor"
       }
     });
+    mocks.getAnalysis.mockResolvedValue({
+      generatedAt: "2026-03-08T00:20:00.000Z",
+      items: [
+        createAnalysis({
+          ticker: "267260",
+          company: "HD Hyundai Electric",
+          signalTone: "湲띿젙",
+          tradePlan: {
+            currentPrice: 374_000,
+            currentPriceLabel: "374,000원",
+            entryPriceLow: 360_000,
+            entryPriceHigh: 365_000,
+            confirmationPrice: 365_000,
+            entryLabel: "360,000원 ~ 365,000원",
+            stopPrice: 348_000,
+            stopLabel: "348,000원",
+            targetPrice: 390_000,
+            targetLabel: "390,000원",
+            stretchTargetPrice: 405_000,
+            stretchTargetLabel: "405,000원",
+            holdWindowLabel: "5~10거래일",
+            riskRewardLabel: "1 : 1.5",
+            nextStep: "보유"
+          }
+        })
+      ]
+    });
     mocks.loadPortfolioProfileDocument.mockResolvedValue({
       name: "실전 운용",
       totalCapital: 50_000_000,
@@ -436,7 +516,8 @@ describe("listRecommendations", () => {
           company: "HD Hyundai Electric",
           sector: "Power Equipment",
           quantity: 12,
-          averagePrice: 350_000
+          averagePrice: 350_000,
+          enteredAt: "2026-03-03"
         }
       ],
       updatedAt: "2026-03-08T00:45:00.000Z",
@@ -467,6 +548,17 @@ describe("listRecommendations", () => {
       suggestedWeightPercent: 11.7,
       maxLossAmount: 399_000,
       limitSource: "risk_budget"
+    });
+    expect(result.holdingActionBoard?.summary.holdingCount).toBe(1);
+    expect(result.holdingActionBoard?.summary.tightenStopCount).toBe(1);
+    expect(result.holdingActionBoard?.sections[2]).toMatchObject({
+      status: "tighten_stop",
+      count: 1
+    });
+    expect(result.holdingActionBoard?.sections[2]?.items[0]).toMatchObject({
+      ticker: "267260",
+      actionStatus: "tighten_stop",
+      holdingDays: 6
     });
   });
 });

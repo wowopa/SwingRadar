@@ -92,6 +92,7 @@ export interface PortfolioProfilePosition {
   sector: string;
   quantity: number;
   averagePrice: number;
+  enteredAt?: string;
   note?: string;
 }
 
@@ -170,6 +171,67 @@ export interface TodayActionBoard {
   summary: TodayActionBoardSummary;
   sections: TodayActionBoardSection[];
   items: TodayActionBoardItem[];
+}
+
+export type HoldingActionStatus =
+  | "exit_review"
+  | "take_profit"
+  | "tighten_stop"
+  | "time_stop_review"
+  | "hold";
+
+export interface HoldingActionItem {
+  ticker: string;
+  company: string;
+  sector: string;
+  signalTone?: SignalTone;
+  quantity: number;
+  averagePrice: number;
+  currentPrice?: number | null;
+  investedCapital: number;
+  marketValue?: number | null;
+  unrealizedPnlAmount?: number | null;
+  unrealizedPnlPercent?: number | null;
+  enteredAt?: string;
+  holdingDays?: number;
+  note?: string;
+  actionStatus: HoldingActionStatus;
+  actionLabel: string;
+  actionSummary: string;
+  actionReason: string;
+  nextAction: string;
+  guardLabel: string;
+  tradePlan?: RecommendationTradePlan;
+}
+
+export interface HoldingActionSummary {
+  headline: string;
+  note: string;
+  profileName?: string;
+  holdingCount: number;
+  investedCapital: number;
+  marketValue?: number;
+  unrealizedPnlAmount?: number;
+  unrealizedPnlPercent?: number;
+  takeProfitCount: number;
+  tightenStopCount: number;
+  exitReviewCount: number;
+  timeStopReviewCount: number;
+  holdCount: number;
+}
+
+export interface HoldingActionSection {
+  status: HoldingActionStatus;
+  label: string;
+  description: string;
+  count: number;
+  items: HoldingActionItem[];
+}
+
+export interface HoldingActionBoard {
+  summary: HoldingActionSummary;
+  sections: HoldingActionSection[];
+  items: HoldingActionItem[];
 }
 
 export interface RecommendationTradePlan {

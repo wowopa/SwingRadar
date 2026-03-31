@@ -170,6 +170,67 @@ export interface TodayActionBoardDto {
   items: TodayActionBoardItemDto[];
 }
 
+export type HoldingActionStatusDto =
+  | "exit_review"
+  | "take_profit"
+  | "tighten_stop"
+  | "time_stop_review"
+  | "hold";
+
+export interface HoldingActionItemDto {
+  ticker: string;
+  company: string;
+  sector: string;
+  signalTone?: SignalToneDto;
+  quantity: number;
+  averagePrice: number;
+  currentPrice?: number | null;
+  investedCapital: number;
+  marketValue?: number | null;
+  unrealizedPnlAmount?: number | null;
+  unrealizedPnlPercent?: number | null;
+  enteredAt?: string;
+  holdingDays?: number;
+  note?: string;
+  actionStatus: HoldingActionStatusDto;
+  actionLabel: string;
+  actionSummary: string;
+  actionReason: string;
+  nextAction: string;
+  guardLabel: string;
+  tradePlan?: RecommendationTradePlanDto;
+}
+
+export interface HoldingActionSummaryDto {
+  headline: string;
+  note: string;
+  profileName?: string;
+  holdingCount: number;
+  investedCapital: number;
+  marketValue?: number;
+  unrealizedPnlAmount?: number;
+  unrealizedPnlPercent?: number;
+  takeProfitCount: number;
+  tightenStopCount: number;
+  exitReviewCount: number;
+  timeStopReviewCount: number;
+  holdCount: number;
+}
+
+export interface HoldingActionSectionDto {
+  status: HoldingActionStatusDto;
+  label: string;
+  description: string;
+  count: number;
+  items: HoldingActionItemDto[];
+}
+
+export interface HoldingActionBoardDto {
+  summary: HoldingActionSummaryDto;
+  sections: HoldingActionSectionDto[];
+  items: HoldingActionItemDto[];
+}
+
 export interface AnalysisTradePlanDto extends RecommendationTradePlanDto {
   bucket: RecommendationActionBucketDto;
   bucketLabel: string;
@@ -263,6 +324,7 @@ export interface RecommendationsResponseDto {
   todaySummary?: TodayActionSummaryDto;
   operatingWorkflow?: TodayOperatingWorkflowDto;
   todayActionBoard?: TodayActionBoardDto;
+  holdingActionBoard?: HoldingActionBoardDto;
 }
 
 export interface AnalysisSummaryMetricDto {

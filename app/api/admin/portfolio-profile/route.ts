@@ -15,6 +15,7 @@ const portfolioPositionSchema = z.object({
   sector: z.string().trim().optional(),
   quantity: z.number().min(0),
   averagePrice: z.number().min(0),
+  enteredAt: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().or(z.literal("")).or(z.null()),
   note: z.string().trim().max(300).optional().or(z.literal("")).or(z.null())
 });
 

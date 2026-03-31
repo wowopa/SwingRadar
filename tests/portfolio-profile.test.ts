@@ -58,12 +58,14 @@ describe("portfolio profile storage", () => {
           ticker: "005930",
           quantity: 10,
           averagePrice: 71_000,
+          enteredAt: "2026-03-20",
           note: "core"
         },
         {
           ticker: "005930",
           quantity: 12,
-          averagePrice: 72_000
+          averagePrice: 72_000,
+          enteredAt: "2026-03-20"
         },
         {
           ticker: "INVALID",
@@ -82,7 +84,8 @@ describe("portfolio profile storage", () => {
       ticker: "005930",
       company: "삼성전자",
       quantity: 12,
-      averagePrice: 72_000
+      averagePrice: 72_000,
+      enteredAt: "2026-03-20"
     });
     expect(saved.positions[0]?.sector).toBeTruthy();
     expect(loaded).toEqual(saved);

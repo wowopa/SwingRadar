@@ -147,6 +147,7 @@ export function PortfolioProfileTab({
                         sector: "",
                         quantity: 0,
                         averagePrice: 0,
+                        enteredAt: "",
                         note: ""
                       }
                     ]
@@ -162,7 +163,7 @@ export function PortfolioProfileTab({
               <div className="space-y-4">
                 {profile.positions.map((position, index) => (
                   <div key={`${position.ticker || "new"}-${index}`} className="rounded-[24px] border border-border/70 bg-secondary/30 p-4">
-                    <div className="grid gap-4 xl:grid-cols-[0.9fr_1fr_1fr_auto]">
+                    <div className="grid gap-4 xl:grid-cols-[0.9fr_1fr_1fr_1fr_auto]">
                       <Field label="티커">
                         <Input
                           value={position.ticker}
@@ -208,6 +209,20 @@ export function PortfolioProfileTab({
                           }
                         />
                       </Field>
+                      <Field label="진입일">
+                        <Input
+                          type="date"
+                          value={position.enteredAt ?? ""}
+                          onChange={(event) =>
+                            setProfile((current) => ({
+                              ...current,
+                              positions: current.positions.map((item, itemIndex) =>
+                                itemIndex === index ? { ...item, enteredAt: event.target.value } : item
+                              )
+                            }))
+                          }
+                        />
+                      </Field>
                       <div className="flex items-end">
                         <Button
                           type="button"
@@ -238,7 +253,7 @@ export function PortfolioProfileTab({
                     <Field label="운용 메모">
                       <Textarea
                         value={position.note ?? ""}
-                        placeholder="예: 실적 발표 전 비중 축소 예정"
+                        placeholder="예: 실적 발표 전 비중 축소, 진입 5일 차 관리"
                         onChange={(event) =>
                           setProfile((current) => ({
                             ...current,

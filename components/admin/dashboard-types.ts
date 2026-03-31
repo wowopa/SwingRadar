@@ -450,6 +450,7 @@ export type PortfolioProfilePositionPayload = {
   sector: string;
   quantity: number;
   averagePrice: number;
+  enteredAt?: string;
   note?: string;
 };
 

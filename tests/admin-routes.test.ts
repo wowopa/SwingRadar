@@ -204,7 +204,8 @@ describe("admin routes", () => {
           company: "Samsung Electronics",
           sector: "Semiconductor",
           quantity: 10,
-          averagePrice: 71_000
+          averagePrice: 71_000,
+          enteredAt: "2026-03-20"
         }
       ]
     }));
@@ -996,7 +997,8 @@ describe("admin routes", () => {
             company: "Samsung Electronics",
             sector: "Semiconductor",
             quantity: 10,
-            averagePrice: 71_000
+            averagePrice: 71_000,
+            enteredAt: "2026-03-20"
           }
         ],
         updatedAt: "2026-03-08T00:00:00.000Z",
@@ -1036,7 +1038,8 @@ describe("admin routes", () => {
             company: "Samsung Electronics",
             sector: "Semiconductor",
             quantity: 10,
-            averagePrice: 71_000
+            averagePrice: 71_000,
+            enteredAt: "2026-03-20"
           }
         ],
         updatedAt: "2026-03-08T00:00:00.000Z",
@@ -1058,6 +1061,7 @@ describe("admin routes", () => {
                 ticker: "005930",
                 quantity: 10,
                 averagePrice: 71_000,
+                enteredAt: "2026-03-20",
                 note: "core"
               }
             ]
@@ -1084,6 +1088,7 @@ describe("admin routes", () => {
               ticker: "005930",
               quantity: 10,
               averagePrice: 71_000,
+              enteredAt: "2026-03-20",
               note: "core"
             }
           ],

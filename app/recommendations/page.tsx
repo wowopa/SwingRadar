@@ -1,4 +1,5 @@
 import { DailyCandidatesPanel } from "@/components/recommendations/daily-candidates-panel";
+import { HoldingActionBoard } from "@/components/recommendations/holding-action-board";
 import { RecommendationExplorer } from "@/components/recommendations/recommendation-explorer";
 import { TodayActionBoard } from "@/components/recommendations/today-action-board";
 import { TodayOperatingSummary } from "@/components/recommendations/today-operating-summary";
@@ -30,6 +31,11 @@ export default async function RecommendationsPage() {
       {response.todayActionBoard ? (
         <section className="mb-6">
           <TodayActionBoard board={response.todayActionBoard} />
+        </section>
+      ) : null}
+      {response.holdingActionBoard ? (
+        <section className="mb-6">
+          <HoldingActionBoard board={response.holdingActionBoard} />
         </section>
       ) : null}
       <section className="mb-6">

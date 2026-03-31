@@ -38,6 +38,19 @@ function normalizeOptionalString(value: unknown) {
   return normalized ? normalized : undefined;
 }
 
+function normalizeOptionalDate(value: unknown) {
+  if (typeof value !== "string") {
+    return undefined;
+  }
+
+  const normalized = value.trim();
+  if (!normalized) {
+    return undefined;
+  }
+
+  return /^\d{4}-\d{2}-\d{2}$/.test(normalized) ? normalized : undefined;
+}
+
 function normalizeNonNegativeNumber(value: unknown, fallback: number) {
   return typeof value === "number" && Number.isFinite(value) && value >= 0 ? value : fallback;
 }
@@ -87,6 +100,7 @@ function normalizePosition(value: unknown): PortfolioProfilePosition | null {
     sector,
     quantity,
     averagePrice,
+    enteredAt: normalizeOptionalDate(payload.enteredAt),
     note: normalizeOptionalString(payload.note)
   };
 }
