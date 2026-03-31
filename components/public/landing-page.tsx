@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, Compass, LockKeyhole, Radar, ShieldCheck, TimerReset, WalletCards } from "lucide-react";
 
@@ -43,7 +44,8 @@ const productSurfaces = [
     description: "로그인하면 가장 먼저 오늘 매수 검토, 장초 확인 대기, 보유 점검 알림이 한 화면에 뜹니다.",
     bullets: ["오늘 매수 검토 0~2개", "장초 확인 대기 종목", "보유 즉시 점검 알림"],
     icon: Radar,
-    span: "lg:col-span-7"
+    span: "lg:col-span-7",
+    previewSrc: "/landing/product-previews/dashboard-preview.svg"
   },
   {
     title: "Portfolio",
@@ -51,7 +53,8 @@ const productSurfaces = [
     description: "새 종목만 고르는 화면이 아닙니다. 익절 검토, 보호 가격 상향, 시간 점검까지 함께 보여줍니다.",
     bullets: ["즉시 점검", "부분 익절 검토", "시간 점검 알림"],
     icon: WalletCards,
-    span: "lg:col-span-5"
+    span: "lg:col-span-5",
+    previewSrc: "/landing/product-previews/portfolio-preview.svg"
   },
   {
     title: "Account",
@@ -59,7 +62,8 @@ const productSurfaces = [
     description: "총 자산, 가용 현금, 허용 손실, 현재 보유를 기준으로 오늘 가능한 행동만 계산합니다.",
     bullets: ["자산 규모 입력", "현금과 손실 한도", "내 기준 행동 보드"],
     icon: LockKeyhole,
-    span: "lg:col-span-4"
+    span: "lg:col-span-4",
+    previewSrc: "/landing/product-previews/account-preview.svg"
   },
   {
     title: "Explore",
@@ -67,7 +71,8 @@ const productSurfaces = [
     description: "랭킹과 상세 분석은 따로 열어볼 수 있게 두고, 기본 화면은 최대한 행동 중심으로 유지합니다.",
     bullets: ["상세 분석 열기", "후보 비교 보기", "보류 종목 점검"],
     icon: Compass,
-    span: "lg:col-span-8"
+    span: "lg:col-span-8",
+    previewSrc: "/landing/product-previews/explore-preview.svg"
   }
 ] as const;
 
@@ -276,15 +281,33 @@ export function LandingPage() {
           </h2>
         </ScrollReveal>
 
+        <ScrollReveal delay={70}>
+          <p className="public-section-copy max-w-[900px] text-[clamp(0.98rem,1.28vw,1.08rem)] leading-8">
+            투자 유의: 본 서비스는 투자 판단을 보조하는 참고 도구이며, 최종 투자 결정과 그에 따른 책임은 사용자에게 있습니다.
+          </p>
+        </ScrollReveal>
+
         <div className="grid gap-4 lg:grid-cols-12">
           {productSurfaces.map((item, index) => {
             const Icon = item.icon;
 
             return (
               <ScrollReveal key={item.title} delay={index * 70} className={item.span}>
-                <section className="h-full rounded-[34px] border border-border/70 bg-white/78 p-6 shadow-[0_24px_80px_hsl(33_22%_26%_/_0.06)] backdrop-blur-xl">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="space-y-3">
+                <section className="relative h-full overflow-hidden rounded-[34px] border border-border/70 bg-white/78 p-6 shadow-[0_24px_80px_hsl(33_22%_26%_/_0.06)] backdrop-blur-xl">
+                  <div className="pointer-events-none absolute inset-y-5 right-5 hidden w-[42%] overflow-hidden rounded-[28px] border border-white/70 bg-white/72 shadow-[0_20px_60px_hsl(33_22%_26%_/_0.08)] md:block">
+                    <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.18))]" />
+                    <Image
+                      src={item.previewSrc}
+                      alt=""
+                      fill
+                      className="object-cover object-top"
+                      sizes="(min-width: 1024px) 32vw, 0px"
+                    />
+                    <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(255,250,243,0.94)_0%,rgba(255,250,243,0.7)_22%,rgba(255,250,243,0.18)_54%,rgba(255,250,243,0.08)_100%)]" />
+                  </div>
+
+                  <div className="relative flex items-start justify-between gap-4">
+                    <div className="max-w-[520px] space-y-3 md:max-w-[54%]">
                       <p className="public-section-kicker text-[11px] font-semibold uppercase tracking-[0.24em]">{item.eyebrow}</p>
                       <h3 className="public-section-title text-[clamp(1.95rem,2.4vw,2.8rem)] font-semibold leading-[0.96] tracking-[-0.07em]">
                         {item.title}
@@ -296,7 +319,7 @@ export function LandingPage() {
                     </div>
                   </div>
 
-                  <ul className="mt-6 space-y-3">
+                  <ul className="relative mt-6 space-y-3 md:max-w-[52%]">
                     {item.bullets.map((bullet) => (
                       <li key={bullet} className="flex items-start gap-3">
                         <span className="mt-[0.7rem] h-1.5 w-1.5 shrink-0 rounded-full bg-primary/55" />
@@ -304,6 +327,19 @@ export function LandingPage() {
                       </li>
                     ))}
                   </ul>
+
+                  <div className="relative mt-6 overflow-hidden rounded-[24px] border border-border/70 bg-white/76 md:hidden">
+                    <div className="relative h-44">
+                      <Image
+                        src={item.previewSrc}
+                        alt=""
+                        fill
+                        className="object-cover object-top"
+                        sizes="100vw"
+                      />
+                      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,250,243,0.06)_0%,rgba(255,250,243,0.22)_100%)]" />
+                    </div>
+                  </div>
                 </section>
               </ScrollReveal>
             );
