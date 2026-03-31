@@ -61,8 +61,8 @@ export function LandingWorkflowDemo() {
   const stage = stages.find((item) => item.id === activeStage) ?? stages[0];
 
   return (
-    <section className="overflow-hidden rounded-[38px] border border-border/70 bg-[linear-gradient(180deg,hsl(35_23%_98%_/_0.95),hsl(33_18%_94%_/_0.98))] p-4 shadow-[0_30px_100px_hsl(33_22%_24%_/_0.07)] sm:p-5">
-      <div className="grid gap-4 xl:grid-cols-[290px_minmax(0,1fr)]">
+    <section className="overflow-hidden rounded-[40px] border border-border/70 bg-[linear-gradient(180deg,hsl(35_23%_98%_/_0.95),hsl(33_18%_94%_/_0.98))] p-4 shadow-[0_30px_100px_hsl(33_22%_24%_/_0.07)] sm:p-5">
+      <div className="grid gap-4 xl:grid-cols-[320px_minmax(0,1fr)]">
         <div className="space-y-3">
           {stages.map((item, index) => {
             const isActive = item.id === activeStage;
@@ -73,7 +73,7 @@ export function LandingWorkflowDemo() {
                 type="button"
                 onClick={() => setActiveStage(item.id)}
                 className={cn(
-                  "w-full rounded-[28px] border px-4 py-4 text-left transition-all",
+                  "w-full rounded-[30px] border px-5 py-5 text-left transition-all duration-300",
                   isActive
                     ? "border-primary/20 bg-primary/[0.08] shadow-[0_16px_40px_hsl(33_22%_24%_/_0.08)]"
                     : "border-border/70 bg-white/76 hover:border-primary/20 hover:bg-white"
@@ -84,12 +84,14 @@ export function LandingWorkflowDemo() {
                     <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
                       0{index + 1} · {item.eyebrow}
                     </p>
-                    <p className="mt-3 text-lg font-semibold tracking-[-0.04em] text-foreground">{item.label}</p>
-                    <p className="mt-2 text-sm leading-6 text-muted-foreground">{item.title}</p>
+                    <p className="mt-3 text-[clamp(1.35rem,2vw,1.8rem)] font-semibold leading-[1] tracking-[-0.05em] text-foreground">
+                      {item.label}
+                    </p>
+                    <p className="mt-3 text-sm leading-6 text-muted-foreground">{item.title}</p>
                   </div>
                   <span
                     className={cn(
-                      "mt-1 h-3 w-3 rounded-full",
+                      "mt-1 h-3 w-3 rounded-full transition-all",
                       isActive ? "bg-primary shadow-[0_0_0_8px_hsl(var(--primary)_/_0.12)]" : "bg-border"
                     )}
                   />
@@ -99,12 +101,17 @@ export function LandingWorkflowDemo() {
           })}
         </div>
 
-        <div className="rounded-[30px] border border-border/70 bg-[linear-gradient(180deg,hsl(220_22%_14%),hsl(220_20%_18%)_46%,hsl(32_32%_20%)_100%)] p-5 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] sm:p-6">
+        <div
+          key={stage.id}
+          className="landing-stage-enter rounded-[32px] border border-border/70 bg-[linear-gradient(180deg,hsl(220_22%_14%),hsl(220_20%_18%)_46%,hsl(32_32%_20%)_100%)] p-5 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] sm:p-6"
+        >
           <div className="flex flex-wrap items-start justify-between gap-4 border-b border-white/10 pb-5">
             <div>
               <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-white/40">{stage.panelNote}</p>
-              <h3 className="mt-3 text-3xl font-semibold leading-tight tracking-[-0.05em] text-white">{stage.panelTitle}</h3>
-              <p className="mt-3 max-w-2xl text-sm leading-7 text-white/66">{stage.description}</p>
+              <h3 className="mt-3 text-[clamp(2.25rem,4vw,3.5rem)] font-semibold leading-[0.95] tracking-[-0.08em] text-white">
+                {stage.panelTitle}
+              </h3>
+              <p className="mt-4 max-w-2xl text-[1.02rem] leading-8 text-white/66">{stage.description}</p>
             </div>
             <Badge className="border-white/10 bg-white/6 text-white" variant="secondary">
               {stage.label}
@@ -112,8 +119,12 @@ export function LandingWorkflowDemo() {
           </div>
 
           <div className="mt-5 grid gap-3 md:grid-cols-3">
-            {stage.bullets.map((bullet) => (
-              <div key={bullet} className="rounded-[22px] border border-white/10 bg-white/[0.055] px-4 py-4 text-sm text-white/74">
+            {stage.bullets.map((bullet, index) => (
+              <div
+                key={bullet}
+                className="rounded-[24px] border border-white/10 bg-white/[0.055] px-4 py-4 text-sm text-white/74"
+                style={{ transitionDelay: `${index * 50}ms` }}
+              >
                 {bullet}
               </div>
             ))}
