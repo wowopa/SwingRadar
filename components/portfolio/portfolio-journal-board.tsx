@@ -1,9 +1,9 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { useEffect, useMemo, useState, useTransition } from "react";
-import { Plus, ScrollText } from "lucide-react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import Link from "next/link";
+import { Plus, ScrollText } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { Badge } from "@/components/ui/badge";
@@ -19,11 +19,7 @@ import {
   isClosingPortfolioTradeEventType
 } from "@/lib/portfolio/journal-insights";
 import { cn, formatPrice } from "@/lib/utils";
-import type {
-  PortfolioJournal,
-  PortfolioProfilePosition,
-  PortfolioTradeEventType
-} from "@/types/recommendation";
+import type { PortfolioJournal, PortfolioProfilePosition, PortfolioTradeEventType } from "@/types/recommendation";
 
 type SymbolSearchItem = {
   ticker: string;
@@ -50,7 +46,7 @@ const tradeTypeMeta: Record<
   buy: {
     label: "첫 매수",
     variant: "positive",
-    description: "포지션을 처음 연 체결입니다."
+    description: "포지션을 처음 여는 체결입니다."
   },
   add: {
     label: "추가 매수",
@@ -162,6 +158,7 @@ export function PortfolioJournalBoard({
   initialJournal: PortfolioJournal;
   positions: PortfolioProfilePosition[];
 }) {
+  const symbolFieldRef = useRef<HTMLDivElement | null>(null);
   const [journal, setJournal] = useState(initialJournal);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [form, setForm] = useState<TradeEventFormState>(createEmptyFormState());
@@ -169,6 +166,7 @@ export function PortfolioJournalBoard({
   const [symbolResults, setSymbolResults] = useState<SymbolSearchItem[]>([]);
   const [symbolDescription, setSymbolDescription] = useState("검색어를 입력하면 종목을 바로 고를 수 있습니다.");
   const [symbolSearchLoading, setSymbolSearchLoading] = useState(false);
+  const [isSymbolDropdownOpen, setIsSymbolDropdownOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -179,6 +177,33 @@ export function PortfolioJournalBoard({
     setJournal(initialJournal);
   }, [initialJournal]);
 
+  useEffect(() => {
+    if (!isDialogOpen) {
+      setIsSymbolDropdownOpen(false);
+      return;
+    }
+
+    function handlePointerDown(event: MouseEvent) {
+      if (!symbolFieldRef.current?.contains(event.target as Node)) {
+        setIsSymbolDropdownOpen(false);
+      }
+    }
+
+    function handleEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setIsSymbolDropdownOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("keydown", handleEscape);
+
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, [isDialogOpen]);
+
   const groupedEvents = useMemo(() => groupPortfolioJournalByTicker(journal.events), [journal.events]);
   const summary = useMemo(() => getPortfolioJournalSummary(journal.events), [journal.events]);
   const quickTickers = useMemo(() => {
@@ -188,6 +213,7 @@ export function PortfolioJournalBoard({
     }
     return [...keys.values()].slice(0, 6);
   }, [positions]);
+
   const selectedSymbol = useMemo(() => {
     if (!form.ticker) {
       return null;
@@ -213,6 +239,7 @@ export function PortfolioJournalBoard({
       const response = await fetch(`/api/symbols?q=${encodeURIComponent(query)}&limit=8`, {
         cache: "no-store"
       });
+
       if (!response.ok) {
         if (!ignore) {
           setSymbolResults([]);
@@ -243,6 +270,7 @@ export function PortfolioJournalBoard({
       ticker: item.ticker
     }));
     setSymbolQuery(item.company);
+    setIsSymbolDropdownOpen(false);
   }
 
   async function submitEvent() {
@@ -278,6 +306,7 @@ export function PortfolioJournalBoard({
       setIsDialogOpen(false);
       setForm(createEmptyFormState());
       setSymbolQuery("");
+      setIsSymbolDropdownOpen(false);
       startTransition(() => {
         router.refresh();
       });
@@ -296,7 +325,7 @@ export function PortfolioJournalBoard({
             <div>
               <CardTitle className="text-xl text-foreground">거래 저널</CardTitle>
               <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
-                첫 매수부터 부분 익절, 손절, 전량 매도까지 실제 체결을 남겨 두면 종목별 생애주기가 한 화면에 쌓입니다.
+                첫 매수부터 부분 익절, 손절, 전량 매도까지 실제 체결을 남기면 종목별 생애주기가 순서대로 쌓입니다.
               </p>
             </div>
             <Button type="button" onClick={() => setIsDialogOpen(true)}>
@@ -428,7 +457,7 @@ export function PortfolioJournalBoard({
             <div className="space-y-2">
               <p className="text-base font-semibold text-foreground">아직 기록된 체결이 없습니다.</p>
               <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
-                첫 매수나 부분 익절부터 남기기 시작하면, 여기서 종목별 생애주기와 종료 결과를 차례로 볼 수 있습니다.
+                첫 매수나 부분 익절부터 기록하기 시작하면 여기서 종목별 생애주기와 종료 결과를 한 번에 볼 수 있습니다.
               </p>
             </div>
             <Button type="button" variant="outline" onClick={() => setIsDialogOpen(true)}>
@@ -491,12 +520,17 @@ export function PortfolioJournalBoard({
 
             <div className="grid gap-4 sm:grid-cols-2">
               <Field label="종목 검색">
-                <div className="space-y-3">
+                <div ref={symbolFieldRef} className="relative space-y-3">
                   <Input
                     value={symbolQuery}
                     placeholder="종목명이나 종목 코드를 입력하세요"
-                    onChange={(event) => setSymbolQuery(event.target.value)}
+                    onChange={(event) => {
+                      setSymbolQuery(event.target.value);
+                      setIsSymbolDropdownOpen(true);
+                    }}
+                    onFocus={() => setIsSymbolDropdownOpen(true)}
                   />
+
                   {selectedSymbol ? (
                     <div className="rounded-[18px] border border-primary/20 bg-primary/8 px-3 py-3 text-sm text-foreground/82">
                       선택된 종목: {selectedSymbol.company} · {form.ticker}
@@ -506,40 +540,44 @@ export function PortfolioJournalBoard({
                       선택된 종목 코드: {form.ticker}
                     </div>
                   ) : null}
-                  <div className="rounded-[20px] border border-border/70 bg-secondary/20 p-2">
-                    <div className="px-2 pb-2 pt-1 text-xs leading-5 text-muted-foreground">
-                      {symbolSearchLoading ? "종목을 찾는 중입니다..." : symbolDescription}
+
+                  {isSymbolDropdownOpen ? (
+                    <div className="absolute left-0 right-0 top-[calc(100%+0.5rem)] z-30 rounded-[20px] border border-border/70 bg-white p-2 shadow-[0_24px_48px_rgba(28,28,35,0.14)]">
+                      <div className="px-2 pb-2 pt-1 text-xs leading-5 text-muted-foreground">
+                        {symbolSearchLoading ? "종목을 찾는 중입니다..." : symbolDescription}
+                      </div>
+
+                      <div className="max-h-72 space-y-1 overflow-y-auto">
+                        {symbolResults.length ? (
+                          symbolResults.map((item) => (
+                            <button
+                              key={item.ticker}
+                              type="button"
+                              onClick={() => applySelectedSymbol(item)}
+                              className={cn(
+                                "flex w-full items-center justify-between rounded-[16px] px-3 py-3 text-left transition",
+                                form.ticker === item.ticker
+                                  ? "bg-primary/10 text-foreground"
+                                  : "hover:bg-secondary/45"
+                              )}
+                            >
+                              <div className="min-w-0">
+                                <p className="truncate text-sm font-semibold text-foreground">{item.company}</p>
+                                <p className="mt-1 text-xs text-muted-foreground">
+                                  {item.ticker} · {item.market} · {item.sector}
+                                </p>
+                              </div>
+                              <Badge variant={item.status === "ready" ? "positive" : "secondary"}>
+                                {item.status === "ready" ? "분석 가능" : "준비 중"}
+                              </Badge>
+                            </button>
+                          ))
+                        ) : (
+                          <div className="px-3 py-4 text-sm text-muted-foreground">검색 결과가 없습니다.</div>
+                        )}
+                      </div>
                     </div>
-                    <div className="space-y-1">
-                      {symbolResults.length ? (
-                        symbolResults.map((item) => (
-                          <button
-                            key={item.ticker}
-                            type="button"
-                            onClick={() => applySelectedSymbol(item)}
-                            className={cn(
-                              "flex w-full items-center justify-between rounded-[16px] px-3 py-3 text-left transition",
-                              form.ticker === item.ticker
-                                ? "bg-primary/10 text-foreground"
-                                : "hover:bg-background/80"
-                            )}
-                          >
-                            <div className="min-w-0">
-                              <p className="truncate text-sm font-semibold text-foreground">{item.company}</p>
-                              <p className="mt-1 text-xs text-muted-foreground">
-                                {item.ticker} · {item.market} · {item.sector}
-                              </p>
-                            </div>
-                            <Badge variant={item.status === "ready" ? "positive" : "secondary"}>
-                              {item.status === "ready" ? "분석 가능" : "준비 중"}
-                            </Badge>
-                          </button>
-                        ))
-                      ) : (
-                        <div className="px-3 py-4 text-sm text-muted-foreground">검색 결과가 없습니다.</div>
-                      )}
-                    </div>
-                  </div>
+                  ) : null}
                 </div>
               </Field>
 
