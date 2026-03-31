@@ -35,13 +35,14 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useAdminToken } from "@/lib/use-admin-token";
 
 const ENABLED_TABS = new Set(["status", "popup", "watchlist"]);
 
 export function AdminDashboard() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [token, setToken] = useState("");
+  const { token, setToken, authHeaders } = useAdminToken();
   const [tab, setTab] = useState("status");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -71,10 +72,6 @@ export function AdminDashboard() {
   const [activeWatchlistTicker, setActiveWatchlistTicker] = useState("");
   const [returnTo, setReturnTo] = useState("");
 
-  const authHeaders = useMemo(
-    () => (token.trim() ? { Authorization: `Bearer ${token.trim()}` } : undefined),
-    [token]
-  );
   const activeWatchlist = useMemo(
     () => watchlist.find((item) => item.ticker === activeWatchlistTicker) ?? null,
     [activeWatchlistTicker, watchlist]

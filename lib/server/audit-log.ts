@@ -12,6 +12,7 @@ export type AuditEventType =
   | "watchlist_add"
   | "watchlist_update"
   | "universe_review_update"
+  | "opening_recheck_update"
   | "provider_fallback"
   | "auto_heal_run";
 

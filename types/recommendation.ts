@@ -75,6 +75,8 @@ export type OpeningRecheckStatus = "pending" | "passed" | "watch" | "avoid" | "e
 export interface OpeningRecheckDecision {
   status: OpeningRecheckStatus;
   updatedAt: string;
+  updatedBy?: string;
+  note?: string;
 }
 
 export interface RecommendationTradePlan {

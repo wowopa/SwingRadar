@@ -12,6 +12,7 @@ import {
   createRecommendationTradePlanInput,
   resolveRecommendationActionBucket
 } from "@/lib/recommendations/action-plan";
+import { listOpeningRecheckDecisions } from "@/lib/server/opening-recheck-board";
 import type { RecommendationsQuery } from "@/lib/server/query-schemas";
 import { formatPrice } from "@/lib/utils";
 
@@ -69,7 +70,11 @@ function enrichRecommendationItem(item: RecommendationListItemDto, dailyCandidat
   };
 }
 
-function enrichDailyCandidateItem(candidate: DailyCandidate, sourceItem?: RecommendationListItemDto): DailyCandidateDto {
+function enrichDailyCandidateItem(
+  candidate: DailyCandidate,
+  sourceItem?: RecommendationListItemDto,
+  openingRecheck?: DailyCandidateDto["openingRecheck"]
+): DailyCandidateDto {
   const activationScore = sourceItem?.activationScore ?? candidate.activationScore;
   const riskRewardRatio =
     formatRiskRewardRatio(
@@ -88,6 +93,7 @@ function enrichDailyCandidateItem(candidate: DailyCandidate, sourceItem?: Recomm
     ...candidate,
     activationScore,
     actionBucket,
+    openingRecheck,
     tradePlan: buildRecommendationTradePlan({
       item: {
         signalTone: candidate.signalTone,
@@ -111,6 +117,9 @@ function enrichDailyCandidateItem(candidate: DailyCandidate, sourceItem?: Recomm
 
 export async function listRecommendations(query: RecommendationsQuery): Promise<RecommendationsResponseDto> {
   const [source, dailyCandidates] = await Promise.all([getDataProvider().getRecommendations(), getDailyCandidates()]);
+  const openingRecheckByTicker = dailyCandidates
+    ? await listOpeningRecheckDecisions(dailyCandidates.generatedAt)
+    : {};
   const sourceByTicker = new Map(source.items.map((item) => [item.ticker, item]));
   const dailyCandidateByTicker = new Map((dailyCandidates?.topCandidates ?? []).map((candidate) => [candidate.ticker, candidate]));
 
@@ -218,7 +227,11 @@ export async function listRecommendations(query: RecommendationsQuery): Promise<
           succeededBatches: dailyCandidates.succeededBatches,
           failedBatches: dailyCandidates.failedBatches,
           topCandidates: dailyCandidates.topCandidates.map((candidate) =>
-            enrichDailyCandidateItem(candidate, sourceByTicker.get(candidate.ticker))
+            enrichDailyCandidateItem(
+              candidate,
+              sourceByTicker.get(candidate.ticker),
+              openingRecheckByTicker[candidate.ticker]
+            )
           )
         }
       : null,

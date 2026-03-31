@@ -45,6 +45,15 @@ export interface TodayOperatingWorkflowDto {
   openingChecklist: OpeningChecklistItemDto[];
 }
 
+export type OpeningRecheckStatusDto = "pending" | "passed" | "watch" | "avoid" | "excluded";
+
+export interface OpeningRecheckDecisionDto {
+  status: OpeningRecheckStatusDto;
+  updatedAt: string;
+  updatedBy?: string;
+  note?: string;
+}
+
 export interface ValidationStatsDto {
   hitRate: number;
   avgReturn: number;
@@ -153,6 +162,7 @@ export interface DailyCandidateDto {
   eventCoverage: string;
   actionBucket?: RecommendationActionBucketDto;
   tradePlan?: RecommendationTradePlanDto;
+  openingRecheck?: OpeningRecheckDecisionDto;
 }
 
 export interface FailedUniverseBatchDto {
