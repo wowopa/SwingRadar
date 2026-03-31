@@ -295,12 +295,6 @@ export function LandingPage() {
           </h2>
         </ScrollReveal>
 
-        <ScrollReveal delay={70}>
-          <p className="public-section-copy max-w-[900px] text-[clamp(0.98rem,1.28vw,1.08rem)] leading-8">
-            투자 유의: 본 서비스는 투자 판단을 보조하는 참고 도구이며, 최종 투자 결정과 그에 따른 책임은 사용자에게 있습니다.
-          </p>
-        </ScrollReveal>
-
         <div className="grid gap-4 lg:grid-cols-12">
           {productSurfaces.map((item, index) => {
             const Icon = item.icon;

@@ -55,7 +55,10 @@ export function PublicShell({ children }: { children: ReactNode }) {
 
         <footer className="mt-16 border-t border-border/60 px-2 pt-6">
           <div className="flex flex-col gap-3 text-sm md:flex-row md:items-center md:justify-between">
-            <p className="public-shell-copy">SWING-RADAR는 로그인 전에는 철학과 흐름을, 로그인 후에는 개인 운용 대시보드를 보여줍니다.</p>
+            <p className="public-shell-copy">
+              투자 유의: 본 서비스는 투자 판단을 보조하는 참고 도구이며, 최종 투자 결정과 그에 따른 책임은 사용자에게
+              있습니다.
+            </p>
             <p className="public-shell-copy-soft text-xs tracking-[0.18em]">COPYRIGHT {currentYear} SWING-RADAR</p>
           </div>
         </footer>
