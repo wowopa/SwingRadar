@@ -4,7 +4,9 @@ const mocks = vi.hoisted(() => ({
   getRecommendations: vi.fn(),
   getTracking: vi.fn(),
   getDailyCandidates: vi.fn(),
-  listOpeningRecheckDecisions: vi.fn()
+  listOpeningRecheckDecisions: vi.fn(),
+  loadPortfolioProfileDocument: vi.fn(),
+  isPortfolioProfileConfigured: vi.fn()
 }));
 
 vi.mock("@/lib/providers", () => ({
@@ -22,12 +24,75 @@ vi.mock("@/lib/server/opening-recheck-board", () => ({
   listOpeningRecheckDecisions: mocks.listOpeningRecheckDecisions
 }));
 
+vi.mock("@/lib/server/portfolio-profile", () => ({
+  loadPortfolioProfileDocument: mocks.loadPortfolioProfileDocument,
+  isPortfolioProfileConfigured: mocks.isPortfolioProfileConfigured
+}));
+
 import { listRecommendations } from "@/lib/services/recommendations-service";
+
+function createRecommendation(overrides: Record<string, unknown>) {
+  return {
+    ticker: "AAA001",
+    company: "Alpha",
+    sector: "Tech",
+    signalTone: "긍정",
+    score: 70,
+    signalLabel: "Base setup",
+    rationale: "Base rationale",
+    invalidation: "41,000원 이탈",
+    invalidationDistance: -4,
+    riskRewardRatio: "1 : 2",
+    validationSummary: "Measured validation",
+    checkpoints: ["41,000원 지지", "44,000원 돌파", "47,000원 확인"],
+    validation: { hitRate: 55, avgReturn: 2, sampleSize: 11, maxDrawdown: -3 },
+    observationWindow: "5~10거래일",
+    updatedAt: "2026-03-08 09:00",
+    ...overrides
+  };
+}
+
+function createCandidate(overrides: Record<string, unknown>) {
+  return {
+    batch: 1,
+    ticker: "AAA001",
+    company: "Alpha",
+    sector: "Tech",
+    signalTone: "긍정",
+    score: 77,
+    candidateScore: 97,
+    activationScore: 73,
+    currentPrice: 43_500,
+    confirmationPrice: 44_000,
+    expansionPrice: 47_000,
+    invalidationPrice: 41_000,
+    averageTurnover20: 1_500_000_000,
+    liquidityRating: "양호",
+    invalidation: "41,000원 이탈",
+    validationSummary: "Measured validation",
+    observationWindow: "5~10거래일",
+    rationale: "Candidate rationale",
+    eventCoverage: "실적 대기",
+    ...overrides
+  };
+}
 
 describe("listRecommendations", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.listOpeningRecheckDecisions.mockResolvedValue({});
+    mocks.loadPortfolioProfileDocument.mockResolvedValue({
+      name: "기본 운용 프로필",
+      totalCapital: 0,
+      availableCash: 0,
+      maxRiskPerTradePercent: 0.8,
+      maxConcurrentPositions: 4,
+      sectorLimit: 2,
+      positions: [],
+      updatedAt: "1970-01-01T00:00:00.000Z",
+      updatedBy: "system"
+    });
+    mocks.isPortfolioProfileConfigured.mockReturnValue(false);
     mocks.getTracking.mockResolvedValue({
       generatedAt: "2026-03-08T00:30:00.000Z",
       history: [],
@@ -39,40 +104,23 @@ describe("listRecommendations", () => {
     mocks.getRecommendations.mockResolvedValue({
       generatedAt: "2026-03-08T00:00:00.000Z",
       items: [
-        {
+        createRecommendation({
           ticker: "AAA001",
           company: "Alpha",
           sector: "Tech",
-          signalTone: "긍정",
           score: 90,
           signalLabel: "High score",
-          rationale: "Alpha setup",
-          invalidation: "80,000원 이탈",
-          invalidationDistance: -5,
-          riskRewardRatio: "1 : 2",
-          validationSummary: "Alpha validation",
-          checkpoints: ["80,000원 지지", "92,000원 돌파", "98,000원 확인"],
-          validation: { hitRate: 50, avgReturn: 1, sampleSize: 10, maxDrawdown: -2 },
-          observationWindow: "5~10거래일",
-          updatedAt: "2026-03-08 09:00"
-        },
-        {
+          rationale: "Alpha setup"
+        }),
+        createRecommendation({
           ticker: "BBB001",
           company: "Beta",
           sector: "Bio",
-          signalTone: "긍정",
           score: 70,
           signalLabel: "Featured",
           rationale: "Beta setup",
-          invalidation: "41,000원 이탈",
-          invalidationDistance: -4,
-          riskRewardRatio: "1 : 3",
-          validationSummary: "Beta validation",
-          checkpoints: ["41,000원 지지", "44,000원 돌파", "47,000원 확인"],
-          validation: { hitRate: 60, avgReturn: 2, sampleSize: 11, maxDrawdown: -3 },
-          observationWindow: "5~10거래일",
-          updatedAt: "2026-03-08 09:00"
-        }
+          riskRewardRatio: "1 : 3"
+        })
       ]
     });
 
@@ -86,27 +134,14 @@ describe("listRecommendations", () => {
       succeededBatches: 5,
       failedBatches: [],
       topCandidates: [
-        {
+        createCandidate({
           batch: 2,
           ticker: "BBB001",
           company: "Beta",
           sector: "Bio",
-          signalTone: "긍정",
-          score: 77,
-          candidateScore: 97,
-          activationScore: 73,
-          currentPrice: 43_500,
-          confirmationPrice: 44_000,
-          expansionPrice: 47_000,
-          invalidationPrice: 41_000,
-          averageTurnover20: 1_500_000_000,
-          liquidityRating: "양호",
-          invalidation: "41,000원 이탈",
-          validationSummary: "Beta validation",
-          observationWindow: "5~10거래일",
           rationale: "Beta setup",
           eventCoverage: "보강 중"
-        }
+        })
       ],
       batchSummaries: []
     });
@@ -146,8 +181,8 @@ describe("listRecommendations", () => {
     expect(result.dailyScan?.topCandidates[0]?.tradePlan?.stopLabel).toBe("41,000원");
     expect(result.todaySummary?.bucketCounts.buy_now).toBe(1);
     expect(result.operatingWorkflow?.steps).toHaveLength(3);
-    expect(result.operatingWorkflow?.steps[0]?.title).toBe("장전 후보");
-    expect(result.operatingWorkflow?.openingChecklist[1]?.title).toContain("손절");
+    expect(result.operatingWorkflow?.steps[0]?.key).toBe("preopen_candidates");
+    expect(result.operatingWorkflow?.openingChecklist[1]?.key).toBe("stop_buffer");
     expect(result.todayActionBoard?.summary.buyReviewCount).toBe(1);
     expect(result.todayActionBoard?.summary.remainingNewPositions).toBe(0);
     expect(result.todayActionBoard?.summary.activeHoldingCount).toBe(0);
@@ -166,40 +201,28 @@ describe("listRecommendations", () => {
     mocks.getRecommendations.mockResolvedValue({
       generatedAt: "2026-03-08T00:00:00.000Z",
       items: [
-        {
+        createRecommendation({
           ticker: "AAA001",
           company: "Alpha",
           sector: "Tech",
           signalTone: "긍정",
           score: 90,
-          signalLabel: "A",
-          rationale: "Alpha setup",
-          invalidation: "80,000원 이탈",
-          invalidationDistance: -5,
-          riskRewardRatio: "1 : 2",
-          validationSummary: "Alpha validation",
-          checkpoints: ["80,000원 지지", "92,000원 돌파", "98,000원 확인"],
-          validation: { hitRate: 50, avgReturn: 1, sampleSize: 10, maxDrawdown: -2 },
-          observationWindow: "5~10거래일",
-          updatedAt: "2026-03-08 09:00"
-        },
-        {
+          signalLabel: "A"
+        }),
+        createRecommendation({
           ticker: "BBB001",
           company: "Beta",
           sector: "Bio",
           signalTone: "주의",
           score: 40,
           signalLabel: "B",
-          rationale: "Beta setup",
+          checkpoints: ["25,000원 지지"],
           invalidation: "25,000원 이탈",
           invalidationDistance: -1,
           riskRewardRatio: "1 : 1",
-          validationSummary: "Beta validation",
-          checkpoints: ["25,000원 지지"],
           validation: { hitRate: 30, avgReturn: -1, sampleSize: 10, maxDrawdown: -6 },
-          observationWindow: "5~10거래일",
           updatedAt: "2026-03-07 09:00"
-        }
+        })
       ]
     });
 
@@ -218,57 +241,31 @@ describe("listRecommendations", () => {
     mocks.getRecommendations.mockResolvedValue({
       generatedAt: "2026-03-08T00:00:00.000Z",
       items: [
-        {
+        createRecommendation({
           ticker: "005930",
-          company: "삼성전자",
-          sector: "반도체",
-          signalTone: "긍정",
+          company: "Samsung Electronics",
+          sector: "Semiconductor",
           score: 75,
           signalLabel: "Held alpha",
-          rationale: "Held alpha setup",
-          invalidation: "70,000원 이탈",
-          invalidationDistance: -4,
-          riskRewardRatio: "1 : 2",
-          validationSummary: "Held alpha validation",
-          checkpoints: ["70,000원 지지", "73,000원 회복", "76,000원 확인"],
-          validation: { hitRate: 55, avgReturn: 2, sampleSize: 12, maxDrawdown: -3 },
-          observationWindow: "5~10거래일",
-          updatedAt: "2026-03-08 09:00"
-        },
-        {
+          rationale: "Held alpha setup"
+        }),
+        createRecommendation({
           ticker: "000660",
-          company: "SK하이닉스",
-          sector: "반도체",
-          signalTone: "긍정",
+          company: "SK Hynix",
+          sector: "Semiconductor",
           score: 74,
           signalLabel: "Held beta",
-          rationale: "Held beta setup",
-          invalidation: "180,000원 이탈",
-          invalidationDistance: -4,
-          riskRewardRatio: "1 : 2",
-          validationSummary: "Held beta validation",
-          checkpoints: ["180,000원 지지", "188,000원 회복", "194,000원 확인"],
-          validation: { hitRate: 54, avgReturn: 2, sampleSize: 10, maxDrawdown: -3 },
-          observationWindow: "5~10거래일",
-          updatedAt: "2026-03-08 09:00"
-        },
-        {
+          rationale: "Held beta setup"
+        }),
+        createRecommendation({
           ticker: "BBB001",
           company: "Beta",
-          sector: "반도체",
-          signalTone: "긍정",
+          sector: "Semiconductor",
           score: 71,
           signalLabel: "Featured",
           rationale: "Beta setup",
-          invalidation: "41,000원 이탈",
-          invalidationDistance: -4,
-          riskRewardRatio: "1 : 3",
-          validationSummary: "Beta validation",
-          checkpoints: ["41,000원 지지", "44,000원 돌파", "47,000원 확인"],
-          validation: { hitRate: 60, avgReturn: 2, sampleSize: 11, maxDrawdown: -3 },
-          observationWindow: "5~10거래일",
-          updatedAt: "2026-03-08 09:00"
-        }
+          riskRewardRatio: "1 : 3"
+        })
       ]
     });
     mocks.getDailyCandidates.mockResolvedValue({
@@ -281,27 +278,11 @@ describe("listRecommendations", () => {
       succeededBatches: 5,
       failedBatches: [],
       topCandidates: [
-        {
-          batch: 1,
+        createCandidate({
           ticker: "BBB001",
           company: "Beta",
-          sector: "반도체",
-          signalTone: "긍정",
-          score: 77,
-          candidateScore: 97,
-          activationScore: 73,
-          currentPrice: 43_500,
-          confirmationPrice: 44_000,
-          expansionPrice: 47_000,
-          invalidationPrice: 41_000,
-          averageTurnover20: 1_500_000_000,
-          liquidityRating: "양호",
-          invalidation: "41,000원 이탈",
-          validationSummary: "Beta validation",
-          observationWindow: "5~10거래일",
-          rationale: "Beta setup",
-          eventCoverage: "보강 중"
-        }
+          sector: "Semiconductor"
+        })
       ],
       batchSummaries: []
     });
@@ -311,7 +292,7 @@ describe("listRecommendations", () => {
         {
           id: "h1",
           ticker: "005930",
-          company: "삼성전자",
+          company: "Samsung Electronics",
           signalDate: "2026-03-07",
           signalTone: "긍정",
           entryScore: 80,
@@ -323,7 +304,7 @@ describe("listRecommendations", () => {
         {
           id: "h2",
           ticker: "000660",
-          company: "SK하이닉스",
+          company: "SK Hynix",
           signalDate: "2026-03-07",
           signalTone: "긍정",
           entryScore: 78,
@@ -346,7 +327,7 @@ describe("listRecommendations", () => {
     const result = await listRecommendations({ sort: "score_desc" });
 
     expect(result.todayActionBoard?.summary.activeHoldingCount).toBe(2);
-    expect(result.todayActionBoard?.summary.crowdedSectors).toEqual([{ sector: "반도체", count: 2 }]);
+    expect(result.todayActionBoard?.summary.crowdedSectors).toEqual([{ sector: "Semiconductor", count: 2 }]);
     expect(result.todayActionBoard?.summary.buyReviewCount).toBe(0);
     expect(result.todayActionBoard?.sections[1]).toMatchObject({
       status: "watch",
@@ -358,5 +339,124 @@ describe("listRecommendations", () => {
       portfolioNote: "섹터 한도 2개"
     });
     expect(result.todayActionBoard?.sections[1]?.items[0]?.boardReason).toContain("섹터 한도");
+  });
+
+  it("prefers a configured portfolio profile over tracking-derived holdings", async () => {
+    mocks.getRecommendations.mockResolvedValue({
+      generatedAt: "2026-03-08T00:00:00.000Z",
+      items: [
+        createRecommendation({
+          ticker: "005930",
+          company: "Samsung Electronics",
+          sector: "Semiconductor",
+          score: 75
+        }),
+        createRecommendation({
+          ticker: "000660",
+          company: "SK Hynix",
+          sector: "Semiconductor",
+          score: 74
+        }),
+        createRecommendation({
+          ticker: "BBB001",
+          company: "Beta",
+          sector: "Semiconductor",
+          score: 71,
+          signalLabel: "Featured",
+          rationale: "Beta setup",
+          riskRewardRatio: "1 : 3"
+        })
+      ]
+    });
+    mocks.getDailyCandidates.mockResolvedValue({
+      generatedAt: "2026-03-08T01:00:00.000Z",
+      batchSize: 20,
+      concurrency: 2,
+      topCandidatesLimit: 10,
+      totalTickers: 100,
+      totalBatches: 5,
+      succeededBatches: 5,
+      failedBatches: [],
+      topCandidates: [
+        createCandidate({
+          ticker: "BBB001",
+          company: "Beta",
+          sector: "Semiconductor"
+        })
+      ],
+      batchSummaries: []
+    });
+    mocks.getTracking.mockResolvedValue({
+      generatedAt: "2026-03-08T00:30:00.000Z",
+      history: [
+        {
+          id: "h1",
+          ticker: "005930",
+          company: "Samsung Electronics",
+          signalDate: "2026-03-07",
+          signalTone: "긍정",
+          entryScore: 80,
+          result: "진행중",
+          mfe: 3,
+          mae: -1,
+          holdingDays: 5
+        },
+        {
+          id: "h2",
+          ticker: "000660",
+          company: "SK Hynix",
+          signalDate: "2026-03-07",
+          signalTone: "긍정",
+          entryScore: 78,
+          result: "진행중",
+          mfe: 2,
+          mae: -1,
+          holdingDays: 4
+        }
+      ],
+      details: {}
+    });
+    mocks.listOpeningRecheckDecisions.mockResolvedValue({
+      BBB001: {
+        status: "passed",
+        updatedAt: "2026-03-08T01:05:00.000Z",
+        updatedBy: "admin-editor"
+      }
+    });
+    mocks.loadPortfolioProfileDocument.mockResolvedValue({
+      name: "실전 운용",
+      totalCapital: 50_000_000,
+      availableCash: 12_000_000,
+      maxRiskPerTradePercent: 0.8,
+      maxConcurrentPositions: 3,
+      sectorLimit: 2,
+      positions: [
+        {
+          ticker: "267260",
+          company: "HD Hyundai Electric",
+          sector: "Power Equipment",
+          quantity: 12,
+          averagePrice: 350_000
+        }
+      ],
+      updatedAt: "2026-03-08T00:45:00.000Z",
+      updatedBy: "admin-dashboard"
+    });
+    mocks.isPortfolioProfileConfigured.mockReturnValue(true);
+
+    const result = await listRecommendations({ sort: "score_desc" });
+
+    expect(result.todayActionBoard?.summary.activeHoldingCount).toBe(1);
+    expect(result.todayActionBoard?.summary.remainingPortfolioSlots).toBe(2);
+    expect(result.todayActionBoard?.summary.crowdedSectors).toEqual([]);
+    expect(result.todayActionBoard?.summary.buyReviewCount).toBe(1);
+    expect(result.todayActionBoard?.sections[0]).toMatchObject({
+      status: "buy_review",
+      count: 1
+    });
+    expect(result.todayActionBoard?.sections[0]?.items[0]).toMatchObject({
+      ticker: "BBB001",
+      boardStatus: "buy_review"
+    });
   });
 });

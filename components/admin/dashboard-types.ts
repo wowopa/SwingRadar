@@ -443,3 +443,24 @@ export type WatchlistSyncStatus = {
   lastCompletedAt: string | null;
   lastDurationMs: number | null;
 };
+
+export type PortfolioProfilePositionPayload = {
+  ticker: string;
+  company: string;
+  sector: string;
+  quantity: number;
+  averagePrice: number;
+  note?: string;
+};
+
+export type PortfolioProfilePayload = {
+  name: string;
+  totalCapital: number;
+  availableCash: number;
+  maxRiskPerTradePercent: number;
+  maxConcurrentPositions: number;
+  sectorLimit: number;
+  positions: PortfolioProfilePositionPayload[];
+  updatedAt: string;
+  updatedBy: string;
+};

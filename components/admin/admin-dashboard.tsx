@@ -17,6 +17,7 @@ import type {
   OperationalIncident,
   OpsHealthReportPayload,
   PopupNoticeDocument,
+  PortfolioProfilePayload,
   PostLaunchHistoryEntryPayload,
   RuntimeStorageReportPayload,
   SnapshotGenerationReportPayload,
@@ -28,6 +29,7 @@ import type {
   WatchlistEntry,
   WatchlistSyncStatus
 } from "@/components/admin/dashboard-types";
+import { PortfolioProfileTab } from "@/components/admin/portfolio-profile-tab";
 import { PopupNoticeTab } from "@/components/admin/popup-notice-tab";
 import { StatusTab } from "@/components/admin/status-tab";
 import { WatchlistTab } from "@/components/admin/watchlist-tab";
@@ -37,7 +39,7 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAdminToken } from "@/lib/use-admin-token";
 
-const ENABLED_TABS = new Set(["status", "popup", "watchlist"]);
+const ENABLED_TABS = new Set(["status", "popup", "watchlist", "portfolio"]);
 
 export function AdminDashboard() {
   const router = useRouter();
@@ -64,6 +66,7 @@ export function AdminDashboard() {
   const [audits, setAudits] = useState<AuditItem[]>([]);
   const [dailyCandidates, setDailyCandidates] = useState<UniverseDailyCandidates | null>(null);
   const [popupNotice, setPopupNotice] = useState<PopupNoticeDocument | null>(null);
+  const [portfolioProfile, setPortfolioProfile] = useState<PortfolioProfilePayload | null>(null);
   const [symbolQuery, setSymbolQuery] = useState("");
   const [symbolResults, setSymbolResults] = useState<SymbolSearchItem[]>([]);
   const [watchlist, setWatchlist] = useState<WatchlistEntry[]>([]);
@@ -151,6 +154,7 @@ export function AdminDashboard() {
         setAudits([]);
         setDailyCandidates(null);
         setPopupNotice(null);
+        setPortfolioProfile(null);
         setSymbolResults([]);
         setWatchlist([]);
         setWatchlistBaseline([]);
@@ -175,9 +179,10 @@ export function AdminDashboard() {
       setRuntimeStorageReport(statusJson.runtimeStorageReport ?? null);
       setDatabaseStorageReport(statusJson.databaseStorageReport ?? null);
 
-      const [auditResult, popupResult, watchlistResult, universeResult] = await Promise.allSettled([
+      const [auditResult, popupResult, portfolioResult, watchlistResult, universeResult] = await Promise.allSettled([
         fetchJson<{ items: AuditItem[] }>("/api/admin/audit", { headers: authHeaders }),
         fetchJson<{ document: PopupNoticeDocument }>("/api/admin/popup-notice", { headers: authHeaders }),
+        fetchJson<{ profile: PortfolioProfilePayload }>("/api/admin/portfolio-profile", { headers: authHeaders }),
         fetchJson<{ items: SymbolSearchItem[]; watchlist: WatchlistEntry[]; syncStatuses: Record<string, WatchlistSyncStatus> }>(
           `/api/admin/watchlist${symbolQuery.trim() ? `?q=${encodeURIComponent(symbolQuery.trim())}` : ""}`,
           { headers: authHeaders }
@@ -203,6 +208,12 @@ export function AdminDashboard() {
         setPopupNotice(popupResult.value.document);
       } else {
         warnings.push({ label: "popup-notice", message: getLoadErrorMessage(popupResult.reason) });
+      }
+
+      if (portfolioResult.status === "fulfilled") {
+        setPortfolioProfile(portfolioResult.value.profile);
+      } else {
+        warnings.push({ label: "portfolio-profile", message: getLoadErrorMessage(portfolioResult.reason) });
       }
 
       if (watchlistResult.status === "fulfilled") {
@@ -285,6 +296,39 @@ export function AdminDashboard() {
       }
     } catch (addError) {
       setError(addError instanceof Error ? addError.message : "예외 편입 종목 추가에 실패했습니다.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function savePortfolioProfile() {
+    if (!authHeaders || !portfolioProfile) {
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+    setMessage(null);
+
+    try {
+      const json = await fetchJson<{ profile: PortfolioProfilePayload }>("/api/admin/portfolio-profile", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...authHeaders },
+        body: JSON.stringify({
+          name: portfolioProfile.name,
+          totalCapital: portfolioProfile.totalCapital,
+          availableCash: portfolioProfile.availableCash,
+          maxRiskPerTradePercent: portfolioProfile.maxRiskPerTradePercent,
+          maxConcurrentPositions: portfolioProfile.maxConcurrentPositions,
+          sectorLimit: portfolioProfile.sectorLimit,
+          positions: portfolioProfile.positions
+        })
+      });
+      setPortfolioProfile(json.profile);
+      setMessage("포트폴리오 프로필을 저장했습니다.");
+      await loadDashboard();
+    } catch (saveError) {
+      setError(saveError instanceof Error ? saveError.message : "포트폴리오 프로필 저장에 실패했습니다.");
     } finally {
       setLoading(false);
     }
@@ -444,6 +488,7 @@ export function AdminDashboard() {
             <TabsTrigger value="status">상태</TabsTrigger>
             <TabsTrigger value="popup">팝업 공지</TabsTrigger>
             <TabsTrigger value="watchlist">예외 편입</TabsTrigger>
+            <TabsTrigger value="portfolio">포트폴리오</TabsTrigger>
           </TabsList>
 
           <TabsContent value="status">
@@ -495,6 +540,15 @@ export function AdminDashboard() {
               watchlistSyncStatuses={watchlistSyncStatuses}
               watchlistChanges={watchlistChanges}
               onSaveMetadata={() => void saveWatchlistMetadata()}
+            />
+          </TabsContent>
+
+          <TabsContent value="portfolio">
+            <PortfolioProfileTab
+              profile={portfolioProfile}
+              setProfile={(updater) => setPortfolioProfile((current) => (current ? updater(current) : current))}
+              onSave={() => void savePortfolioProfile()}
+              disabled={loading || !portfolioProfile}
             />
           </TabsContent>
         </Tabs>

@@ -32,7 +32,9 @@ const mocks = vi.hoisted(() => ({
   updateWatchlistEntry: vi.fn(),
   getFeaturedSymbols: vi.fn(),
   getSymbolSuggestionByTicker: vi.fn(),
-  searchSymbols: vi.fn()
+  searchSymbols: vi.fn(),
+  loadPortfolioProfileDocument: vi.fn(),
+  savePortfolioProfileDocument: vi.fn()
 }));
 
 vi.mock("@/lib/server/admin-auth", () => ({
@@ -108,9 +110,15 @@ vi.mock("@/lib/symbols/master", () => ({
   searchSymbols: mocks.searchSymbols
 }));
 
+vi.mock("@/lib/server/portfolio-profile", () => ({
+  loadPortfolioProfileDocument: mocks.loadPortfolioProfileDocument,
+  savePortfolioProfileDocument: mocks.savePortfolioProfileDocument
+}));
+
 import { GET as getIngestRoute, POST as postIngestRoute } from "@/app/api/admin/ingest/route";
 import { GET as getAuditRoute } from "@/app/api/admin/audit/route";
 import { GET as getNewsCurationRoute, POST as postNewsCurationRoute } from "@/app/api/admin/news-curation/route";
+import { GET as getPortfolioProfileRoute, POST as postPortfolioProfileRoute } from "@/app/api/admin/portfolio-profile/route";
 import { POST as postPublishRoute } from "@/app/api/admin/publish/route";
 import { POST as postRollbackRoute } from "@/app/api/admin/rollback/route";
 import { GET as getStatusRoute } from "@/app/api/admin/status/route";
@@ -177,6 +185,29 @@ describe("admin routes", () => {
       updatedBy: "system",
       items: []
     });
+    mocks.loadPortfolioProfileDocument.mockResolvedValue({
+      name: "기본 운용 프로필",
+      totalCapital: 0,
+      availableCash: 0,
+      maxRiskPerTradePercent: 0.8,
+      maxConcurrentPositions: 4,
+      sectorLimit: 2,
+      positions: [],
+      updatedAt: "1970-01-01T00:00:00.000Z",
+      updatedBy: "system"
+    });
+    mocks.savePortfolioProfileDocument.mockImplementation((profile: Record<string, unknown>) => ({
+      ...profile,
+      positions: [
+        {
+          ticker: "005930",
+          company: "Samsung Electronics",
+          sector: "Semiconductor",
+          quantity: 10,
+          averagePrice: 71_000
+        }
+      ]
+    }));
     mocks.getDailyCandidates.mockResolvedValue(null);
     mocks.listUniverseCandidateReviews.mockResolvedValue({});
     mocks.saveUniverseCandidateReview.mockResolvedValue({
@@ -945,6 +976,139 @@ describe("admin routes", () => {
         document: {
           updatedBy: "admin-editor",
           items: [{ impact: "\uC8FC\uC758" }]
+        }
+      });
+    });
+  });
+
+  describe("admin portfolio profile route", () => {
+    it("returns the current portfolio profile on GET", async () => {
+      mocks.loadPortfolioProfileDocument.mockResolvedValue({
+        name: "실전 운용",
+        totalCapital: 50_000_000,
+        availableCash: 12_000_000,
+        maxRiskPerTradePercent: 0.8,
+        maxConcurrentPositions: 4,
+        sectorLimit: 2,
+        positions: [
+          {
+            ticker: "005930",
+            company: "Samsung Electronics",
+            sector: "Semiconductor",
+            quantity: 10,
+            averagePrice: 71_000
+          }
+        ],
+        updatedAt: "2026-03-08T00:00:00.000Z",
+        updatedBy: "admin-editor"
+      });
+
+      const response = await getPortfolioProfileRoute(createRequest("http://localhost/api/admin/portfolio-profile"));
+      const payload = await parseJson<{
+        ok: boolean;
+        requestId: string;
+        profile: { name: string; positions: Array<{ ticker: string; quantity: number }> };
+      }>(response);
+
+      expect(response.status).toBe(200);
+      expect(mocks.loadPortfolioProfileDocument).toHaveBeenCalledTimes(1);
+      expect(payload).toMatchObject({
+        ok: true,
+        requestId: "req-test",
+        profile: {
+          name: "실전 운용",
+          positions: [{ ticker: "005930", quantity: 10 }]
+        }
+      });
+    });
+
+    it("normalizes and saves the portfolio profile on POST", async () => {
+      mocks.savePortfolioProfileDocument.mockResolvedValue({
+        name: "실전 운용",
+        totalCapital: 50_000_000,
+        availableCash: 12_000_000,
+        maxRiskPerTradePercent: 0.8,
+        maxConcurrentPositions: 4,
+        sectorLimit: 2,
+        positions: [
+          {
+            ticker: "005930",
+            company: "Samsung Electronics",
+            sector: "Semiconductor",
+            quantity: 10,
+            averagePrice: 71_000
+          }
+        ],
+        updatedAt: "2026-03-08T00:00:00.000Z",
+        updatedBy: "admin-dashboard"
+      });
+
+      const response = await postPortfolioProfileRoute(
+        createRequest("http://localhost/api/admin/portfolio-profile", {
+          method: "POST",
+          body: JSON.stringify({
+            name: "실전 운용",
+            totalCapital: 50_000_000,
+            availableCash: 12_000_000,
+            maxRiskPerTradePercent: 0.8,
+            maxConcurrentPositions: 4,
+            sectorLimit: 2,
+            positions: [
+              {
+                ticker: "005930",
+                quantity: 10,
+                averagePrice: 71_000,
+                note: "core"
+              }
+            ]
+          })
+        })
+      );
+      const payload = await parseJson<{
+        ok: boolean;
+        requestId: string;
+        profile: { name: string; updatedBy: string; positions: Array<{ ticker: string; company: string }> };
+      }>(response);
+
+      expect(response.status).toBe(200);
+      expect(mocks.savePortfolioProfileDocument).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: "실전 운용",
+          totalCapital: 50_000_000,
+          availableCash: 12_000_000,
+          maxRiskPerTradePercent: 0.8,
+          maxConcurrentPositions: 4,
+          sectorLimit: 2,
+          positions: [
+            {
+              ticker: "005930",
+              quantity: 10,
+              averagePrice: 71_000,
+              note: "core"
+            }
+          ],
+          updatedBy: "admin-dashboard"
+        })
+      );
+      expect(mocks.recordAuditLog).toHaveBeenCalledWith(
+        expect.objectContaining({
+          eventType: "portfolio_profile_saved",
+          status: "success",
+          requestId: "req-test"
+        })
+      );
+      expect(payload).toMatchObject({
+        ok: true,
+        requestId: "req-test",
+        profile: {
+          name: "실전 운용",
+          updatedBy: "admin-dashboard",
+          positions: [
+            {
+              ticker: "005930",
+              company: "Samsung Electronics"
+            }
+          ]
         }
       });
     });

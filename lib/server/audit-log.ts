@@ -8,6 +8,7 @@ export type AuditEventType =
   | "admin_draft_saved"
   | "admin_news_curation_saved"
   | "popup_notice_saved"
+  | "portfolio_profile_saved"
   | "admin_publish"
   | "watchlist_add"
   | "watchlist_update"

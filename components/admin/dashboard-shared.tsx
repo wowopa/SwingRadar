@@ -123,10 +123,12 @@ export function formatAuditEventType(eventType: string) {
     admin_draft_saved: "초안 저장",
     admin_news_curation_saved: "뉴스 큐레이션 저장",
     popup_notice_saved: "팝업 공지 저장",
+    portfolio_profile_saved: "포트폴리오 프로필 저장",
     admin_publish: "발행",
     watchlist_add: "예외 편입 추가",
     watchlist_update: "예외 편입 수정",
     universe_review_update: "유니버스 후보 검토",
+    opening_recheck_update: "장초 재판정 저장",
     provider_fallback: "데이터 provider fallback"
   };
 

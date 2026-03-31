@@ -86,6 +86,27 @@ export interface TodayActionBoardSectorLoad {
   count: number;
 }
 
+export interface PortfolioProfilePosition {
+  ticker: string;
+  company: string;
+  sector: string;
+  quantity: number;
+  averagePrice: number;
+  note?: string;
+}
+
+export interface PortfolioProfile {
+  name: string;
+  totalCapital: number;
+  availableCash: number;
+  maxRiskPerTradePercent: number;
+  maxConcurrentPositions: number;
+  sectorLimit: number;
+  positions: PortfolioProfilePosition[];
+  updatedAt: string;
+  updatedBy: string;
+}
+
 export interface TodayActionBoardItem {
   ticker: string;
   company: string;

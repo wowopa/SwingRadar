@@ -14,6 +14,10 @@ import {
   resolveRecommendationActionBucket
 } from "@/lib/recommendations/action-plan";
 import { listOpeningRecheckDecisions } from "@/lib/server/opening-recheck-board";
+import {
+  isPortfolioProfileConfigured,
+  loadPortfolioProfileDocument
+} from "@/lib/server/portfolio-profile";
 import type { RecommendationsQuery } from "@/lib/server/query-schemas";
 import { getSymbolByTicker } from "@/lib/symbols/master";
 import { formatPrice } from "@/lib/utils";
@@ -144,10 +148,11 @@ function enrichDailyCandidateItem(
 
 export async function listRecommendations(query: RecommendationsQuery): Promise<RecommendationsResponseDto> {
   const provider = getDataProvider();
-  const [source, dailyCandidates, tracking] = await Promise.all([
+  const [source, dailyCandidates, tracking, portfolioProfile] = await Promise.all([
     provider.getRecommendations(),
     getDailyCandidates(),
-    provider.getTracking()
+    provider.getTracking(),
+    loadPortfolioProfileDocument()
   ]);
   const openingRecheckByTicker = dailyCandidates
     ? await listOpeningRecheckDecisions(dailyCandidates.generatedAt)
@@ -267,18 +272,34 @@ export async function listRecommendations(query: RecommendationsQuery): Promise<
           tradePlan: candidate.tradePlan,
           openingRecheck: candidate.openingRecheck
         })),
-        todaySummary,
         {
-          activeHoldings: tracking.history
-            .filter((item) => item.result === "진행중")
-            .map((item) => ({
-              ticker: item.ticker,
-              company: item.company,
-              sector: resolveHoldingSector(item.ticker, {
-                recommendationSector: sourceByTicker.get(item.ticker)?.sector,
-                candidateSector: dailyCandidateByTicker.get(item.ticker)?.sector
-              })
-            }))
+          ...todaySummary,
+          maxConcurrentPositions:
+            isPortfolioProfileConfigured(portfolioProfile) && portfolioProfile.maxConcurrentPositions > 0
+              ? portfolioProfile.maxConcurrentPositions
+              : todaySummary.maxConcurrentPositions
+        },
+        {
+          activeHoldings: isPortfolioProfileConfigured(portfolioProfile)
+            ? portfolioProfile.positions.map((position) => ({
+                ticker: position.ticker,
+                company: position.company,
+                sector: position.sector
+              }))
+            : tracking.history
+                .filter((item) => item.result === "진행중")
+                .map((item) => ({
+                  ticker: item.ticker,
+                  company: item.company,
+                  sector: resolveHoldingSector(item.ticker, {
+                    recommendationSector: sourceByTicker.get(item.ticker)?.sector,
+                    candidateSector: dailyCandidateByTicker.get(item.ticker)?.sector
+                  })
+                })),
+          sectorLimit:
+            isPortfolioProfileConfigured(portfolioProfile) && portfolioProfile.sectorLimit > 0
+              ? portfolioProfile.sectorLimit
+              : undefined
         }
       )
     : undefined;
