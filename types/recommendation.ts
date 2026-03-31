@@ -72,11 +72,23 @@ export interface TodayOperatingWorkflow {
 
 export type OpeningRecheckStatus = "pending" | "passed" | "watch" | "avoid" | "excluded";
 
+export type OpeningGapCheck = "normal" | "elevated" | "overheated";
+export type OpeningConfirmationCheck = "confirmed" | "mixed" | "failed";
+export type OpeningActionIntent = "review" | "watch" | "hold";
+
+export interface OpeningRecheckChecklist {
+  gap: OpeningGapCheck;
+  confirmation: OpeningConfirmationCheck;
+  action: OpeningActionIntent;
+}
+
 export interface OpeningRecheckDecision {
   status: OpeningRecheckStatus;
   updatedAt: string;
   updatedBy?: string;
   note?: string;
+  checklist?: OpeningRecheckChecklist;
+  suggestedStatus?: Exclude<OpeningRecheckStatus, "pending">;
 }
 
 export type TodayActionBoardStatus = "buy_review" | "watch" | "avoid" | "excluded" | "pending";

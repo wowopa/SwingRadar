@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import Link from "next/link";
 import { Loader2, RotateCcw } from "lucide-react";
@@ -10,17 +10,41 @@ import { SignalToneBadge } from "@/components/shared/signal-tone-badge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
 import type { DailyScanSummaryDto, OpeningRecheckDecisionDto } from "@/lib/api-contracts/swing-radar";
+import { resolveRecommendationActionBucket } from "@/lib/recommendations/action-plan";
 import {
   buildOpeningRecheckCounts,
+  getOpeningActionIntentMeta,
+  getOpeningConfirmationMeta,
+  getOpeningGapMeta,
   getOpeningRecheckStatusMeta,
+  OPENING_ACTION_INTENTS,
+  OPENING_CONFIRMATION_CHECKS,
+  OPENING_GAP_CHECKS,
   OPENING_RECHECK_DECISION_STATUSES,
-  OPENING_RECHECK_STATUSES
+  OPENING_RECHECK_STATUSES,
+  suggestOpeningRecheckStatus
 } from "@/lib/recommendations/opening-recheck";
-import { resolveRecommendationActionBucket } from "@/lib/recommendations/action-plan";
 import { useAdminToken } from "@/lib/use-admin-token";
 import { cn, formatDateTimeShort } from "@/lib/utils";
-import type { OpeningRecheckStatus } from "@/types/recommendation";
+import type {
+  OpeningActionIntent,
+  OpeningConfirmationCheck,
+  OpeningGapCheck,
+  OpeningRecheckChecklist,
+  OpeningRecheckStatus
+} from "@/types/recommendation";
+
+type OpeningDecisionStatus = Exclude<OpeningRecheckStatus, "pending">;
+
+interface OpeningDraft {
+  gap?: OpeningGapCheck;
+  confirmation?: OpeningConfirmationCheck;
+  action?: OpeningActionIntent;
+  note: string;
+  finalStatus: OpeningDecisionStatus | null;
+}
 
 function formatTurnover(value?: number | null) {
   if (!value || value <= 0) {
@@ -35,6 +59,26 @@ function createInitialDecisions(items: DailyScanSummaryDto["topCandidates"]) {
   return Object.fromEntries(
     items.flatMap((item) => (item.openingRecheck ? [[item.ticker, item.openingRecheck]] : []))
   ) as Record<string, OpeningRecheckDecisionDto>;
+}
+
+function createDraft(decision?: OpeningRecheckDecisionDto): OpeningDraft {
+  if (!decision) {
+    return {
+      note: "",
+      finalStatus: null
+    };
+  }
+
+  const suggestedStatus = decision.suggestedStatus;
+  const finalStatus = suggestedStatus && suggestedStatus === decision.status ? null : decision.status;
+
+  return {
+    gap: decision.checklist?.gap,
+    confirmation: decision.checklist?.confirmation,
+    action: decision.checklist?.action,
+    note: decision.note ?? "",
+    finalStatus: finalStatus === "pending" ? null : finalStatus
+  };
 }
 
 function getStatusButtonClasses(status: OpeningRecheckStatus, isActive: boolean) {
@@ -55,6 +99,79 @@ function getStatusButtonClasses(status: OpeningRecheckStatus, isActive: boolean)
   }
 
   return "border-border/80 bg-secondary/40 text-foreground hover:bg-secondary/50";
+}
+
+function getChoiceButtonClasses(
+  variant: "default" | "secondary" | "positive" | "neutral" | "caution",
+  isActive: boolean
+) {
+  if (!isActive) {
+    return "border-border/70 bg-background/80 text-foreground/80 hover:bg-background";
+  }
+
+  if (variant === "positive") {
+    return "border-positive/35 bg-positive/10 text-positive hover:bg-positive/15";
+  }
+
+  if (variant === "neutral") {
+    return "border-neutral/35 bg-neutral/10 text-neutral hover:bg-neutral/15";
+  }
+
+  if (variant === "caution") {
+    return "border-caution/35 bg-caution/10 text-caution hover:bg-caution/15";
+  }
+
+  return "border-primary/35 bg-primary/10 text-primary hover:bg-primary/15";
+}
+
+function buildChecklist(draft: OpeningDraft): OpeningRecheckChecklist | null {
+  if (!draft.gap || !draft.confirmation || !draft.action) {
+    return null;
+  }
+
+  return {
+    gap: draft.gap,
+    confirmation: draft.confirmation,
+    action: draft.action
+  };
+}
+
+function getDefaultFocusTicker(
+  items: DailyScanSummaryDto["topCandidates"],
+  decisions: Record<string, OpeningRecheckDecisionDto>
+) {
+  return (
+    items.find((item) => (decisions[item.ticker]?.status ?? "pending") === "pending")?.ticker ??
+    items[0]?.ticker ??
+    null
+  );
+}
+
+function getNextFocusTicker(
+  currentTicker: string,
+  items: DailyScanSummaryDto["topCandidates"],
+  decisions: Record<string, OpeningRecheckDecisionDto>
+) {
+  if (!items.length) {
+    return null;
+  }
+
+  const orderedTickers = items.map((item) => item.ticker);
+  const currentIndex = orderedTickers.indexOf(currentTicker);
+  const pendingAfterCurrent = orderedTickers.find(
+    (ticker, index) => index > currentIndex && (decisions[ticker]?.status ?? "pending") === "pending"
+  );
+
+  if (pendingAfterCurrent) {
+    return pendingAfterCurrent;
+  }
+
+  const firstPending = orderedTickers.find((ticker) => (decisions[ticker]?.status ?? "pending") === "pending");
+  if (firstPending) {
+    return firstPending;
+  }
+
+  return orderedTickers[Math.min(currentIndex + 1, orderedTickers.length - 1)] ?? orderedTickers[0] ?? null;
 }
 
 async function parseResponse<T>(response: Response): Promise<T> {
@@ -83,37 +200,67 @@ export function DailyCandidatesPanel({ dailyScan }: { dailyScan: DailyScanSummar
   const hasCandidates = visibleCandidates.length > 0;
 
   const [decisions, setDecisions] = useState<Record<string, OpeningRecheckDecisionDto>>({});
+  const [drafts, setDrafts] = useState<Record<string, OpeningDraft>>({});
+  const [focusTicker, setFocusTicker] = useState<string | null>(null);
   const [savingKey, setSavingKey] = useState<string | null>(null);
   const [boardMessage, setBoardMessage] = useState<string | null>(null);
   const [boardError, setBoardError] = useState<string | null>(null);
 
   useEffect(() => {
     setDecisions(initialDecisions);
+    setDrafts({});
+    setFocusTicker(getDefaultFocusTicker(visibleCandidates, initialDecisions));
     setSavingKey(null);
     setBoardMessage(null);
     setBoardError(null);
-  }, [initialDecisions, scanKey]);
+  }, [initialDecisions, scanKey, visibleCandidates]);
+
+  const focusedCandidate = useMemo(
+    () => visibleCandidates.find((item) => item.ticker === focusTicker) ?? visibleCandidates[0] ?? null,
+    [focusTicker, visibleCandidates]
+  );
+
+  const focusedDecision = focusedCandidate ? decisions[focusedCandidate.ticker] : undefined;
+  const focusedDraft = focusedCandidate
+    ? (drafts[focusedCandidate.ticker] ?? createDraft(focusedDecision))
+    : null;
+  const focusedChecklist = focusedDraft ? buildChecklist(focusedDraft) : null;
+  const suggestedStatus = focusedChecklist ? suggestOpeningRecheckStatus(focusedChecklist) : undefined;
+  const resolvedStatus = focusedDraft
+    ? focusedDraft.finalStatus ?? suggestedStatus ?? focusedDecision?.suggestedStatus ?? undefined
+    : undefined;
 
   const counts = useMemo(
     () => buildOpeningRecheckCounts(visibleCandidates.map((item) => item.ticker), decisions),
     [decisions, visibleCandidates]
   );
-  const groupedBoardItems = useMemo(
-    () =>
-      OPENING_RECHECK_DECISION_STATUSES.map((status) => ({
-        status,
-        meta: getOpeningRecheckStatusMeta(status),
-        items: visibleCandidates.filter((item) => (decisions[item.ticker]?.status ?? "pending") === status)
-      })),
-    [decisions, visibleCandidates]
-  );
 
-  async function saveStatus(ticker: string, status: OpeningRecheckStatus) {
+  function updateDraft(ticker: string, patch: Partial<OpeningDraft>) {
+    setDrafts((current) => {
+      const base = current[ticker] ?? createDraft(decisions[ticker]);
+      return {
+        ...current,
+        [ticker]: {
+          ...base,
+          ...patch
+        }
+      };
+    });
+  }
+
+  async function persistDecision(input: {
+    ticker: string;
+    status: OpeningRecheckStatus;
+    checklist?: OpeningRecheckChecklist;
+    suggestedStatus?: OpeningDecisionStatus;
+    note?: string;
+    advance?: boolean;
+  }) {
     if (!authHeaders || !scanKey) {
       return;
     }
 
-    setSavingKey(ticker);
+    setSavingKey(input.ticker);
     setBoardError(null);
     setBoardMessage(null);
 
@@ -126,23 +273,38 @@ export function DailyCandidatesPanel({ dailyScan }: { dailyScan: DailyScanSummar
         },
         body: JSON.stringify({
           scanKey,
-          ticker,
-          status
+          ticker: input.ticker,
+          status: input.status,
+          checklist: input.checklist,
+          suggestedStatus: input.suggestedStatus,
+          note: input.note?.trim() || undefined
         }),
         cache: "no-store"
       });
       const json = await parseResponse<{ decision: OpeningRecheckDecisionDto | null }>(response);
+      const nextDecisions = { ...decisions };
 
-      setDecisions((current) => {
-        const next = { ...current };
-        if (json.decision) {
-          next[ticker] = json.decision;
-        } else {
-          delete next[ticker];
-        }
-        return next;
-      });
-      setBoardMessage(`${ticker} 장초 확인을 ${getOpeningRecheckStatusMeta(status).label}로 저장했습니다.`);
+      if (json.decision) {
+        nextDecisions[input.ticker] = json.decision;
+      } else {
+        delete nextDecisions[input.ticker];
+      }
+
+      setDecisions(nextDecisions);
+      setDrafts((current) => ({
+        ...current,
+        [input.ticker]: createDraft(json.decision ?? undefined)
+      }));
+
+      if (input.advance) {
+        setFocusTicker(getNextFocusTicker(input.ticker, visibleCandidates, nextDecisions));
+      }
+
+      const resolvedMeta =
+        input.status === "pending"
+          ? getOpeningRecheckStatusMeta("pending")
+          : getOpeningRecheckStatusMeta(input.status as OpeningDecisionStatus);
+      setBoardMessage(`${input.ticker} 장초 체크를 ${resolvedMeta.label}로 저장했습니다.`);
       startTransition(() => {
         router.refresh();
       });
@@ -153,8 +315,38 @@ export function DailyCandidatesPanel({ dailyScan }: { dailyScan: DailyScanSummar
     }
   }
 
+  async function saveFocused(advance: boolean) {
+    if (!focusedCandidate || !focusedDraft) {
+      return;
+    }
+
+    const checklist = buildChecklist(focusedDraft);
+    const status = focusedDraft.finalStatus ?? (checklist ? suggestOpeningRecheckStatus(checklist) : undefined);
+
+    if (!checklist || !status) {
+      setBoardError("갭 상태, 확인 가격 반응, 오늘 행동을 모두 고른 뒤 저장해 주세요.");
+      return;
+    }
+
+    await persistDecision({
+      ticker: focusedCandidate.ticker,
+      status,
+      checklist,
+      suggestedStatus: suggestOpeningRecheckStatus(checklist),
+      note: focusedDraft.note,
+      advance
+    });
+  }
+
   async function resetStatus(ticker: string) {
-    await saveStatus(ticker, "pending");
+    setDrafts((current) => ({
+      ...current,
+      [ticker]: createDraft(undefined)
+    }));
+    await persistDecision({
+      ticker,
+      status: "pending"
+    });
   }
 
   async function clearBoard() {
@@ -181,6 +373,8 @@ export function DailyCandidatesPanel({ dailyScan }: { dailyScan: DailyScanSummar
 
       await parseResponse<{ cleared: boolean }>(response);
       setDecisions({});
+      setDrafts({});
+      setFocusTicker(visibleCandidates[0]?.ticker ?? null);
       setBoardMessage("오늘 장초 확인 보드를 초기화했습니다.");
       startTransition(() => {
         router.refresh();
@@ -223,8 +417,8 @@ export function DailyCandidatesPanel({ dailyScan }: { dailyScan: DailyScanSummar
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="rounded-2xl border border-primary/20 bg-primary/8 p-4 text-sm leading-6 text-foreground/82">
-          장 시작 후 5~10분 동안 시초가와 계획 기준의 거리, 확인 가격 반응, 손절 여유를 다시 본 뒤에만 오늘 행동 후보로
-          넘겨야 합니다.
+          장 시작 후 5~10분 동안 시초가와 계획 기준의 거리, 확인 가격 반응, 오늘 행동 의도를 다시 보고 저장하면
+          시스템이 오늘 상태를 자동으로 제안합니다.
         </div>
 
         <div className="rounded-2xl border border-border/70 bg-secondary/20 p-4">
@@ -278,168 +472,392 @@ export function DailyCandidatesPanel({ dailyScan }: { dailyScan: DailyScanSummar
               );
             })}
           </div>
-
-          <div className="mt-4 grid gap-3 xl:grid-cols-2">
-            {groupedBoardItems.map((group) => (
-              <div key={group.status} className="rounded-2xl border border-border/70 bg-background/80 p-4">
-                <div className="flex items-center justify-between gap-2">
-                  <p className="text-sm font-semibold text-foreground">{group.meta.label}</p>
-                  <Badge variant={group.meta.variant}>{group.items.length}개</Badge>
-                </div>
-                {group.items.length ? (
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    {group.items.map((item) => (
-                      <span
-                        key={`${group.status}-${item.ticker}`}
-                        className="rounded-full border border-border/70 bg-secondary/25 px-3 py-1 text-xs text-foreground/80"
-                      >
-                        {item.company}
-                      </span>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="mt-3 text-xs leading-5 text-muted-foreground">아직 이 상태로 정리된 종목은 없습니다.</p>
-                )}
-              </div>
-            ))}
-          </div>
         </div>
 
         {hasCandidates ? (
           <>
-            <div className="grid gap-4 xl:grid-cols-3">
-              {visibleCandidates.map((item, index) => {
-                const actionBucket =
-                  item.actionBucket ??
-                  resolveRecommendationActionBucket({
-                    signalTone: item.signalTone,
-                    score: item.score,
-                    activationScore: item.activationScore
-                  });
-                const recheckStatus = decisions[item.ticker]?.status ?? "pending";
-                const recheckMeta = getOpeningRecheckStatusMeta(recheckStatus);
-                const recheckDecision = decisions[item.ticker];
-                const isSaving = savingKey === item.ticker;
-
-                return (
-                  <div key={`${item.ticker}-${index}`} className="rounded-2xl border border-border/70 bg-secondary/35 p-4">
-                    <div className="flex items-start justify-between gap-3">
+            <div className="grid gap-4 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
+              <div className="rounded-3xl border border-border/70 bg-secondary/25 p-5">
+                {focusedCandidate && focusedDraft ? (
+                  <>
+                    <div className="flex flex-wrap items-start justify-between gap-3">
                       <div>
-                        <p className="text-sm font-semibold text-foreground">{item.company}</p>
-                        <p className="mt-1 text-xs text-muted-foreground">
-                          {item.ticker} · {item.sector}
-                        </p>
-                      </div>
-                      <div className="flex flex-col items-end gap-2">
-                        <span className="rounded-full border border-border/70 bg-background/80 px-2.5 py-1 text-[11px] font-medium text-foreground/72">
-                          장전 후보 {index + 1}
-                        </span>
-                        <Badge variant={recheckMeta.variant}>{recheckMeta.label}</Badge>
-                        <ActionBucketBadge bucket={actionBucket} />
-                        <SignalToneBadge tone={item.signalTone} />
-                      </div>
-                    </div>
-
-                    <div className="mt-4 grid grid-cols-3 gap-3 text-sm">
-                      <div className="rounded-xl border border-border/70 px-3 py-2">
-                        <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">우선순위</p>
-                        <p className="mt-1 font-semibold text-foreground">{item.candidateScore}</p>
-                      </div>
-                      <div className="rounded-xl border border-border/70 px-3 py-2">
-                        <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">관찰 점수</p>
-                        <p className="mt-1 font-semibold text-foreground">
-                          {typeof item.activationScore === "number" ? item.activationScore : "계산 중"}
-                        </p>
-                      </div>
-                      <div className="rounded-xl border border-border/70 px-3 py-2">
-                        <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">유동성</p>
-                        <p className="mt-1 font-semibold text-foreground">
-                          {item.liquidityRating ?? formatTurnover(item.averageTurnover20)}
-                        </p>
-                      </div>
-                    </div>
-
-                    {item.tradePlan ? (
-                      <div className="mt-4 rounded-2xl border border-border/70 bg-background/70 p-3">
-                        <div className="grid gap-3 sm:grid-cols-2">
-                          <div>
-                            <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">진입 구간</p>
-                            <p className="mt-1 text-sm font-semibold text-foreground">{item.tradePlan.entryLabel}</p>
-                          </div>
-                          <div>
-                            <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">손절 기준</p>
-                            <p className="mt-1 text-sm font-semibold text-foreground">{item.tradePlan.stopLabel}</p>
-                          </div>
-                        </div>
-                        <p className="mt-3 text-sm leading-6 text-foreground/82">{item.tradePlan.nextStep}</p>
-                      </div>
-                    ) : null}
-
-                    <div className="mt-4 rounded-2xl border border-border/70 bg-background/80 p-4">
-                      <div className="flex items-center justify-between gap-3">
-                        <div>
-                          <p className="text-sm font-semibold text-foreground">장초 확인</p>
-                          <p className="mt-1 text-xs leading-5 text-muted-foreground">{recheckMeta.description}</p>
-                        </div>
-                        {recheckDecision ? (
-                          <span className="text-xs text-muted-foreground">
-                            최종 반영 {formatDateTimeShort(recheckDecision.updatedAt)}
+                        <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">장초 체크 포커스</p>
+                        <div className="mt-2 flex flex-wrap items-center gap-2">
+                          <p className="text-xl font-semibold text-foreground">{focusedCandidate.company}</p>
+                          <span className="rounded-full border border-border/70 bg-background/80 px-3 py-1 text-xs text-muted-foreground">
+                            {focusedCandidate.ticker} · 장전 후보{" "}
+                            {visibleCandidates.findIndex((item) => item.ticker === focusedCandidate.ticker) + 1}
                           </span>
-                        ) : (
-                          <span className="text-xs text-muted-foreground">아직 저장 전</span>
-                        )}
+                        </div>
+                        <p className="mt-2 text-sm text-muted-foreground">{focusedCandidate.sector}</p>
                       </div>
-                      <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                        {OPENING_RECHECK_DECISION_STATUSES.map((status) => {
-                          const meta = getOpeningRecheckStatusMeta(status);
-                          const isActive = recheckStatus === status;
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Badge
+                          variant={resolvedStatus ? getOpeningRecheckStatusMeta(resolvedStatus).variant : "secondary"}
+                        >
+                          {resolvedStatus ? getOpeningRecheckStatusMeta(resolvedStatus).label : "체크 필요"}
+                        </Badge>
+                        <ActionBucketBadge
+                          bucket={
+                            focusedCandidate.actionBucket ??
+                            resolveRecommendationActionBucket({
+                              signalTone: focusedCandidate.signalTone,
+                              score: focusedCandidate.score,
+                              activationScore: focusedCandidate.activationScore
+                            })
+                          }
+                        />
+                        <SignalToneBadge tone={focusedCandidate.signalTone} />
+                      </div>
+                    </div>
 
-                          return (
-                            <Button
-                              key={`${item.ticker}-${status}`}
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              className={cn("justify-start rounded-2xl px-3 text-left", getStatusButtonClasses(status, isActive))}
-                              onClick={() => void saveStatus(item.ticker, status)}
-                              disabled={!canManageBoard || isSaving}
-                            >
-                              {isSaving && isActive ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-                              {meta.label}
-                            </Button>
-                          );
-                        })}
+                    <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                      <div className="rounded-2xl border border-border/70 bg-background/80 px-4 py-3">
+                        <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">진입 구간</p>
+                        <p className="mt-1 text-sm font-semibold text-foreground">
+                          {focusedCandidate.tradePlan?.entryLabel ?? "분석 확인"}
+                        </p>
                       </div>
-                      {recheckStatus !== "pending" ? (
-                        <div className="mt-3 flex justify-end">
+                      <div className="rounded-2xl border border-border/70 bg-background/80 px-4 py-3">
+                        <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">손절 기준</p>
+                        <p className="mt-1 text-sm font-semibold text-foreground">
+                          {focusedCandidate.tradePlan?.stopLabel ?? "분석 확인"}
+                        </p>
+                      </div>
+                      <div className="rounded-2xl border border-border/70 bg-background/80 px-4 py-3">
+                        <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">유동성</p>
+                        <p className="mt-1 text-sm font-semibold text-foreground">
+                          {focusedCandidate.liquidityRating ?? formatTurnover(focusedCandidate.averageTurnover20)}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="mt-4 grid gap-4">
+                      <div className="rounded-2xl border border-border/70 bg-background/70 p-4">
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <p className="text-sm font-semibold text-foreground">1. 갭 상태</p>
+                            <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                              시초가가 계획 진입 구간에서 얼마나 멀어졌는지 빠르게 체크합니다.
+                            </p>
+                          </div>
+                          <Badge variant={focusedDraft.gap ? getOpeningGapMeta(focusedDraft.gap).variant : "secondary"}>
+                            {focusedDraft.gap ? getOpeningGapMeta(focusedDraft.gap).label : "선택 전"}
+                          </Badge>
+                        </div>
+                        <div className="mt-3 grid gap-2 sm:grid-cols-3">
+                          {OPENING_GAP_CHECKS.map((gap) => {
+                            const meta = getOpeningGapMeta(gap);
+                            return (
+                              <Button
+                                key={`${focusedCandidate.ticker}-${gap}`}
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                className={cn(
+                                  "h-auto min-h-[88px] flex-col items-start rounded-2xl px-4 py-3 text-left",
+                                  getChoiceButtonClasses(meta.variant, focusedDraft.gap === gap)
+                                )}
+                                onClick={() => updateDraft(focusedCandidate.ticker, { gap })}
+                              >
+                                <span className="w-full text-sm font-semibold">{meta.label}</span>
+                                <span className="w-full whitespace-normal text-xs leading-5 text-current/80">
+                                  {meta.description}
+                                </span>
+                              </Button>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      <div className="rounded-2xl border border-border/70 bg-background/70 p-4">
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <p className="text-sm font-semibold text-foreground">2. 확인 가격 반응</p>
+                            <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                              확인 가격을 지지하거나 돌파했는지, 아직 애매한지, 실패했는지 고릅니다.
+                            </p>
+                          </div>
+                          <Badge
+                            variant={
+                              focusedDraft.confirmation
+                                ? getOpeningConfirmationMeta(focusedDraft.confirmation).variant
+                                : "secondary"
+                            }
+                          >
+                            {focusedDraft.confirmation
+                              ? getOpeningConfirmationMeta(focusedDraft.confirmation).label
+                              : "선택 전"}
+                          </Badge>
+                        </div>
+                        <div className="mt-3 grid gap-2 sm:grid-cols-3">
+                          {OPENING_CONFIRMATION_CHECKS.map((confirmation) => {
+                            const meta = getOpeningConfirmationMeta(confirmation);
+                            return (
+                              <Button
+                                key={`${focusedCandidate.ticker}-${confirmation}`}
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                className={cn(
+                                  "h-auto min-h-[88px] flex-col items-start rounded-2xl px-4 py-3 text-left",
+                                  getChoiceButtonClasses(meta.variant, focusedDraft.confirmation === confirmation)
+                                )}
+                                onClick={() => updateDraft(focusedCandidate.ticker, { confirmation })}
+                              >
+                                <span className="w-full text-sm font-semibold">{meta.label}</span>
+                                <span className="w-full whitespace-normal text-xs leading-5 text-current/80">
+                                  {meta.description}
+                                </span>
+                              </Button>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      <div className="rounded-2xl border border-border/70 bg-background/70 p-4">
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <p className="text-sm font-semibold text-foreground">3. 오늘 행동</p>
+                            <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                              이 종목을 오늘 진입 검토로 넘길지, 더 볼지, 오늘은 보류할지 정합니다.
+                            </p>
+                          </div>
+                          <Badge
+                            variant={
+                              focusedDraft.action ? getOpeningActionIntentMeta(focusedDraft.action).variant : "secondary"
+                            }
+                          >
+                            {focusedDraft.action ? getOpeningActionIntentMeta(focusedDraft.action).label : "선택 전"}
+                          </Badge>
+                        </div>
+                        <div className="mt-3 grid gap-2 sm:grid-cols-3">
+                          {OPENING_ACTION_INTENTS.map((action) => {
+                            const meta = getOpeningActionIntentMeta(action);
+                            return (
+                              <Button
+                                key={`${focusedCandidate.ticker}-${action}`}
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                className={cn(
+                                  "h-auto min-h-[88px] flex-col items-start rounded-2xl px-4 py-3 text-left",
+                                  getChoiceButtonClasses(meta.variant, focusedDraft.action === action)
+                                )}
+                                onClick={() => updateDraft(focusedCandidate.ticker, { action })}
+                              >
+                                <span className="w-full text-sm font-semibold">{meta.label}</span>
+                                <span className="w-full whitespace-normal text-xs leading-5 text-current/80">
+                                  {meta.description}
+                                </span>
+                              </Button>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      <div className="rounded-2xl border border-border/70 bg-background/80 p-4">
+                        <div className="flex flex-wrap items-start justify-between gap-3">
+                          <div>
+                            <p className="text-sm font-semibold text-foreground">자동 제안 상태</p>
+                            <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                              위 3가지 체크를 모두 고르면 시스템이 기본 상태를 제안합니다. 필요하면 아래에서 최종 상태를
+                              바꿀 수 있습니다.
+                            </p>
+                          </div>
+                          <Badge
+                            variant={suggestedStatus ? getOpeningRecheckStatusMeta(suggestedStatus).variant : "secondary"}
+                          >
+                            {suggestedStatus ? getOpeningRecheckStatusMeta(suggestedStatus).label : "체크를 먼저 선택해 주세요"}
+                          </Badge>
+                        </div>
+
+                        <div className="mt-3 grid gap-2 sm:grid-cols-5">
                           <Button
                             type="button"
-                            variant="ghost"
+                            variant="outline"
                             size="sm"
-                            onClick={() => void resetStatus(item.ticker)}
-                            disabled={!canManageBoard || isSaving}
+                            className={cn(
+                              "justify-start rounded-2xl px-3 text-left",
+                              getStatusButtonClasses(
+                                suggestedStatus ?? "pending",
+                                suggestedStatus !== undefined && !focusedDraft.finalStatus
+                              )
+                            )}
+                            onClick={() => updateDraft(focusedCandidate.ticker, { finalStatus: null })}
+                            disabled={!suggestedStatus}
                           >
-                            대기로 돌리기
+                            제안대로
                           </Button>
+                          {OPENING_RECHECK_DECISION_STATUSES.map((status) => {
+                            const meta = getOpeningRecheckStatusMeta(status);
+                            return (
+                              <Button
+                                key={`${focusedCandidate.ticker}-override-${status}`}
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                className={cn(
+                                  "justify-start rounded-2xl px-3 text-left",
+                                  getStatusButtonClasses(status, focusedDraft.finalStatus === status)
+                                )}
+                                onClick={() => updateDraft(focusedCandidate.ticker, { finalStatus: status })}
+                                disabled={!suggestedStatus}
+                              >
+                                {meta.label}
+                              </Button>
+                            );
+                          })}
                         </div>
-                      ) : null}
-                    </div>
 
-                    <p className="mt-4 line-clamp-3 text-sm leading-6 text-muted-foreground">{item.rationale}</p>
-                    <div className="mt-4 flex items-center justify-between gap-3">
-                      <p className="text-xs text-muted-foreground">
-                        점수보다 중요한 것은 장초 확인 결과와 포지션 한도입니다.
-                      </p>
-                      <Link
-                        href={`/analysis/${item.ticker}`}
-                        className="inline-flex items-center rounded-full border border-border/70 bg-background/90 px-4 py-2 text-sm font-medium text-foreground transition hover:border-primary/35 hover:text-primary"
-                      >
-                        상세 분석 보기
-                      </Link>
+                        <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto]">
+                          <div>
+                            <label
+                              htmlFor={`opening-note-${focusedCandidate.ticker}`}
+                              className="text-sm font-semibold text-foreground"
+                            >
+                              메모
+                            </label>
+                            <Textarea
+                              id={`opening-note-${focusedCandidate.ticker}`}
+                              className="mt-2 min-h-[112px]"
+                              placeholder="예: 시초가가 확인 가격 위에서 출발했지만 반응이 약해 조금 더 지켜보기"
+                              value={focusedDraft.note}
+                              onChange={(event) =>
+                                updateDraft(focusedCandidate.ticker, { note: event.target.value })
+                              }
+                            />
+                          </div>
+                          <div className="flex flex-col justify-end gap-2">
+                            <Button
+                              type="button"
+                              size="sm"
+                              onClick={() => void saveFocused(false)}
+                              disabled={!canManageBoard || savingKey === focusedCandidate.ticker || !resolvedStatus}
+                            >
+                              {savingKey === focusedCandidate.ticker ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : null}
+                              저장
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="secondary"
+                              size="sm"
+                              onClick={() => void saveFocused(true)}
+                              disabled={!canManageBoard || savingKey === focusedCandidate.ticker || !resolvedStatus}
+                            >
+                              저장 후 다음
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => void resetStatus(focusedCandidate.ticker)}
+                              disabled={!canManageBoard || savingKey === focusedCandidate.ticker}
+                            >
+                              대기로 초기화
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
                     </div>
+                  </>
+                ) : (
+                  <div className="rounded-2xl border border-border/70 bg-background/70 p-5 text-sm text-muted-foreground">
+                    장초 체크할 후보가 없습니다.
                   </div>
-                );
-              })}
+                )}
+              </div>
+
+              <div className="rounded-3xl border border-border/70 bg-background/80 p-5">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">장초 체크 큐</p>
+                    <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                      한 종목씩 체크한 뒤 저장 후 다음으로 넘어가면 아침 루틴이 훨씬 짧아집니다.
+                    </p>
+                  </div>
+                  <Badge variant="secondary">{visibleCandidates.length}개</Badge>
+                </div>
+
+                <div className="mt-4 space-y-3">
+                  {visibleCandidates.map((item, index) => {
+                    const actionBucket =
+                      item.actionBucket ??
+                      resolveRecommendationActionBucket({
+                        signalTone: item.signalTone,
+                        score: item.score,
+                        activationScore: item.activationScore
+                      });
+                    const recheckDecision = decisions[item.ticker];
+                    const recheckStatus = recheckDecision?.status ?? "pending";
+                    const recheckMeta = getOpeningRecheckStatusMeta(recheckStatus);
+                    const isFocused = focusedCandidate?.ticker === item.ticker;
+
+                    return (
+                      <button
+                        key={`${item.ticker}-${index}`}
+                        type="button"
+                        className={cn(
+                          "w-full rounded-2xl border px-4 py-4 text-left transition",
+                          isFocused
+                            ? "border-primary/35 bg-primary/8 shadow-sm"
+                            : "border-border/70 bg-secondary/25 hover:border-primary/25 hover:bg-secondary/35"
+                        )}
+                        onClick={() => setFocusTicker(item.ticker)}
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span className="rounded-full border border-border/70 bg-background/80 px-2.5 py-1 text-[11px] text-muted-foreground">
+                                {index + 1}
+                              </span>
+                              <p className="text-sm font-semibold text-foreground">{item.company}</p>
+                            </div>
+                            <p className="mt-1 text-xs text-muted-foreground">
+                              {item.ticker} · {item.sector}
+                            </p>
+                          </div>
+                          <Badge variant={recheckMeta.variant}>{recheckMeta.label}</Badge>
+                        </div>
+
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          <ActionBucketBadge bucket={actionBucket} className="min-w-0" />
+                          <SignalToneBadge tone={item.signalTone} />
+                          {recheckDecision?.checklist ? (
+                            <>
+                              <Badge variant={getOpeningGapMeta(recheckDecision.checklist.gap).variant}>
+                                {getOpeningGapMeta(recheckDecision.checklist.gap).label}
+                              </Badge>
+                              <Badge
+                                variant={getOpeningConfirmationMeta(recheckDecision.checklist.confirmation).variant}
+                              >
+                                {getOpeningConfirmationMeta(recheckDecision.checklist.confirmation).label}
+                              </Badge>
+                              <Badge variant={getOpeningActionIntentMeta(recheckDecision.checklist.action).variant}>
+                                {getOpeningActionIntentMeta(recheckDecision.checklist.action).label}
+                              </Badge>
+                            </>
+                          ) : null}
+                        </div>
+
+                        <div className="mt-3 grid gap-2 text-xs text-muted-foreground sm:grid-cols-2">
+                          <p>진입: {item.tradePlan?.entryLabel ?? "분석 확인"}</p>
+                          <p>손절: {item.tradePlan?.stopLabel ?? "분석 확인"}</p>
+                        </div>
+
+                        <p className="mt-3 line-clamp-2 text-sm leading-6 text-foreground/82">
+                          {recheckDecision?.note?.trim()
+                            ? recheckDecision.note
+                            : item.tradePlan?.nextStep ?? "이 종목의 장초 반응을 확인해 주세요."}
+                        </p>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
 
             <div className="rounded-2xl border border-border/70 bg-secondary/25 p-4 text-sm text-muted-foreground">
@@ -472,4 +890,3 @@ export function DailyCandidatesPanel({ dailyScan }: { dailyScan: DailyScanSummar
     </Card>
   );
 }
-

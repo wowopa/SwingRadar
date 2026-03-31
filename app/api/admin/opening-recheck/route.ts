@@ -14,6 +14,14 @@ const decisionPayloadSchema = z.object({
   scanKey: z.string().trim().min(1).max(64),
   ticker: z.string().trim().min(1).max(16).regex(/^[A-Za-z0-9._-]+$/),
   status: z.enum(["pending", "passed", "watch", "avoid", "excluded"]),
+  suggestedStatus: z.enum(["passed", "watch", "avoid", "excluded"]).optional(),
+  checklist: z
+    .object({
+      gap: z.enum(["normal", "elevated", "overheated"]),
+      confirmation: z.enum(["confirmed", "mixed", "failed"]),
+      action: z.enum(["review", "watch", "hold"])
+    })
+    .optional(),
   note: z.string().trim().max(1000).optional()
 });
 
@@ -46,6 +54,8 @@ export async function PUT(request: Request) {
       scanKey: body.scanKey,
       ticker: body.ticker,
       status: body.status,
+      suggestedStatus: body.suggestedStatus,
+      checklist: body.checklist,
       note: body.note,
       updatedBy: "admin-editor"
     });
@@ -60,6 +70,10 @@ export async function PUT(request: Request) {
         scanKey: body.scanKey,
         ticker: body.ticker,
         recheckStatus: body.status,
+        suggestedStatus: body.suggestedStatus ?? "",
+        checklistGap: body.checklist?.gap ?? "",
+        checklistConfirmation: body.checklist?.confirmation ?? "",
+        checklistAction: body.checklist?.action ?? "",
         note: body.note?.trim() ?? ""
       }
     });

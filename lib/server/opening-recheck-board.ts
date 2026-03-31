@@ -3,7 +3,14 @@ import path from "node:path";
 
 import { loadRuntimeDocument, saveRuntimeDocument } from "@/lib/server/runtime-documents";
 import { getRuntimePaths } from "@/lib/server/runtime-paths";
-import type { OpeningRecheckDecision, OpeningRecheckStatus } from "@/types/recommendation";
+import type {
+  OpeningActionIntent,
+  OpeningConfirmationCheck,
+  OpeningGapCheck,
+  OpeningRecheckChecklist,
+  OpeningRecheckDecision,
+  OpeningRecheckStatus
+} from "@/types/recommendation";
 
 const OPENING_RECHECK_DOCUMENT_NAME = "opening-recheck-board";
 const MAX_STORED_SCANS = 30;
@@ -32,6 +39,37 @@ function createEmptyDocument(): OpeningRecheckBoardDocument {
   return { scans: {} };
 }
 
+function normalizeGap(value: unknown): OpeningGapCheck | null {
+  return ["normal", "elevated", "overheated"].includes(String(value)) ? (value as OpeningGapCheck) : null;
+}
+
+function normalizeConfirmation(value: unknown): OpeningConfirmationCheck | null {
+  return ["confirmed", "mixed", "failed"].includes(String(value))
+    ? (value as OpeningConfirmationCheck)
+    : null;
+}
+
+function normalizeActionIntent(value: unknown): OpeningActionIntent | null {
+  return ["review", "watch", "hold"].includes(String(value)) ? (value as OpeningActionIntent) : null;
+}
+
+function normalizeChecklist(value: unknown): OpeningRecheckChecklist | undefined {
+  if (!value || typeof value !== "object") {
+    return undefined;
+  }
+
+  const payload = value as Record<string, unknown>;
+  const gap = normalizeGap(payload.gap);
+  const confirmation = normalizeConfirmation(payload.confirmation);
+  const action = normalizeActionIntent(payload.action);
+
+  if (!gap || !confirmation || !action) {
+    return undefined;
+  }
+
+  return { gap, confirmation, action };
+}
+
 function normalizeEntry(ticker: string, value: unknown): OpeningRecheckBoardEntry | null {
   if (!value || typeof value !== "object") {
     return null;
@@ -53,7 +91,11 @@ function normalizeEntry(ticker: string, value: unknown): OpeningRecheckBoardEntr
     status: status as OpeningRecheckStatus,
     updatedAt,
     updatedBy: typeof payload.updatedBy === "string" && payload.updatedBy.trim() ? payload.updatedBy : undefined,
-    note: typeof payload.note === "string" && payload.note.trim() ? payload.note.trim() : undefined
+    note: typeof payload.note === "string" && payload.note.trim() ? payload.note.trim() : undefined,
+    checklist: normalizeChecklist(payload.checklist),
+    suggestedStatus: ["passed", "watch", "avoid", "excluded"].includes(String(payload.suggestedStatus))
+      ? (payload.suggestedStatus as Exclude<OpeningRecheckStatus, "pending">)
+      : undefined
   };
 }
 
@@ -134,6 +176,8 @@ export async function saveOpeningRecheckDecision(input: {
   status: OpeningRecheckStatus;
   updatedBy: string;
   note?: string;
+  checklist?: OpeningRecheckChecklist;
+  suggestedStatus?: Exclude<OpeningRecheckStatus, "pending">;
 }) {
   const document = await loadDocument();
   const existingScan = document.scans[input.scanKey] ?? {
@@ -151,7 +195,9 @@ export async function saveOpeningRecheckDecision(input: {
       status: input.status,
       updatedAt,
       updatedBy: input.updatedBy,
-      note: input.note?.trim() ? input.note.trim() : undefined
+      note: input.note?.trim() ? input.note.trim() : undefined,
+      checklist: input.checklist,
+      suggestedStatus: input.suggestedStatus
     };
   }
 

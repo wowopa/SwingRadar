@@ -44,6 +44,12 @@ describe("opening recheck board", () => {
       scanKey: "scan-a",
       ticker: "AAA001",
       status: "passed",
+      suggestedStatus: "passed",
+      checklist: {
+        gap: "normal",
+        confirmation: "confirmed",
+        action: "review"
+      },
       updatedBy: "admin-editor",
       note: "gap check passed"
     });
@@ -51,21 +57,45 @@ describe("opening recheck board", () => {
       scanKey: "scan-a",
       ticker: "BBB001",
       status: "watch",
+      suggestedStatus: "watch",
+      checklist: {
+        gap: "elevated",
+        confirmation: "mixed",
+        action: "watch"
+      },
       updatedBy: "admin-editor"
     });
 
     expect(firstDecision).toMatchObject({
       ticker: "AAA001",
       status: "passed",
+      suggestedStatus: "passed",
       updatedBy: "admin-editor",
-      note: "gap check passed"
+      note: "gap check passed",
+      checklist: {
+        gap: "normal",
+        confirmation: "confirmed",
+        action: "review"
+      }
     });
     expect(await listOpeningRecheckDecisions("scan-a")).toMatchObject({
       AAA001: {
-        status: "passed"
+        status: "passed",
+        suggestedStatus: "passed",
+        checklist: {
+          gap: "normal",
+          confirmation: "confirmed",
+          action: "review"
+        }
       },
       BBB001: {
-        status: "watch"
+        status: "watch",
+        suggestedStatus: "watch",
+        checklist: {
+          gap: "elevated",
+          confirmation: "mixed",
+          action: "watch"
+        }
       }
     });
 

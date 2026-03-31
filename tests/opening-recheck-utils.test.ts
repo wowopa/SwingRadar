@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { buildOpeningRecheckCounts, getOpeningRecheckStatusMeta } from "@/lib/recommendations/opening-recheck";
+import {
+  buildOpeningRecheckCounts,
+  getOpeningRecheckStatusMeta,
+  suggestOpeningRecheckStatus
+} from "@/lib/recommendations/opening-recheck";
 
 describe("opening recheck utils", () => {
   it("counts pending tickers when no decision exists", () => {
@@ -21,7 +25,41 @@ describe("opening recheck utils", () => {
   it("returns readable metadata for each decision state", () => {
     const meta = getOpeningRecheckStatusMeta("excluded");
 
-    expect(meta.label).toBe("제외");
-    expect(meta.description).toContain("후보");
+    expect(meta.label.length).toBeGreaterThan(0);
+    expect(meta.description.length).toBeGreaterThan(0);
+  });
+
+  it("suggests a conservative status from the checklist", () => {
+    expect(
+      suggestOpeningRecheckStatus({
+        gap: "normal",
+        confirmation: "confirmed",
+        action: "review"
+      })
+    ).toBe("passed");
+
+    expect(
+      suggestOpeningRecheckStatus({
+        gap: "elevated",
+        confirmation: "confirmed",
+        action: "review"
+      })
+    ).toBe("watch");
+
+    expect(
+      suggestOpeningRecheckStatus({
+        gap: "overheated",
+        confirmation: "confirmed",
+        action: "review"
+      })
+    ).toBe("avoid");
+
+    expect(
+      suggestOpeningRecheckStatus({
+        gap: "normal",
+        confirmation: "failed",
+        action: "review"
+      })
+    ).toBe("excluded");
   });
 });

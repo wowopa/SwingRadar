@@ -47,12 +47,23 @@ export interface TodayOperatingWorkflowDto {
 }
 
 export type OpeningRecheckStatusDto = "pending" | "passed" | "watch" | "avoid" | "excluded";
+export type OpeningGapCheckDto = "normal" | "elevated" | "overheated";
+export type OpeningConfirmationCheckDto = "confirmed" | "mixed" | "failed";
+export type OpeningActionIntentDto = "review" | "watch" | "hold";
+
+export interface OpeningRecheckChecklistDto {
+  gap: OpeningGapCheckDto;
+  confirmation: OpeningConfirmationCheckDto;
+  action: OpeningActionIntentDto;
+}
 
 export interface OpeningRecheckDecisionDto {
   status: OpeningRecheckStatusDto;
   updatedAt: string;
   updatedBy?: string;
   note?: string;
+  checklist?: OpeningRecheckChecklistDto;
+  suggestedStatus?: Exclude<OpeningRecheckStatusDto, "pending">;
 }
 
 export type TodayActionBoardStatusDto = "buy_review" | "watch" | "avoid" | "excluded" | "pending";
