@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
+import { Compass, LockKeyhole, Radar, ShieldCheck, TimerReset, WalletCards } from "lucide-react";
 
-import { BrandMark } from "@/components/layout/brand-signature";
 import { LandingWorkflowDemo } from "@/components/public/landing-workflow-demo";
 import { ScrollReveal } from "@/components/public/scroll-reveal";
 import { Badge } from "@/components/ui/badge";
@@ -43,6 +43,7 @@ const productSurfaces = [
     eyebrow: "오늘 바로 볼 것",
     description: "로그인하면 가장 먼저 오늘 매수 검토, 장초 확인 대기, 보유 점검 알림이 한 화면에 뜹니다.",
     bullets: ["오늘 매수 검토 0~2개", "장초 확인 대기 종목", "보유 즉시 점검 알림"],
+    icon: Radar,
     span: "lg:col-span-7"
   },
   {
@@ -50,6 +51,7 @@ const productSurfaces = [
     eyebrow: "들고 있는 종목 관리",
     description: "새 종목만 고르는 화면이 아닙니다. 익절 검토, 보호 가격 상향, 시간 점검까지 함께 보여줍니다.",
     bullets: ["즉시 점검", "부분 익절 검토", "시간 점검 알림"],
+    icon: WalletCards,
     span: "lg:col-span-5"
   },
   {
@@ -57,6 +59,7 @@ const productSurfaces = [
     eyebrow: "내 자산에 맞춤",
     description: "총 자산, 가용 현금, 허용 손실, 현재 보유를 기준으로 오늘 가능한 행동만 계산합니다.",
     bullets: ["자산 규모 입력", "현금과 손실 한도", "내 기준 행동 보드"],
+    icon: LockKeyhole,
     span: "lg:col-span-4"
   },
   {
@@ -64,6 +67,7 @@ const productSurfaces = [
     eyebrow: "필요할 때만 깊게",
     description: "랭킹과 상세 분석은 따로 열어볼 수 있게 두고, 기본 화면은 최대한 행동 중심으로 유지합니다.",
     bullets: ["상세 분석 열기", "후보 비교 보기", "보류 종목 점검"],
+    icon: Compass,
     span: "lg:col-span-8"
   }
 ] as const;
@@ -90,15 +94,18 @@ const faqs = [
 const operatingPrinciples = [
   {
     title: "먼저 줄이고",
-    note: "전일 데이터로 오늘 먼저 볼 종목만 좁혀둡니다."
+    note: "전일 데이터로 오늘 먼저 볼 종목만 좁혀둡니다.",
+    icon: ShieldCheck
   },
   {
     title: "한 번 더 거르고",
-    note: "장초에 짧게 다시 보고 무리한 진입은 바로 멈춥니다."
+    note: "장초에 짧게 다시 보고 무리한 진입은 바로 멈춥니다.",
+    icon: TimerReset
   },
   {
     title: "내 기준으로 실행",
-    note: "자산과 보유 기준으로 오늘 가능한 행동만 남깁니다."
+    note: "자산과 보유 기준으로 오늘 가능한 행동만 남깁니다.",
+    icon: WalletCards
   }
 ] as const;
 
@@ -296,6 +303,8 @@ export function LandingPage() {
 
         <div className="grid gap-4 lg:grid-cols-12">
           {productSurfaces.map((item, index) => {
+            const Icon = item.icon;
+
             return (
               <ScrollReveal key={item.title} delay={index * 70} className={item.span}>
                 <section className="relative h-full overflow-hidden rounded-[34px] border border-border/70 bg-white/78 p-6 shadow-[0_24px_80px_hsl(33_22%_26%_/_0.06)] backdrop-blur-xl">
@@ -307,7 +316,9 @@ export function LandingPage() {
                       </h3>
                       <p className="public-section-copy max-w-xl text-sm leading-7">{item.description}</p>
                     </div>
-                    <BrandMark compact className="h-12 w-12 shrink-0 rounded-2xl" />
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary/8 text-primary">
+                      <Icon className="h-5 w-5" />
+                    </div>
                   </div>
 
                   <ul className="relative mt-6 space-y-3">
@@ -326,11 +337,15 @@ export function LandingPage() {
 
         <div className="grid gap-4 md:grid-cols-3">
           {operatingPrinciples.map((item, index) => {
+            const Icon = item.icon;
+
             return (
               <ScrollReveal key={item.title} delay={100 + index * 70}>
                 <div className="rounded-[28px] border border-border/70 bg-[linear-gradient(180deg,hsl(35_23%_98%_/_0.92),hsl(33_18%_95%_/_0.98))] px-5 py-5 shadow-[0_18px_56px_hsl(33_22%_24%_/_0.05)]">
                   <div className="flex items-center gap-3">
-                    <BrandMark compact className="h-10 w-10 rounded-2xl shadow-none" />
+                    <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                      <Icon className="h-4 w-4" />
+                    </div>
                     <p className="public-section-title text-base font-semibold">{item.title}</p>
                   </div>
                   <p className="public-section-copy mt-3 text-sm leading-7">{item.note}</p>

@@ -23,7 +23,7 @@ export function BrandMark({ compact = false, className }: BrandMarkProps) {
       )}
     >
       <Image
-        src="/brand/swingradar-bi.svg"
+        src="/brand/swingradar_bi.png"
         alt=""
         fill
         className="object-cover"
