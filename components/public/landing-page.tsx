@@ -8,14 +8,14 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
 const landingStatusToneClasses = {
-  positive: "border-emerald-200/28 bg-emerald-200/16 text-emerald-50",
-  neutral: "border-amber-200/28 bg-amber-200/16 text-amber-50",
-  caution: "border-rose-200/28 bg-rose-200/16 text-rose-50"
+  positive: "border-emerald-300/45 bg-emerald-300/28 text-emerald-50",
+  neutral: "border-amber-300/45 bg-amber-300/30 text-amber-50",
+  caution: "border-rose-300/45 bg-rose-300/28 text-rose-50"
 } as const;
 
 const benefitStrip = [
-  { label: "신규 매수", value: "0~2개", note: "많이 보여주지 않고, 실제로 볼 것만 남깁니다." },
-  { label: "아침 판단", value: "5~10분", note: "장초에 짧게 다시 보고 무리한 추격을 막습니다." },
+  { label: "신규 매수", value: "0~2개", note: "장 시작 전 가장 좋은 종목을 선별합니다." },
+  { label: "아침 판단", value: "5~10분", note: "장 시작 전 종목별 진입 주의 사항을 안내합니다." },
   { label: "운용 기준", value: "개인화", note: "내 자산과 보유 종목 기준으로 행동이 달라집니다." }
 ] as const;
 
@@ -118,10 +118,7 @@ const heroBoardItems = [
 export function LandingPage() {
   return (
     <main className="space-y-28 pb-16">
-      <section className="relative overflow-hidden rounded-[44px] border border-white/10 bg-[linear-gradient(160deg,hsl(218_28%_12%)_0%,hsl(217_20%_16%)_46%,hsl(34_30%_22%)_100%)] px-6 py-7 text-white shadow-[0_50px_140px_hsl(220_32%_8%_/_0.26)] sm:px-8 sm:py-9 lg:px-10 lg:py-10">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_12%_12%,hsl(39_80%_72%_/_0.18),transparent_24%),radial-gradient(circle_at_84%_18%,hsl(196_94%_72%_/_0.14),transparent_20%),radial-gradient(circle_at_68%_82%,hsl(34_88%_62%_/_0.16),transparent_18%)]" />
-        <div className="public-pan pointer-events-none absolute right-[-4rem] top-10 h-60 w-60 rounded-full bg-[radial-gradient(circle,hsl(39_78%_72%_/_0.16),transparent_72%)] blur-3xl" />
-        <div className="public-float-delayed pointer-events-none absolute left-16 top-20 h-28 w-28 rounded-full bg-[radial-gradient(circle,hsl(197_88%_74%_/_0.12),transparent_72%)] blur-3xl" />
+      <section className="relative overflow-hidden rounded-[44px] border border-white/10 bg-[hsl(220_22%_15%)] px-6 py-7 text-white shadow-[0_50px_140px_hsl(220_32%_8%_/_0.18)] sm:px-8 sm:py-9 lg:px-10 lg:py-10">
 
         <div className="relative lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(29rem,34rem)] lg:items-start lg:gap-10">
           <ScrollReveal>
@@ -131,12 +128,11 @@ export function LandingPage() {
                   Action-first swing operating system
                 </Badge>
                 <div className="space-y-6">
-                  <h1 className="headline-balance public-hero-title max-w-[7.6ch] text-[clamp(4.4rem,11vw,9.4rem)] font-semibold leading-[0.86] tracking-[-0.11em]">
-                    오늘 할 행동만 남깁니다.
+                  <h1 className="headline-balance public-hero-title max-w-[11.5ch] text-[clamp(4.4rem,11vw,9.4rem)] font-semibold leading-[0.86] tracking-[-0.11em]">
+                    더 쉬운 스윙 투자, SWING-RADAR
                   </h1>
                   <p className="public-hero-copy max-w-[760px] text-[clamp(1.05rem,1.6vw,1.28rem)] leading-8">
-                    많이 보여주는 대신, 실제로 검토할 종목만 줄여줍니다. 장전 후보를 만들고 장초에 한 번 더 걸러서 내 계좌 기준으로
-                    오늘 볼 행동 0~2개만 남깁니다.
+                    매일 아침마다 AI가 모든 종목을 분석하여 내 계좌 기준으로 최상의 결과를 낼 수 있는 종목만 추천합니다.
                   </p>
                 </div>
               </div>

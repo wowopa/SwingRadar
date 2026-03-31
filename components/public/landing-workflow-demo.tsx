@@ -6,9 +6,9 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
 const landingStatusToneClasses = {
-  positive: "border-emerald-200/28 bg-emerald-200/16 text-emerald-50",
-  neutral: "border-amber-200/28 bg-amber-200/16 text-amber-50",
-  caution: "border-rose-200/28 bg-rose-200/16 text-rose-50",
+  positive: "border-emerald-300/45 bg-emerald-300/28 text-emerald-50",
+  neutral: "border-amber-300/45 bg-amber-300/30 text-amber-50",
+  caution: "border-rose-300/45 bg-rose-300/28 text-rose-50",
   secondary: "border-white/14 bg-white/8 text-white/86"
 } as const;
 

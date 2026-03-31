@@ -15,7 +15,7 @@ export function PublicShell({ children }: { children: ReactNode }) {
   const currentYear = new Date().getFullYear();
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top,hsl(38_35%_24%_/_0.22),transparent_26%),linear-gradient(180deg,hsl(220_22%_11%)_0%,hsl(220_20%_14%)_18%,hsl(34_15%_92%)_46%,hsl(33_17%_95%)_100%)] text-foreground">
+    <div className="min-h-screen bg-[hsl(34_18%_95%)] text-foreground">
       <div className="fixed inset-x-0 top-0 z-50 px-4 sm:px-6 lg:px-8">
         <div className="mx-auto w-full max-w-[1680px]">
           <header className="relative overflow-hidden rounded-b-[32px] border-x border-b border-white/10 bg-[linear-gradient(180deg,rgba(16,22,35,0.96),rgba(23,31,46,0.9))] shadow-[0_22px_60px_hsl(220_26%_8%_/_0.18)] backdrop-blur-xl">
