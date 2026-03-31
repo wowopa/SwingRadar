@@ -106,11 +106,8 @@ export function LandingPage() {
                   Action-first swing operating system
                 </Badge>
                 <div className="space-y-6">
-                  <h1 className="max-w-[980px] text-[clamp(4.4rem,11vw,9.4rem)] font-semibold leading-[0.86] tracking-[-0.11em] text-white">
-                    <span className="block">오늘 무엇을</span>
-                    <span className="block">해야 하는지</span>
-                    <span className="block">먼저 답하는</span>
-                    <span className="block">스윙 서비스.</span>
+                  <h1 className="headline-balance max-w-[8.6ch] text-[clamp(4.4rem,11vw,9.4rem)] font-semibold leading-[0.86] tracking-[-0.11em] text-white">
+                    오늘 무엇을 해야 하는지 먼저 답하는 스윙 서비스.
                   </h1>
                   <p className="max-w-[760px] text-[clamp(1.05rem,1.6vw,1.28rem)] leading-8 text-white/72">
                     SWING-RADAR는 종목을 많이 나열하는 대신, 장전 후보를 만들고 장초에 다시 확인한 뒤 실제로 검토할 0~2개의
@@ -221,10 +218,8 @@ export function LandingPage() {
       <section id="overview" className="space-y-8">
         <ScrollReveal className="space-y-4">
           <p className="eyebrow-label">Overview</p>
-          <h2 className="max-w-[900px] text-[clamp(3.2rem,8vw,6.4rem)] font-semibold leading-[0.9] tracking-[-0.1em] text-foreground">
-            <span className="block">분석 리포트처럼</span>
-            <span className="block">길게 읽지 않아도</span>
-            <span className="block">되게 바꿨습니다.</span>
+          <h2 className="headline-balance max-w-[8.8ch] text-[clamp(3.2rem,8vw,6.4rem)] font-semibold leading-[0.9] tracking-[-0.1em] text-foreground">
+            분석 리포트처럼 길게 읽지 않아도 되게 바꿨습니다.
           </h2>
         </ScrollReveal>
 
@@ -263,10 +258,8 @@ export function LandingPage() {
       <section id="workflow" className="space-y-8">
         <ScrollReveal className="space-y-4">
           <p className="eyebrow-label">Workflow</p>
-          <h2 className="max-w-[1060px] text-[clamp(3.2rem,8vw,6.2rem)] font-semibold leading-[0.9] tracking-[-0.1em] text-foreground">
-            <span className="block">장전 후보에서 끝나지 않습니다.</span>
-            <span className="block">장초 확인을 거쳐야</span>
-            <span className="block">오늘 행동이 됩니다.</span>
+          <h2 className="headline-balance max-w-[10.4ch] text-[clamp(3.2rem,8vw,6.2rem)] font-semibold leading-[0.9] tracking-[-0.1em] text-foreground">
+            장전 후보에서 끝나지 않습니다. 장초 확인을 거쳐야 오늘 행동이 됩니다.
           </h2>
         </ScrollReveal>
 
@@ -287,9 +280,8 @@ export function LandingPage() {
       <section id="product" className="space-y-8">
         <ScrollReveal className="space-y-4">
           <p className="eyebrow-label">Product</p>
-          <h2 className="max-w-[980px] text-[clamp(3.1rem,8vw,6rem)] font-semibold leading-[0.9] tracking-[-0.1em] text-foreground">
-            <span className="block">로그인 후에는 설명이 아니라</span>
-            <span className="block">개인 운용 대시보드가 열립니다.</span>
+          <h2 className="headline-balance max-w-[10.4ch] text-[clamp(3.1rem,8vw,6rem)] font-semibold leading-[0.9] tracking-[-0.1em] text-foreground">
+            로그인 후에는 설명이 아니라 개인 운용 대시보드가 열립니다.
           </h2>
         </ScrollReveal>
 
@@ -376,9 +368,8 @@ export function LandingPage() {
         <div className="grid gap-10 xl:grid-cols-[minmax(0,0.86fr)_minmax(0,1.14fr)]">
           <ScrollReveal className="space-y-4">
             <p className="eyebrow-label">FAQ</p>
-            <h2 className="max-w-[720px] text-[clamp(3rem,7vw,5.4rem)] font-semibold leading-[0.9] tracking-[-0.1em] text-foreground">
-              <span className="block">사용자가 바로 묻는</span>
-              <span className="block">질문부터 답합니다.</span>
+            <h2 className="headline-balance max-w-[9.2ch] text-[clamp(3rem,7vw,5.4rem)] font-semibold leading-[0.9] tracking-[-0.1em] text-foreground">
+              사용자가 바로 묻는 질문부터 답합니다.
             </h2>
             <p className="max-w-lg text-[clamp(1rem,1.4vw,1.18rem)] leading-8 text-muted-foreground">
               로그인 전에는 서비스가 어떤 원리로 종목 수를 줄이는지 이해하고, 로그인 후에는 내 기준의 운용 화면으로 바로
