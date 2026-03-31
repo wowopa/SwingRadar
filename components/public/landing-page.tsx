@@ -129,7 +129,8 @@ export function LandingPage() {
                 </Badge>
                 <div className="space-y-6">
                   <h1 className="headline-balance public-hero-title max-w-[11.5ch] text-[clamp(4.4rem,11vw,9.4rem)] font-semibold leading-[0.86] tracking-[-0.11em]">
-                    더 쉬운 스윙 투자, SWING-RADAR
+                    <span className="block">더 쉬운 스윙 투자,</span>
+                    <span className="block">SWING-RADAR</span>
                   </h1>
                   <p className="public-hero-copy max-w-[760px] text-[clamp(1.05rem,1.6vw,1.28rem)] leading-8">
                     매일 아침마다 AI가 모든 종목을 분석하여 내 계좌 기준으로 최상의 결과를 낼 수 있는 종목만 추천합니다.
