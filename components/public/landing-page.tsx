@@ -171,7 +171,7 @@ export function LandingPage() {
             </div>
           </ScrollReveal>
 
-          <div className="landing-hero-board-enter relative mt-10 lg:mt-2 lg:justify-self-end lg:self-start">
+          <div className="landing-hero-board-enter relative mt-10 hidden lg:mt-2 lg:block lg:justify-self-end lg:self-start">
             <div className="relative public-float lg:w-[31rem] xl:w-[34rem]">
                 <div className="absolute -inset-x-6 -inset-y-6 rounded-[42px] bg-[radial-gradient(circle_at_center,hsl(37_80%_68%_/_0.14),transparent_72%)] blur-3xl" />
                 <div className="relative rounded-[34px] border border-white/12 bg-[linear-gradient(180deg,rgba(255,255,255,0.17),rgba(255,255,255,0.08))] p-4 backdrop-blur-xl sm:p-5">
