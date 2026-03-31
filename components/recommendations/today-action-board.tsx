@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import { ArrowUpRight, Binoculars, CircleOff, Clock3, ShieldX } from "lucide-react";
 
 import { SignalToneBadge } from "@/components/shared/signal-tone-badge";
@@ -112,7 +112,7 @@ export function TodayActionBoard({ board }: { board?: TodayActionBoardDto }) {
             <div>
               <CardTitle className="text-xl text-foreground">오늘 실제 행동 보드</CardTitle>
               <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                저장된 장초 재판정과 현재 보유 포지션, 섹터 한도까지 함께 반영한 오늘의 실행 보드입니다.
+                저장된 장초 확인과 현재 보유 포지션, 섹터 한도까지 함께 반영한 오늘의 실행 보드입니다.
               </p>
             </div>
             <Badge variant={board.summary.buyReviewCount > 0 ? "positive" : "secondary"}>{board.summary.headline}</Badge>
@@ -135,7 +135,7 @@ export function TodayActionBoard({ board }: { board?: TodayActionBoardDto }) {
                 {board.summary.crowdedSectors.map((item) => `${item.sector} ${item.count}개`).join(", ")}
               </>
             ) : (
-              "현재는 특정 섹터가 한도에 걸리지 않아, 섹터 중복보다 개별 재판정 결과가 더 중요합니다."
+              "현재는 특정 섹터가 한도에 걸리지 않아, 섹터 중복보다 각 종목의 장초 확인이 더 중요합니다."
             )}
           </div>
         </CardContent>
@@ -148,7 +148,7 @@ export function TodayActionBoard({ board }: { board?: TodayActionBoardDto }) {
               <div>
                 <CardTitle className="text-lg text-foreground">{buyReviewSection?.label ?? "오늘 매수 검토"}</CardTitle>
                 <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                  {buyReviewSection?.description ?? "장초 재판정과 포트폴리오 한도를 모두 통과한 종목입니다."}
+                  {buyReviewSection?.description ?? "장초 확인과 포트폴리오 한도를 모두 통과한 종목입니다."}
                 </p>
               </div>
               <Badge variant="positive">{buyReviewSection?.count ?? 0}개</Badge>
@@ -239,7 +239,7 @@ export function TodayActionBoard({ board }: { board?: TodayActionBoardDto }) {
               </div>
             ) : (
               <div className="rounded-[24px] border border-border/70 bg-secondary/20 p-5 text-sm leading-6 text-muted-foreground">
-                아직 오늘 실제 매수 검토로 확정된 종목은 없습니다. 장초 재판정이 먼저 필요합니다.
+                아직 오늘 실제 매수 검토로 확정된 종목은 없습니다. 장초 확인이 먼저 필요합니다.
               </div>
             )}
           </CardContent>
@@ -316,3 +316,4 @@ function SummaryMetric({ title, value, note }: { title: string; value: string; n
     </div>
   );
 }
+

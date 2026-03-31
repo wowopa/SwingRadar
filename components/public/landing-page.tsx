@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import { ArrowRight, BookOpenText, BriefcaseBusiness, Compass, Radar, ShieldCheck, WalletCards } from "lucide-react";
 
 import { LandingWorkflowDemo } from "@/components/public/landing-workflow-demo";
@@ -17,7 +17,7 @@ const painPoints = [
   },
   {
     title: "결국 궁금한 것은 오늘의 행동입니다.",
-    description: "그래서 이 서비스는 분석 설명보다 장전 후보, 장초 재판정, 당일 행동 순서를 먼저 보여줍니다."
+    description: "그래서 이 서비스는 분석 설명보다 장전 후보, 장초 확인, 당일 행동 순서를 먼저 보여줍니다."
   }
 ] as const;
 
@@ -25,7 +25,7 @@ const appAreas = [
   {
     icon: Radar,
     title: "Dashboard",
-    description: "오늘의 운영 모드, 실제 매수 검토, 장초 재판정, 보유 관리 알림을 한 화면에서 확인합니다."
+    description: "오늘의 운영 모드, 실제 매수 검토, 장초 확인, 보유 관리 알림을 한 화면에서 확인합니다."
   },
   {
     icon: WalletCards,
@@ -47,7 +47,7 @@ const appAreas = [
 const faqs = [
   {
     question: "1위 종목이면 바로 사는 건가요?",
-    answer: "아닙니다. 전일 데이터로 고른 장전 후보일 뿐이고, 장초 재판정을 통과해야 오늘 행동 보드로 올라갑니다."
+    answer: "아닙니다. 전일 데이터로 고른 장전 후보일 뿐이고, 장초 확인을 통과해야 오늘 행동 보드로 올라갑니다."
   },
   {
     question: "종목이 많이 보이면 다 사야 하나요?",
@@ -74,7 +74,7 @@ export function LandingPage() {
               매일 수많은 종목 대신, 오늘 실행할 0~2개의 행동만 남깁니다.
             </h1>
             <p className="max-w-3xl text-base leading-8 text-muted-foreground sm:text-lg">
-              SWING-RADAR는 분석 리포트를 길게 보여주는 대신, 장전 후보를 추리고 장초 재판정으로 다시 걸러 내며 포트폴리오 한도 안에서
+              SWING-RADAR는 분석 리포트를 길게 보여주는 대신, 장전 후보를 추리고 장초 확인으로 다시 걸러 내며 포트폴리오 한도 안에서
               실제로 검토할 종목만 남기는 스윙 운용 경험을 제공합니다.
             </p>
           </div>
@@ -94,7 +94,7 @@ export function LandingPage() {
           <div className="grid gap-3 sm:grid-cols-3">
             {[
               { label: "신규 매수", value: "0~2개", note: "다 사는 서비스가 아닙니다." },
-              { label: "판단 순서", value: "3단계", note: "장전 후보 -> 장초 재판정 -> 당일 행동" },
+              { label: "판단 순서", value: "3단계", note: "장전 후보 -> 장초 확인 -> 당일 행동" },
               { label: "핵심 기준", value: "행동 우선", note: "점수보다 지금 해야 할 행동을 먼저 보여줍니다." }
             ].map((item) => (
               <Card key={item.label} className="border-border/70 bg-white/82 shadow-sm">
@@ -137,7 +137,7 @@ export function LandingPage() {
             <div className="space-y-3">
               {[
                 "장전 후보는 전일 데이터 기준의 계획이고, 장중 추격 신호가 아닙니다.",
-                "장초 재판정을 통과해야만 오늘 실제 행동 보드로 올라갑니다.",
+                "장초 확인을 통과해야만 오늘 실제 행동 보드로 올라갑니다.",
                 "보유 종목 수와 같은 섹터 수까지 함께 보아 오늘 과도한 진입을 막습니다.",
                 "매수 구간, 손절 기준, 1차 목표, 권장 비중까지 함께 제시해 행동 문장으로 마무리합니다."
               ].map((item) => (
@@ -198,3 +198,4 @@ export function LandingPage() {
     </main>
   );
 }
+

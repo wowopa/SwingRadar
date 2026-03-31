@@ -1,4 +1,4 @@
-import type { DailyCandidate } from "@/lib/repositories/daily-candidates";
+﻿import type { DailyCandidate } from "@/lib/repositories/daily-candidates";
 import {
   getRecommendationActionMeta,
   resolveRecommendationActionBucket,
@@ -95,7 +95,7 @@ function buildCautionPoints(analysis: TickerAnalysis) {
 function buildActionTexts(bucket: RecommendationActionBucket) {
   if (bucket === "buy_now") {
     return {
-      title: "장초 재판정을 통과하면 매수 계획까지 볼 수 있는 구간입니다",
+      title: "장초 확인을 통과하면 매수 계획까지 볼 수 있는 구간입니다",
       summary: "아무 가격에 추격 매수하는 뜻은 아닙니다. 장 시작 후 확인 가격과 손절 기준을 다시 점검한 뒤 계획형 진입이 필요합니다."
     };
   }
@@ -264,3 +264,4 @@ export function buildAnalysisTradePlan({
     cautionPoints: buildCautionPoints(analysis)
   };
 }
+

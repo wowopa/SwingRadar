@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+﻿import { describe, expect, it } from "vitest";
 
 import {
   buildTodayActionBoard,
@@ -71,7 +71,7 @@ describe("recommendation action plan", () => {
     const workflow = buildTodayOperatingWorkflow({
       marketStance: "selective",
       marketStanceLabel: "선별 매수",
-      summary: "장초 재판정을 통과한 종목 한 개만 조심스럽게 본다.",
+      summary: "장초 확인을 통과한 종목 한 개만 조심스럽게 본다.",
       maxNewPositions: 1,
       maxConcurrentPositions: 4,
       bucketCounts: {
@@ -195,3 +195,4 @@ describe("recommendation action plan", () => {
     });
   });
 });
+

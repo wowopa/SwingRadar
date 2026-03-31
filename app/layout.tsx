@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import { Noto_Sans_KR } from "next/font/google";
 
 import { RouteScrollReset } from "@/components/layout/route-scroll-reset";
@@ -16,7 +16,7 @@ const bodyFont = Noto_Sans_KR({
 
 export const metadata: Metadata = {
   title: "SWING-RADAR",
-  description: "장전 후보, 장초 재판정, 당일 행동까지 연결하는 KRX 스윙 운용 대시보드"
+  description: "장전 후보, 장초 확인, 당일 행동까지 연결하는 KRX 스윙 운용 대시보드"
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -32,3 +32,4 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     </html>
   );
 }
+

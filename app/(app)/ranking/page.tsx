@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 
 import { RecommendationExplorer } from "@/components/recommendations/recommendation-explorer";
 import { PageHeader } from "@/components/shared/page-header";
@@ -99,7 +99,7 @@ export default async function RankingPage() {
         <SummaryCard
           title="오늘 상위 후보"
           value={`${topCandidates.length}개`}
-          note="이 중에서도 실제 행동은 장초 재판정을 통과한 일부 종목만 남습니다."
+          note="이 중에서도 실제 행동은 장초 확인을 통과한 일부 종목만 남습니다."
         />
         <SummaryCard
           title="최근 갱신 시각"
@@ -113,7 +113,7 @@ export default async function RankingPage() {
           <CardHeader>
             <CardTitle className="text-lg text-foreground">오늘 먼저 볼 상위 후보</CardTitle>
             <p className="text-sm leading-6 text-muted-foreground">
-              대시보드 밖에서 넓게 확인할 때 쓰는 목록입니다. 높은 순위가 바로 매수 의미는 아니며, 장초 재판정과 포트폴리오 한도가
+              대시보드 밖에서 넓게 확인할 때 쓰는 목록입니다. 높은 순위가 바로 매수 의미는 아니며, 장초 확인과 포트폴리오 한도가
               함께 맞아야 실제 행동 보드로 올라갑니다.
             </p>
           </CardHeader>
@@ -231,3 +231,4 @@ function MetricChip({ label, value }: { label: string; value: string }) {
     </div>
   );
 }
+

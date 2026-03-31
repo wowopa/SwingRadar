@@ -1,4 +1,4 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+﻿import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface TrackingSelectionGuideProps {
   maxActive: number;
@@ -28,7 +28,7 @@ export function TrackingSelectionGuide(props: TrackingSelectionGuideProps) {
       <CardHeader>
         <CardTitle>공용 추적 운영 기준</CardTitle>
         <p className="text-sm leading-6 text-muted-foreground">
-          공용 추적은 상위 후보를 모두 나열하는 화면이 아니라, 전일 종가 기준 장전 후보를 만든 뒤 장초 재판정을 거쳐 실제
+          공용 추적은 상위 후보를 모두 나열하는 화면이 아니라, 전일 종가 기준 장전 후보를 만든 뒤 장초 확인을 거쳐 실제
           행동 후보만 남기는 영역입니다. 단기 급등이나 과열 신호가 강한 종목은 추격하지 않도록 별도 억제 조건을 함께 적용합니다.
         </p>
       </CardHeader>
@@ -47,7 +47,7 @@ export function TrackingSelectionGuide(props: TrackingSelectionGuideProps) {
         </div>
 
         <div className="rounded-2xl border border-border/70 bg-secondary/25 p-4">
-          <p className="text-sm font-semibold text-foreground">2. 장초 재판정</p>
+          <p className="text-sm font-semibold text-foreground">2. 장초 확인</p>
           <p className="mt-2 text-sm leading-6 text-muted-foreground">장 시작 후 5~10분 동안 갭과 확인 가격 반응을 다시 보고 매수 검토 여부를 정합니다.</p>
           <ul className="mt-3 space-y-2 text-sm leading-6 text-muted-foreground">
             <li>관찰 우선순위가 {props.minEntryActivationScore}점 이상일 때</li>
@@ -61,7 +61,7 @@ export function TrackingSelectionGuide(props: TrackingSelectionGuideProps) {
 
         <div className="rounded-2xl border border-border/70 bg-secondary/25 p-4">
           <p className="text-sm font-semibold text-foreground">3. 당일 행동과 보유 관리</p>
-          <p className="mt-2 text-sm leading-6 text-muted-foreground">재판정을 통과한 종목만 실제 행동 후보로 옮기고, 나머지는 관찰 또는 보류로 둡니다.</p>
+          <p className="mt-2 text-sm leading-6 text-muted-foreground">장초 확인을 통과한 종목만 실제 행동 후보로 옮기고, 나머지는 관찰 또는 보류로 둡니다.</p>
           <ul className="mt-3 space-y-2 text-sm leading-6 text-muted-foreground">
             <li>추적 중인 종목은 최대 {props.maxActive}개까지만 유지</li>
             <li>관찰 포함 전체 live 종목은 최대 {props.maxWatch}개까지만 유지</li>
@@ -74,3 +74,4 @@ export function TrackingSelectionGuide(props: TrackingSelectionGuideProps) {
     </Card>
   );
 }
+

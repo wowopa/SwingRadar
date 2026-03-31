@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import { ArrowDownCircle, Clock3, Flag, ShieldCheck, Target, TrendingUp } from "lucide-react";
 
 import { SignalToneBadge } from "@/components/shared/signal-tone-badge";
@@ -94,7 +94,7 @@ function buildSummaryMetrics(board: HoldingActionBoardDto) {
     {
       title: "시간 손절",
       value: `${board.summary.timeStopReviewCount}개`,
-      note: "보유 기간 재판정"
+      note: "보유 기간 점검"
     }
   ];
 }
@@ -259,3 +259,4 @@ function MetricChip({ label, value }: { label: string; value: string }) {
     </div>
   );
 }
+

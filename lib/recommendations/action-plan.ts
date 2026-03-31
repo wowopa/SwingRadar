@@ -1,4 +1,4 @@
-import type { DailyCandidate } from "@/lib/repositories/daily-candidates";
+﻿import type { DailyCandidate } from "@/lib/repositories/daily-candidates";
 import { formatPrice } from "@/lib/utils";
 import type {
   OpeningRecheckDecision,
@@ -98,7 +98,7 @@ const TODAY_ACTION_BOARD_SECTION_META: Record<
 > = {
   buy_review: {
     label: "오늘 매수 검토",
-    description: "장초 재판정을 통과했고 오늘 신규 매수 한도 안에 들어온 종목입니다."
+    description: "장초 확인을 통과했고 오늘 신규 매수 한도 안에 들어온 종목입니다."
   },
   watch: {
     label: "관찰 유지",
@@ -113,8 +113,8 @@ const TODAY_ACTION_BOARD_SECTION_META: Record<
     description: "손절 기준 훼손 또는 구조 악화로 오늘 행동 보드에서 뺀 종목입니다."
   },
   pending: {
-    label: "재판정 대기",
-    description: "장초 재판정 저장 전이라 아직 실제 행동 보드에 올리지 않은 종목입니다."
+    label: "장초 확인 대기",
+    description: "아직 장초 확인 전이라 실제 행동 보드에 올리지 않은 종목입니다."
   }
 };
 
@@ -124,13 +124,13 @@ const ACTION_BUCKET_META: Record<RecommendationActionBucket, ActionBucketMeta> =
   buy_now: {
     label: "장초 통과 시 매수 검토",
     shortLabel: "장초 매수 검토",
-    description: "전일 기준 우선순위가 높고, 장초 재판정만 통과하면 오늘 매수까지 볼 수 있는 종목입니다.",
+    description: "전일 기준 우선순위가 높고, 장초 흐름만 괜찮으면 오늘 매수까지 볼 수 있는 종목입니다.",
     variant: "positive"
   },
   watch_only: {
     label: "관찰만",
     shortLabel: "관찰만",
-    description: "흐름은 좋지만 장초 재판정에서 확인 가격과 거래 반응을 더 봐야 하는 종목입니다.",
+    description: "흐름은 좋지만 장초 확인에서 확인 가격과 거래 반응을 더 봐야 하는 종목입니다.",
     variant: "neutral"
   },
   avoid: {
@@ -492,7 +492,7 @@ export function buildTodayOperatingSummary(items: RecommendationActionItem[]): T
     return {
       marketStance: "attack",
       marketStanceLabel: "공격 가능",
-      summary: "오늘은 장초 재판정만 통과하면 매수 검토까지 볼 수 있는 종목이 몇 개 있습니다. 그래도 상위 1~2개만 선별해서 보는 날입니다.",
+      summary: "오늘은 장초 확인만 통과하면 매수 검토까지 볼 수 있는 종목이 몇 개 있습니다. 그래도 상위 1~2개만 선별해서 보는 날입니다.",
       maxNewPositions: 2,
       maxConcurrentPositions: 5,
       bucketCounts,
@@ -504,7 +504,7 @@ export function buildTodayOperatingSummary(items: RecommendationActionItem[]): T
     return {
       marketStance: "selective",
       marketStanceLabel: "선별 매수",
-      summary: "오늘은 장초 재판정을 통과한 종목 1개 정도만 신중하게 볼 만한 날입니다.",
+      summary: "오늘은 장초 확인을 통과한 종목 1개 정도만 신중하게 볼 만한 날입니다.",
       maxNewPositions: 1,
       maxConcurrentPositions: 4,
       bucketCounts,
@@ -515,7 +515,7 @@ export function buildTodayOperatingSummary(items: RecommendationActionItem[]): T
   return {
     marketStance: "watch",
     marketStanceLabel: "관찰 우위",
-    summary: "오늘은 장초 재판정을 통과해도 신규 매수를 공격적으로 늘리지 않고, 기존 보유 관리와 관찰에 무게를 두는 편이 좋습니다.",
+    summary: "오늘은 장초 확인을 통과해도 신규 매수를 공격적으로 늘리지 않고, 기존 보유 관리와 관찰에 무게를 두는 편이 좋습니다.",
     maxNewPositions: 0,
     maxConcurrentPositions: 4,
     bucketCounts,
@@ -526,7 +526,7 @@ export function buildTodayOperatingSummary(items: RecommendationActionItem[]): T
 export function buildTodayOperatingWorkflow(summary: TodayOperatingSummary): DailyOperatingWorkflow {
   const actionDetail =
     summary.maxNewPositions > 0
-      ? `장초 재판정을 통과한 종목만 최대 ${summary.maxNewPositions}개까지 분할 진입을 검토합니다. 동시 관리 종목은 총 ${summary.maxConcurrentPositions}개를 넘기지 않습니다.`
+      ? `장초 확인을 통과한 종목만 최대 ${summary.maxNewPositions}개까지 분할 진입을 검토합니다. 동시 관리 종목은 총 ${summary.maxConcurrentPositions}개를 넘기지 않습니다.`
       : `오늘은 신규 매수보다 기존 보유 관리와 관찰 유지가 우선입니다. 동시 관리 종목은 총 ${summary.maxConcurrentPositions}개 기준으로 통제합니다.`;
 
   const steps: OperatingStage[] = [
@@ -538,14 +538,14 @@ export function buildTodayOperatingWorkflow(summary: TodayOperatingSummary): Dai
     },
     {
       key: "opening_recheck",
-      title: "장초 재판정",
+      title: "장초 확인",
       summary: `${OPENING_RECHECK_WINDOW_LABEL} 동안 갭과 구조를 다시 확인합니다.`,
       detail: `시초가가 계획 진입가보다 ${MAX_ACCEPTABLE_GAP_PERCENT}% 이상 높게 뜨면 추격 금지로 돌리고, 손절 기준과 너무 가까우면 후보에서 제외합니다.`
     },
     {
       key: "today_action",
       title: "당일 행동",
-      summary: "재판정 통과 종목만 실제 행동 후보로 옮깁니다.",
+      summary: "장초 확인 통과 종목만 실제 행동 후보로 옮깁니다.",
       detail: actionDetail
     }
   ];
@@ -554,7 +554,7 @@ export function buildTodayOperatingWorkflow(summary: TodayOperatingSummary): Dai
     {
       key: "gap",
       title: "시초가가 계획 진입가보다 너무 높게 뜨지 않았는가",
-      passLabel: `${MAX_ACCEPTABLE_GAP_PERCENT}% 이내면 재판정 계속`,
+      passLabel: `${MAX_ACCEPTABLE_GAP_PERCENT}% 이내면 확인 계속`,
       failLabel: `${MAX_ACCEPTABLE_GAP_PERCENT}%를 넘겨 갭상승하면 추격 금지`
     },
     {
@@ -579,7 +579,7 @@ export function buildTodayOperatingWorkflow(summary: TodayOperatingSummary): Dai
 
   return {
     basisLabel: "전일 종가 기준 장전 계획",
-    staleDataNote: "오전 8시경 수신한 전일 데이터 기준입니다. 장초 재판정 전까지는 실제 매수 신호가 아니라 장전 계획으로 해석해야 합니다.",
+    staleDataNote: "오전 8시경 수신한 전일 데이터 기준입니다. 장초 확인 전까지는 실제 매수 신호가 아니라 장전 계획으로 해석해야 합니다.",
     recheckWindowLabel: OPENING_RECHECK_WINDOW_LABEL,
     steps,
     openingChecklist
@@ -652,7 +652,7 @@ export function buildTodayActionBoard(
         portfolioNote = `섹터 한도 ${sectorLimit}개`;
       } else if (buyReviewTickers.has(candidate.ticker) && buyReviewLimit > 0) {
         boardStatus = "buy_review";
-        boardReason = "장초 재판정을 통과했고 오늘 신규 매수 한도 안에 들어 있습니다.";
+        boardReason = "장초 확인을 통과했고 오늘 신규 매수 한도 안에 들어 있습니다.";
         portfolioNote = `남은 포트폴리오 슬롯 ${remainingPortfolioSlots}개 기준`;
       } else {
         boardStatus = "watch";
@@ -662,8 +662,8 @@ export function buildTodayActionBoard(
         } else {
           boardReason =
             buyReviewLimit > 0
-              ? `장초 재판정은 통과했지만 오늘 신규 매수 한도 ${buyReviewLimit}개를 넘겨 관찰 유지로 남깁니다.`
-              : "재판정을 통과해도 오늘은 신규 매수 한도가 없어 관찰 유지로 남깁니다.";
+              ? `장초 확인은 통과했지만 오늘 신규 매수 한도 ${buyReviewLimit}개를 넘겨 관찰 유지로 남깁니다.`
+              : "장초 확인을 통과해도 오늘은 신규 매수 한도가 없어 관찰 유지로 남깁니다.";
           portfolioNote = `신규 매수 한도 ${buyReviewLimit}개`;
         }
       }
@@ -678,7 +678,7 @@ export function buildTodayActionBoard(
       boardReason = "손절 기준 훼손 또는 구조 약화로 오늘 후보에서 제외합니다.";
     } else {
       boardStatus = "pending";
-      boardReason = "장초 재판정이 아직 저장되지 않아 실제 행동 후보로 확정하지 않았습니다.";
+      boardReason = "아직 장초 확인 전이라 실제 행동 후보로 확정하지 않았습니다.";
     }
 
     return {
@@ -764,18 +764,18 @@ export function buildTodayActionBoard(
   let note = "손절 기준과 비중이 정리된 종목만 실제 매수 검토 대상으로 남깁니다.";
 
   if (buyReviewCount === 0 && pendingCount > 0) {
-    headline = `아직 재판정 대기 ${pendingCount}개`;
-    note = "장초 재판정이 끝나기 전까지는 오늘 실제 매수 검토 종목을 확정하지 않습니다.";
+    headline = `아직 장초 확인 대기 ${pendingCount}개`;
+    note = "장초 확인이 끝나기 전까지는 오늘 실제 매수 검토 종목을 확정하지 않습니다.";
   } else if (buyReviewCount === 0 && watchCount > 0) {
     headline = "오늘은 관찰 유지 우선";
-    note = "재판정을 통과한 종목보다 더 지켜봐야 할 종목이 많아 신규 매수보다 관찰이 우선입니다.";
+    note = "장초 확인을 통과한 종목보다 더 지켜봐야 할 종목이 많아 신규 매수보다 관찰이 우선입니다.";
   } else if (buyReviewCount === 0 && avoidCount + excludedCount > 0) {
     headline = "오늘은 신규 매수보다 방어 우선";
     note = "보류 또는 제외 종목이 많아 오늘은 신규 매수를 공격적으로 늘리지 않는 편이 좋습니다.";
   }
 
   if (overflowPassedCount > 0) {
-    note = `재판정을 통과한 종목이 더 있지만 신규 매수 한도 ${buyReviewLimit}개를 넘는 ${overflowPassedCount}개는 관찰 유지로 남깁니다.`;
+    note = `장초 확인을 통과한 종목이 더 있지만 신규 매수 한도 ${buyReviewLimit}개를 넘는 ${overflowPassedCount}개는 관찰 유지로 남깁니다.`;
   }
 
   return {
@@ -873,3 +873,4 @@ export function createRecommendationTradePlanInput(
     riskRewardRatio: recommendation.riskRewardRatio
   };
 }
+

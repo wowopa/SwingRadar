@@ -1,4 +1,4 @@
-import { LockKeyhole, Radar, ShieldCheck } from "lucide-react";
+﻿import { LockKeyhole, Radar, ShieldCheck } from "lucide-react";
 import { redirect } from "next/navigation";
 
 import { AuthPanel } from "@/components/auth/auth-panel";
@@ -33,7 +33,7 @@ export default async function AuthPage({
             </h1>
             <p className="max-w-2xl text-base leading-8 text-muted-foreground">
               SWING-RADAR는 공개 리포트를 보여주는 서비스가 아니라, 내 자산과 내 보유를 기준으로 오늘 무엇을 할지 정리하는 운용
-              도구입니다. 로그인 후에는 장전 후보, 장초 재판정, 보유 관리까지 모두 내 기준으로 계산됩니다.
+              도구입니다. 로그인 후에는 장전 후보, 장초 확인, 보유 관리까지 모두 내 기준으로 계산됩니다.
             </p>
           </div>
 
@@ -47,7 +47,7 @@ export default async function AuthPage({
               {
                 icon: Radar,
                 title: "오늘 행동 보드",
-                description: "장전 후보와 장초 재판정 결과를 묶어 오늘 매수 검토 대상을 좁힙니다."
+                description: "장전 후보와 장초 확인 결과를 묶어 오늘 매수 검토 대상을 좁힙니다."
               },
               {
                 icon: ShieldCheck,
@@ -81,3 +81,4 @@ export default async function AuthPage({
     </main>
   );
 }
+

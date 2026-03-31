@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+﻿import type { ReactNode } from "react";
 
 import { AuthCta } from "@/components/layout/auth-cta";
 import { BrandSignature } from "@/components/layout/brand-signature";
@@ -28,7 +28,7 @@ export function PrivateAppShell({
                 <Badge variant="positive">Logged In</Badge>
                 <div className="space-y-2">
                   <h1 className="text-2xl font-semibold leading-tight tracking-[-0.05em] text-foreground sm:text-[2.6rem]">
-                    장전 계획, 장초 재판정, 보유 관리만 남긴 개인 운용 대시보드
+                    장전 계획, 장초 확인, 보유 관리만 남긴 개인 운용 대시보드
                   </h1>
                   <p className="max-w-3xl text-sm leading-7 text-muted-foreground sm:text-base">
                     이제는 분석 리포트를 읽는 대신, 오늘 매수 검토 종목과 보유 관리 우선순위를 먼저 보는 구조로 정리했습니다.
@@ -36,7 +36,7 @@ export function PrivateAppShell({
                 </div>
                 <div className="flex flex-wrap gap-2">
                   <span className="data-chip">장전 후보 선별</span>
-                  <span className="data-chip">장초 재판정 기록</span>
+                  <span className="data-chip">장초 확인 기록</span>
                   <span className="data-chip">포트폴리오 슬롯 제한</span>
                   <span className="data-chip">보유 종목 관리 보드</span>
                 </div>
@@ -70,3 +70,4 @@ export function PrivateAppShell({
     </div>
   );
 }
+

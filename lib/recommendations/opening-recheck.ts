@@ -1,4 +1,4 @@
-import type { OpeningRecheckDecision, OpeningRecheckStatus } from "@/types/recommendation";
+﻿import type { OpeningRecheckDecision, OpeningRecheckStatus } from "@/types/recommendation";
 
 export const OPENING_RECHECK_STATUSES = ["pending", "passed", "watch", "avoid", "excluded"] as const;
 export const OPENING_RECHECK_DECISION_STATUSES = ["passed", "watch", "avoid", "excluded"] as const;
@@ -20,12 +20,12 @@ export interface OpeningRecheckCounts {
 const OPENING_RECHECK_STATUS_META: Record<OpeningRecheckStatus, OpeningRecheckStatusMeta> = {
   pending: {
     label: "대기",
-    description: "아직 장초 재판정 전입니다.",
+    description: "아직 장초 확인 전입니다.",
     variant: "secondary"
   },
   passed: {
     label: "통과",
-    description: "장초 재판정을 통과해 오늘 행동 후보로 유지합니다.",
+    description: "장초 확인을 통과해 오늘 행동 후보로 유지합니다.",
     variant: "positive"
   },
   watch: {
@@ -68,3 +68,4 @@ export function buildOpeningRecheckCounts(
 
   return counts;
 }
+

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 
@@ -24,13 +24,13 @@ const stages = [
   },
   {
     id: "opening",
-    label: "장초 재판정",
+    label: "장초 확인",
     eyebrow: "09:00-09:10",
-    title: "시초가와 초반 5~10분 흐름으로 다시 한번 걸러냅니다.",
+    title: "시초가와 초반 5~10분 흐름으로 실제 행동 가능 여부를 확인합니다.",
     description:
       "갭상승이 과하면 추격 금지로 내리고, 손절 기준과 멀지 않으면 제외합니다. 통과한 종목만 오늘 행동 보드로 올라갑니다.",
     bullets: ["통과", "관찰 유지", "추격 금지", "제외"],
-    boardTitle: "재판정 결과",
+    boardTitle: "장초 확인 결과",
     boardItems: [
       { name: "ISC", status: "통과", tone: "positive" as const },
       { name: "DN오토모티브", status: "관찰 유지", tone: "neutral" as const },
@@ -40,7 +40,7 @@ const stages = [
   {
     id: "action",
     label: "당일 행동",
-    eyebrow: "After Recheck",
+    eyebrow: "09:10 이후",
     title: "통과한 종목만 0~2개 수준으로 남겨 실제 행동으로 연결합니다.",
     description:
       "보유 종목 수, 같은 섹터 수, 가용 현금과 리스크 한도까지 함께 보고 오늘 살 수 있는 종목만 최종 행동 보드에 남깁니다.",
@@ -122,3 +122,4 @@ export function LandingWorkflowDemo() {
     </Card>
   );
 }
+

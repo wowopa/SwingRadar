@@ -1,4 +1,4 @@
-import { DailyCandidatesPanel } from "@/components/recommendations/daily-candidates-panel";
+﻿import { DailyCandidatesPanel } from "@/components/recommendations/daily-candidates-panel";
 import { DashboardFocusBoard } from "@/components/recommendations/dashboard-focus-board";
 import { HoldingActionBoard } from "@/components/recommendations/holding-action-board";
 import { TodayActionBoard } from "@/components/recommendations/today-action-board";
@@ -24,7 +24,7 @@ export default async function RecommendationsPage() {
       <PageHeader
         eyebrow="Dashboard"
         title="오늘의 행동 대시보드"
-        description="설명보다 행동을 먼저 보여주는 메인 화면입니다. 오늘 신규 매수 검토 종목, 장초 재판정 상태, 보유 관리 우선순위를 한 번에 확인합니다."
+        description="설명보다 행동을 먼저 보여주는 메인 화면입니다. 오늘 신규 매수 검토 종목, 장초 확인 상태, 보유 관리 우선순위를 한 번에 확인합니다."
       />
       <PublicDataStatusBarGroup summaries={statusSummaries} />
 
@@ -57,3 +57,4 @@ export default async function RecommendationsPage() {
     </main>
   );
 }
+

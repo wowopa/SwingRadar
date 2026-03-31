@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { Loader2, RotateCcw } from "lucide-react";
@@ -142,12 +142,12 @@ export function DailyCandidatesPanel({ dailyScan }: { dailyScan: DailyScanSummar
         }
         return next;
       });
-      setBoardMessage(`${ticker} 장초 재판정을 ${getOpeningRecheckStatusMeta(status).label}로 저장했습니다.`);
+      setBoardMessage(`${ticker} 장초 확인을 ${getOpeningRecheckStatusMeta(status).label}로 저장했습니다.`);
       startTransition(() => {
         router.refresh();
       });
     } catch (error) {
-      setBoardError(error instanceof Error ? error.message : "장초 재판정 저장에 실패했습니다.");
+      setBoardError(error instanceof Error ? error.message : "장초 확인 저장에 실패했습니다.");
     } finally {
       setSavingKey(null);
     }
@@ -181,12 +181,12 @@ export function DailyCandidatesPanel({ dailyScan }: { dailyScan: DailyScanSummar
 
       await parseResponse<{ cleared: boolean }>(response);
       setDecisions({});
-      setBoardMessage("오늘 장초 재판정 보드를 초기화했습니다.");
+      setBoardMessage("오늘 장초 확인 보드를 초기화했습니다.");
       startTransition(() => {
         router.refresh();
       });
     } catch (error) {
-      setBoardError(error instanceof Error ? error.message : "장초 재판정 초기화에 실패했습니다.");
+      setBoardError(error instanceof Error ? error.message : "장초 확인 초기화에 실패했습니다.");
     } finally {
       setSavingKey(null);
     }
@@ -214,7 +214,7 @@ export function DailyCandidatesPanel({ dailyScan }: { dailyScan: DailyScanSummar
           <CardTitle>오늘 먼저 볼 종목</CardTitle>
           <p className="mt-2 text-sm text-muted-foreground">
             최신 유니버스 스캔에서 지금 먼저 확인할 종목만 추렸습니다. 이 목록은 전일 종가 기준 장전 후보이며, 장초
-            재판정을 통과하기 전까지는 실제 매수 신호가 아닙니다.
+            확인을 통과하기 전까지는 실제 매수 신호가 아닙니다.
           </p>
         </div>
         <div className="rounded-2xl border border-border/70 bg-secondary/35 px-4 py-3 text-sm text-muted-foreground">
@@ -232,7 +232,7 @@ export function DailyCandidatesPanel({ dailyScan }: { dailyScan: DailyScanSummar
             <div>
               <p className="text-sm font-semibold text-foreground">오늘 실제 행동 보드</p>
               <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                서버에 저장된 장초 재판정 결과를 기준으로 오늘 행동을 정리합니다. 현재 노출 {visibleCandidates.length}개
+                서버에 저장된 장초 확인 결과를 기준으로 오늘 행동을 정리합니다. 현재 노출 {visibleCandidates.length}개
                 기준이며, 마지막 스캔 시각은 {formatDateTimeShort(dailyScan.generatedAt)}입니다.
               </p>
               <p className="mt-2 text-xs leading-5 text-muted-foreground">
@@ -256,7 +256,7 @@ export function DailyCandidatesPanel({ dailyScan }: { dailyScan: DailyScanSummar
               disabled={!canManageBoard || savingKey === "clear-all"}
             >
               {savingKey === "clear-all" ? <Loader2 className="h-4 w-4 animate-spin" /> : <RotateCcw className="h-4 w-4" />}
-              오늘 판정 초기화
+              오늘 확인 초기화
             </Button>
           </div>
 
@@ -378,7 +378,7 @@ export function DailyCandidatesPanel({ dailyScan }: { dailyScan: DailyScanSummar
                     <div className="mt-4 rounded-2xl border border-border/70 bg-background/80 p-4">
                       <div className="flex items-center justify-between gap-3">
                         <div>
-                          <p className="text-sm font-semibold text-foreground">장초 재판정</p>
+                          <p className="text-sm font-semibold text-foreground">장초 확인</p>
                           <p className="mt-1 text-xs leading-5 text-muted-foreground">{recheckMeta.description}</p>
                         </div>
                         {recheckDecision ? (
@@ -419,7 +419,7 @@ export function DailyCandidatesPanel({ dailyScan }: { dailyScan: DailyScanSummar
                             onClick={() => void resetStatus(item.ticker)}
                             disabled={!canManageBoard || isSaving}
                           >
-                            판정 취소
+                            대기로 돌리기
                           </Button>
                         </div>
                       ) : null}
@@ -428,7 +428,7 @@ export function DailyCandidatesPanel({ dailyScan }: { dailyScan: DailyScanSummar
                     <p className="mt-4 line-clamp-3 text-sm leading-6 text-muted-foreground">{item.rationale}</p>
                     <div className="mt-4 flex items-center justify-between gap-3">
                       <p className="text-xs text-muted-foreground">
-                        점수보다 중요한 것은 장초 재판정 결과와 포지션 한도입니다.
+                        점수보다 중요한 것은 장초 확인 결과와 포지션 한도입니다.
                       </p>
                       <Link
                         href={`/analysis/${item.ticker}`}
@@ -443,7 +443,7 @@ export function DailyCandidatesPanel({ dailyScan }: { dailyScan: DailyScanSummar
             </div>
 
             <div className="rounded-2xl border border-border/70 bg-secondary/25 p-4 text-sm text-muted-foreground">
-              총 {dailyScan.totalTickers}개 종목을 스캔했고, 그중 오늘 먼저 볼 종목만 자동 정렬했습니다. 장초 재판정이 끝나기
+              총 {dailyScan.totalTickers}개 종목을 스캔했고, 그중 오늘 먼저 볼 종목만 자동 정렬했습니다. 장초 확인이 끝나기
               전까지는 이 목록 전체를 곧바로 실행 신호로 보지 않는 편이 안전합니다.{" "}
               <Link className="font-medium text-primary hover:text-primary/80" href="/ranking">
                 전체 후보 순위 보기
@@ -472,3 +472,4 @@ export function DailyCandidatesPanel({ dailyScan }: { dailyScan: DailyScanSummar
     </Card>
   );
 }
+

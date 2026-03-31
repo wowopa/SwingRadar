@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import { ArrowUpRight, Clock3, Compass, ShieldAlert, WalletCards } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -94,7 +94,7 @@ export function DashboardFocusBoard({
           </div>
           <p className="text-sm leading-7 text-muted-foreground">
             {summary?.summary ??
-              "오늘 행동 보드는 장전 후보, 장초 재판정, 포트폴리오 한도를 함께 반영해 실제로 검토할 종목만 남기는 방향으로 설계되어 있습니다."}
+              "오늘 행동 보드는 장전 후보, 장초 확인, 포트폴리오 한도를 함께 반영해 실제로 검토할 종목만 남기는 방향으로 설계되어 있습니다."}
           </p>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -175,7 +175,7 @@ export function DashboardFocusBoard({
       <div className="grid gap-4">
         <FocusQueueCard
           title="오늘 매수 검토"
-          description="장초 재판정을 통과하고 포트폴리오 한도까지 맞는 종목만 남깁니다."
+          description="장초 확인을 통과하고 포트폴리오 한도까지 맞는 종목만 남깁니다."
           count={todayActionBoard?.summary.buyReviewCount ?? 0}
           variant={(todayActionBoard?.summary.buyReviewCount ?? 0) > 0 ? "positive" : "secondary"}
           icon={ArrowUpRight}
@@ -214,7 +214,7 @@ export function DashboardFocusBoard({
         />
 
         <FocusQueueCard
-          title="장초 재판정 대기"
+          title="장초 확인 대기"
           description="장전 후보 중 아직 통과/보류 판단을 확정하지 않은 종목들입니다."
           count={openingRecheck.counts.pending}
           variant={openingRecheck.counts.pending > 0 ? "neutral" : "secondary"}
@@ -238,7 +238,7 @@ export function DashboardFocusBoard({
             note: item.tradePlan?.nextStep ?? item.rationale,
             href: `/analysis/${item.ticker}`
           }))}
-          emptyMessage="상단 후보의 장초 재판정은 대부분 완료되었습니다."
+          emptyMessage="상단 후보의 장초 확인은 대부분 완료되었습니다."
         />
       </div>
     </section>
@@ -314,3 +314,4 @@ function FocusQueueCard({
     </Card>
   );
 }
+

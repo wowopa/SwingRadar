@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import { ArrowUpRight, Binoculars, CircleOff, LayoutDashboard, TimerReset, WalletCards } from "lucide-react";
 
 import { ActionBucketBadge } from "@/components/recommendations/action-bucket-badge";
@@ -20,7 +20,7 @@ const bucketIcons = {
 } satisfies Record<RecommendationActionBucket, typeof ArrowUpRight>;
 
 const emptyMessages: Record<RecommendationActionBucket, string> = {
-  buy_now: "장초 재판정까지 볼 종목은 아직 없습니다.",
+  buy_now: "장초 확인까지 볼 종목은 아직 없습니다.",
   watch_only: "추가 관찰이 필요한 종목은 많지 않습니다.",
   avoid: "현재 상위 후보 중 즉시 보류로 보는 종목은 많지 않습니다."
 };
@@ -87,7 +87,7 @@ export function TodayOperatingSummary({
           <SummaryMetric
             title="장초 통과 후보"
             value={`${resolvedSummary.bucketCounts.buy_now}개`}
-            note="장초 재판정 통과 시 매수 검토할 종목"
+            note="장초 확인 통과 시 매수 검토할 종목"
             icon={LayoutDashboard}
           />
           <SummaryMetric
@@ -109,7 +109,7 @@ export function TodayOperatingSummary({
               </p>
             </div>
             <div className="rounded-full border border-border/70 bg-secondary/35 px-3 py-1 text-xs font-medium text-foreground/78">
-              {resolvedWorkflow.recheckWindowLabel} 재판정
+              {resolvedWorkflow.recheckWindowLabel} 확인
             </div>
           </div>
         </CardHeader>
@@ -136,7 +136,7 @@ export function TodayOperatingSummary({
           </div>
 
           <div className="rounded-[24px] border border-border/70 bg-background/70 p-4">
-            <p className="text-sm font-semibold text-foreground">장초 재판정 체크리스트</p>
+            <p className="text-sm font-semibold text-foreground">장초 확인 체크리스트</p>
             <div className="mt-4 grid gap-3 xl:grid-cols-2">
               {resolvedWorkflow.openingChecklist.map((item) => (
                 <div key={item.key} className="rounded-[22px] border border-border/70 bg-secondary/20 p-4">
@@ -241,3 +241,4 @@ function SummaryMetric({
     </Card>
   );
 }
+

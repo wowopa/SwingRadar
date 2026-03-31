@@ -1,4 +1,4 @@
-import { formatPercent, formatPrice } from "@/lib/utils";
+﻿import { formatPercent, formatPrice } from "@/lib/utils";
 import type {
   HoldingActionBoard,
   HoldingActionItem,
@@ -40,7 +40,7 @@ const HOLDING_SECTION_META: Record<
   },
   time_stop_review: {
     label: "시간 손절 검토",
-    description: "보유 기간 대비 확장이 약해 시간을 더 쓰기보다 재판정이 필요한 보유입니다."
+    description: "보유 기간 대비 확장이 약해 시간을 더 쓰기보다 다시 점검이 필요한 보유입니다."
   },
   hold: {
     label: "계획 유지",
@@ -186,7 +186,7 @@ function buildActionCopy({
     case "time_stop_review":
       return {
         actionLabel: "시간 손절 검토",
-        actionSummary: `${company}는 보유 기간 대비 확장이 약해 시간을 더 쓸지 재판정이 필요합니다.`,
+        actionSummary: `${company}는 보유 기간 대비 확장이 약해 시간을 더 쓸지 다시 확인이 필요합니다.`,
         actionReason: `진입 후 ${holdingDays ?? 0}일이 지났는데도 기대 수익이 ${returnLabel}에 머물러 ${holdWindowLabel} 운용 가정과 맞지 않습니다.`,
         nextAction: "구조가 다시 강해지지 않으면 비중 축소 또는 정리를 검토합니다.",
         guardLabel: `보유 ${holdingDays ?? 0}일 / 계획 ${holdWindowLabel}`
@@ -336,7 +336,7 @@ export function buildHoldingActionBoard({
     headline = `부분 익절 검토 ${takeProfitCount}개`;
     note = "수익 구간에 들어온 보유가 있어 일부 이익을 챙기고 남은 물량을 관리할 타이밍입니다.";
   } else if (timeStopReviewCount > 0) {
-    headline = `시간 손절 재판정 ${timeStopReviewCount}개`;
+    headline = `시간 손절 점검 ${timeStopReviewCount}개`;
     note = "보유 기간 대비 확장이 약한 종목이 있어 시간을 더 줄지 다시 판단해야 합니다.";
   } else if (tightenStopCount > 0) {
     headline = `보호 가격 상향 ${tightenStopCount}개`;
@@ -363,3 +363,4 @@ export function buildHoldingActionBoard({
     items
   };
 }
+
