@@ -27,9 +27,9 @@ export default async function TrackingPage() {
   return (
     <main className="space-y-8 pb-10">
       <PageHeader
-        eyebrow="Portfolio"
-        title="보유와 관찰 종목 관리"
-        description="이미 들고 있는 종목과 계속 관찰 중인 종목을 한곳에서 관리합니다. 신규 진입보다 보유 관리와 다음 행동 판단에 집중하는 화면입니다."
+        eyebrow="Watchlist"
+        title="공용 추적과 관찰 기록"
+        description="서비스가 추적한 공용 후보와 관찰 기록을 보는 화면입니다. 내 실제 포트폴리오와는 분리된 공용 히스토리입니다."
       />
       <PublicDataStatusBar summary={statusSummary} />
       <TrackingSelectionGuide {...trackingConfig} />

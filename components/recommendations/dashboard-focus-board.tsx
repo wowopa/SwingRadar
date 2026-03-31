@@ -54,10 +54,6 @@ function getOpeningCheckSummary(dailyScan: DailyScanSummaryDto | null) {
   };
 }
 
-function getBuyReviewItems(board?: TodayActionBoardDto) {
-  return board?.sections.find((section) => section.status === "buy_review")?.items.slice(0, 2) ?? [];
-}
-
 function getHoldingAttentionItems(board?: HoldingActionBoardDto) {
   if (!board) {
     return [];
@@ -81,6 +77,10 @@ function getHoldingAttentionCount(board?: HoldingActionBoardDto) {
   );
 }
 
+function getBuyReviewItems(board?: TodayActionBoardDto) {
+  return board?.sections.find((section) => section.status === "buy_review")?.items.slice(0, 2) ?? [];
+}
+
 function getSummaryMetrics({
   summary,
   todayActionBoard,
@@ -96,7 +96,7 @@ function getSummaryMetrics({
     {
       title: "오늘 매수 검토",
       value: formatQueueCount(todayActionBoard?.summary.buyReviewCount ?? 0),
-      note: "오늘 실제로 새로 검토할 종목"
+      note: "오늘 실제로 새로 볼 종목"
     },
     {
       title: "보유 우선 관리",
@@ -113,11 +113,11 @@ function getSummaryMetrics({
       value:
         typeof todayActionBoard?.summary.availableCash === "number"
           ? formatPrice(todayActionBoard.summary.availableCash)
-          : formatQueueCount(todayActionBoard?.summary.activeHoldingCount ?? 0),
+          : "확인 필요",
       note:
         typeof todayActionBoard?.summary.availableCash === "number"
           ? "권장 수량 계산 기준"
-          : "현재 관리 중인 보유 종목 수"
+          : "포트폴리오 설정에서 입력 필요"
     },
     {
       title: "신규 매수 여유",
@@ -138,9 +138,7 @@ function buildBuyReviewNote(item: TodayActionBoardItemDto) {
     return item.boardReason;
   }
 
-  const entry = plan.entryLabel;
-  const stop = plan.stopLabel;
-  return `진입 ${entry} / 손절 ${stop}`;
+  return `진입 ${plan.entryLabel} / 손절 ${plan.stopLabel}`;
 }
 
 function buildBuyReviewSizing(item: TodayActionBoardItemDto) {
@@ -203,7 +201,7 @@ export function DashboardFocusBoard({
               </CardTitle>
               <p className="max-w-3xl text-sm leading-7 text-muted-foreground">
                 {summary?.summary ??
-                  "대시보드는 오늘 실제로 해야 할 것만 먼저 보여줍니다. 상세 분석과 긴 설명은 뒤로 보내고, 신규 매수 검토와 보유 관리, 장초 확인 대기만 남겼습니다."}
+                  "대시보드는 오늘 실제로 해야 할 것만 먼저 보여줍니다. 신규 매수 검토, 보유 우선 관리, 장초 확인 대기만 남겼습니다."}
               </p>
             </div>
 
@@ -265,9 +263,7 @@ export function DashboardFocusBoard({
                             {item.company} <span className="text-xs font-medium text-muted-foreground">{item.ticker}</span>
                           </p>
                           <SignalToneBadge tone={item.signalTone} />
-                          {item.featuredRank ? (
-                            <Badge variant="secondary">후보 #{item.featuredRank}</Badge>
-                          ) : null}
+                          {item.featuredRank ? <Badge variant="secondary">후보 #{item.featuredRank}</Badge> : null}
                         </div>
                         <p className="mt-3 text-sm leading-6 text-foreground/82">{buildBuyReviewNote(item)}</p>
                         {buildBuyReviewSizing(item) ? (
@@ -313,7 +309,7 @@ export function DashboardFocusBoard({
                     return (
                       <Link
                         key={item.ticker}
-                        href="/tracking"
+                        href="/portfolio"
                         className="block rounded-[22px] border border-border/70 bg-secondary/20 px-4 py-3 transition hover:border-primary/35 hover:bg-secondary/35"
                       >
                         <div className="flex items-start justify-between gap-3">
@@ -391,13 +387,19 @@ export function DashboardFocusBoard({
         </div>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {[
           {
-            href: "/tracking",
+            href: "/portfolio",
             title: "Portfolio",
-            description: "보유 관리와 장초 확인 상세 보기",
+            description: "내 보유 종목과 다음 행동 보기",
             icon: WalletCards
+          },
+          {
+            href: "/tracking",
+            title: "Watchlist",
+            description: "공용 추적과 관찰 기록 보기",
+            icon: Clock3
           },
           {
             href: "/ranking",

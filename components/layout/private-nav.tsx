@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Compass, LayoutGrid, UserRound, WalletCards } from "lucide-react";
+import { Binoculars, Compass, LayoutGrid, UserRound, WalletCards } from "lucide-react";
 import { usePathname } from "next/navigation";
 
 import { cn } from "@/lib/utils";
@@ -15,10 +15,17 @@ const navItems = [
     match: ["/recommendations"]
   },
   {
-    href: "/tracking",
+    href: "/portfolio",
     label: "Portfolio",
-    description: "보유 관리",
+    description: "내 보유 관리",
     icon: WalletCards,
+    match: ["/portfolio"]
+  },
+  {
+    href: "/tracking",
+    label: "Watchlist",
+    description: "공용 추적",
+    icon: Binoculars,
     match: ["/tracking"]
   },
   {
@@ -31,7 +38,7 @@ const navItems = [
   {
     href: "/account",
     label: "Account",
-    description: "설정",
+    description: "계정 설정",
     icon: UserRound,
     match: ["/account", "/admin", "/support", "/maintenance"]
   }
