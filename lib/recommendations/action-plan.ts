@@ -67,9 +67,17 @@ export interface TodayActionBoardCandidateInput {
   openingRecheck?: OpeningRecheckDecision | null;
 }
 
+export interface TodayActionBoardHoldingInput {
+  ticker: string;
+  company: string;
+  sector: string;
+}
+
 const OPENING_RECHECK_WINDOW_LABEL = "장 시작 후 5~10분";
 const MAX_ACCEPTABLE_GAP_PERCENT = 3;
 const MIN_STOP_BUFFER_PERCENT = 1.5;
+const MAX_SECTOR_ACTIVE_POSITIONS = 2;
+const NON_MEANINGFUL_PORTFOLIO_SECTORS = new Set(["", "주권", "기타", "미분류"]);
 
 const TODAY_ACTION_BOARD_SECTION_META: Record<
   TodayActionBoardStatus,
@@ -163,6 +171,10 @@ function compareActionBoardPriority(left: TodayActionBoardCandidateInput, right:
   }
 
   return left.company.localeCompare(right.company, "ko");
+}
+
+function isMeaningfulPortfolioSector(sector: string) {
+  return !NON_MEANINGFUL_PORTFOLIO_SECTORS.has(sector.trim());
 }
 
 function parsePriceText(value?: string | null) {
@@ -461,30 +473,87 @@ export function buildTodayOperatingWorkflow(summary: TodayOperatingSummary): Dai
 
 export function buildTodayActionBoard(
   candidates: TodayActionBoardCandidateInput[],
-  summary: Pick<TodayOperatingSummary, "maxNewPositions">
+  summary: Pick<TodayOperatingSummary, "maxNewPositions" | "maxConcurrentPositions">,
+  portfolio?: {
+    activeHoldings?: TodayActionBoardHoldingInput[];
+    sectorLimit?: number;
+  }
 ): TodayActionBoard {
   const orderedCandidates = [...candidates].sort(compareActionBoardPriority);
+  const sectorLimit = portfolio?.sectorLimit ?? MAX_SECTOR_ACTIVE_POSITIONS;
+  const activeHoldings = portfolio?.activeHoldings ?? [];
+  const activeHoldingTickers = new Set(activeHoldings.map((holding) => holding.ticker));
+  const activeSectorCounts = activeHoldings.reduce<Record<string, number>>((acc, holding) => {
+    const key = holding.sector.trim();
+    if (!isMeaningfulPortfolioSector(key)) {
+      return acc;
+    }
+
+    acc[key] = (acc[key] ?? 0) + 1;
+    return acc;
+  }, {});
+  const crowdedSectors = Object.entries(activeSectorCounts)
+    .filter(([, count]) => count >= sectorLimit)
+    .sort((left, right) => {
+      if (right[1] !== left[1]) {
+        return right[1] - left[1];
+      }
+
+      return left[0].localeCompare(right[0], "ko");
+    })
+    .map(([sector, count]) => ({ sector, count }));
+  const remainingPortfolioSlots = Math.max(summary.maxConcurrentPositions - activeHoldings.length, 0);
+  const buyReviewLimit = Math.max(Math.min(summary.maxNewPositions, remainingPortfolioSlots), 0);
+  const eligiblePassedCandidates = orderedCandidates.filter((candidate) => {
+    if (candidate.openingRecheck?.status !== "passed") {
+      return false;
+    }
+
+    if (activeHoldingTickers.has(candidate.ticker)) {
+      return false;
+    }
+
+    return (activeSectorCounts[candidate.sector] ?? 0) < sectorLimit;
+  });
   const passedCandidates = orderedCandidates.filter((candidate) => candidate.openingRecheck?.status === "passed");
-  const buyReviewLimit = Math.max(summary.maxNewPositions, 0);
-  const buyReviewTickers = new Set(passedCandidates.slice(0, buyReviewLimit).map((candidate) => candidate.ticker));
+  const buyReviewTickers = new Set(eligiblePassedCandidates.slice(0, buyReviewLimit).map((candidate) => candidate.ticker));
 
   const items = orderedCandidates.map<TodayActionBoardItem>((candidate) => {
     const openingRecheck = candidate.openingRecheck ?? undefined;
     const rawStatus = openingRecheck?.status ?? "pending";
+    const isAlreadyHeld = activeHoldingTickers.has(candidate.ticker);
+    const sectorHoldings = activeSectorCounts[candidate.sector] ?? 0;
+    const sectorBlocked = isMeaningfulPortfolioSector(candidate.sector) && sectorHoldings >= sectorLimit;
 
     let boardStatus: TodayActionBoardStatus;
     let boardReason: string;
+    let portfolioNote: string | undefined;
 
     if (rawStatus === "passed") {
-      if (buyReviewTickers.has(candidate.ticker) && buyReviewLimit > 0) {
+      if (isAlreadyHeld) {
+        boardStatus = "watch";
+        boardReason = "이미 진행중인 포지션이라 신규 매수보다 기존 포지션 관리가 우선입니다.";
+        portfolioNote = "이미 보유 중";
+      } else if (sectorBlocked) {
+        boardStatus = "watch";
+        boardReason = `현재 ${candidate.sector} 보유가 ${sectorHoldings}개라 섹터 한도 ${sectorLimit}개를 넘어 신규 매수를 열지 않습니다.`;
+        portfolioNote = `섹터 한도 ${sectorLimit}개`;
+      } else if (buyReviewTickers.has(candidate.ticker) && buyReviewLimit > 0) {
         boardStatus = "buy_review";
         boardReason = "장초 재판정을 통과했고 오늘 신규 매수 한도 안에 들어 있습니다.";
+        portfolioNote = `남은 포트폴리오 슬롯 ${remainingPortfolioSlots}개 기준`;
       } else {
         boardStatus = "watch";
-        boardReason =
-          buyReviewLimit > 0
-            ? `장초 재판정은 통과했지만 오늘 신규 매수 한도 ${buyReviewLimit}개를 넘겨 관찰 유지로 남깁니다.`
-            : "재판정을 통과해도 오늘은 신규 매수 한도가 없어 관찰 유지로 남깁니다.";
+        if (remainingPortfolioSlots <= 0) {
+          boardReason = `현재 진행중 포지션 ${activeHoldings.length}개로 동시 관리 기준 ${summary.maxConcurrentPositions}개를 채워 신규 매수 여유가 없습니다.`;
+          portfolioNote = "포트폴리오 슬롯 없음";
+        } else {
+          boardReason =
+            buyReviewLimit > 0
+              ? `장초 재판정은 통과했지만 오늘 신규 매수 한도 ${buyReviewLimit}개를 넘겨 관찰 유지로 남깁니다.`
+              : "재판정을 통과해도 오늘은 신규 매수 한도가 없어 관찰 유지로 남깁니다.";
+          portfolioNote = `신규 매수 한도 ${buyReviewLimit}개`;
+        }
       }
     } else if (rawStatus === "watch") {
       boardStatus = "watch";
@@ -512,7 +581,8 @@ export function buildTodayActionBoard(
       tradePlan: candidate.tradePlan ?? undefined,
       openingRecheck,
       boardStatus,
-      boardReason
+      boardReason,
+      portfolioNote
     };
   });
 
@@ -561,6 +631,10 @@ export function buildTodayActionBoard(
       note,
       maxNewPositions: buyReviewLimit,
       remainingNewPositions,
+      activeHoldingCount: activeHoldings.length,
+      remainingPortfolioSlots,
+      sectorLimit,
+      crowdedSectors,
       buyReviewCount,
       watchCount,
       avoidCount,

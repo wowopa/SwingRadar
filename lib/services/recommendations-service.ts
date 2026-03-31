@@ -15,6 +15,7 @@ import {
 } from "@/lib/recommendations/action-plan";
 import { listOpeningRecheckDecisions } from "@/lib/server/opening-recheck-board";
 import type { RecommendationsQuery } from "@/lib/server/query-schemas";
+import { getSymbolByTicker } from "@/lib/symbols/master";
 import { formatPrice } from "@/lib/utils";
 
 function toNullableNumber(value: unknown): number | null {
@@ -41,6 +42,31 @@ function formatRiskRewardRatio(entryPrice?: number | null, targetPrice?: number 
 
 function formatCandidateCheckpoint(value: number | null | undefined, fallback: string) {
   return typeof value === "number" && Number.isFinite(value) ? formatPrice(value) : fallback;
+}
+
+function resolveHoldingSector(
+  ticker: string,
+  sources: {
+    recommendationSector?: string | null;
+    candidateSector?: string | null;
+  }
+) {
+  const recommendationSector = sources.recommendationSector?.trim();
+  if (recommendationSector) {
+    return recommendationSector;
+  }
+
+  const candidateSector = sources.candidateSector?.trim();
+  if (candidateSector) {
+    return candidateSector;
+  }
+
+  const symbolSector = getSymbolByTicker(ticker)?.sector?.trim();
+  if (symbolSector && !["주권", "기타"].includes(symbolSector)) {
+    return symbolSector;
+  }
+
+  return "미분류";
 }
 
 function enrichRecommendationItem(item: RecommendationListItemDto, dailyCandidate?: DailyCandidate | null): RecommendationListItemDto {
@@ -117,7 +143,12 @@ function enrichDailyCandidateItem(
 }
 
 export async function listRecommendations(query: RecommendationsQuery): Promise<RecommendationsResponseDto> {
-  const [source, dailyCandidates] = await Promise.all([getDataProvider().getRecommendations(), getDailyCandidates()]);
+  const provider = getDataProvider();
+  const [source, dailyCandidates, tracking] = await Promise.all([
+    provider.getRecommendations(),
+    getDailyCandidates(),
+    provider.getTracking()
+  ]);
   const openingRecheckByTicker = dailyCandidates
     ? await listOpeningRecheckDecisions(dailyCandidates.generatedAt)
     : {};
@@ -236,7 +267,19 @@ export async function listRecommendations(query: RecommendationsQuery): Promise<
           tradePlan: candidate.tradePlan,
           openingRecheck: candidate.openingRecheck
         })),
-        todaySummary
+        todaySummary,
+        {
+          activeHoldings: tracking.history
+            .filter((item) => item.result === "진행중")
+            .map((item) => ({
+              ticker: item.ticker,
+              company: item.company,
+              sector: resolveHoldingSector(item.ticker, {
+                recommendationSector: sourceByTicker.get(item.ticker)?.sector,
+                candidateSector: dailyCandidateByTicker.get(item.ticker)?.sector
+              })
+            }))
+        }
       )
     : undefined;
 

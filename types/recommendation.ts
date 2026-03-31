@@ -81,6 +81,11 @@ export interface OpeningRecheckDecision {
 
 export type TodayActionBoardStatus = "buy_review" | "watch" | "avoid" | "excluded" | "pending";
 
+export interface TodayActionBoardSectorLoad {
+  sector: string;
+  count: number;
+}
+
 export interface TodayActionBoardItem {
   ticker: string;
   company: string;
@@ -94,6 +99,7 @@ export interface TodayActionBoardItem {
   openingRecheck?: OpeningRecheckDecision;
   boardStatus: TodayActionBoardStatus;
   boardReason: string;
+  portfolioNote?: string;
 }
 
 export interface TodayActionBoardSummary {
@@ -101,6 +107,10 @@ export interface TodayActionBoardSummary {
   note: string;
   maxNewPositions: number;
   remainingNewPositions: number;
+  activeHoldingCount: number;
+  remainingPortfolioSlots: number;
+  sectorLimit: number;
+  crowdedSectors: TodayActionBoardSectorLoad[];
   buyReviewCount: number;
   watchCount: number;
   avoidCount: number;

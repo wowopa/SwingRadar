@@ -56,6 +56,11 @@ export interface OpeningRecheckDecisionDto {
 
 export type TodayActionBoardStatusDto = "buy_review" | "watch" | "avoid" | "excluded" | "pending";
 
+export interface TodayActionBoardSectorLoadDto {
+  sector: string;
+  count: number;
+}
+
 export interface ValidationStatsDto {
   hitRate: number;
   avgReturn: number;
@@ -113,6 +118,7 @@ export interface TodayActionBoardItemDto {
   openingRecheck?: OpeningRecheckDecisionDto;
   boardStatus: TodayActionBoardStatusDto;
   boardReason: string;
+  portfolioNote?: string;
 }
 
 export interface TodayActionBoardSummaryDto {
@@ -120,6 +126,10 @@ export interface TodayActionBoardSummaryDto {
   note: string;
   maxNewPositions: number;
   remainingNewPositions: number;
+  activeHoldingCount: number;
+  remainingPortfolioSlots: number;
+  sectorLimit: number;
+  crowdedSectors: TodayActionBoardSectorLoadDto[];
   buyReviewCount: number;
   watchCount: number;
   avoidCount: number;

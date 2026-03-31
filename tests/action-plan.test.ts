@@ -154,7 +154,17 @@ describe("recommendation action plan", () => {
         }
       ],
       {
-        maxNewPositions: 1
+        maxNewPositions: 1,
+        maxConcurrentPositions: 4
+      },
+      {
+        activeHoldings: [
+          {
+            ticker: "267260",
+            company: "HD현대일렉트릭",
+            sector: "전력기기"
+          }
+        ]
       }
     );
 
@@ -162,6 +172,10 @@ describe("recommendation action plan", () => {
     expect(board.summary.watchCount).toBe(2);
     expect(board.summary.avoidCount).toBe(1);
     expect(board.summary.pendingCount).toBe(1);
+    expect(board.summary.activeHoldingCount).toBe(1);
+    expect(board.summary.remainingPortfolioSlots).toBe(3);
+    expect(board.summary.sectorLimit).toBe(2);
+    expect(board.summary.crowdedSectors).toEqual([]);
     expect(board.summary.note).toContain("한도 1개");
     expect(board.sections[0]?.status).toBe("buy_review");
     expect(board.sections[0]?.items[0]?.ticker).toBe("005930");

@@ -52,7 +52,7 @@ export function TodayActionBoard({ board }: { board?: TodayActionBoardDto }) {
             <div>
               <CardTitle className="text-xl text-foreground">오늘 실제 행동 보드</CardTitle>
               <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                저장된 장초 재판정과 오늘 신규 매수 한도를 같이 반영해 실제 행동만 남긴 보드입니다.
+                저장된 장초 재판정에 현재 진행중 포지션 수와 섹터 중복 한도까지 함께 반영한 실제 행동 보드입니다.
               </p>
             </div>
             <Badge variant={board.summary.buyReviewCount > 0 ? "positive" : "secondary"}>{board.summary.headline}</Badge>
@@ -62,12 +62,23 @@ export function TodayActionBoard({ board }: { board?: TodayActionBoardDto }) {
           <div className="rounded-[24px] border border-primary/20 bg-primary/8 p-4 text-sm leading-6 text-foreground/82">
             {board.summary.note}
           </div>
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-6">
             <SummaryMetric title="오늘 매수 검토" value={`${board.summary.buyReviewCount}개`} note="실제 신규 매수 검토로 남은 종목" />
-            <SummaryMetric title="남은 슬롯" value={`${board.summary.remainingNewPositions}개`} note="오늘 추가로 쓸 수 있는 신규 매수 한도" />
+            <SummaryMetric title="신규 매수 잔여" value={`${board.summary.remainingNewPositions}개`} note="오늘 추가로 쓸 수 있는 신규 매수 한도" />
+            <SummaryMetric title="진행중 포지션" value={`${board.summary.activeHoldingCount}개`} note="현재 보유 관리 대상으로 잡힌 종목 수" />
+            <SummaryMetric title="포트폴리오 슬롯" value={`${board.summary.remainingPortfolioSlots}개`} note="동시 관리 기준에서 남은 자리" />
+            <SummaryMetric title="섹터 한도" value={`${board.summary.sectorLimit}개`} note="같은 섹터 신규 진입 상한" />
             <SummaryMetric title="관찰 유지" value={`${board.summary.watchCount}개`} note="더 지켜보거나 한도 때문에 뒤로 미룬 종목" />
-            <SummaryMetric title="추격 금지" value={`${board.summary.avoidCount}개`} note="갭상승·과열로 오늘은 따라붙지 않는 종목" />
-            <SummaryMetric title="재판정 대기" value={`${board.summary.pendingCount}개`} note="아직 장초 재판정 저장 전인 종목" />
+          </div>
+          <div className="rounded-[24px] border border-border/70 bg-secondary/20 p-4 text-sm leading-6 text-muted-foreground">
+            {board.summary.crowdedSectors.length ? (
+              <>
+                현재 섹터 한도에 걸린 구간:{" "}
+                {board.summary.crowdedSectors.map((item) => `${item.sector} ${item.count}개`).join(" · ")}
+              </>
+            ) : (
+              "현재는 특정 섹터가 한도에 걸리지 않아, 섹터 중복보다 개별 재판정 결과가 우선입니다."
+            )}
           </div>
         </CardContent>
       </Card>
@@ -106,6 +117,7 @@ export function TodayActionBoard({ board }: { board?: TodayActionBoardDto }) {
                               후보 #{item.featuredRank}
                             </span>
                           ) : null}
+                          {item.portfolioNote ? <Badge variant="secondary">{item.portfolioNote}</Badge> : null}
                         </div>
                         <p className="mt-2 text-sm leading-6 text-foreground/82">{item.boardReason}</p>
                       </div>
@@ -170,12 +182,13 @@ export function TodayActionBoard({ board }: { board?: TodayActionBoardDto }) {
                           className="block rounded-[22px] border border-border/70 bg-secondary/20 px-4 py-3 transition hover:border-primary/35 hover:bg-secondary/35"
                         >
                           <div className="flex items-center justify-between gap-3">
-                            <div className="min-w-0">
-                              <p className="text-sm font-semibold text-foreground">
-                                {item.company} <span className="text-xs font-medium text-muted-foreground">{item.ticker}</span>
-                              </p>
-                              <p className="mt-2 text-xs leading-5 text-muted-foreground">{item.boardReason}</p>
-                            </div>
+                          <div className="min-w-0">
+                            <p className="text-sm font-semibold text-foreground">
+                              {item.company} <span className="text-xs font-medium text-muted-foreground">{item.ticker}</span>
+                            </p>
+                            {item.portfolioNote ? <p className="mt-1 text-[11px] text-foreground/70">{item.portfolioNote}</p> : null}
+                            <p className="mt-2 text-xs leading-5 text-muted-foreground">{item.boardReason}</p>
+                          </div>
                             {item.featuredRank ? (
                               <span className="rounded-full border border-border/70 bg-background/90 px-2.5 py-1 text-[11px] font-medium text-foreground/72">
                                 #{item.featuredRank}
