@@ -5,13 +5,15 @@ import { TodayActionBoard } from "@/components/recommendations/today-action-boar
 import { TodayOperatingSummary } from "@/components/recommendations/today-operating-summary";
 import { PageHeader } from "@/components/shared/page-header";
 import { PublicDataStatusBarGroup } from "@/components/shared/public-data-status-bar";
-import { getRecommendations } from "@/lib/repositories/recommendations";
 import { buildPublicDataStatusSummary } from "@/lib/server/public-data-status";
+import { getCurrentUserSession } from "@/lib/server/user-auth";
+import { listRecommendations } from "@/lib/services/recommendations-service";
 
 export const dynamic = "force-dynamic";
 
 export default async function RecommendationsPage() {
-  const response = await getRecommendations();
+  const session = await getCurrentUserSession();
+  const response = await listRecommendations({ sort: "score_desc" }, { userId: session?.user.id });
   const statusSummaries = [
     buildPublicDataStatusSummary("recommendations", response.generatedAt),
     buildPublicDataStatusSummary("daily-candidates", response.dailyScan?.generatedAt ?? response.generatedAt)
