@@ -3,6 +3,7 @@
 import type { ReactNode } from "react";
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { Plus, ScrollText } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import { Badge } from "@/components/ui/badge";
@@ -11,11 +12,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  buildPortfolioCloseReview,
+  getPortfolioJournalSummary,
+  groupPortfolioJournalByTicker,
+  isClosingPortfolioTradeEventType
+} from "@/lib/portfolio/journal-insights";
 import { cn, formatPrice } from "@/lib/utils";
 import type {
   PortfolioJournal,
   PortfolioProfilePosition,
-  PortfolioTradeEvent,
   PortfolioTradeEventType
 } from "@/types/recommendation";
 
@@ -59,8 +65,6 @@ const tradeTypeMeta: Record<
   }
 };
 
-const closingTypes = new Set<PortfolioTradeEventType>(["exit_full", "stop_loss", "manual_exit"]);
-
 type TradeEventFormState = {
   ticker: string;
   type: PortfolioTradeEventType;
@@ -69,22 +73,6 @@ type TradeEventFormState = {
   fees: string;
   tradedAt: string;
   note: string;
-};
-
-type JournalGroupMetrics = {
-  remainingQuantity: number;
-  investedCapital: number;
-  averageCost: number;
-  realizedPnl: number;
-};
-
-type JournalGroup = {
-  ticker: string;
-  company: string;
-  sector: string;
-  events: PortfolioTradeEvent[];
-  latestEvent: PortfolioTradeEvent;
-  metrics: JournalGroupMetrics;
 };
 
 function formatDateTime(value: string) {
@@ -145,90 +133,6 @@ function createEmptyFormState(): TradeEventFormState {
   };
 }
 
-function calculateGroupMetrics(events: PortfolioTradeEvent[]): JournalGroupMetrics {
-  let remainingQuantity = 0;
-  let investedCapital = 0;
-  let realizedPnl = 0;
-
-  const ascendingEvents = [...events].sort((left, right) => {
-    return new Date(left.tradedAt).getTime() - new Date(right.tradedAt).getTime();
-  });
-
-  for (const event of ascendingEvents) {
-    const amount = event.price * event.quantity;
-    const fees = event.fees ?? 0;
-
-    if (event.type === "buy" || event.type === "add") {
-      remainingQuantity += event.quantity;
-      investedCapital += amount + fees;
-      continue;
-    }
-
-    const averageCost = remainingQuantity > 0 ? investedCapital / remainingQuantity : 0;
-    const reducingQuantity = Math.min(remainingQuantity, event.quantity);
-    const costBasis = averageCost * reducingQuantity;
-
-    realizedPnl += amount - fees - costBasis;
-    remainingQuantity = Math.max(remainingQuantity - reducingQuantity, 0);
-    investedCapital = Math.max(investedCapital - costBasis, 0);
-  }
-
-  return {
-    remainingQuantity,
-    investedCapital,
-    averageCost: remainingQuantity > 0 ? investedCapital / remainingQuantity : 0,
-    realizedPnl
-  };
-}
-
-function groupEventsByTicker(events: PortfolioTradeEvent[]): JournalGroup[] {
-  const groups = new Map<string, PortfolioTradeEvent[]>();
-
-  for (const event of events) {
-    const current = groups.get(event.ticker) ?? [];
-    current.push(event);
-    groups.set(event.ticker, current);
-  }
-
-  return [...groups.entries()]
-    .map(([ticker, tickerEvents]) => {
-      const latestEvent = tickerEvents[0];
-      return {
-        ticker,
-        company: latestEvent?.company ?? ticker,
-        sector: latestEvent?.sector ?? "미분류",
-        events: tickerEvents,
-        latestEvent,
-        metrics: calculateGroupMetrics(tickerEvents)
-      };
-    })
-    .sort((left, right) => {
-      return new Date(right.latestEvent.tradedAt).getTime() - new Date(left.latestEvent.tradedAt).getTime();
-    });
-}
-
-function getJournalSummary(events: PortfolioTradeEvent[]) {
-  const groups = groupEventsByTicker(events);
-  let activeCount = 0;
-  let closedCount = 0;
-
-  for (const group of groups) {
-    if (closingTypes.has(group.latestEvent.type)) {
-      closedCount += 1;
-    } else {
-      activeCount += 1;
-    }
-  }
-
-  return {
-    totalEvents: events.length,
-    activeCount,
-    closedCount,
-    partialExitCount: events.filter((event) => event.type === "take_profit_partial").length,
-    stopLossCount: events.filter((event) => event.type === "stop_loss").length
-  };
-}
-
 function formatSignedPrice(value: number) {
   if (value === 0) {
     return formatPrice(0);
@@ -257,8 +161,8 @@ export function PortfolioJournalBoard({
     setJournal(initialJournal);
   }, [initialJournal]);
 
-  const groupedEvents = useMemo(() => groupEventsByTicker(journal.events), [journal.events]);
-  const summary = useMemo(() => getJournalSummary(journal.events), [journal.events]);
+  const groupedEvents = useMemo(() => groupPortfolioJournalByTicker(journal.events), [journal.events]);
+  const summary = useMemo(() => getPortfolioJournalSummary(journal.events), [journal.events]);
   const quickTickers = useMemo(() => {
     const keys = new Map<string, PortfolioProfilePosition>();
     for (const position of positions) {
@@ -351,7 +255,8 @@ export function PortfolioJournalBoard({
       {groupedEvents.length ? (
         <div className="grid gap-4 xl:grid-cols-2">
           {groupedEvents.map((group) => {
-            const isClosed = closingTypes.has(group.latestEvent.type);
+            const isClosed = isClosingPortfolioTradeEventType(group.latestEvent.type);
+            const review = buildPortfolioCloseReview(group);
 
             return (
               <Card key={group.ticker} className="border-border/70 bg-white/82 shadow-sm">
@@ -365,7 +270,12 @@ export function PortfolioJournalBoard({
                         {group.sector} · 이벤트 {group.events.length}건
                       </p>
                     </div>
-                    <Badge variant={isClosed ? "secondary" : "positive"}>{isClosed ? "종료" : "보유 중"}</Badge>
+                    <div className="flex items-center gap-2">
+                      <Badge variant={isClosed ? "secondary" : "positive"}>{isClosed ? "종료" : "보유 중"}</Badge>
+                      <Button asChild variant="ghost" size="sm">
+                        <Link href={`/portfolio/${group.ticker}`}>상세 보기</Link>
+                      </Button>
+                    </div>
                   </div>
 
                   <div className="grid gap-3 sm:grid-cols-3">
@@ -382,6 +292,14 @@ export function PortfolioJournalBoard({
                 </CardHeader>
 
                 <CardContent className="space-y-3">
+                  {isClosed ? (
+                    <div className="rounded-[20px] border border-border/70 bg-background/80 px-4 py-4">
+                      <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">종료 회고</p>
+                      <p className="mt-2 text-sm font-semibold text-foreground">{review.headline}</p>
+                      <p className="mt-2 text-sm leading-6 text-muted-foreground">{review.summary}</p>
+                    </div>
+                  ) : null}
+
                   {group.events.map((event, index) => {
                     const meta = tradeTypeMeta[event.type];
 

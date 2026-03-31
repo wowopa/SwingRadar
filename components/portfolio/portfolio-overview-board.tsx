@@ -187,7 +187,7 @@ export function PortfolioOverviewBoard({
                 return (
                   <Link
                     key={position.ticker}
-                    href={`/analysis/${position.ticker}`}
+                    href={`/portfolio/${position.ticker}`}
                     className="block rounded-[24px] border border-border/70 bg-secondary/20 p-4 transition hover:border-primary/35 hover:bg-secondary/35"
                   >
                     <div className="flex items-start justify-between gap-3">
