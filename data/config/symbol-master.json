@@ -201,7 +201,7 @@
     "sector": "주권",
     "market": "KOSPI",
     "region": "KR",
-    "status": "pending"
+    "status": "ready"
   },
   {
     "ticker": "000215",
@@ -285,7 +285,7 @@
     "sector": "중견기업부",
     "market": "KOSDAQ",
     "region": "KR",
-    "status": "pending"
+    "status": "ready"
   },
   {
     "ticker": "000270",
@@ -921,7 +921,7 @@
     "sector": "주권",
     "market": "KOSPI",
     "region": "KR",
-    "status": "pending"
+    "status": "ready"
   },
   {
     "ticker": "001130",
@@ -1293,7 +1293,7 @@
     "sector": "주권",
     "market": "KOSPI",
     "region": "KR",
-    "status": "pending"
+    "status": "ready"
   },
   {
     "ticker": "001560",
@@ -1569,7 +1569,7 @@
     "sector": "주권",
     "market": "KOSPI",
     "region": "KR",
-    "status": "pending"
+    "status": "ready"
   },
   {
     "ticker": "002025",
@@ -2373,7 +2373,7 @@
     "sector": "주권",
     "market": "KOSPI",
     "region": "KR",
-    "status": "ready"
+    "status": "pending"
   },
   {
     "ticker": "003300",
@@ -3453,7 +3453,7 @@
     "sector": "주권",
     "market": "KOSPI",
     "region": "KR",
-    "status": "pending"
+    "status": "ready"
   },
   {
     "ticker": "005030",
@@ -3777,7 +3777,7 @@
     "sector": "주권",
     "market": "KOSPI",
     "region": "KR",
-    "status": "pending"
+    "status": "ready"
   },
   {
     "ticker": "005710",
@@ -4221,7 +4221,7 @@
     "sector": "주권",
     "market": "KOSPI",
     "region": "KR",
-    "status": "ready"
+    "status": "pending"
   },
   {
     "ticker": "006370",
@@ -4425,7 +4425,7 @@
     "sector": "주권",
     "market": "KOSPI",
     "region": "KR",
-    "status": "pending"
+    "status": "ready"
   },
   {
     "ticker": "0068Y0",
@@ -4605,7 +4605,7 @@
     "sector": "주권",
     "market": "KOSPI",
     "region": "KR",
-    "status": "pending"
+    "status": "ready"
   },
   {
     "ticker": "007370",
@@ -4797,7 +4797,7 @@
     "sector": "주권",
     "market": "KOSPI",
     "region": "KR",
-    "status": "pending"
+    "status": "ready"
   },
   {
     "ticker": "007815",
@@ -5397,7 +5397,7 @@
     "sector": "주권",
     "market": "KOSPI",
     "region": "KR",
-    "status": "pending"
+    "status": "ready"
   },
   {
     "ticker": "009440",
@@ -5697,7 +5697,7 @@
     "sector": "주권",
     "market": "KOSPI",
     "region": "KR",
-    "status": "ready"
+    "status": "pending"
   },
   {
     "ticker": "010100",
@@ -5721,7 +5721,7 @@
     "sector": "주권",
     "market": "KOSPI",
     "region": "KR",
-    "status": "ready"
+    "status": "pending"
   },
   {
     "ticker": "010130",
@@ -5985,7 +5985,7 @@
     "sector": "주권",
     "market": "KOSPI",
     "region": "KR",
-    "status": "pending"
+    "status": "ready"
   },
   {
     "ticker": "011080",
@@ -6321,7 +6321,7 @@
     "sector": "주권",
     "market": "KOSPI",
     "region": "KR",
-    "status": "pending"
+    "status": "ready"
   },
   {
     "ticker": "012160",
@@ -6489,7 +6489,7 @@
     "sector": "주권",
     "market": "KOSPI",
     "region": "KR",
-    "status": "pending"
+    "status": "ready"
   },
   {
     "ticker": "012690",
@@ -6595,6 +6595,18 @@
       "하이록코리아"
     ],
     "sector": "우량기업부",
+    "market": "KOSDAQ",
+    "region": "KR",
+    "status": "pending"
+  },
+  {
+    "ticker": "0130H0",
+    "company": "엔에이치스팩33호",
+    "aliases": [
+      "NH SPECIAL PURPOSE ACQUISITION 33 COMPANY",
+      "엔에이치기업인수목적33호"
+    ],
+    "sector": "SPAC(소속부없음)",
     "market": "KOSDAQ",
     "region": "KR",
     "status": "pending"
@@ -7485,7 +7497,7 @@
     "sector": "주권",
     "market": "KOSPI",
     "region": "KR",
-    "status": "pending"
+    "status": "ready"
   },
   {
     "ticker": "017800",
@@ -7521,7 +7533,7 @@
     "sector": "주권",
     "market": "KOSPI",
     "region": "KR",
-    "status": "pending"
+    "status": "ready"
   },
   {
     "ticker": "017890",
@@ -7545,7 +7557,7 @@
     "sector": "주권",
     "market": "KOSPI",
     "region": "KR",
-    "status": "pending"
+    "status": "ready"
   },
   {
     "ticker": "017940",
@@ -7689,7 +7701,7 @@
     "sector": "주권",
     "market": "KOSPI",
     "region": "KR",
-    "status": "pending"
+    "status": "ready"
   },
   {
     "ticker": "018680",
@@ -7929,7 +7941,7 @@
     "sector": "주권",
     "market": "KOSPI",
     "region": "KR",
-    "status": "pending"
+    "status": "ready"
   },
   {
     "ticker": "020180",
@@ -8157,7 +8169,7 @@
     "sector": "우량기업부",
     "market": "KOSDAQ",
     "region": "KR",
-    "status": "pending"
+    "status": "ready"
   },
   {
     "ticker": "023350",
@@ -8217,7 +8229,7 @@
     "sector": "주권",
     "market": "KOSPI",
     "region": "KR",
-    "status": "pending"
+    "status": "ready"
   },
   {
     "ticker": "023590",
@@ -8469,7 +8481,7 @@
     "sector": "중견기업부",
     "market": "KOSDAQ",
     "region": "KR",
-    "status": "pending"
+    "status": "ready"
   },
   {
     "ticker": "024880",
@@ -8685,7 +8697,7 @@
     "sector": "주권",
     "market": "KOSPI",
     "region": "KR",
-    "status": "pending"
+    "status": "ready"
   },
   {
     "ticker": "025870",
@@ -9009,7 +9021,7 @@
     "sector": "중견기업부",
     "market": "KOSDAQ",
     "region": "KR",
-    "status": "pending"
+    "status": "ready"
   },
   {
     "ticker": "028670",
@@ -9369,7 +9381,7 @@
     "sector": "중견기업부",
     "market": "KOSDAQ",
     "region": "KR",
-    "status": "pending"
+    "status": "ready"
   },
   {
     "ticker": "032540",
@@ -9621,7 +9633,7 @@
     "sector": "중견기업부",
     "market": "KOSDAQ",
     "region": "KR",
-    "status": "pending"
+    "status": "ready"
   },
   {
     "ticker": "033170",
@@ -9813,7 +9825,7 @@
     "sector": "주권",
     "market": "KOSPI",
     "region": "KR",
-    "status": "pending"
+    "status": "ready"
   },
   {
     "ticker": "033790",
@@ -10545,7 +10557,7 @@
     "sector": "우량기업부",
     "market": "KOSDAQ",
     "region": "KR",
-    "status": "ready"
+    "status": "pending"
   },
   {
     "ticker": "037030",
@@ -10761,7 +10773,7 @@
     "sector": "우량기업부",
     "market": "KOSDAQ",
     "region": "KR",
-    "status": "pending"
+    "status": "ready"
   },
   {
     "ticker": "038290",
@@ -11049,7 +11061,7 @@
     "sector": "중견기업부",
     "market": "KOSDAQ",
     "region": "KR",
-    "status": "pending"
+    "status": "ready"
   },
   {
     "ticker": "039570",
@@ -11337,7 +11349,7 @@
     "sector": "우량기업부",
     "market": "KOSDAQ",
     "region": "KR",
-    "status": "pending"
+    "status": "ready"
   },
   {
     "ticker": "041930",
@@ -11409,7 +11421,7 @@
     "sector": "우량기업부",
     "market": "KOSDAQ",
     "region": "KR",
-    "status": "pending"
+    "status": "ready"
   },
   {
     "ticker": "042420",
@@ -11925,7 +11937,7 @@
     "sector": "중견기업부",
     "market": "KOSDAQ",
     "region": "KR",
-    "status": "pending"
+    "status": "ready"
   },
   {
     "ticker": "046210",
@@ -12021,7 +12033,7 @@
     "sector": "주권",
     "market": "KOSPI",
     "region": "KR",
-    "status": "pending"
+    "status": "ready"
   },
   {
     "ticker": "047050",
@@ -12489,7 +12501,7 @@
     "sector": "우량기업부",
     "market": "KOSDAQ",
     "region": "KR",
-    "status": "ready"
+    "status": "pending"
   },
   {
     "ticker": "050960",
@@ -12693,7 +12705,7 @@
     "sector": "투자주의환기종목(소속부없음)",
     "market": "KOSDAQ",
     "region": "KR",
-    "status": "ready"
+    "status": "pending"
   },
   {
     "ticker": "052220",
@@ -13065,7 +13077,7 @@
     "sector": "주권",
     "market": "KOSPI",
     "region": "KR",
-    "status": "pending"
+    "status": "ready"
   },
   {
     "ticker": "053700",
@@ -14058,7 +14070,7 @@
       "InkredibleBuzz",
       "인크레더블버즈"
     ],
-    "sector": "중견기업부",
+    "sector": "관리종목(소속부없음)",
     "market": "KOSDAQ",
     "region": "KR",
     "status": "pending"
@@ -14637,7 +14649,7 @@
     "sector": "주권",
     "market": "KOSPI",
     "region": "KR",
-    "status": "pending"
+    "status": "ready"
   },
   {
     "ticker": "066980",
@@ -15465,7 +15477,7 @@
     "sector": "우량기업부",
     "market": "KOSDAQ",
     "region": "KR",
-    "status": "ready"
+    "status": "pending"
   },
   {
     "ticker": "073540",
@@ -15801,7 +15813,7 @@
     "sector": "우량기업부",
     "market": "KOSDAQ",
     "region": "KR",
-    "status": "pending"
+    "status": "ready"
   },
   {
     "ticker": "078860",
@@ -16293,7 +16305,7 @@
     "sector": "우량기업부",
     "market": "KOSDAQ",
     "region": "KR",
-    "status": "pending"
+    "status": "ready"
   },
   {
     "ticker": "083310",
@@ -16725,7 +16737,7 @@
     "sector": "우량기업부",
     "market": "KOSDAQ",
     "region": "KR",
-    "status": "pending"
+    "status": "ready"
   },
   {
     "ticker": "086520",
@@ -16977,7 +16989,7 @@
     "sector": "중견기업부",
     "market": "KOSDAQ",
     "region": "KR",
-    "status": "pending"
+    "status": "ready"
   },
   {
     "ticker": "088910",
@@ -17049,7 +17061,7 @@
     "sector": "중견기업부",
     "market": "KOSDAQ",
     "region": "KR",
-    "status": "pending"
+    "status": "ready"
   },
   {
     "ticker": "089230",
@@ -17721,7 +17733,7 @@
     "sector": "우량기업부",
     "market": "KOSDAQ",
     "region": "KR",
-    "status": "pending"
+    "status": "ready"
   },
   {
     "ticker": "094280",
@@ -17877,7 +17889,7 @@
     "sector": "우량기업부",
     "market": "KOSDAQ",
     "region": "KR",
-    "status": "pending"
+    "status": "ready"
   },
   {
     "ticker": "095500",
@@ -17997,7 +18009,7 @@
     "sector": "벤처기업부",
     "market": "KOSDAQ",
     "region": "KR",
-    "status": "pending"
+    "status": "ready"
   },
   {
     "ticker": "096530",
@@ -18189,7 +18201,7 @@
     "sector": "중견기업부",
     "market": "KOSDAQ",
     "region": "KR",
-    "status": "pending"
+    "status": "ready"
   },
   {
     "ticker": "098120",
@@ -18357,7 +18369,7 @@
     "sector": "주권",
     "market": "KOSPI",
     "region": "KR",
-    "status": "pending"
+    "status": "ready"
   },
   {
     "ticker": "100120",
@@ -18465,7 +18477,7 @@
     "sector": "주권",
     "market": "KOSPI",
     "region": "KR",
-    "status": "pending"
+    "status": "ready"
   },
   {
     "ticker": "101000",
@@ -19341,7 +19353,7 @@
     "sector": "주권",
     "market": "KOSPI",
     "region": "KR",
-    "status": "pending"
+    "status": "ready"
   },
   {
     "ticker": "113810",
@@ -19473,7 +19485,7 @@
     "sector": "우량기업부",
     "market": "KOSDAQ",
     "region": "KR",
-    "status": "pending"
+    "status": "ready"
   },
   {
     "ticker": "115450",
@@ -19689,7 +19701,7 @@
     "sector": "주권",
     "market": "KOSPI",
     "region": "KR",
-    "status": "pending"
+    "status": "ready"
   },
   {
     "ticker": "120115",
@@ -19737,7 +19749,7 @@
     "sector": "우량기업부",
     "market": "KOSDAQ",
     "region": "KR",
-    "status": "pending"
+    "status": "ready"
   },
   {
     "ticker": "121800",
@@ -20349,7 +20361,7 @@
     "sector": "우량기업부",
     "market": "KOSDAQ",
     "region": "KR",
-    "status": "pending"
+    "status": "ready"
   },
   {
     "ticker": "131090",
@@ -20457,7 +20469,7 @@
     "sector": "우량기업부",
     "market": "KOSDAQ",
     "region": "KR",
-    "status": "pending"
+    "status": "ready"
   },
   {
     "ticker": "133750",
@@ -20901,7 +20913,7 @@
     "sector": "기술성장기업부",
     "market": "KOSDAQ",
     "region": "KR",
-    "status": "pending"
+    "status": "ready"
   },
   {
     "ticker": "142210",
@@ -21429,7 +21441,7 @@
     "sector": "우량기업부",
     "market": "KOSDAQ",
     "region": "KR",
-    "status": "pending"
+    "status": "ready"
   },
   {
     "ticker": "161000",
@@ -21477,7 +21489,7 @@
     "sector": "주권",
     "market": "KOSPI",
     "region": "KR",
-    "status": "pending"
+    "status": "ready"
   },
   {
     "ticker": "162300",
@@ -21633,7 +21645,7 @@
     "sector": "벤처기업부",
     "market": "KOSDAQ",
     "region": "KR",
-    "status": "pending"
+    "status": "ready"
   },
   {
     "ticker": "171010",
@@ -21837,7 +21849,7 @@
     "sector": "주권",
     "market": "KOSPI",
     "region": "KR",
-    "status": "pending"
+    "status": "ready"
   },
   {
     "ticker": "179290",
@@ -22173,7 +22185,7 @@
     "sector": "중견기업부",
     "market": "KOSDAQ",
     "region": "KR",
-    "status": "pending"
+    "status": "ready"
   },
   {
     "ticker": "189980",
@@ -22677,7 +22689,7 @@
     "sector": "중견기업부",
     "market": "KOSDAQ",
     "region": "KR",
-    "status": "pending"
+    "status": "ready"
   },
   {
     "ticker": "200780",
@@ -22833,7 +22845,7 @@
     "sector": "중견기업부",
     "market": "KOSDAQ",
     "region": "KR",
-    "status": "pending"
+    "status": "ready"
   },
   {
     "ticker": "204840",
@@ -23133,7 +23145,7 @@
     "sector": "우량기업부",
     "market": "KOSDAQ",
     "region": "KR",
-    "status": "pending"
+    "status": "ready"
   },
   {
     "ticker": "213500",
@@ -23505,7 +23517,7 @@
     "sector": "주권",
     "market": "KOSPI",
     "region": "KR",
-    "status": "pending"
+    "status": "ready"
   },
   {
     "ticker": "217620",
@@ -24093,7 +24105,7 @@
     "sector": "우량기업부",
     "market": "KOSDAQ",
     "region": "KR",
-    "status": "pending"
+    "status": "ready"
   },
   {
     "ticker": "230360",
@@ -24225,7 +24237,7 @@
     "sector": "우량기업부",
     "market": "KOSDAQ",
     "region": "KR",
-    "status": "pending"
+    "status": "ready"
   },
   {
     "ticker": "234920",
@@ -24693,7 +24705,7 @@
     "sector": "우량기업부",
     "market": "KOSDAQ",
     "region": "KR",
-    "status": "pending"
+    "status": "ready"
   },
   {
     "ticker": "247660",
@@ -25077,7 +25089,7 @@
     "sector": "주권",
     "market": "KOSPI",
     "region": "KR",
-    "status": "pending"
+    "status": "ready"
   },
   {
     "ticker": "260660",
@@ -25149,7 +25161,7 @@
     "sector": "기술성장기업부",
     "market": "KOSDAQ",
     "region": "KR",
-    "status": "pending"
+    "status": "ready"
   },
   {
     "ticker": "262260",
@@ -25329,7 +25341,7 @@
     "sector": "우량기업부",
     "market": "KOSDAQ",
     "region": "KR",
-    "status": "pending"
+    "status": "ready"
   },
   {
     "ticker": "264660",
@@ -25677,7 +25689,7 @@
     "sector": "주권",
     "market": "KOSPI",
     "region": "KR",
-    "status": "pending"
+    "status": "ready"
   },
   {
     "ticker": "273060",
@@ -25833,7 +25845,7 @@
     "sector": "주권",
     "market": "KOSPI",
     "region": "KR",
-    "status": "pending"
+    "status": "ready"
   },
   {
     "ticker": "278650",
@@ -25905,7 +25917,7 @@
     "sector": "주권",
     "market": "KOSPI",
     "region": "KR",
-    "status": "pending"
+    "status": "ready"
   },
   {
     "ticker": "282330",
@@ -25917,7 +25929,7 @@
     "sector": "주권",
     "market": "KOSPI",
     "region": "KR",
-    "status": "pending"
+    "status": "ready"
   },
   {
     "ticker": "282720",
@@ -25929,7 +25941,7 @@
     "sector": "우량기업부",
     "market": "KOSDAQ",
     "region": "KR",
-    "status": "pending"
+    "status": "ready"
   },
   {
     "ticker": "282880",
@@ -26469,7 +26481,7 @@
     "sector": "투자주의환기종목(소속부없음)",
     "market": "KOSDAQ",
     "region": "KR",
-    "status": "pending"
+    "status": "ready"
   },
   {
     "ticker": "297570",
@@ -26517,7 +26529,7 @@
     "sector": "주권",
     "market": "KOSPI",
     "region": "KR",
-    "status": "pending"
+    "status": "ready"
   },
   {
     "ticker": "298040",
@@ -27129,7 +27141,7 @@
     "sector": "기술성장기업부",
     "market": "KOSDAQ",
     "region": "KR",
-    "status": "pending"
+    "status": "ready"
   },
   {
     "ticker": "314140",
@@ -27405,7 +27417,7 @@
     "sector": "우량기업부",
     "market": "KOSDAQ",
     "region": "KR",
-    "status": "pending"
+    "status": "ready"
   },
   {
     "ticker": "320000",
@@ -27477,7 +27489,7 @@
     "sector": "주권",
     "market": "KOSPI",
     "region": "KR",
-    "status": "pending"
+    "status": "ready"
   },
   {
     "ticker": "322180",
@@ -27681,7 +27693,7 @@
     "sector": "중견기업부",
     "market": "KOSDAQ",
     "region": "KR",
-    "status": "pending"
+    "status": "ready"
   },
   {
     "ticker": "331380",
@@ -28005,7 +28017,7 @@
     "sector": "기술성장기업부",
     "market": "KOSDAQ",
     "region": "KR",
-    "status": "pending"
+    "status": "ready"
   },
   {
     "ticker": "339770",
@@ -28161,7 +28173,7 @@
     "sector": "기술성장기업부",
     "market": "KOSDAQ",
     "region": "KR",
-    "status": "pending"
+    "status": "ready"
   },
   {
     "ticker": "347740",
@@ -28473,7 +28485,7 @@
     "sector": "주권",
     "market": "KOSPI",
     "region": "KR",
-    "status": "pending"
+    "status": "ready"
   },
   {
     "ticker": "35320K",
@@ -28761,7 +28773,7 @@
     "sector": "벤처기업부",
     "market": "KOSDAQ",
     "region": "KR",
-    "status": "pending"
+    "status": "ready"
   },
   {
     "ticker": "361570",
@@ -29157,7 +29169,7 @@
     "sector": "주권",
     "market": "KOSPI",
     "region": "KR",
-    "status": "pending"
+    "status": "ready"
   },
   {
     "ticker": "375500",
@@ -29169,7 +29181,7 @@
     "sector": "주권",
     "market": "KOSPI",
     "region": "KR",
-    "status": "pending"
+    "status": "ready"
   },
   {
     "ticker": "37550K",
@@ -29253,7 +29265,7 @@
     "sector": "기술성장기업부",
     "market": "KOSDAQ",
     "region": "KR",
-    "status": "pending"
+    "status": "ready"
   },
   {
     "ticker": "376930",
@@ -29433,7 +29445,7 @@
     "sector": "관리종목(소속부없음)",
     "market": "KOSDAQ",
     "region": "KR",
-    "status": "pending"
+    "status": "ready"
   },
   {
     "ticker": "380550",
@@ -29505,7 +29517,7 @@
     "sector": "우량기업부",
     "market": "KOSDAQ",
     "region": "KR",
-    "status": "pending"
+    "status": "ready"
   },
   {
     "ticker": "382840",
@@ -29733,7 +29745,7 @@
     "sector": "우량기업부",
     "market": "KOSDAQ",
     "region": "KR",
-    "status": "pending"
+    "status": "ready"
   },
   {
     "ticker": "389470",
@@ -29817,7 +29829,7 @@
     "sector": "기술성장기업부",
     "market": "KOSDAQ",
     "region": "KR",
-    "status": "pending"
+    "status": "ready"
   },
   {
     "ticker": "393970",
@@ -30009,7 +30021,7 @@
     "sector": "기술성장기업부",
     "market": "KOSDAQ",
     "region": "KR",
-    "status": "pending"
+    "status": "ready"
   },
   {
     "ticker": "403490",
@@ -30333,7 +30345,7 @@
     "sector": "우량기업부",
     "market": "KOSDAQ",
     "region": "KR",
-    "status": "pending"
+    "status": "ready"
   },
   {
     "ticker": "417790",
@@ -30597,7 +30609,7 @@
     "sector": "우량기업부",
     "market": "KOSDAQ",
     "region": "KR",
-    "status": "pending"
+    "status": "ready"
   },
   {
     "ticker": "429270",
@@ -31017,7 +31029,7 @@
     "sector": "주권",
     "market": "KOSPI",
     "region": "KR",
-    "status": "pending"
+    "status": "ready"
   },
   {
     "ticker": "450330",
@@ -31281,7 +31293,7 @@
     "sector": "벤처기업부",
     "market": "KOSDAQ",
     "region": "KR",
-    "status": "pending"
+    "status": "ready"
   },
   {
     "ticker": "453860",
@@ -31365,7 +31377,7 @@
     "sector": "주권",
     "market": "KOSPI",
     "region": "KR",
-    "status": "pending"
+    "status": "ready"
   },
   {
     "ticker": "456070",
@@ -32217,7 +32229,7 @@
     "sector": "주권",
     "market": "KOSPI",
     "region": "KR",
-    "status": "pending"
+    "status": "ready"
   },
   {
     "ticker": "475230",
@@ -32313,7 +32325,7 @@
     "sector": "벤처기업부",
     "market": "KOSDAQ",
     "region": "KR",
-    "status": "pending"
+    "status": "ready"
   },
   {
     "ticker": "475660",
@@ -32397,7 +32409,7 @@
     "sector": "기술성장기업부",
     "market": "KOSDAQ",
     "region": "KR",
-    "status": "pending"
+    "status": "ready"
   },
   {
     "ticker": "477340",
@@ -33177,7 +33189,7 @@
     "sector": "외국기업(소속부없음)",
     "market": "KOSDAQ",
     "region": "KR",
-    "status": "ready"
+    "status": "pending"
   },
   {
     "ticker": "950170",
