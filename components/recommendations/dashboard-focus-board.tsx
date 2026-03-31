@@ -37,7 +37,7 @@ function formatQueueCount(value: number, suffix = "개") {
 }
 
 function getOpeningCheckSummary(dailyScan: DailyScanSummaryDto | null) {
-  const candidates = dailyScan?.topCandidates.slice(0, 6) ?? [];
+  const candidates = dailyScan?.topCandidates ?? [];
   const counts = {
     pending: 0,
     passed: 0,
@@ -53,7 +53,7 @@ function getOpeningCheckSummary(dailyScan: DailyScanSummaryDto | null) {
 
   return {
     counts,
-    pendingItems: candidates.filter((item) => (item.openingRecheck?.status ?? "pending") === "pending").slice(0, 3)
+    pendingItems: candidates.filter((item) => (item.openingRecheck?.status ?? "pending") === "pending")
   };
 }
 
@@ -360,7 +360,7 @@ export function DashboardFocusBoard({
             </CardHeader>
             <CardContent className="space-y-4">
               {openingSummary.pendingItems.length ? (
-                <div className="space-y-3">
+                <div className="max-h-[420px] space-y-3 overflow-y-auto pr-1">
                   {openingSummary.pendingItems.map((item) => (
                     <Link
                       key={item.ticker}

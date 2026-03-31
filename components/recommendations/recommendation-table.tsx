@@ -55,17 +55,13 @@ export function RecommendationTable({
               </tr>
             </thead>
             <tbody>
-              {items.map((item) => {
+              {items.map((item, index) => {
                 return (
                   <tr key={item.ticker} className="border-b border-border/60 text-foreground/80 last:border-0">
                     <td className="py-4 pr-6">
-                      {item.featuredRank ? (
-                        <span className="rounded-full border border-primary/30 bg-primary/10 px-2 py-1 text-[11px] font-medium text-primary">
-                          #{item.featuredRank}
-                        </span>
-                      ) : (
-                        <span className="text-xs text-muted-foreground">-</span>
-                      )}
+                      <span className="rounded-full border border-primary/30 bg-primary/10 px-2 py-1 text-[11px] font-medium text-primary">
+                        #{index + 1}
+                      </span>
                     </td>
                     <td className="py-4 pr-6">
                       <FavoriteTickerButton active={favorites.includes(item.ticker)} label={`${item.company} 즐겨찾기`} onClick={() => onToggleFavorite(item.ticker)} />
