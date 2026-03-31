@@ -257,7 +257,7 @@ export function LandingPage() {
                     #{index + 1}
                   </span>
                   <div className="space-y-3">
-                    <h3 className="public-section-title text-[clamp(1.65rem,2.2vw,2.45rem)] font-semibold leading-[1] tracking-[-0.07em]">
+                    <h3 className="public-section-title text-[clamp(1.52rem,2vw,2.26rem)] font-semibold leading-[1] tracking-[-0.07em]">
                       {item.title}
                     </h3>
                     <p className="public-section-copy text-base leading-8">{item.body}</p>
