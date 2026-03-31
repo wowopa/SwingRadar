@@ -28,10 +28,10 @@ export default async function AuthPage({
         <div className="space-y-5">
           <Badge variant="positive">Private Dashboard</Badge>
           <div className="space-y-4">
-            <h1 className="max-w-3xl text-4xl font-semibold leading-tight tracking-[-0.05em] text-foreground sm:text-[3.35rem]">
+            <h1 className="max-w-3xl text-4xl font-semibold leading-tight tracking-[-0.05em] text-white/95 drop-shadow-[0_12px_24px_rgba(15,23,42,0.18)] sm:text-[3.35rem]">
               로그인 후에만 개인 포트폴리오 기준의 행동 보드가 열립니다.
             </h1>
-            <p className="max-w-2xl text-base leading-8 text-muted-foreground">
+            <p className="max-w-2xl text-base leading-8 text-white/72">
               SWING-RADAR는 공개 리포트를 보여주는 서비스가 아니라, 내 자산과 내 보유를 기준으로 오늘 무엇을 할지 정리하는 운용
               도구입니다. 로그인 후에는 장전 후보, 장초 확인, 보유 관리까지 모두 내 기준으로 계산됩니다.
             </p>
@@ -58,14 +58,14 @@ export default async function AuthPage({
               const Icon = item.icon;
 
               return (
-                <Card key={item.title} className="border-border/70 bg-white/82 shadow-sm">
+                <Card key={item.title} className="border-white/30 bg-white/90 shadow-[0_18px_42px_rgba(15,23,42,0.12)] backdrop-blur-md">
                   <CardContent className="space-y-3 p-5">
                     <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/10 text-primary">
                       <Icon className="h-5 w-5" />
                     </div>
                     <div>
-                      <p className="text-sm font-semibold text-foreground">{item.title}</p>
-                      <p className="mt-2 text-sm leading-6 text-muted-foreground">{item.description}</p>
+                      <p className="text-sm font-semibold text-slate-900">{item.title}</p>
+                      <p className="mt-2 text-sm leading-6 text-slate-600">{item.description}</p>
                     </div>
                   </CardContent>
                 </Card>

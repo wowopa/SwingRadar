@@ -5,20 +5,25 @@ import { cn } from "@/lib/utils";
 type BrandMarkProps = {
   compact?: boolean;
   className?: string;
+  mode?: "framed" | "plain";
 };
 
 type BrandSignatureProps = {
   compact?: boolean;
   className?: string;
   tone?: "default" | "light";
+  markMode?: "framed" | "plain";
 };
 
-export function BrandMark({ compact = false, className }: BrandMarkProps) {
+export function BrandMark({ compact = false, className, mode = "framed" }: BrandMarkProps) {
+  const isPlain = mode === "plain";
+
   return (
     <div
       className={cn(
-        "relative overflow-hidden rounded-[1.6rem] border border-white/10 shadow-panel",
+        "relative shrink-0",
         compact ? "h-14 w-14" : "h-16 w-16 sm:h-[4.6rem] sm:w-[4.6rem]",
+        isPlain ? "overflow-visible rounded-none border-0 bg-transparent shadow-none" : "overflow-hidden rounded-[1.6rem] border border-white/10 shadow-panel",
         className
       )}
     >
@@ -26,25 +31,25 @@ export function BrandMark({ compact = false, className }: BrandMarkProps) {
         src="/brand/swingradar_bi.png"
         alt=""
         fill
-        className="object-cover"
+        className={isPlain ? "object-contain" : "object-cover"}
         sizes={compact ? "56px" : "74px"}
       />
     </div>
   );
 }
 
-export function BrandSignature({ compact = false, className, tone = "default" }: BrandSignatureProps) {
+export function BrandSignature({ compact = false, className, tone = "default", markMode = "framed" }: BrandSignatureProps) {
   const isLight = tone === "light";
 
   return (
     <div className={cn("flex items-center gap-3 sm:gap-4", className)}>
-      <BrandMark compact={compact} />
+      <BrandMark compact={compact} mode={markMode} />
 
       <div className="min-w-0">
         <p
           className={cn(
             "text-[10px] font-semibold uppercase tracking-[0.34em] sm:text-[11px]",
-            isLight ? "text-white/68" : "text-foreground/66"
+            isLight ? "text-[#D8B86A]" : "text-foreground/66"
           )}
         >
           SWING SIGNAL RECOMMENDED SERVICE

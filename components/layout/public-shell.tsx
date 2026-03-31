@@ -22,7 +22,7 @@ export function PublicShell({ children }: { children: ReactNode }) {
             <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_12%_10%,hsl(39_76%_70%_/_0.12),transparent_18%),radial-gradient(circle_at_88%_22%,hsl(196_90%_72%_/_0.08),transparent_20%)]" />
             <div className="relative mx-auto flex min-h-[84px] items-center justify-between gap-4 px-4 py-4 sm:px-5 lg:px-6">
               <Link href="/" className="min-w-0">
-                <BrandSignature compact className="gap-3" tone="light" />
+                <BrandSignature compact className="gap-3" tone="light" markMode="plain" />
               </Link>
 
               <nav className="hidden items-center gap-6 lg:flex">
