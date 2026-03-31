@@ -104,15 +104,15 @@ export function LandingPage() {
         <div className="public-pan pointer-events-none absolute right-[-4rem] top-10 h-60 w-60 rounded-full bg-[radial-gradient(circle,hsl(39_78%_72%_/_0.16),transparent_72%)] blur-3xl" />
         <div className="public-float-delayed pointer-events-none absolute left-16 top-20 h-28 w-28 rounded-full bg-[radial-gradient(circle,hsl(197_88%_74%_/_0.12),transparent_72%)] blur-3xl" />
 
-        <ScrollReveal>
-          <div className="relative">
-            <div className="max-w-[980px] space-y-8 pb-8 lg:pb-[23rem]">
+        <div className="relative lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(29rem,34rem)] lg:items-start lg:gap-10">
+          <ScrollReveal>
+            <div className="max-w-[860px] space-y-8">
               <div className="space-y-5">
                 <Badge className="public-hero-badge hover:bg-white/8" variant="secondary">
                   Action-first swing operating system
                 </Badge>
                 <div className="space-y-6">
-                  <h1 className="headline-balance public-hero-title max-w-[8.6ch] text-[clamp(4.4rem,11vw,9.4rem)] font-semibold leading-[0.86] tracking-[-0.11em]">
+                  <h1 className="headline-balance public-hero-title max-w-[7.6ch] text-[clamp(4.4rem,11vw,9.4rem)] font-semibold leading-[0.86] tracking-[-0.11em]">
                     오늘 할 행동만 남깁니다.
                   </h1>
                   <p className="public-hero-copy max-w-[760px] text-[clamp(1.05rem,1.6vw,1.28rem)] leading-8">
@@ -153,9 +153,10 @@ export function LandingPage() {
                 ))}
               </div>
             </div>
+          </ScrollReveal>
 
-            <ScrollReveal delay={220} axis="x">
-              <div className="relative public-float lg:absolute lg:bottom-2 lg:right-0 lg:w-[31rem] xl:w-[34rem]">
+          <div className="landing-hero-board-enter relative mt-10 lg:mt-2 lg:justify-self-end lg:self-start">
+            <div className="relative public-float lg:w-[31rem] xl:w-[34rem]">
                 <div className="absolute -inset-x-6 -inset-y-6 rounded-[42px] bg-[radial-gradient(circle_at_center,hsl(37_80%_68%_/_0.14),transparent_72%)] blur-3xl" />
                 <div className="relative rounded-[34px] border border-white/12 bg-[linear-gradient(180deg,rgba(255,255,255,0.17),rgba(255,255,255,0.08))] p-4 backdrop-blur-xl sm:p-5">
                   <div className="rounded-[30px] border border-white/12 bg-[linear-gradient(180deg,rgba(16,23,37,0.96),rgba(22,29,44,0.99))] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
@@ -218,28 +219,18 @@ export function LandingPage() {
                     </div>
                   </div>
                 </div>
-              </div>
-            </ScrollReveal>
+            </div>
           </div>
-        </ScrollReveal>
+        </div>
       </section>
 
       <section id="overview" className="space-y-8">
-        <div className="grid gap-6 xl:grid-cols-[minmax(0,0.84fr)_minmax(0,1.16fr)] xl:items-end">
-          <ScrollReveal className="space-y-4">
-            <p className="public-section-kicker text-[11px] font-semibold uppercase tracking-[0.24em]">Benefits</p>
-            <h2 className="headline-balance public-section-title max-w-[11.4ch] text-[clamp(2.9rem,6.4vw,5.8rem)] font-semibold leading-[0.92] tracking-[-0.095em]">
-              고민은 줄고, 기준은 더 선명해집니다.
-            </h2>
-          </ScrollReveal>
-
-          <ScrollReveal delay={80}>
-            <p className="public-section-copy max-w-[640px] text-[clamp(1rem,1.35vw,1.14rem)] leading-8 xl:ml-auto">
-              긴 설명보다 먼저 체감되는 변화가 중요합니다. 아침에 더 빨리, 더 적게, 더 차분하게 결정할 수 있도록 이점부터 전면에
-              두었습니다.
-            </p>
-          </ScrollReveal>
-        </div>
+        <ScrollReveal className="space-y-4">
+          <p className="public-section-kicker text-[11px] font-semibold uppercase tracking-[0.24em]">Benefits</p>
+          <h2 className="headline-balance public-section-title text-[clamp(2.9rem,6.1vw,5.6rem)] font-semibold leading-[0.94] tracking-[-0.095em]">
+            명확한 기준으로 종목 선택의 고민을 줄여줍니다.
+          </h2>
+        </ScrollReveal>
 
         <div className="grid gap-4 xl:grid-cols-3">
           {benefitNarrative.map((item, index) => (
@@ -263,21 +254,12 @@ export function LandingPage() {
       </section>
 
       <section id="workflow" className="space-y-8">
-        <div className="grid gap-6 xl:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] xl:items-end">
-          <ScrollReveal className="space-y-4">
-            <p className="public-section-kicker text-[11px] font-semibold uppercase tracking-[0.24em]">Workflow</p>
-            <h2 className="headline-balance public-section-title max-w-[11.2ch] text-[clamp(2.9rem,6.5vw,5.9rem)] font-semibold leading-[0.92] tracking-[-0.095em]">
-              아침 10분이면 오늘 할 일이 정리됩니다.
-            </h2>
-          </ScrollReveal>
-
-          <ScrollReveal delay={90}>
-            <p className="public-section-copy max-w-[700px] text-[clamp(1rem,1.35vw,1.14rem)] leading-8 xl:ml-auto">
-              장전에는 후보를 줄이고, 장초에는 한 번 더 거르고, 그 뒤에는 정말로 볼 종목만 남깁니다. 그래서 루틴은 짧아지고 추격은 더
-              줄어듭니다.
-            </p>
-          </ScrollReveal>
-        </div>
+        <ScrollReveal className="space-y-4">
+          <p className="public-section-kicker text-[11px] font-semibold uppercase tracking-[0.24em]">Workflow</p>
+          <h2 className="headline-balance public-section-title text-[clamp(2.9rem,6.2vw,5.7rem)] font-semibold leading-[0.94] tracking-[-0.095em]">
+            아침 10분이면 오늘 할 일이 정리됩니다.
+          </h2>
+        </ScrollReveal>
 
         <div className="pt-2">
           <ScrollReveal delay={130}>
@@ -289,16 +271,9 @@ export function LandingPage() {
       <section id="product" className="space-y-8">
         <ScrollReveal className="space-y-4">
           <p className="public-section-kicker text-[11px] font-semibold uppercase tracking-[0.24em]">Product</p>
-          <h2 className="headline-balance public-section-title max-w-[10.4ch] text-[clamp(3.1rem,8vw,6rem)] font-semibold leading-[0.9] tracking-[-0.1em]">
-            로그인 후에는 내 기준 행동판이 열립니다.
+          <h2 className="headline-balance public-section-title text-[clamp(2.9rem,6.1vw,5.6rem)] font-semibold leading-[0.94] tracking-[-0.095em]">
+            스윙에 필요한 세부 기능을 모두 제공합니다.
           </h2>
-        </ScrollReveal>
-
-        <ScrollReveal delay={70}>
-          <p className="public-section-copy max-w-[760px] text-[clamp(1rem,1.35vw,1.14rem)] leading-8">
-            공개 랜딩은 방향만 보여주고, 실제 가치는 로그인 후부터 시작됩니다. 내 자산, 내 보유, 내 한도 기준으로 오늘 행동이
-            달라지기 때문입니다.
-          </p>
         </ScrollReveal>
 
         <div className="grid gap-4 lg:grid-cols-12">
@@ -376,12 +351,9 @@ export function LandingPage() {
         <div className="grid gap-10 xl:grid-cols-[minmax(0,0.86fr)_minmax(0,1.14fr)]">
           <ScrollReveal className="space-y-4">
             <p className="public-section-kicker text-[11px] font-semibold uppercase tracking-[0.24em]">FAQ</p>
-            <h2 className="headline-balance public-section-title max-w-[9.2ch] text-[clamp(3rem,7vw,5.4rem)] font-semibold leading-[0.9] tracking-[-0.1em]">
-              사용자는 결국 이것을 묻습니다.
+            <h2 className="headline-balance public-section-title text-[clamp(2.8rem,5.8vw,5rem)] font-semibold leading-[0.94] tracking-[-0.095em]">
+              SWING-RADAR에 대한 모든 것
             </h2>
-            <p className="public-section-copy max-w-lg text-[clamp(1rem,1.4vw,1.18rem)] leading-8">
-              뭘 사야 하는지, 뭘 기다려야 하는지, 왜 오늘은 쉬어야 하는지. 랜딩도 그 질문에 가깝게 답하도록 정리했습니다.
-            </p>
             <div className="pt-2">
               <Button asChild size="lg">
                 <Link href="/auth">
