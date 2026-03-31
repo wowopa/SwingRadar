@@ -5,6 +5,13 @@ import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
+const landingStatusToneClasses = {
+  positive: "border-emerald-200/28 bg-emerald-200/16 text-emerald-50",
+  neutral: "border-amber-200/28 bg-amber-200/16 text-amber-50",
+  caution: "border-rose-200/28 bg-rose-200/16 text-rose-50",
+  secondary: "border-white/14 bg-white/8 text-white/86"
+} as const;
+
 const stages = [
   {
     id: "preopen",
@@ -113,9 +120,9 @@ export function LandingWorkflowDemo() {
               </h3>
               <p className="public-panel-copy mt-4 max-w-2xl text-[1.02rem] leading-8">{stage.description}</p>
             </div>
-            <Badge className="border-white/10 bg-white/6 text-white" variant="secondary">
-              {stage.label}
-            </Badge>
+                    <Badge className="border-white/10 bg-white/6 text-white" variant="secondary">
+                      {stage.label}
+                    </Badge>
           </div>
 
           <div className="mt-5 grid gap-3 md:grid-cols-3">
@@ -140,7 +147,9 @@ export function LandingWorkflowDemo() {
                     </span>
                     <p className="public-panel-title text-sm font-semibold">{item.name}</p>
                   </div>
-                  <Badge variant={item.tone}>{item.status}</Badge>
+                  <Badge variant="secondary" className={landingStatusToneClasses[item.tone]}>
+                    {item.status}
+                  </Badge>
                 </div>
               </div>
             ))}

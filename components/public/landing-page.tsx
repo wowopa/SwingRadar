@@ -6,6 +6,12 @@ import { ScrollReveal } from "@/components/public/scroll-reveal";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
+const landingStatusToneClasses = {
+  positive: "border-emerald-200/28 bg-emerald-200/16 text-emerald-50",
+  neutral: "border-amber-200/28 bg-amber-200/16 text-amber-50",
+  caution: "border-rose-200/28 bg-rose-200/16 text-rose-50"
+} as const;
+
 const benefitStrip = [
   { label: "신규 매수", value: "0~2개", note: "많이 보여주지 않고, 실제로 볼 것만 남깁니다." },
   { label: "아침 판단", value: "5~10분", note: "장초에 짧게 다시 보고 무리한 추격을 막습니다." },
@@ -85,9 +91,9 @@ const faqs = [
 ] as const;
 
 const heroBoardItems = [
-  ["ISC", "오늘 매수 검토", "진입 87,000 ~ 88,200 / 손절 83,400"],
-  ["DN오토모티브", "관찰 유지", "시초가 반응이 약하면 더 지켜보기"],
-  ["씨에스윈드", "추격 금지", "이미 과열 구간이면 오늘은 보류"]
+  { name: "ISC", status: "오늘 매수 검토", note: "진입 87,000 ~ 88,200 / 손절 83,400", tone: "positive" as const },
+  { name: "DN오토모티브", status: "관찰 유지", note: "시초가 반응이 약하면 더 지켜보기", tone: "neutral" as const },
+  { name: "씨에스윈드", status: "추격 금지", note: "이미 과열 구간이면 오늘은 보류", tone: "caution" as const }
 ] as const;
 
 export function LandingPage() {
@@ -181,9 +187,9 @@ export function LandingPage() {
                     </div>
 
                     <div className="mt-4 space-y-3">
-                      {heroBoardItems.map(([name, state, note], index) => (
+                      {heroBoardItems.map((item, index) => (
                         <div
-                          key={name}
+                          key={item.name}
                           className="rounded-[24px] border border-white/8 bg-white/[0.045] px-4 py-4 transition duration-300 hover:bg-white/[0.075]"
                         >
                           <div className="flex items-center justify-between gap-3">
@@ -192,13 +198,16 @@ export function LandingPage() {
                                 0{index + 1}
                               </span>
                               <div>
-                                <p className="public-panel-title text-sm font-semibold">{name}</p>
-                                <p className="public-panel-note mt-1 text-xs">{note}</p>
+                                <p className="public-panel-title text-sm font-semibold">{item.name}</p>
+                                <p className="public-panel-note mt-1 text-xs">{item.note}</p>
                               </div>
                             </div>
-                            <span className="rounded-full border border-white/10 bg-white/6 px-3 py-1 text-xs font-medium text-white/72">
-                              {state}
-                            </span>
+                            <Badge
+                              variant="secondary"
+                              className={landingStatusToneClasses[item.tone]}
+                            >
+                              {item.status}
+                            </Badge>
                           </div>
                         </div>
                       ))}
@@ -216,61 +225,61 @@ export function LandingPage() {
       </section>
 
       <section id="overview" className="space-y-8">
-        <ScrollReveal className="space-y-4">
-          <p className="public-section-kicker text-[11px] font-semibold uppercase tracking-[0.24em]">Benefits</p>
-          <h2 className="headline-balance public-section-title max-w-[8.8ch] text-[clamp(3.2rem,8vw,6.4rem)] font-semibold leading-[0.9] tracking-[-0.1em]">
-            고민은 줄고, 기준은 더 선명해집니다.
-          </h2>
-        </ScrollReveal>
-
-        <div className="grid gap-8 xl:grid-cols-[minmax(0,0.82fr)_minmax(0,1.18fr)] xl:items-start">
-          <ScrollReveal delay={80}>
-            <div className="rounded-[34px] border border-border/70 bg-white/68 p-6 shadow-[0_24px_80px_hsl(33_22%_26%_/_0.06)] backdrop-blur-xl sm:p-8">
-              <p className="public-section-copy max-w-[520px] text-[clamp(1rem,1.4vw,1.16rem)] leading-8">
-                이 랜딩의 목적은 서비스 구조를 길게 설명하는 데 있지 않습니다. 사용자가 아침에 더 빨리, 더 적게, 더 차분하게 결정할 수
-                있게 만드는 이점을 먼저 보여주는 데 있습니다.
-              </p>
-            </div>
+        <div className="grid gap-6 xl:grid-cols-[minmax(0,0.84fr)_minmax(0,1.16fr)] xl:items-end">
+          <ScrollReveal className="space-y-4">
+            <p className="public-section-kicker text-[11px] font-semibold uppercase tracking-[0.24em]">Benefits</p>
+            <h2 className="headline-balance public-section-title max-w-[11.4ch] text-[clamp(2.9rem,6.4vw,5.8rem)] font-semibold leading-[0.92] tracking-[-0.095em]">
+              고민은 줄고, 기준은 더 선명해집니다.
+            </h2>
           </ScrollReveal>
 
-          <div className="space-y-4">
-            {benefitNarrative.map((item, index) => (
-              <ScrollReveal key={item.title} delay={index * 90}>
-                <article className="rounded-[34px] border border-border/70 bg-white/76 p-6 shadow-[0_24px_80px_hsl(33_22%_26%_/_0.06)] backdrop-blur-xl sm:p-8">
-                  <div className="flex items-start gap-4">
-                    <span className="mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-primary/15 bg-primary/8 text-sm font-semibold text-primary">
-                      {item.number}
-                    </span>
-                    <div className="space-y-3">
-                      <h3 className="public-section-title max-w-[780px] text-[clamp(1.9rem,3vw,3.15rem)] font-semibold leading-[0.96] tracking-[-0.08em]">
-                        {item.title}
-                      </h3>
-                      <p className="public-section-copy max-w-2xl text-base leading-8">{item.body}</p>
-                    </div>
+          <ScrollReveal delay={80}>
+            <p className="public-section-copy max-w-[640px] text-[clamp(1rem,1.35vw,1.14rem)] leading-8 xl:ml-auto">
+              긴 설명보다 먼저 체감되는 변화가 중요합니다. 아침에 더 빨리, 더 적게, 더 차분하게 결정할 수 있도록 이점부터 전면에
+              두었습니다.
+            </p>
+          </ScrollReveal>
+        </div>
+
+        <div className="grid gap-4 xl:grid-cols-3">
+          {benefitNarrative.map((item, index) => (
+            <ScrollReveal key={item.title} delay={index * 90}>
+              <article className="h-full rounded-[34px] border border-border/70 bg-white/76 p-6 shadow-[0_24px_80px_hsl(33_22%_26%_/_0.06)] backdrop-blur-xl sm:p-8">
+                <div className="flex items-start gap-4">
+                  <span className="mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-primary/15 bg-primary/8 text-sm font-semibold text-primary">
+                    {item.number}
+                  </span>
+                  <div className="space-y-3">
+                    <h3 className="public-section-title text-[clamp(1.65rem,2.2vw,2.45rem)] font-semibold leading-[1] tracking-[-0.07em]">
+                      {item.title}
+                    </h3>
+                    <p className="public-section-copy text-base leading-8">{item.body}</p>
                   </div>
-                </article>
-              </ScrollReveal>
-            ))}
-          </div>
+                </div>
+              </article>
+            </ScrollReveal>
+          ))}
         </div>
       </section>
 
       <section id="workflow" className="space-y-8">
-        <ScrollReveal className="space-y-4">
-          <p className="public-section-kicker text-[11px] font-semibold uppercase tracking-[0.24em]">Workflow</p>
-          <h2 className="headline-balance public-section-title max-w-[10.4ch] text-[clamp(3.2rem,8vw,6.2rem)] font-semibold leading-[0.9] tracking-[-0.1em]">
-            아침 10분이면 오늘 할 일이 정리됩니다.
-          </h2>
-        </ScrollReveal>
-
-        <div className="grid gap-6 xl:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] xl:items-start">
-          <ScrollReveal delay={90}>
-            <div className="public-section-copy rounded-[32px] border border-border/70 bg-white/72 px-5 py-5 text-[1.02rem] leading-8 shadow-[0_18px_56px_hsl(33_22%_24%_/_0.05)] backdrop-blur-xl sm:px-6">
-              장전에는 후보를 줄이고, 장초에는 한 번 더 거르고, 그 뒤에는 정말로 볼 종목만 남깁니다. 그래서 아침 루틴이 짧아지고,
-              무리한 추격도 줄어듭니다.
-            </div>
+        <div className="grid gap-6 xl:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] xl:items-end">
+          <ScrollReveal className="space-y-4">
+            <p className="public-section-kicker text-[11px] font-semibold uppercase tracking-[0.24em]">Workflow</p>
+            <h2 className="headline-balance public-section-title max-w-[11.2ch] text-[clamp(2.9rem,6.5vw,5.9rem)] font-semibold leading-[0.92] tracking-[-0.095em]">
+              아침 10분이면 오늘 할 일이 정리됩니다.
+            </h2>
           </ScrollReveal>
 
+          <ScrollReveal delay={90}>
+            <p className="public-section-copy max-w-[700px] text-[clamp(1rem,1.35vw,1.14rem)] leading-8 xl:ml-auto">
+              장전에는 후보를 줄이고, 장초에는 한 번 더 거르고, 그 뒤에는 정말로 볼 종목만 남깁니다. 그래서 루틴은 짧아지고 추격은 더
+              줄어듭니다.
+            </p>
+          </ScrollReveal>
+        </div>
+
+        <div className="pt-2">
           <ScrollReveal delay={130}>
             <LandingWorkflowDemo />
           </ScrollReveal>
@@ -285,14 +294,12 @@ export function LandingPage() {
           </h2>
         </ScrollReveal>
 
-        <div className="flex justify-start">
-          <ScrollReveal delay={70}>
-            <div className="public-section-copy max-w-[760px] rounded-[28px] border border-border/70 bg-white/72 px-5 py-5 text-[1.02rem] leading-8 shadow-[0_18px_56px_hsl(33_22%_24%_/_0.05)] backdrop-blur-xl">
-              공개 랜딩은 방향만 보여주고, 실제 가치는 로그인 후부터 시작됩니다. 내 자산, 내 보유, 내 한도 기준으로 오늘 행동이
-              달라지기 때문입니다.
-            </div>
-          </ScrollReveal>
-        </div>
+        <ScrollReveal delay={70}>
+          <p className="public-section-copy max-w-[760px] text-[clamp(1rem,1.35vw,1.14rem)] leading-8">
+            공개 랜딩은 방향만 보여주고, 실제 가치는 로그인 후부터 시작됩니다. 내 자산, 내 보유, 내 한도 기준으로 오늘 행동이
+            달라지기 때문입니다.
+          </p>
+        </ScrollReveal>
 
         <div className="grid gap-4 lg:grid-cols-12">
           {productSurfaces.map((item, index) => {
@@ -314,13 +321,14 @@ export function LandingPage() {
                     </div>
                   </div>
 
-                  <div className="mt-6 space-y-3">
+                  <ul className="mt-6 space-y-3">
                     {item.bullets.map((bullet) => (
-                      <div key={bullet} className="public-section-copy-soft rounded-[22px] border border-border/70 bg-secondary/20 px-4 py-3 text-sm">
-                        {bullet}
-                      </div>
+                      <li key={bullet} className="flex items-start gap-3">
+                        <span className="mt-[0.7rem] h-1.5 w-1.5 shrink-0 rounded-full bg-primary/55" />
+                        <span className="public-section-copy-soft text-sm leading-7">{bullet}</span>
+                      </li>
                     ))}
-                  </div>
+                  </ul>
                 </section>
               </ScrollReveal>
             );
