@@ -3,16 +3,12 @@
 import type { ReactNode } from "react";
 import { useMemo, useState } from "react";
 
-import { RecommendationCard } from "@/components/recommendations/recommendation-card";
-import { RecommendationFramework } from "@/components/recommendations/recommendation-framework";
 import { RecommendationTable } from "@/components/recommendations/recommendation-table";
 import { Input } from "@/components/ui/input";
 import {
-  getRecommendationActionMeta,
   resolveRecommendationActionBucket,
   type RecommendationActionBucket
 } from "@/lib/recommendations/action-plan";
-import { formatPercent } from "@/lib/utils";
 import { useFavoriteTickers } from "@/lib/use-favorite-tickers";
 import type { Recommendation, ValidationBasis } from "@/types/recommendation";
 
@@ -57,28 +53,6 @@ function getActionBucket(item: Recommendation) {
   );
 }
 
-function buildReasons(item: Recommendation) {
-  const reasons: string[] = [];
-
-  if (item.tradePlan?.entryLabel) {
-    reasons.push(`진입 구간 ${item.tradePlan.entryLabel}`);
-  }
-  if (item.tradePlan?.stopLabel) {
-    reasons.push(`손절 기준 ${item.tradePlan.stopLabel}`);
-  }
-  if (item.validation.hitRate >= 58) {
-    reasons.push(`유사 흐름 확률 ${item.validation.hitRate}%`);
-  }
-  if (item.validation.avgReturn >= 4) {
-    reasons.push(`평균 수익 ${formatPercent(item.validation.avgReturn)}`);
-  }
-  if ((item.featuredRank ?? Number.MAX_SAFE_INTEGER) <= 10) {
-    reasons.push(`오늘 후보 상위권 #${item.featuredRank}`);
-  }
-
-  return reasons.slice(0, 3);
-}
-
 function getToneClasses(tone: "emerald" | "sky" | "amber" | "stone") {
   const tones = {
     emerald: "border-emerald-200 bg-emerald-50 text-emerald-700",
@@ -90,18 +64,6 @@ function getToneClasses(tone: "emerald" | "sky" | "amber" | "stone") {
   return tones[tone];
 }
 
-function getDefaultCardLimit(bucket: RecommendationActionBucket) {
-  if (bucket === "buy_now") {
-    return 3;
-  }
-
-  if (bucket === "watch_only") {
-    return 4;
-  }
-
-  return 2;
-}
-
 export function RecommendationExplorer({ items }: { items: Recommendation[] }) {
   const [query, setQuery] = useState("");
   const [tone, setTone] = useState<ToneFilter>("all");
@@ -109,7 +71,7 @@ export function RecommendationExplorer({ items }: { items: Recommendation[] }) {
   const [favoriteFilter, setFavoriteFilter] = useState<FavoriteFilter>("all");
   const [trustFilter, setTrustFilter] = useState<TrustFilter>("all");
   const [sort, setSort] = useState<SortKey>("score_desc");
-  const { favorites, isFavorite, toggleFavorite } = useFavoriteTickers();
+  const { favorites, toggleFavorite } = useFavoriteTickers();
 
   const sectors = useMemo(() => {
     return Array.from(new Set(items.map((item) => item.sector))).sort((left, right) => left.localeCompare(right, "ko"));
@@ -202,17 +164,6 @@ export function RecommendationExplorer({ items }: { items: Recommendation[] }) {
       }
     );
   }, [filteredItems]);
-
-  const cardSections = useMemo(
-    () =>
-      ACTION_BUCKET_ORDER.map((bucket) => ({
-        bucket,
-        meta: getRecommendationActionMeta(bucket),
-        items: bucketedItems[bucket].slice(0, getDefaultCardLimit(bucket)),
-        hiddenCount: Math.max(bucketedItems[bucket].length - getDefaultCardLimit(bucket), 0)
-      })),
-    [bucketedItems]
-  );
 
   const actionableCount = bucketedItems.buy_now.length + bucketedItems.watch_only.length;
   const enoughInvalidationCount = filteredItems.filter((item) => item.invalidationDistance <= -6).length;
@@ -311,72 +262,20 @@ export function RecommendationExplorer({ items }: { items: Recommendation[] }) {
       </section>
 
       {filteredItems.length ? (
-        <>
-          <section className="space-y-4">
-            <div className="flex flex-wrap items-end justify-between gap-3">
-              <div>
-                <h2 className="text-xl font-semibold text-foreground">행동 후보 카드</h2>
-                <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                  기본 카드 영역은 장초 확인을 통과하면 행동할 수 있는 후보부터 보여줍니다. 보류 종목은 표에서 비교하되, 카드에서는 과도하게 앞세우지 않습니다.
-                </p>
-              </div>
-              <div className="rounded-2xl border border-border/70 bg-secondary/35 px-4 py-3 text-sm text-muted-foreground">
-                장초 통과 후보 {bucketedItems.buy_now.length}개 · 관찰만 {bucketedItems.watch_only.length}개 · 보류 {bucketedItems.avoid.length}개
-              </div>
-            </div>
-
-            <div className="space-y-8">
-              {cardSections.map((section) => (
-                <div key={section.bucket} className="space-y-4">
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <div>
-                      <h3 className="text-lg font-semibold text-foreground">{section.meta.label}</h3>
-                      <p className="mt-1 text-sm leading-6 text-muted-foreground">{section.meta.description}</p>
-                    </div>
-                    <div className="rounded-2xl border border-border/70 bg-secondary/25 px-3 py-2 text-sm text-muted-foreground">
-                      {bucketedItems[section.bucket].length}개 중 기본 카드 {section.items.length}개 노출
-                    </div>
-                  </div>
-
-                  {section.items.length ? (
-                    <div className="grid gap-6 xl:grid-cols-2">
-                      {section.items.map((item) => (
-                        <RecommendationCard
-                          key={item.ticker}
-                          item={item}
-                          summaryLabel={section.meta.label}
-                          summaryReasons={buildReasons(item)}
-                          isFavorite={isFavorite(item.ticker)}
-                          onToggleFavorite={toggleFavorite}
-                        />
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="rounded-3xl border border-border/70 bg-card/40 p-6 text-sm leading-6 text-muted-foreground">
-                      현재 필터 기준으로 이 구간에 해당하는 종목은 없습니다.
-                    </div>
-                  )}
-
-                  {section.hiddenCount > 0 ? (
-                    <div className="rounded-2xl border border-border/70 bg-secondary/25 px-4 py-3 text-sm text-muted-foreground">
-                      이 구간에는 추가로 {section.hiddenCount}개가 더 있습니다. 전체 비교는 아래 표에서 확인할 수 있습니다.
-                    </div>
-                  ) : null}
-                </div>
-              ))}
-            </div>
-          </section>
-
-          <section className="space-y-4">
+        <section className="space-y-4">
+          <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
-              <h2 className="text-lg font-semibold text-foreground">전체 후보 비교표</h2>
+              <h2 className="text-lg font-semibold text-foreground">전체 후보 순위표</h2>
               <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                카드에서 먼저 행동 후보를 고른 뒤, 나머지 종목과 비교하거나 필터 결과 전체를 빠르게 읽을 때 쓰는 표입니다.
+                이 화면은 카드보다 비교표 중심으로 봅니다. 필터와 정렬로 후보를 좁힌 뒤, 필요한 종목만 상세 분석으로 들어가면 됩니다.
               </p>
             </div>
-            <RecommendationTable items={filteredItems} favorites={favorites} onToggleFavorite={toggleFavorite} />
-          </section>
-        </>
+            <div className="rounded-2xl border border-border/70 bg-secondary/35 px-4 py-3 text-sm text-muted-foreground">
+              장초 통과 후보 {bucketedItems.buy_now.length}개 · 관찰만 {bucketedItems.watch_only.length}개 · 보류 {bucketedItems.avoid.length}개
+            </div>
+          </div>
+          <RecommendationTable items={filteredItems} favorites={favorites} onToggleFavorite={toggleFavorite} />
+        </section>
       ) : (
         <section className="rounded-3xl border border-border/70 bg-card/40 p-8 text-center">
           <p className="text-lg font-semibold text-foreground">조건에 맞는 후보가 없습니다.</p>
@@ -386,9 +285,6 @@ export function RecommendationExplorer({ items }: { items: Recommendation[] }) {
         </section>
       )}
 
-      <section>
-        <RecommendationFramework />
-      </section>
     </div>
   );
 }
