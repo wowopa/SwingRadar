@@ -81,13 +81,13 @@ export function LandingWorkflowDemo() {
               >
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+                    <p className="public-section-kicker text-[11px] font-semibold uppercase tracking-[0.22em]">
                       0{index + 1} · {item.eyebrow}
                     </p>
-                    <p className="mt-3 text-[clamp(1.35rem,2vw,1.8rem)] font-semibold leading-[1] tracking-[-0.05em] text-foreground">
+                    <p className="public-section-title mt-3 text-[clamp(1.35rem,2vw,1.8rem)] font-semibold leading-[1] tracking-[-0.05em]">
                       {item.label}
                     </p>
-                    <p className="mt-3 text-sm leading-6 text-muted-foreground">{item.title}</p>
+                    <p className="public-section-copy mt-3 text-sm leading-6">{item.title}</p>
                   </div>
                   <span
                     className={cn(
@@ -107,11 +107,11 @@ export function LandingWorkflowDemo() {
         >
           <div className="flex flex-wrap items-start justify-between gap-4 border-b border-white/10 pb-5">
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-white/40">{stage.panelNote}</p>
-              <h3 className="mt-3 text-[clamp(2.25rem,4vw,3.5rem)] font-semibold leading-[0.95] tracking-[-0.08em] text-white">
+              <p className="public-panel-kicker text-[11px] font-semibold uppercase tracking-[0.24em]">{stage.panelNote}</p>
+              <h3 className="public-panel-title mt-3 text-[clamp(2.25rem,4vw,3.5rem)] font-semibold leading-[0.95] tracking-[-0.08em]">
                 {stage.panelTitle}
               </h3>
-              <p className="mt-4 max-w-2xl text-[1.02rem] leading-8 text-white/66">{stage.description}</p>
+              <p className="public-panel-copy mt-4 max-w-2xl text-[1.02rem] leading-8">{stage.description}</p>
             </div>
             <Badge className="border-white/10 bg-white/6 text-white" variant="secondary">
               {stage.label}
@@ -122,7 +122,7 @@ export function LandingWorkflowDemo() {
             {stage.bullets.map((bullet, index) => (
               <div
                 key={bullet}
-                className="rounded-[24px] border border-white/10 bg-white/[0.055] px-4 py-4 text-sm text-white/74"
+                className="public-panel-copy rounded-[24px] border border-white/10 bg-white/[0.055] px-4 py-4 text-sm"
                 style={{ transitionDelay: `${index * 50}ms` }}
               >
                 {bullet}
@@ -138,7 +138,7 @@ export function LandingWorkflowDemo() {
                     <span className="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/6 text-xs font-semibold text-white/70">
                       0{index + 1}
                     </span>
-                    <p className="text-sm font-semibold text-white">{item.name}</p>
+                    <p className="public-panel-title text-sm font-semibold">{item.name}</p>
                   </div>
                   <Badge variant={item.tone}>{item.status}</Badge>
                 </div>
@@ -146,7 +146,7 @@ export function LandingWorkflowDemo() {
             ))}
           </div>
 
-          <div className="mt-5 rounded-[24px] border border-amber-300/14 bg-amber-300/8 px-4 py-4 text-sm leading-7 text-white/72">
+          <div className="public-panel-copy mt-5 rounded-[24px] border border-amber-300/14 bg-amber-300/8 px-4 py-4 text-sm leading-7">
             종목을 많이 보여주는 것보다, 지금 무엇을 해야 하는지 먼저 답하는 화면이 되도록 설계했습니다.
           </div>
         </div>

@@ -20,7 +20,7 @@ export function PublicShell({ children }: { children: ReactNode }) {
         <header className="sticky top-4 z-40">
           <div className="mx-auto flex items-center justify-between gap-4 rounded-full border border-white/10 bg-[linear-gradient(180deg,rgba(18,25,38,0.88),rgba(24,31,45,0.72))] px-4 py-3 shadow-[0_24px_70px_hsl(220_26%_8%_/_0.22)] backdrop-blur-xl sm:px-5">
             <Link href="/" className="min-w-0">
-              <BrandSignature compact className="gap-3" />
+              <BrandSignature compact className="gap-3" tone="light" />
             </Link>
 
             <nav className="hidden items-center gap-6 lg:flex">
@@ -28,7 +28,7 @@ export function PublicShell({ children }: { children: ReactNode }) {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className="text-sm font-medium text-white/64 transition hover:text-white"
+                  className="public-shell-link text-sm font-medium transition"
                 >
                   {item.label}
                 </Link>
@@ -49,9 +49,9 @@ export function PublicShell({ children }: { children: ReactNode }) {
         <main className="pt-8 sm:pt-10">{children}</main>
 
         <footer className="mt-16 border-t border-border/60 px-2 pt-6">
-          <div className="flex flex-col gap-3 text-sm text-muted-foreground md:flex-row md:items-center md:justify-between">
-            <p>SWING-RADAR는 로그인 전에는 철학과 흐름을, 로그인 후에는 개인 운용 대시보드를 보여줍니다.</p>
-            <p className="text-xs tracking-[0.18em]">COPYRIGHT {currentYear} SWING-RADAR</p>
+          <div className="flex flex-col gap-3 text-sm md:flex-row md:items-center md:justify-between">
+            <p className="public-shell-copy">SWING-RADAR는 로그인 전에는 철학과 흐름을, 로그인 후에는 개인 운용 대시보드를 보여줍니다.</p>
+            <p className="public-shell-copy-soft text-xs tracking-[0.18em]">COPYRIGHT {currentYear} SWING-RADAR</p>
           </div>
         </footer>
       </div>

@@ -3,9 +3,12 @@ import { cn } from "@/lib/utils";
 type BrandSignatureProps = {
   compact?: boolean;
   className?: string;
+  tone?: "default" | "light";
 };
 
-export function BrandSignature({ compact = false, className }: BrandSignatureProps) {
+export function BrandSignature({ compact = false, className, tone = "default" }: BrandSignatureProps) {
+  const isLight = tone === "light";
+
   return (
     <div className={cn("flex items-center gap-3 sm:gap-4", className)}>
       <div
@@ -51,20 +54,33 @@ export function BrandSignature({ compact = false, className }: BrandSignaturePro
       </div>
 
       <div className="min-w-0">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.34em] text-muted-foreground sm:text-[11px]">
+        <p
+          className={cn(
+            "text-[10px] font-semibold uppercase tracking-[0.34em] sm:text-[11px]",
+            isLight ? "text-white/42" : "text-muted-foreground"
+          )}
+        >
           KRX Swing Signal Workspace
         </p>
         <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
           <p
             className={cn(
-              "text-balance font-semibold tracking-[-0.05em] text-foreground",
+              "text-balance font-semibold tracking-[-0.05em]",
+              isLight ? "text-white" : "text-foreground",
               compact ? "text-xl sm:text-2xl" : "text-[1.7rem] sm:text-[2.15rem]"
             )}
           >
             SWING-RADAR
           </p>
           {!compact ? (
-            <span className="rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.24em] text-primary">
+            <span
+              className={cn(
+                "rounded-full px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.24em]",
+                isLight
+                  ? "border border-white/12 bg-white/8 text-white/78"
+                  : "border border-primary/20 bg-primary/10 text-primary"
+              )}
+            >
               Signal First
             </span>
           ) : null}
