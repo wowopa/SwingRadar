@@ -59,18 +59,19 @@ describe("recommendation action plan", () => {
     ]);
 
     expect(summary.marketStance).toBe("selective");
-    expect(summary.marketStanceLabel).toBe("선별 매수");
     expect(summary.maxNewPositions).toBe(1);
-    expect(summary.bucketCounts.buy_now).toBe(1);
-    expect(summary.bucketCounts.watch_only).toBe(1);
-    expect(summary.bucketCounts.avoid).toBe(1);
+    expect(summary.bucketCounts).toEqual({
+      buy_now: 1,
+      watch_only: 1,
+      avoid: 1
+    });
   });
 
   it("builds a three-step workflow around the daily summary", () => {
     const workflow = buildTodayOperatingWorkflow({
       marketStance: "selective",
       marketStanceLabel: "선별 매수",
-      summary: "장초 재판정을 통과한 종목 1개 정도만 신중하게 볼 만한 날입니다.",
+      summary: "장초 재판정을 통과한 종목 한 개만 조심스럽게 본다.",
       maxNewPositions: 1,
       maxConcurrentPositions: 4,
       bucketCounts: {
@@ -78,51 +79,54 @@ describe("recommendation action plan", () => {
         watch_only: 3,
         avoid: 2
       },
-      focusNote: "장초 매수 검토 1개만 우선 검토합니다."
+      focusNote: "상위 1개만 검토한다."
     });
 
-    expect(workflow.basisLabel).toBe("전일 종가 기준 장전 계획");
     expect(workflow.steps).toHaveLength(3);
-    expect(workflow.steps[1]?.title).toBe("장초 재판정");
+    expect(workflow.steps[0]?.key).toBe("preopen_candidates");
+    expect(workflow.steps[1]?.key).toBe("opening_recheck");
     expect(workflow.openingChecklist[0]?.failLabel).toContain("추격 금지");
-    expect(workflow.steps[2]?.detail).toContain("최대 1개");
   });
 
-  it("builds a capped today action board from saved recheck decisions", () => {
+  it("builds position sizing for buy-review candidates when a portfolio profile is present", () => {
     const board = buildTodayActionBoard(
       [
         {
           ticker: "005930",
           company: "삼성전자",
-          sector: "반도체",
+          sector: "Semiconductor",
           signalTone: "긍정",
           featuredRank: 1,
           candidateScore: 98,
           activationScore: 74,
+          tradePlan: {
+            currentPrice: 74_500,
+            currentPriceLabel: "74,500원",
+            entryPriceLow: 74_500,
+            entryPriceHigh: 75_000,
+            confirmationPrice: 75_000,
+            entryLabel: "74,500원 ~ 75,000원",
+            stopPrice: 71_000,
+            stopLabel: "71,000원",
+            targetPrice: 81_000,
+            targetLabel: "81,000원",
+            stretchTargetPrice: 84_000,
+            stretchTargetLabel: "84,000원",
+            holdWindowLabel: "5~10거래일",
+            riskRewardLabel: "1 : 1.7",
+            nextStep: "장초 확인"
+          },
           openingRecheck: {
             status: "passed",
             updatedAt: "2026-03-31T00:05:00.000Z"
           }
         },
         {
-          ticker: "000660",
-          company: "SK하이닉스",
-          sector: "반도체",
-          signalTone: "긍정",
-          featuredRank: 2,
-          candidateScore: 94,
-          activationScore: 71,
-          openingRecheck: {
-            status: "passed",
-            updatedAt: "2026-03-31T00:06:00.000Z"
-          }
-        },
-        {
           ticker: "035420",
           company: "NAVER",
-          sector: "인터넷",
+          sector: "Internet",
           signalTone: "중립",
-          featuredRank: 3,
+          featuredRank: 2,
           candidateScore: 88,
           activationScore: 58,
           openingRecheck: {
@@ -133,9 +137,9 @@ describe("recommendation action plan", () => {
         {
           ticker: "068270",
           company: "셀트리온",
-          sector: "제약/바이오",
+          sector: "Bio",
           signalTone: "주의",
-          featuredRank: 4,
+          featuredRank: 3,
           candidateScore: 80,
           activationScore: 42,
           openingRecheck: {
@@ -146,9 +150,9 @@ describe("recommendation action plan", () => {
         {
           ticker: "051910",
           company: "LG화학",
-          sector: "화학",
+          sector: "Chemical",
           signalTone: "중립",
-          featuredRank: 5,
+          featuredRank: 4,
           candidateScore: 77,
           activationScore: 49
         }
@@ -161,24 +165,33 @@ describe("recommendation action plan", () => {
         activeHoldings: [
           {
             ticker: "267260",
-            company: "HD현대일렉트릭",
-            sector: "전력기기"
+            company: "HD Hyundai Electric",
+            sector: "Power Equipment"
           }
-        ]
+        ],
+        profileName: "실전 운용",
+        totalCapital: 50_000_000,
+        availableCash: 12_000_000,
+        maxRiskPerTradePercent: 0.8
       }
     );
 
     expect(board.summary.buyReviewCount).toBe(1);
-    expect(board.summary.watchCount).toBe(2);
+    expect(board.summary.watchCount).toBe(1);
     expect(board.summary.avoidCount).toBe(1);
     expect(board.summary.pendingCount).toBe(1);
     expect(board.summary.activeHoldingCount).toBe(1);
     expect(board.summary.remainingPortfolioSlots).toBe(3);
-    expect(board.summary.sectorLimit).toBe(2);
-    expect(board.summary.crowdedSectors).toEqual([]);
-    expect(board.summary.note).toContain("한도 1개");
+    expect(board.summary.portfolioProfileName).toBe("실전 운용");
+    expect(board.summary.availableCash).toBe(12_000_000);
+    expect(board.summary.riskBudgetPerTrade).toBe(400_000);
     expect(board.sections[0]?.status).toBe("buy_review");
-    expect(board.sections[0]?.items[0]?.ticker).toBe("005930");
-    expect(board.sections[1]?.items[0]?.boardReason).toContain("관찰");
+    expect(board.sections[0]?.items[0]?.tradePlan?.positionSizing).toMatchObject({
+      suggestedQuantity: 100,
+      suggestedCapital: 7_500_000,
+      suggestedWeightPercent: 15,
+      maxLossAmount: 400_000,
+      limitSource: "risk_budget"
+    });
   });
 });

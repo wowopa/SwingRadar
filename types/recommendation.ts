@@ -107,6 +107,22 @@ export interface PortfolioProfile {
   updatedBy: string;
 }
 
+export type PositionSizingLimitSource = "risk_budget" | "slot_budget" | "cash_budget";
+
+export interface PositionSizingPlan {
+  entryReferencePrice: number;
+  stopDistancePrice: number;
+  stopDistancePercent: number;
+  riskBudget: number;
+  suggestedQuantity: number;
+  suggestedCapital: number;
+  suggestedWeightPercent: number;
+  maxLossAmount: number;
+  limitSource: PositionSizingLimitSource;
+  limitLabel: string;
+  note: string;
+}
+
 export interface TodayActionBoardItem {
   ticker: string;
   company: string;
@@ -137,6 +153,9 @@ export interface TodayActionBoardSummary {
   avoidCount: number;
   excludedCount: number;
   pendingCount: number;
+  portfolioProfileName?: string;
+  availableCash?: number;
+  riskBudgetPerTrade?: number;
 }
 
 export interface TodayActionBoardSection {
@@ -169,6 +188,7 @@ export interface RecommendationTradePlan {
   holdWindowLabel: string;
   riskRewardLabel: string;
   nextStep: string;
+  positionSizing?: PositionSizingPlan;
 }
 
 export interface RankChangeSummary {

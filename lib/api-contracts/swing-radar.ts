@@ -4,6 +4,7 @@ export type RiskStatusDto = "양호" | "확인 필요" | "주의";
 export type TrackingResultDto = "감시중" | "진행중" | "성공" | "실패" | "무효화";
 export type ValidationBasisDto = "실측 기반" | "공용 추적 참고" | "유사 업종 참고" | "유사 흐름 참고" | "보수 계산";
 export type RecommendationActionBucketDto = "buy_now" | "watch_only" | "avoid";
+export type PositionSizingLimitSourceDto = "risk_budget" | "slot_budget" | "cash_budget";
 
 export interface ActionBucketCountsDto {
   buy_now: number;
@@ -103,6 +104,21 @@ export interface RecommendationTradePlanDto {
   holdWindowLabel: string;
   riskRewardLabel: string;
   nextStep: string;
+  positionSizing?: PositionSizingPlanDto;
+}
+
+export interface PositionSizingPlanDto {
+  entryReferencePrice: number;
+  stopDistancePrice: number;
+  stopDistancePercent: number;
+  riskBudget: number;
+  suggestedQuantity: number;
+  suggestedCapital: number;
+  suggestedWeightPercent: number;
+  maxLossAmount: number;
+  limitSource: PositionSizingLimitSourceDto;
+  limitLabel: string;
+  note: string;
 }
 
 export interface TodayActionBoardItemDto {
@@ -135,6 +151,9 @@ export interface TodayActionBoardSummaryDto {
   avoidCount: number;
   excludedCount: number;
   pendingCount: number;
+  portfolioProfileName?: string;
+  availableCash?: number;
+  riskBudgetPerTrade?: number;
 }
 
 export interface TodayActionBoardSectionDto {

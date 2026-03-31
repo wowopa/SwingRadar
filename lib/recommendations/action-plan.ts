@@ -4,6 +4,7 @@ import type {
   OpeningRecheckDecision,
   OpeningChecklistItem,
   OperatingStage,
+  PositionSizingPlan,
   Recommendation,
   RecommendationActionBucket,
   RecommendationTradePlan,
@@ -71,6 +72,15 @@ export interface TodayActionBoardHoldingInput {
   ticker: string;
   company: string;
   sector: string;
+}
+
+export interface TodayActionBoardPortfolioInput {
+  activeHoldings?: TodayActionBoardHoldingInput[];
+  sectorLimit?: number;
+  profileName?: string | null;
+  totalCapital?: number | null;
+  availableCash?: number | null;
+  maxRiskPerTradePercent?: number | null;
 }
 
 const OPENING_RECHECK_WINDOW_LABEL = "장 시작 후 5~10분";
@@ -205,6 +215,111 @@ function formatPriceRange(low: number | null, high: number | null, fallback: str
   }
 
   return formatPrice(low ?? high ?? 0);
+}
+
+function roundToSingleDecimal(value: number) {
+  return Math.round(value * 10) / 10;
+}
+
+function resolveEntryReferencePrice(tradePlan?: RecommendationTradePlan | null) {
+  if (!tradePlan) {
+    return null;
+  }
+
+  return (
+    tradePlan.entryPriceHigh ??
+    tradePlan.confirmationPrice ??
+    tradePlan.currentPrice ??
+    tradePlan.entryPriceLow ??
+    null
+  );
+}
+
+function buildPositionSizingPlan({
+  tradePlan,
+  totalCapital,
+  availableCash,
+  maxRiskPerTradePercent,
+  maxConcurrentPositions,
+  buyReviewCount
+}: {
+  tradePlan?: RecommendationTradePlan | null;
+  totalCapital: number;
+  availableCash: number;
+  maxRiskPerTradePercent: number;
+  maxConcurrentPositions: number;
+  buyReviewCount: number;
+}): PositionSizingPlan | undefined {
+  const entryReferencePrice = resolveEntryReferencePrice(tradePlan);
+  const stopPrice = tradePlan?.stopPrice ?? null;
+
+  if (
+    entryReferencePrice === null ||
+    stopPrice === null ||
+    !Number.isFinite(entryReferencePrice) ||
+    !Number.isFinite(stopPrice) ||
+    entryReferencePrice <= 0 ||
+    totalCapital <= 0 ||
+    availableCash <= 0 ||
+    maxRiskPerTradePercent <= 0 ||
+    maxConcurrentPositions <= 0 ||
+    buyReviewCount <= 0
+  ) {
+    return undefined;
+  }
+
+  const stopDistancePrice = entryReferencePrice - stopPrice;
+  if (stopDistancePrice <= 0) {
+    return undefined;
+  }
+
+  const riskBudget = (totalCapital * maxRiskPerTradePercent) / 100;
+  const slotBudget = totalCapital / maxConcurrentPositions;
+  const cashBudgetPerIdea = availableCash / buyReviewCount;
+  const capitalCap = Math.max(0, Math.min(slotBudget, cashBudgetPerIdea));
+  const riskBasedQuantity = Math.floor(riskBudget / stopDistancePrice);
+  const cappedQuantity = Math.floor(capitalCap / entryReferencePrice);
+
+  let suggestedQuantity = Math.min(Math.max(riskBasedQuantity, 0), Math.max(cappedQuantity, 0));
+  let limitSource: PositionSizingPlan["limitSource"] = "risk_budget";
+  let limitLabel = "리스크 예산 기준";
+  let note = `손절 기준 최대 손실을 ${formatPrice(riskBudget)} 안으로 제한하도록 계산했습니다.`;
+
+  if (riskBasedQuantity <= 0) {
+    suggestedQuantity = 0;
+    limitSource = "risk_budget";
+    limitLabel = "리스크 예산 기준";
+    note = "현재 손절 폭이 커서 1주만 매수해도 1회 손실 한도를 넘습니다.";
+  } else if (suggestedQuantity < riskBasedQuantity) {
+    if (cashBudgetPerIdea <= slotBudget) {
+      limitSource = "cash_budget";
+      limitLabel = "가용 현금 기준";
+      note = `오늘 가용 현금을 매수 검토 ${buyReviewCount}개에 나눠 잡아 ${formatPrice(capitalCap)}까지만 제안합니다.`;
+    } else {
+      limitSource = "slot_budget";
+      limitLabel = "포트폴리오 슬롯 기준";
+      note = `동시 보유 ${maxConcurrentPositions}개 기준 1종목당 ${formatPrice(slotBudget)}를 넘기지 않도록 제한했습니다.`;
+    }
+  }
+
+  const suggestedCapital = suggestedQuantity * entryReferencePrice;
+  const maxLossAmount = suggestedQuantity * stopDistancePrice;
+  const suggestedWeightPercent = totalCapital > 0 ? (suggestedCapital / totalCapital) * 100 : 0;
+  const stopDistancePercent = (stopDistancePrice / entryReferencePrice) * 100;
+
+  return {
+    entryReferencePrice,
+    stopDistancePrice,
+    stopDistancePercent: roundToSingleDecimal(stopDistancePercent),
+    riskBudget: Math.round(riskBudget),
+    suggestedQuantity,
+    suggestedCapital: Math.round(suggestedCapital),
+    suggestedWeightPercent: roundToSingleDecimal(suggestedWeightPercent),
+    maxLossAmount: Math.round(maxLossAmount),
+    limitSource,
+    limitLabel,
+    note
+  };
 }
 
 function getDefaultHoldWindow(signalTone: SignalTone) {
@@ -474,10 +589,7 @@ export function buildTodayOperatingWorkflow(summary: TodayOperatingSummary): Dai
 export function buildTodayActionBoard(
   candidates: TodayActionBoardCandidateInput[],
   summary: Pick<TodayOperatingSummary, "maxNewPositions" | "maxConcurrentPositions">,
-  portfolio?: {
-    activeHoldings?: TodayActionBoardHoldingInput[];
-    sectorLimit?: number;
-  }
+  portfolio?: TodayActionBoardPortfolioInput
 ): TodayActionBoard {
   const orderedCandidates = [...candidates].sort(compareActionBoardPriority);
   const sectorLimit = portfolio?.sectorLimit ?? MAX_SECTOR_ACTIVE_POSITIONS;
@@ -606,6 +718,47 @@ export function buildTodayActionBoard(
   const pendingCount = sections.find((section) => section.status === "pending")?.count ?? 0;
   const overflowPassedCount = Math.max(passedCandidates.length - buyReviewCount, 0);
   const remainingNewPositions = Math.max(buyReviewLimit - buyReviewCount, 0);
+  const sizingEnabled =
+    typeof portfolio?.totalCapital === "number" &&
+    portfolio.totalCapital > 0 &&
+    typeof portfolio?.availableCash === "number" &&
+    portfolio.availableCash > 0 &&
+    typeof portfolio?.maxRiskPerTradePercent === "number" &&
+    portfolio.maxRiskPerTradePercent > 0 &&
+    buyReviewCount > 0;
+  const sizingTotalCapital = sizingEnabled ? (portfolio?.totalCapital ?? 0) : 0;
+  const sizingAvailableCash = sizingEnabled ? (portfolio?.availableCash ?? 0) : 0;
+  const sizingRiskPercent = sizingEnabled ? (portfolio?.maxRiskPerTradePercent ?? 0) : 0;
+  const sizedItems = items.map((item) => {
+    if (!sizingEnabled || item.boardStatus !== "buy_review" || !item.tradePlan) {
+      return item;
+    }
+
+    const positionSizing = buildPositionSizingPlan({
+      tradePlan: item.tradePlan,
+      totalCapital: sizingTotalCapital,
+      availableCash: sizingAvailableCash,
+      maxRiskPerTradePercent: sizingRiskPercent,
+      maxConcurrentPositions: summary.maxConcurrentPositions,
+      buyReviewCount
+    });
+
+    if (!positionSizing) {
+      return item;
+    }
+
+    return {
+      ...item,
+      tradePlan: {
+        ...item.tradePlan,
+        positionSizing
+      }
+    };
+  });
+  const sizedSections = sections.map((section) => ({
+    ...section,
+    items: sizedItems.filter((item) => item.boardStatus === section.status)
+  }));
 
   let headline = `오늘 실제 매수 검토 ${buyReviewCount}개`;
   let note = "손절 기준과 비중이 정리된 종목만 실제 매수 검토 대상으로 남깁니다.";
@@ -639,10 +792,22 @@ export function buildTodayActionBoard(
       watchCount,
       avoidCount,
       excludedCount,
-      pendingCount
+      pendingCount,
+      portfolioProfileName: portfolio?.profileName ?? undefined,
+      availableCash:
+        typeof portfolio?.availableCash === "number" && portfolio.availableCash > 0
+          ? portfolio.availableCash
+          : undefined,
+      riskBudgetPerTrade:
+        typeof portfolio?.totalCapital === "number" &&
+        portfolio.totalCapital > 0 &&
+        typeof portfolio?.maxRiskPerTradePercent === "number" &&
+        portfolio.maxRiskPerTradePercent > 0
+          ? Math.round((portfolio.totalCapital * portfolio.maxRiskPerTradePercent) / 100)
+          : undefined
     },
-    sections,
-    items
+    sections: sizedSections,
+    items: sizedItems
   };
 }
 

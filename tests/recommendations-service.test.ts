@@ -450,6 +450,9 @@ describe("listRecommendations", () => {
     expect(result.todayActionBoard?.summary.remainingPortfolioSlots).toBe(2);
     expect(result.todayActionBoard?.summary.crowdedSectors).toEqual([]);
     expect(result.todayActionBoard?.summary.buyReviewCount).toBe(1);
+    expect(result.todayActionBoard?.summary.portfolioProfileName).toBe("실전 운용");
+    expect(result.todayActionBoard?.summary.availableCash).toBe(12_000_000);
+    expect(result.todayActionBoard?.summary.riskBudgetPerTrade).toBe(400_000);
     expect(result.todayActionBoard?.sections[0]).toMatchObject({
       status: "buy_review",
       count: 1
@@ -457,6 +460,13 @@ describe("listRecommendations", () => {
     expect(result.todayActionBoard?.sections[0]?.items[0]).toMatchObject({
       ticker: "BBB001",
       boardStatus: "buy_review"
+    });
+    expect(result.todayActionBoard?.sections[0]?.items[0]?.tradePlan?.positionSizing).toMatchObject({
+      suggestedQuantity: 133,
+      suggestedCapital: 5_852_000,
+      suggestedWeightPercent: 11.7,
+      maxLossAmount: 399_000,
+      limitSource: "risk_budget"
     });
   });
 });

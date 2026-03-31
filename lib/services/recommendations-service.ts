@@ -299,7 +299,13 @@ export async function listRecommendations(query: RecommendationsQuery): Promise<
           sectorLimit:
             isPortfolioProfileConfigured(portfolioProfile) && portfolioProfile.sectorLimit > 0
               ? portfolioProfile.sectorLimit
-              : undefined
+              : undefined,
+          profileName: isPortfolioProfileConfigured(portfolioProfile) ? portfolioProfile.name : undefined,
+          totalCapital: isPortfolioProfileConfigured(portfolioProfile) ? portfolioProfile.totalCapital : undefined,
+          availableCash: isPortfolioProfileConfigured(portfolioProfile) ? portfolioProfile.availableCash : undefined,
+          maxRiskPerTradePercent: isPortfolioProfileConfigured(portfolioProfile)
+            ? portfolioProfile.maxRiskPerTradePercent
+            : undefined
         }
       )
     : undefined;
