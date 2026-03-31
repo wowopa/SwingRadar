@@ -1,4 +1,4 @@
-import type { SignalTone } from "@/types/recommendation";
+import type { OpeningRecheckTickerInsight, SignalTone } from "@/types/recommendation";
 
 export type TrackingResult = "감시중" | "진행중" | "성공" | "실패" | "무효화";
 
@@ -64,6 +64,7 @@ export interface TrackingDetail {
   chartSnapshot: HistoricalSnapshotPoint[];
   historicalNews: TrackingNewsCard[];
   scoreLog: ScoreLogEntry[];
+  openingCheckInsight?: OpeningRecheckTickerInsight;
 }
 
 export interface TrackingDetailSource {

@@ -1,3 +1,4 @@
+import { OpeningCheckInsightCard } from "@/components/shared/opening-check-insight-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { TrackingDetail } from "@/types/tracking";
 
@@ -23,6 +24,8 @@ export function TrackingReviewPanel({ detail }: { detail: TrackingDetail }) {
 
   return (
     <section className="space-y-6">
+      <OpeningCheckInsightCard insight={detail.openingCheckInsight} />
+
       <Card>
         <CardHeader>
           <CardTitle>선정 사유</CardTitle>

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowLeft, ArrowUpRight } from "lucide-react";
 
+import { OpeningCheckInsightCard } from "@/components/shared/opening-check-insight-card";
 import { SignalToneBadge } from "@/components/shared/signal-tone-badge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -12,7 +13,7 @@ import {
   type PortfolioJournalGroup
 } from "@/lib/portfolio/journal-insights";
 import { formatPercent, formatPrice } from "@/lib/utils";
-import type { PortfolioProfilePosition } from "@/types/recommendation";
+import type { OpeningRecheckTickerInsight, PortfolioProfilePosition } from "@/types/recommendation";
 
 function formatDate(value?: string | null) {
   if (!value) {
@@ -57,7 +58,8 @@ export function PositionDetailView({
   sector,
   position,
   journalGroup,
-  actionItem
+  actionItem,
+  openingCheckInsight
 }: {
   ticker: string;
   company: string;
@@ -65,6 +67,7 @@ export function PositionDetailView({
   position?: PortfolioProfilePosition | null;
   journalGroup?: PortfolioJournalGroup | null;
   actionItem?: HoldingActionItemDto | null;
+  openingCheckInsight?: OpeningRecheckTickerInsight | null;
 }) {
   const isClosed = journalGroup ? isClosingPortfolioTradeEventType(journalGroup.latestEvent.type) : false;
   const review = journalGroup ? buildPortfolioCloseReview(journalGroup) : null;
@@ -187,6 +190,11 @@ export function PositionDetailView({
         </Card>
 
         <div className="space-y-6">
+          <OpeningCheckInsightCard
+            insight={openingCheckInsight}
+            emptyMessage="이 종목은 아직 장초 체크와 연결된 기록이 없거나, 장전 후보에서 벗어나 바로 포트폴리오에 들어왔습니다."
+          />
+
           <Card className="border-border/70 bg-white/82 shadow-sm">
             <CardHeader>
               <CardTitle className="text-lg text-foreground">현재 계획과 다음 행동</CardTitle>

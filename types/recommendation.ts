@@ -133,6 +133,24 @@ export interface OpeningRecheckReview {
   patterns: OpeningRecheckReviewPattern[];
 }
 
+export interface OpeningRecheckTickerInsight {
+  scanKey: string;
+  signalDate: string;
+  status: Exclude<OpeningRecheckStatus, "pending">;
+  statusLabel: string;
+  statusDescription: string;
+  suggestedStatus?: Exclude<OpeningRecheckStatus, "pending">;
+  suggestedStatusLabel?: string;
+  gapLabel?: string;
+  confirmationLabel?: string;
+  actionLabel?: string;
+  note?: string;
+  outcome?: OpeningRecheckReviewOutcome;
+  outcomeLabel?: string;
+  outcomeNote: string;
+  matchedBy: "signal_date" | "latest_ticker";
+}
+
 export type TodayActionBoardStatus = "buy_review" | "watch" | "avoid" | "excluded" | "pending";
 
 export interface TodayActionBoardSectorLoad {

@@ -108,6 +108,24 @@ export interface OpeningRecheckReviewDto {
   patterns: OpeningRecheckReviewPatternDto[];
 }
 
+export interface OpeningRecheckTickerInsightDto {
+  scanKey: string;
+  signalDate: string;
+  status: Exclude<OpeningRecheckStatusDto, "pending">;
+  statusLabel: string;
+  statusDescription: string;
+  suggestedStatus?: Exclude<OpeningRecheckStatusDto, "pending">;
+  suggestedStatusLabel?: string;
+  gapLabel?: string;
+  confirmationLabel?: string;
+  actionLabel?: string;
+  note?: string;
+  outcome?: OpeningRecheckReviewOutcomeDto;
+  outcomeLabel?: string;
+  outcomeNote: string;
+  matchedBy: "signal_date" | "latest_ticker";
+}
+
 export type TodayActionBoardStatusDto = "buy_review" | "watch" | "avoid" | "excluded" | "pending";
 
 export interface TodayActionBoardSectorLoadDto {
@@ -528,6 +546,7 @@ export interface TrackingDetailDto {
   chartSnapshot: Array<{ label: string; price: number }>;
   historicalNews: TrackingEventDto[];
   scoreLog: Array<{ timestamp: string; factor: string; delta: number; reason: string; scoreAfter?: number }>;
+  openingCheckInsight?: OpeningRecheckTickerInsightDto;
 }
 
 export interface TrackingResponseDto {

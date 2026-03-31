@@ -1,11 +1,16 @@
 import type { TrackingResponseDto } from "@/lib/api-contracts/swing-radar";
 import { getDataProvider } from "@/lib/providers";
+import { buildOpeningRecheckTickerInsight } from "@/lib/recommendations/opening-recheck-insight";
+import { listOpeningRecheckScans } from "@/lib/server/opening-recheck-board";
 import { getLatestTrackingNewsByTicker } from "@/lib/server/latest-news";
 import type { TrackingQuery } from "@/lib/server/query-schemas";
 import { resolveTicker } from "@/lib/symbols/master";
 
 export async function getTrackingSnapshot(query: TrackingQuery): Promise<TrackingResponseDto> {
-  const source = await getDataProvider().getTracking();
+  const [source, openingRecheckScans] = await Promise.all([
+    getDataProvider().getTracking(),
+    listOpeningRecheckScans()
+  ]);
   let history = [...source.history];
 
   if (query.ticker) {
@@ -43,13 +48,33 @@ export async function getTrackingSnapshot(query: TrackingQuery): Promise<Trackin
       Object.entries(source.details)
         .filter(([key]) => detailIds.has(key))
         .map(async ([key, detail]) => {
+          const historyEntry = history.find((item) => item.id === key);
+          const openingCheckInsight = historyEntry
+            ? buildOpeningRecheckTickerInsight(openingRecheckScans, {
+                ticker: historyEntry.ticker,
+                signalDate: historyEntry.signalDate,
+                trackingResult: historyEntry.result
+              })
+            : undefined;
+
           if (detail.historicalNews.length > 0) {
-            return [key, detail] as const;
+            return [
+              key,
+              {
+                ...detail,
+                openingCheckInsight
+              }
+            ] as const;
           }
 
-          const historyEntry = history.find((item) => item.id === key);
           if (!historyEntry) {
-            return [key, detail] as const;
+            return [
+              key,
+              {
+                ...detail,
+                openingCheckInsight
+              }
+            ] as const;
           }
 
           const fallbackNews = await getLatestTrackingNewsByTicker(historyEntry.ticker);
@@ -58,7 +83,8 @@ export async function getTrackingSnapshot(query: TrackingQuery): Promise<Trackin
             key,
             {
               ...detail,
-              historicalNews: fallbackNews
+              historicalNews: fallbackNews,
+              openingCheckInsight
             }
           ] as const;
         })
