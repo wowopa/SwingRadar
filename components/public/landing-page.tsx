@@ -6,60 +6,60 @@ import { ScrollReveal } from "@/components/public/scroll-reveal";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
-const promiseStrip = [
-  { label: "신규 매수", value: "0~2개", note: "많이 고르는 서비스가 아닙니다." },
-  { label: "장초 점검", value: "5~10분", note: "시초가와 구조를 짧게 다시 봅니다." },
-  { label: "운용 기준", value: "개인화", note: "내 자산과 보유 기준으로 판단합니다." }
+const benefitStrip = [
+  { label: "신규 매수", value: "0~2개", note: "많이 보여주지 않고, 실제로 볼 것만 남깁니다." },
+  { label: "아침 판단", value: "5~10분", note: "장초에 짧게 다시 보고 무리한 추격을 막습니다." },
+  { label: "운용 기준", value: "개인화", note: "내 자산과 보유 종목 기준으로 행동이 달라집니다." }
 ] as const;
 
-const painNarrative = [
+const benefitNarrative = [
   {
     number: "01",
-    title: "종목이 많을수록 결정은 더 어려워집니다.",
-    body: "좋아 보이는 종목이 열 개 보여도 실제로 매수할 수 있는 종목은 많지 않습니다. 그래서 서비스는 후보를 늘리는 대신, 오늘 실제로 검토할 소수의 종목만 남겨야 합니다."
+    title: "볼 종목 수부터 줄여줍니다.",
+    body: "좋아 보이는 종목은 많아도, 실제로 살 수 있는 종목은 많지 않습니다. 서비스는 아침에 먼저 볼 후보만 남겨서 결정을 훨씬 가볍게 만듭니다."
   },
   {
     number: "02",
-    title: "전일 강했던 종목이 오늘도 좋은 종목은 아닙니다.",
-    body: "장전 후보는 계획일 뿐입니다. 시초가가 과하게 뜨거나 손절 여유가 얕아지면 그 종목은 바로 추격 금지 또는 관찰 유지로 내려가야 합니다."
+    title: "추격 매수를 덜 하게 만듭니다.",
+    body: "전일 강했던 종목도 장초에 다시 걸러냅니다. 이미 많이 튄 종목은 쫓지 않게 하고, 기다릴 종목과 보류할 종목을 바로 나눕니다."
   },
   {
     number: "03",
-    title: "사용자가 궁금한 건 설명이 아니라 행동입니다.",
-    body: "그래서 SWING-RADAR는 점수와 분석을 앞세우지 않습니다. 오늘 뭘 볼지, 무엇을 보류할지, 얼마까지 살 수 있을지를 먼저 보여주는 방식으로 바뀌었습니다."
+    title: "내 계좌 기준으로 판단해줍니다.",
+    body: "같은 종목도 누구에게나 같은 답이 나오지 않습니다. 자산, 현금, 보유 종목, 섹터 한도까지 반영해서 오늘 가능한 행동만 보여줍니다."
   }
 ] as const;
 
 const productSurfaces = [
   {
     title: "Dashboard",
-    eyebrow: "오늘 먼저 볼 화면",
-    description: "오늘 매수 검토, 장초 확인 대기, 보유 즉시 점검을 한 화면에서 정리합니다.",
-    bullets: ["오늘 실제 매수 검토 0~2개", "장초 확인 대기 종목", "긴급 보유 관리 알림"],
+    eyebrow: "오늘 바로 볼 것",
+    description: "로그인하면 가장 먼저 오늘 매수 검토, 장초 확인 대기, 보유 점검 알림이 한 화면에 뜹니다.",
+    bullets: ["오늘 매수 검토 0~2개", "장초 확인 대기 종목", "보유 즉시 점검 알림"],
     icon: Radar,
     span: "lg:col-span-7"
   },
   {
     title: "Portfolio",
-    eyebrow: "보유 관리",
-    description: "이미 보유 중인 종목을 손절, 부분 익절, 보호 가격 상향 기준으로 나눕니다.",
-    bullets: ["즉시 점검", "부분 익절 검토", "시간 손절 검토"],
+    eyebrow: "들고 있는 종목 관리",
+    description: "새 종목만 고르는 화면이 아닙니다. 익절 검토, 보호 가격 상향, 시간 점검까지 함께 보여줍니다.",
+    bullets: ["즉시 점검", "부분 익절 검토", "시간 점검 알림"],
     icon: WalletCards,
     span: "lg:col-span-5"
   },
   {
     title: "Account",
-    eyebrow: "개인 운용 기준",
-    description: "총 자산, 가용 현금, 손실 한도, 보유 종목을 저장해 내 기준으로 행동을 계산합니다.",
-    bullets: ["자산 규모 입력", "현금과 손실 한도", "사용자별 행동 보드"],
+    eyebrow: "내 자산에 맞춤",
+    description: "총 자산, 가용 현금, 허용 손실, 현재 보유를 기준으로 오늘 가능한 행동만 계산합니다.",
+    bullets: ["자산 규모 입력", "현금과 손실 한도", "내 기준 행동 보드"],
     icon: LockKeyhole,
     span: "lg:col-span-4"
   },
   {
     title: "Explore",
     eyebrow: "필요할 때만 깊게",
-    description: "전체 후보와 상세 분석은 뒤로 보내고, 오늘 행동을 정한 뒤에만 깊게 들어갑니다.",
-    bullets: ["상세 분석", "후보 비교", "보류 종목 점검"],
+    description: "랭킹과 상세 분석은 따로 열어볼 수 있게 두고, 기본 화면은 최대한 행동 중심으로 유지합니다.",
+    bullets: ["상세 분석 열기", "후보 비교 보기", "보류 종목 점검"],
     icon: Compass,
     span: "lg:col-span-8"
   }
@@ -67,27 +67,27 @@ const productSurfaces = [
 
 const faqs = [
   {
-    question: "1위 종목이면 바로 사는 건가요?",
-    answer: "아닙니다. 장전 후보일 뿐입니다. 장초 확인을 통과하고 포트폴리오 한도까지 맞아야 오늘 실제 행동 보드에 올라갑니다."
+    question: "1위면 바로 사면 되나요?",
+    answer: "아닙니다. 순위는 시작점일 뿐입니다. 장초 확인을 통과하고 포트폴리오 한도까지 맞아야 오늘 행동 보드에 올라갑니다."
   },
   {
-    question: "종목이 많이 보이면 다 사야 하나요?",
-    answer: "아닙니다. 이 서비스는 오히려 종목 수를 줄이는 쪽에 가깝습니다. 좋은 후보가 많아도 오늘 신규 매수는 0~2개만 남기는 방향으로 설계했습니다."
+    question: "종목이 많으면 다 사야 하나요?",
+    answer: "아닙니다. 이 서비스는 많이 사게 만드는 쪽이 아니라, 덜 사게 만드는 쪽에 가깝습니다. 보통 오늘 검토는 0~2개만 남깁니다."
   },
   {
-    question: "왜 로그인해야 기능을 볼 수 있나요?",
-    answer: "핵심 가치가 내 자산, 내 보유, 내 손실 한도 기준의 개인화된 행동 보드이기 때문입니다. 로그인 후에야 운용 화면이 완성됩니다."
+    question: "왜 로그인이 필요한가요?",
+    answer: "진짜 가치가 내 자산과 보유 기준으로 달라지기 때문입니다. 로그인 후에는 내 계좌 기준 행동 보드가 열립니다."
   },
   {
-    question: "이 서비스는 실시간 급등 추격용인가요?",
-    answer: "아닙니다. 전일 데이터로 장전 계획을 만들고, 장초에 짧게 다시 확인한 뒤 행동을 좁혀가는 차분한 스윙 운용 흐름을 전제로 합니다."
+    question: "실시간 급등을 쫓는 서비스인가요?",
+    answer: "아닙니다. 전일 데이터로 계획을 세우고, 장초에 짧게 다시 확인한 뒤, 차분하게 실행할 종목만 남기는 방식입니다."
   }
 ] as const;
 
 const heroBoardItems = [
   ["ISC", "오늘 매수 검토", "진입 87,000 ~ 88,200 / 손절 83,400"],
   ["DN오토모티브", "관찰 유지", "시초가 반응이 약하면 더 지켜보기"],
-  ["씨에스윈드", "추격 금지", "갭상승 과열로 오늘은 보류"]
+  ["씨에스윈드", "추격 금지", "이미 과열 구간이면 오늘은 보류"]
 ] as const;
 
 export function LandingPage() {
@@ -107,11 +107,11 @@ export function LandingPage() {
                 </Badge>
                 <div className="space-y-6">
                   <h1 className="headline-balance public-hero-title max-w-[8.6ch] text-[clamp(4.4rem,11vw,9.4rem)] font-semibold leading-[0.86] tracking-[-0.11em]">
-                    오늘 무엇을 해야 하는지 먼저 답하는 스윙 서비스.
+                    오늘 할 행동만 남깁니다.
                   </h1>
                   <p className="public-hero-copy max-w-[760px] text-[clamp(1.05rem,1.6vw,1.28rem)] leading-8">
-                    SWING-RADAR는 종목을 많이 나열하는 대신, 장전 후보를 만들고 장초에 다시 확인한 뒤 실제로 검토할 0~2개의
-                    행동만 남기는 개인 운용 대시보드입니다.
+                    많이 보여주는 대신, 실제로 검토할 종목만 줄여줍니다. 장전 후보를 만들고 장초에 한 번 더 걸러서 내 계좌 기준으로
+                    오늘 볼 행동 0~2개만 남깁니다.
                   </p>
                 </div>
               </div>
@@ -129,12 +129,12 @@ export function LandingPage() {
                   variant="ghost"
                   className="border border-white/14 bg-white/6 text-white hover:bg-white/10 hover:text-white"
                 >
-                  <Link href="#workflow">운용 흐름 보기</Link>
+                  <Link href="#workflow">어떻게 줄여주는지 보기</Link>
                 </Button>
               </div>
 
               <div className="grid max-w-[780px] gap-3 md:grid-cols-3">
-                {promiseStrip.map((item, index) => (
+                {benefitStrip.map((item, index) => (
                   <ScrollReveal key={item.label} delay={120 + index * 70}>
                     <div className="rounded-[28px] border border-white/10 bg-white/6 px-4 py-4 backdrop-blur-sm">
                       <p className="public-hero-label text-[11px] font-semibold uppercase tracking-[0.24em]">{item.label}</p>
@@ -205,7 +205,7 @@ export function LandingPage() {
                     </div>
 
                     <div className="public-panel-copy mt-4 rounded-[24px] border border-amber-300/16 bg-amber-300/8 px-4 py-4 text-sm leading-6">
-                      종목이 많아도 다 사지 않습니다. 장초 확인과 포트폴리오 한도를 함께 통과한 종목만 오늘 행동 보드에 남깁니다.
+                      많이 보여주는 대신, 지금 볼 것만 남깁니다. 그래서 아침 판단이 더 빠르고 덜 흔들립니다.
                     </div>
                   </div>
                 </div>
@@ -217,9 +217,9 @@ export function LandingPage() {
 
       <section id="overview" className="space-y-8">
         <ScrollReveal className="space-y-4">
-          <p className="public-section-kicker text-[11px] font-semibold uppercase tracking-[0.24em]">Overview</p>
+          <p className="public-section-kicker text-[11px] font-semibold uppercase tracking-[0.24em]">Benefits</p>
           <h2 className="headline-balance public-section-title max-w-[8.8ch] text-[clamp(3.2rem,8vw,6.4rem)] font-semibold leading-[0.9] tracking-[-0.1em]">
-            분석 리포트처럼 길게 읽지 않아도 되게 바꿨습니다.
+            고민은 줄고, 기준은 더 선명해집니다.
           </h2>
         </ScrollReveal>
 
@@ -227,14 +227,14 @@ export function LandingPage() {
           <ScrollReveal delay={80}>
             <div className="rounded-[34px] border border-border/70 bg-white/68 p-6 shadow-[0_24px_80px_hsl(33_22%_26%_/_0.06)] backdrop-blur-xl sm:p-8">
               <p className="public-section-copy max-w-[520px] text-[clamp(1rem,1.4vw,1.16rem)] leading-8">
-                참고하신 랜딩처럼, 큰 문장이 다른 영역에 눌리지 않고 먼저 서게 만드는 것이 중요했습니다. 그래서 이 섹션부터는
-                헤딩을 위로 빼고, 설명과 사례 카드는 아래로 내려 타이포가 충분한 호흡을 갖도록 구조를 바꿨습니다.
+                이 랜딩의 목적은 서비스 구조를 길게 설명하는 데 있지 않습니다. 사용자가 아침에 더 빨리, 더 적게, 더 차분하게 결정할 수
+                있게 만드는 이점을 먼저 보여주는 데 있습니다.
               </p>
             </div>
           </ScrollReveal>
 
           <div className="space-y-4">
-            {painNarrative.map((item, index) => (
+            {benefitNarrative.map((item, index) => (
               <ScrollReveal key={item.title} delay={index * 90}>
                 <article className="rounded-[34px] border border-border/70 bg-white/76 p-6 shadow-[0_24px_80px_hsl(33_22%_26%_/_0.06)] backdrop-blur-xl sm:p-8">
                   <div className="flex items-start gap-4">
@@ -259,15 +259,15 @@ export function LandingPage() {
         <ScrollReveal className="space-y-4">
           <p className="public-section-kicker text-[11px] font-semibold uppercase tracking-[0.24em]">Workflow</p>
           <h2 className="headline-balance public-section-title max-w-[10.4ch] text-[clamp(3.2rem,8vw,6.2rem)] font-semibold leading-[0.9] tracking-[-0.1em]">
-            장전 후보에서 끝나지 않습니다. 장초 확인을 거쳐야 오늘 행동이 됩니다.
+            아침 10분이면 오늘 할 일이 정리됩니다.
           </h2>
         </ScrollReveal>
 
         <div className="grid gap-6 xl:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] xl:items-start">
           <ScrollReveal delay={90}>
             <div className="public-section-copy rounded-[32px] border border-border/70 bg-white/72 px-5 py-5 text-[1.02rem] leading-8 shadow-[0_18px_56px_hsl(33_22%_24%_/_0.05)] backdrop-blur-xl sm:px-6">
-              전일 데이터로 계획을 세우고, 장 시작 후 5~10분 동안 실제 행동 가능 여부를 다시 확인합니다. 이 짧은 점검이 실시간
-              추격과 차분한 스윙을 가르는 핵심 단계입니다.
+              장전에는 후보를 줄이고, 장초에는 한 번 더 거르고, 그 뒤에는 정말로 볼 종목만 남깁니다. 그래서 아침 루틴이 짧아지고,
+              무리한 추격도 줄어듭니다.
             </div>
           </ScrollReveal>
 
@@ -281,15 +281,15 @@ export function LandingPage() {
         <ScrollReveal className="space-y-4">
           <p className="public-section-kicker text-[11px] font-semibold uppercase tracking-[0.24em]">Product</p>
           <h2 className="headline-balance public-section-title max-w-[10.4ch] text-[clamp(3.1rem,8vw,6rem)] font-semibold leading-[0.9] tracking-[-0.1em]">
-            로그인 후에는 설명이 아니라 개인 운용 대시보드가 열립니다.
+            로그인 후에는 내 기준 행동판이 열립니다.
           </h2>
         </ScrollReveal>
 
         <div className="flex justify-start">
           <ScrollReveal delay={70}>
             <div className="public-section-copy max-w-[760px] rounded-[28px] border border-border/70 bg-white/72 px-5 py-5 text-[1.02rem] leading-8 shadow-[0_18px_56px_hsl(33_22%_24%_/_0.05)] backdrop-blur-xl">
-              공개 영역은 서비스 철학과 흐름만 보여주고, 실제 기능은 모두 로그인 후 대시보드 안쪽에서만 보이게 바꾸었습니다.
-              이제 랜딩은 설득의 역할을, 앱은 실행의 역할을 분리해서 가져갑니다.
+              공개 랜딩은 방향만 보여주고, 실제 가치는 로그인 후부터 시작됩니다. 내 자산, 내 보유, 내 한도 기준으로 오늘 행동이
+              달라지기 때문입니다.
             </div>
           </ScrollReveal>
         </div>
@@ -330,18 +330,18 @@ export function LandingPage() {
         <div className="grid gap-4 md:grid-cols-3">
           {[
             {
-              title: "장전 계획",
-              note: "전일 데이터로 오늘 먼저 볼 종목을 미리 좁힙니다.",
+              title: "먼저 줄이고",
+              note: "전일 데이터로 오늘 먼저 볼 종목만 좁혀둡니다.",
               icon: ShieldCheck
             },
             {
-              title: "장초 확인",
-              note: "시초가와 구조를 짧게 다시 보고 통과 여부를 정합니다.",
+              title: "한 번 더 거르고",
+              note: "장초에 짧게 다시 보고 무리한 진입은 바로 멈춥니다.",
               icon: TimerReset
             },
             {
-              title: "개인 포트폴리오",
-              note: "내 자산과 보유 기준으로 오늘 실제 행동을 제한합니다.",
+              title: "내 기준으로 실행",
+              note: "자산과 보유 기준으로 오늘 가능한 행동만 남깁니다.",
               icon: WalletCards
             }
           ].map((item, index) => {
@@ -369,11 +369,10 @@ export function LandingPage() {
           <ScrollReveal className="space-y-4">
             <p className="public-section-kicker text-[11px] font-semibold uppercase tracking-[0.24em]">FAQ</p>
             <h2 className="headline-balance public-section-title max-w-[9.2ch] text-[clamp(3rem,7vw,5.4rem)] font-semibold leading-[0.9] tracking-[-0.1em]">
-              사용자가 바로 묻는 질문부터 답합니다.
+              사용자는 결국 이것을 묻습니다.
             </h2>
             <p className="public-section-copy max-w-lg text-[clamp(1rem,1.4vw,1.18rem)] leading-8">
-              로그인 전에는 서비스가 어떤 원리로 종목 수를 줄이는지 이해하고, 로그인 후에는 내 기준의 운용 화면으로 바로
-              이어지게 만드는 것이 목표입니다.
+              뭘 사야 하는지, 뭘 기다려야 하는지, 왜 오늘은 쉬어야 하는지. 랜딩도 그 질문에 가깝게 답하도록 정리했습니다.
             </p>
             <div className="pt-2">
               <Button asChild size="lg">

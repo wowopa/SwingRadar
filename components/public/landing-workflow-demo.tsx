@@ -10,10 +10,10 @@ const stages = [
     id: "preopen",
     label: "장전 후보",
     eyebrow: "08:00",
-    title: "전일 데이터로 오늘 먼저 볼 종목만 좁힙니다.",
+    title: "먼저 볼 것만 남깁니다.",
     description:
-      "실시간 급등을 따라붙지 않고, 전일 종가 기준으로 장초에 확인할 후보만 정리합니다. 이 단계는 계획이지 매수 지시가 아닙니다.",
-    bullets: ["매수 검토 0~3개", "관찰 후보 5~10개", "급등 추격형 후보 감점"],
+      "전일 데이터로 후보를 먼저 줄입니다. 이 단계는 매수 지시가 아니라, 오늘 아침에 먼저 확인할 목록을 만드는 단계입니다.",
+    bullets: ["매수 검토 0~3개", "관찰 후보 5~10개", "과열 종목 감점"],
     panelTitle: "오늘 먼저 볼 후보",
     panelNote: "전일 종가 기준 장전 계획",
     boardItems: [
@@ -26,9 +26,9 @@ const stages = [
     id: "opening",
     label: "장초 확인",
     eyebrow: "09:00-09:10",
-    title: "시초가와 초반 흐름으로 실제 행동 가능 여부를 다시 봅니다.",
+    title: "살지 말지 다시 거릅니다.",
     description:
-      "갭상승이 과하면 추격 금지로 내리고, 손절 여유가 얕으면 제외합니다. 통과한 종목만 오늘 행동 보드로 올립니다.",
+      "시초가와 초반 구조를 짧게 다시 봅니다. 많이 튄 종목은 추격 금지로 돌리고, 손절 여유가 무너지면 바로 제외합니다.",
     bullets: ["통과", "관찰 유지", "추격 금지", "제외"],
     panelTitle: "장초 확인 결과",
     panelNote: "시초가와 구조를 짧게 다시 점검",
@@ -42,12 +42,12 @@ const stages = [
     id: "action",
     label: "당일 행동",
     eyebrow: "09:10 이후",
-    title: "통과한 종목만 0~2개로 남겨 실제 행동으로 연결합니다.",
+    title: "실제로 볼 종목만 남깁니다.",
     description:
-      "포트폴리오 슬롯, 같은 섹터 수, 가용 현금, 손실 한도까지 함께 보고 오늘 정말 살 수 있는 종목만 남깁니다.",
-    bullets: ["권장 비중과 수량 계산", "보유 관리 알림", "손절과 목표가 함께 제시"],
+      "통과한 종목도 전부 사지 않습니다. 포트폴리오 한도, 현금, 섹터 중복까지 함께 보고 오늘 행동 보드로 연결합니다.",
+    bullets: ["오늘 매수 검토 0~2개", "권장 비중과 수량 계산", "손절과 목표가 함께 제시"],
     panelTitle: "오늘 실제 행동 보드",
-    panelNote: "행동으로 좁혀진 최종 보드",
+    panelNote: "행동으로 끝나는 최종 보드",
     boardItems: [
       { name: "ISC", status: "오늘 매수 검토", tone: "positive" as const },
       { name: "로킷헬스케어", status: "관찰 유지", tone: "neutral" as const },
@@ -147,7 +147,7 @@ export function LandingWorkflowDemo() {
           </div>
 
           <div className="public-panel-copy mt-5 rounded-[24px] border border-amber-300/14 bg-amber-300/8 px-4 py-4 text-sm leading-7">
-            종목을 많이 보여주는 것보다, 지금 무엇을 해야 하는지 먼저 답하는 화면이 되도록 설계했습니다.
+            핵심은 많이 보여주는 것이 아니라, 지금 뭘 해야 하는지 먼저 답하는 것입니다.
           </div>
         </div>
       </div>
