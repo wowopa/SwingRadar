@@ -28,8 +28,19 @@ import type { RecommendationsQuery } from "@/lib/server/query-schemas";
 import { getSymbolByTicker } from "@/lib/symbols/master";
 import { formatPrice } from "@/lib/utils";
 
+const DEFAULT_OPENING_CHECK_LIMIT = 5;
+
 function toNullableNumber(value: unknown): number | null {
   return typeof value === "number" && Number.isFinite(value) ? value : null;
+}
+
+function parsePositiveInt(value: string | undefined, fallback: number) {
+  const parsed = Number(value);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
+}
+
+function getOpeningCheckLimit() {
+  return parsePositiveInt(process.env.SWING_RADAR_OPENING_CHECK_LIMIT, DEFAULT_OPENING_CHECK_LIMIT);
 }
 
 function formatRiskRewardRatio(entryPrice?: number | null, targetPrice?: number | null, invalidationPrice?: number | null) {
@@ -302,9 +313,11 @@ export async function listRecommendations(
         )
       )
     : null;
-  const todayActionBoard = dailyScanCandidates
+  const openingCheckLimit = getOpeningCheckLimit();
+  const openingCheckCandidates = dailyScanCandidates?.slice(0, openingCheckLimit) ?? null;
+  const todayActionBoard = openingCheckCandidates
     ? buildTodayActionBoard(
-        dailyScanCandidates.map((candidate, index) => ({
+        openingCheckCandidates.map((candidate, index) => ({
           ticker: candidate.ticker,
           company: candidate.company,
           sector: candidate.sector,
@@ -428,11 +441,13 @@ export async function listRecommendations(
           batchSize: dailyCandidates.batchSize,
           concurrency: dailyCandidates.concurrency,
           topCandidatesLimit: dailyCandidates.topCandidatesLimit,
+          openingCheckLimit,
           totalTickers: dailyCandidates.totalTickers,
           totalBatches: dailyCandidates.totalBatches,
           succeededBatches: dailyCandidates.succeededBatches,
           failedBatches: dailyCandidates.failedBatches,
-          topCandidates: dailyScanCandidates
+          topCandidates: dailyScanCandidates,
+          openingCheckCandidates: openingCheckCandidates ?? []
         }
       : null,
     todaySummary,

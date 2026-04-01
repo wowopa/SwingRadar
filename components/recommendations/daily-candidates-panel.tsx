@@ -211,7 +211,10 @@ export function DailyCandidatesPanel({
 }) {
   const router = useRouter();
   const { authHeaders } = useAdminToken();
-  const visibleCandidates = useMemo(() => dailyScan?.topCandidates ?? [], [dailyScan]);
+  const visibleCandidates = useMemo(
+    () => dailyScan?.openingCheckCandidates ?? dailyScan?.topCandidates ?? [],
+    [dailyScan]
+  );
   const initialDecisions = useMemo(() => createInitialDecisions(visibleCandidates), [visibleCandidates]);
   const scanKey = dailyScan?.generatedAt ?? "";
   const canManageBoard = Boolean(authHeaders);

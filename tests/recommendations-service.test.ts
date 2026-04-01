@@ -251,6 +251,60 @@ describe("listRecommendations", () => {
     expect(result.todaySummary?.maxNewPositions).toBe(0);
   });
 
+  it("keeps ranking candidates intact but limits opening check candidates with a dedicated env var", async () => {
+    const previousLimit = process.env.SWING_RADAR_OPENING_CHECK_LIMIT;
+    process.env.SWING_RADAR_OPENING_CHECK_LIMIT = "5";
+
+    try {
+      const tickers = ["AAA001", "BBB001", "CCC001", "DDD001", "EEE001", "FFF001", "GGG001", "HHH001"];
+
+      mocks.getRecommendations.mockResolvedValue({
+        generatedAt: "2026-03-08T00:00:00.000Z",
+        items: tickers.map((ticker, index) =>
+          createRecommendation({
+            ticker,
+            company: `Company ${index + 1}`,
+            sector: "Tech",
+            score: 90 - index
+          })
+        )
+      });
+      mocks.getDailyCandidates.mockResolvedValue({
+        generatedAt: "2026-03-08T01:00:00.000Z",
+        batchSize: 20,
+        concurrency: 2,
+        topCandidatesLimit: 20,
+        totalTickers: 100,
+        totalBatches: 5,
+        succeededBatches: 5,
+        failedBatches: [],
+        topCandidates: tickers.map((ticker, index) =>
+          createCandidate({
+            ticker,
+            company: `Company ${index + 1}`,
+            sector: "Tech",
+            score: 90 - index,
+            candidateScore: 100 - index
+          })
+        ),
+        batchSummaries: []
+      });
+
+      const result = await listRecommendations({ sort: "score_desc" });
+
+      expect(result.dailyScan?.topCandidates).toHaveLength(8);
+      expect(result.dailyScan?.openingCheckLimit).toBe(5);
+      expect(result.dailyScan?.openingCheckCandidates?.map((item) => item.ticker)).toEqual(tickers.slice(0, 5));
+      expect(result.todayActionBoard?.items.map((item) => item.ticker)).toEqual(tickers.slice(0, 5));
+    } finally {
+      if (previousLimit === undefined) {
+        delete process.env.SWING_RADAR_OPENING_CHECK_LIMIT;
+      } else {
+        process.env.SWING_RADAR_OPENING_CHECK_LIMIT = previousLimit;
+      }
+    }
+  });
+
   it("downgrades passed candidates when the same sector is already full", async () => {
     mocks.getRecommendations.mockResolvedValue({
       generatedAt: "2026-03-08T00:00:00.000Z",

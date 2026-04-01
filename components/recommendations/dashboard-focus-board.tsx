@@ -37,7 +37,7 @@ function formatQueueCount(value: number, suffix = "개") {
 }
 
 function getOpeningCheckSummary(dailyScan: DailyScanSummaryDto | null) {
-  const candidates = dailyScan?.topCandidates ?? [];
+  const candidates = dailyScan?.openingCheckCandidates ?? dailyScan?.topCandidates ?? [];
   const counts = {
     pending: 0,
     passed: 0,

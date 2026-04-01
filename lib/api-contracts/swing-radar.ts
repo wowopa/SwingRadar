@@ -381,11 +381,13 @@ export interface DailyScanSummaryDto {
   batchSize: number;
   concurrency?: number;
   topCandidatesLimit?: number;
+  openingCheckLimit?: number;
   totalTickers: number;
   totalBatches: number;
   succeededBatches: number;
   failedBatches: FailedUniverseBatchDto[];
   topCandidates: DailyCandidateDto[];
+  openingCheckCandidates?: DailyCandidateDto[];
 }
 
 export interface RecommendationsResponseDto {
