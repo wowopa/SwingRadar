@@ -7,6 +7,7 @@ import { promisify } from "node:util";
 import { fileURLToPath } from "node:url";
 
 import { loadLocalEnv } from "./load-env.mjs";
+import { resolveSymbolMasterOutputPath } from "./lib/symbol-master-paths.mjs";
 
 const execFileAsync = promisify(execFile);
 const __filename = fileURLToPath(import.meta.url);
@@ -21,6 +22,9 @@ SWING-RADAR symbol master sync
 
 Usage:
   node scripts/sync-symbol-master.mjs [--input <csv-path> | --source-url <url>] [--output <json-path>] [--status <ready|pending>] [--merge] [--krx]
+
+Default output:
+  %LOCALAPPDATA%/SwingRadar/runtime/config/symbol-master.json
 
 Environment:
   SWING_RADAR_SYMBOL_SYNC_INPUT
@@ -39,7 +43,7 @@ function parseArgs(argv) {
   const options = {
     input: process.env.SWING_RADAR_SYMBOL_SYNC_INPUT,
     sourceUrl: process.env.SWING_RADAR_SYMBOL_SYNC_URL,
-    output: path.join(projectRoot, "data", "config", "symbol-master.json"),
+    output: resolveSymbolMasterOutputPath(projectRoot),
     status: process.env.SWING_RADAR_SYMBOL_SYNC_STATUS ?? "pending",
     merge: process.env.SWING_RADAR_SYMBOL_SYNC_MERGE === "true",
     krx: process.env.SWING_RADAR_SYMBOL_SYNC_KRX === "true",

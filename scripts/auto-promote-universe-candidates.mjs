@@ -8,6 +8,7 @@ import { fileURLToPath } from "node:url";
 import { getAutoPromotionPolicy, buildPromotionMetrics, evaluateAutoPromotionCandidate } from "./lib/auto-promotion-utils.mjs";
 import { loadLocalEnv } from "./load-env.mjs";
 import { getRuntimePaths } from "./lib/runtime-paths.mjs";
+import { resolveSymbolMasterInputPath } from "./lib/symbol-master-paths.mjs";
 
 const execFileAsync = promisify(execFile);
 const __filename = fileURLToPath(import.meta.url);
@@ -64,7 +65,7 @@ function getReviewPath() {
 }
 
 function getSymbolMasterPath() {
-  return path.resolve(projectRoot, "data", "config", "symbol-master.json");
+  return resolveSymbolMasterInputPath(projectRoot);
 }
 
 function getReportPath() {

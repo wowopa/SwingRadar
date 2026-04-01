@@ -3,6 +3,7 @@ import path from "node:path";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
 import { getRuntimePaths } from "./lib/runtime-paths.mjs";
+import { resolveSymbolMasterInputPath } from "./lib/symbol-master-paths.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -20,7 +21,7 @@ Usage:
 function parseArgs(argv) {
   const runtimePaths = getRuntimePaths(projectRoot);
   const options = {
-    input: path.join(projectRoot, "data", "config", "symbol-master.json"),
+    input: resolveSymbolMasterInputPath(projectRoot),
     output: path.join(runtimePaths.runtimeConfigDir, "watchlist.universe.json"),
     markets: ["KOSPI", "KOSDAQ"],
     limit: 0

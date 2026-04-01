@@ -3,6 +3,8 @@ import path from "node:path";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
 
+import { resolveSymbolMasterOutputPath } from "./lib/symbol-master-paths.mjs";
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const projectRoot = path.resolve(__dirname, "..");
@@ -15,6 +17,9 @@ SWING-RADAR symbol master importer
 Usage:
   node scripts/import-symbol-master.mjs --input <csv-path> [--output <json-path>] [--status <ready|pending>] [--merge]
 
+Default output:
+  %LOCALAPPDATA%/SwingRadar/runtime/config/symbol-master.json
+
 Expected CSV columns:
   ticker,company,market,sector,dartCorpCode,aliases
 `);
@@ -22,7 +27,7 @@ Expected CSV columns:
 
 function parseArgs(argv) {
   const options = {
-    output: path.join(projectRoot, "data", "config", "symbol-master.json"),
+    output: resolveSymbolMasterOutputPath(projectRoot),
     status: "pending",
     merge: false
   };
