@@ -451,9 +451,9 @@ export function DashboardFocusBoard({
             icon: WalletCards
           },
           {
-            href: "/ranking",
-            title: "Explore",
-            description: "종목 비교와 상세 분석 보기",
+            href: "/signals",
+            title: "Signals",
+            description: "공통 후보와 공용 복기 보기",
             icon: Compass
           },
           {

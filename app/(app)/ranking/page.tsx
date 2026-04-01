@@ -20,27 +20,27 @@ export default async function RankingPage() {
   return (
     <main className="space-y-6">
       <PageHeader
-        eyebrow="Explore"
-        title="종목 순위표"
-        description="대시보드 밖에서 전체 종목을 넓게 비교하는 영역입니다. 카드보다 표 중심으로 보고, 필요한 종목만 상세 분석으로 들어갑니다."
+        eyebrow="Signals"
+        title="서비스 공통 후보"
+        description="이 순위표는 모두가 함께 보는 공통 후보 레이어입니다. 오늘 서비스가 좋게 보는 종목을 비교하고, 필요한 종목만 상세 분석으로 들어갑니다."
       />
       <PublicDataStatusBar summary={statusSummary} />
 
       <section className="grid gap-4 lg:grid-cols-3">
         <SummaryCard
-          title="오늘 스캔한 종목"
+          title="오늘 분석 대상"
           value={`${dailyCandidates?.totalTickers ?? recommendations.items.length}개`}
-          note="전일 데이터 기준으로 오늘 먼저 볼 종목을 추리는 전체 유니버스입니다."
+          note="전일 데이터 기준으로 오늘 우선순위를 계산한 전체 분석 대상입니다."
         />
         <SummaryCard
-          title="오늘 상위 종목"
-          value={`${(dailyCandidates?.topCandidates ?? []).slice(0, 10).length}개`}
-          note="실제 행동은 이 중에서도 장초 확인과 포트폴리오 한도를 통과한 일부만 남습니다."
+          title="공통 후보 수"
+          value={`${dailyCandidates?.topCandidates.length ?? recommendations.items.length}개`}
+          note="모두가 같이 보는 공통 후보입니다. 실제 실행 여부는 Today와 Portfolio에서 개인 기준으로 다시 갈립니다."
         />
         <SummaryCard
-          title="최근 갱신 시각"
+          title="최신 갱신 시각"
           value={dailyCandidates ? formatDateTimeShort(dailyCandidates.generatedAt) : "-"}
-          note="지금 보고 있는 탐색 데이터가 마지막으로 갱신된 시각입니다."
+          note="지금 보고 있는 공통 후보 데이터가 마지막으로 갱신된 시각입니다."
         />
       </section>
 

@@ -27,9 +27,9 @@ export default async function TrackingPage() {
   return (
     <main className="space-y-8 pb-10">
       <PageHeader
-        eyebrow="Watchlist"
-        title="공용 관찰 기록"
-        description="서비스가 먼저 본 종목과 관찰 결과를 복기하는 화면입니다. 오늘 장초 확인을 진행하는 곳이 아니라, 공용 이력을 다시 보는 참고 화면입니다."
+        eyebrow="Signals"
+        title="공용 추적 복기"
+        description="서비스가 어떤 종목을 공용으로 봤고, 그 판단이 어떻게 끝났는지를 다시 보는 복기 화면입니다. 오늘 장초 확인이나 개인 행동을 입력하는 화면은 아닙니다."
       />
       <PublicDataStatusBar summary={statusSummary} />
       <TrackingSelectionGuide {...trackingConfig} />
