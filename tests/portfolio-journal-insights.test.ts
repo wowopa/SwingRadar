@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   buildPortfolioCloseReview,
+  buildPortfolioReviewSummary,
   calculatePortfolioJournalGroupMetrics,
   groupPortfolioJournalByTicker,
   isClosingPortfolioTradeEventType
@@ -51,5 +52,22 @@ describe("portfolio journal insights", () => {
     const review = buildPortfolioCloseReview(groups[0]);
     expect(review.headline).toBe("손절로 종료된 거래입니다.");
     expect(review.watchouts[0]).toContain("손절");
+  });
+
+  it("summarizes closed review patterns", () => {
+    const groups = groupPortfolioJournalByTicker([
+      createEvent({ ticker: "005930", company: "삼성전자", type: "stop_loss", quantity: 5, price: 64000, tradedAt: "2026-04-03T09:00:00+09:00" }),
+      createEvent({ ticker: "005930", company: "삼성전자", type: "buy", quantity: 5, price: 70000, tradedAt: "2026-03-31T09:00:00+09:00" }),
+      createEvent({ ticker: "000660", company: "SK하이닉스", type: "exit_full", quantity: 5, price: 135000, tradedAt: "2026-04-07T09:00:00+09:00" }),
+      createEvent({ ticker: "000660", company: "SK하이닉스", type: "take_profit_partial", quantity: 2, price: 132000, tradedAt: "2026-04-05T09:00:00+09:00" }),
+      createEvent({ ticker: "000660", company: "SK하이닉스", type: "buy", quantity: 5, price: 120000, tradedAt: "2026-03-31T09:00:00+09:00" })
+    ]);
+
+    const summary = buildPortfolioReviewSummary(groups);
+    expect(summary.closedCount).toBe(2);
+    expect(summary.profitableCount).toBe(1);
+    expect(summary.lossCount).toBe(1);
+    expect(summary.stopLossCount).toBe(1);
+    expect(summary.patterns.find((pattern) => pattern.key === "partial_take")?.count).toBe(1);
   });
 });

@@ -32,6 +32,26 @@ export interface PortfolioCloseReview {
   watchouts: string[];
 }
 
+export interface PortfolioReviewPattern {
+  key: "stop_loss" | "manual_exit" | "partial_take" | "extended_hold";
+  label: string;
+  count: number;
+  note: string;
+  tone: "positive" | "neutral" | "caution" | "secondary";
+}
+
+export interface PortfolioReviewSummary {
+  closedCount: number;
+  realizedPnlTotal: number;
+  profitableCount: number;
+  lossCount: number;
+  breakEvenCount: number;
+  stopLossCount: number;
+  manualExitCount: number;
+  averageHoldingDays: number;
+  patterns: PortfolioReviewPattern[];
+}
+
 export function isClosingPortfolioTradeEventType(type: PortfolioTradeEventType) {
   return closingPortfolioTradeEventTypes.has(type);
 }
@@ -196,5 +216,63 @@ export function buildPortfolioCloseReview(group: PortfolioJournalGroup): Portfol
     summary,
     strengths,
     watchouts
+  };
+}
+
+export function buildPortfolioReviewSummary(groups: PortfolioJournalGroup[]): PortfolioReviewSummary {
+  const closedGroups = groups.filter((group) => isClosingPortfolioTradeEventType(group.latestEvent.type));
+  const realizedPnlTotal = closedGroups.reduce((sum, group) => sum + group.metrics.realizedPnl, 0);
+  const profitableCount = closedGroups.filter((group) => group.metrics.realizedPnl > 0).length;
+  const lossCount = closedGroups.filter((group) => group.metrics.realizedPnl < 0).length;
+  const breakEvenCount = closedGroups.length - profitableCount - lossCount;
+  const stopLossCount = closedGroups.filter((group) => group.latestEvent.type === "stop_loss").length;
+  const manualExitCount = closedGroups.filter((group) => group.latestEvent.type === "manual_exit").length;
+  const averageHoldingDays = closedGroups.length
+    ? Math.round(
+        closedGroups.reduce((sum, group) => sum + group.holdingDays, 0) / closedGroups.length
+      )
+    : 0;
+
+  const patterns: PortfolioReviewPattern[] = [
+    {
+      key: "stop_loss",
+      label: "손절 종료",
+      count: stopLossCount,
+      note: "손절로 닫힌 거래 수입니다. 진입과 손절 거리 규칙을 다시 보기 좋습니다.",
+      tone: stopLossCount > 0 ? "caution" : "secondary"
+    },
+    {
+      key: "manual_exit",
+      label: "수동 종료",
+      count: manualExitCount,
+      note: "계획 외 판단으로 정리한 거래입니다. 메모 품질을 높이면 회고 가치가 커집니다.",
+      tone: manualExitCount > 0 ? "neutral" : "secondary"
+    },
+    {
+      key: "partial_take",
+      label: "부분 익절 후 종료",
+      count: closedGroups.filter((group) => group.partialExitCount > 0).length,
+      note: "부분 익절이 실제 종료까지 이어진 거래입니다.",
+      tone: closedGroups.some((group) => group.partialExitCount > 0) ? "positive" : "secondary"
+    },
+    {
+      key: "extended_hold",
+      label: "8일 이상 보유",
+      count: closedGroups.filter((group) => group.holdingDays >= 8).length,
+      note: "시간 손절이나 교체 규칙이 필요할 수 있는 종료 거래입니다.",
+      tone: closedGroups.some((group) => group.holdingDays >= 8) ? "neutral" : "secondary"
+    }
+  ];
+
+  return {
+    closedCount: closedGroups.length,
+    realizedPnlTotal,
+    profitableCount,
+    lossCount,
+    breakEvenCount,
+    stopLossCount,
+    manualExitCount,
+    averageHoldingDays,
+    patterns
   };
 }

@@ -7,6 +7,7 @@ import type { PortfolioProfilePayload } from "@/components/admin/dashboard-types
 import { AccountPortfolioPanel } from "@/components/account/account-portfolio-panel";
 import { PortfolioJournalBoard } from "@/components/portfolio/portfolio-journal-board";
 import { PortfolioOverviewBoard } from "@/components/portfolio/portfolio-overview-board";
+import { PortfolioReviewsBoard } from "@/components/portfolio/portfolio-reviews-board";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { HoldingActionBoardDto } from "@/lib/api-contracts/swing-radar";
@@ -83,7 +84,7 @@ export function PortfolioWorkspace({
         </TabsContent>
 
         <TabsContent value="reviews" className="mt-0">
-          <PortfolioJournalBoard initialJournal={initialJournal} positions={profile.positions} view="reviews" />
+          <PortfolioReviewsBoard journal={initialJournal} />
         </TabsContent>
       </Tabs>
 
