@@ -5,7 +5,7 @@ import { PageHeader } from "@/components/shared/page-header";
 import { PublicDataStatusBarGroup } from "@/components/shared/public-data-status-bar";
 import { TrackingDetailPanel } from "@/components/tracking/tracking-detail-panel";
 import { TrackingSelectionGuide } from "@/components/tracking/tracking-selection-guide";
-import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { getDailyCandidates } from "@/lib/repositories/daily-candidates";
 import { getRecommendations } from "@/lib/repositories/recommendations";
 import { getTrackingPayload } from "@/lib/repositories/tracking";
@@ -68,12 +68,8 @@ export default async function SignalsPage({
   const trackingConfig = getTrackingConfig();
 
   return (
-    <main className="space-y-6">
-      <PageHeader
-        eyebrow="Signals"
-        title="서비스 공통 후보"
-        description="이 화면은 모두가 함께 보는 공통 후보와 공용 복기를 다룹니다. 실제 오늘 행동과 보유 관리는 Today와 Portfolio에서 개인 기준으로 이어집니다."
-      />
+    <main className="space-y-5">
+      <PageHeader eyebrow="Signals" title="서비스 공통 후보" />
       <PublicDataStatusBarGroup summaries={statusSummaries} />
 
       <section className="space-y-4">
@@ -81,36 +77,30 @@ export default async function SignalsPage({
           <SignalsTabLink
             href="/signals?tab=candidates"
             title="오늘 후보"
-            note={`${candidateCount}개 공통 후보`}
+            count={`${candidateCount}개`}
             active={activeTab === "candidates"}
           />
           <SignalsTabLink
             href="/signals?tab=tracking"
             title="공용 복기"
-            note={`${tracking.history.length}개 추적 이력`}
+            count={`${tracking.history.length}건`}
             active={activeTab === "tracking"}
           />
         </div>
 
-        <Card className="border-border/80 bg-white/90 shadow-[0_18px_46px_-32px_rgba(24,32,42,0.22)]">
-          <CardContent className="flex flex-wrap items-start justify-between gap-4 p-5">
-            <div className="max-w-3xl">
-              <p className="text-sm font-semibold text-foreground">
-                {activeTab === "candidates" ? "서비스가 오늘 좋게 보는 후보만 모읍니다" : "공용 추적 결과를 복기하는 화면입니다"}
-              </p>
-              <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                {activeTab === "candidates"
-                  ? `오늘 후보 ${candidateCount}개는 모두가 같은 기준으로 봅니다. 이 가운데 장초 확인 대상으로는 상위 ${openingCheckCount}개만 Today에서 다시 확인합니다.`
-                  : "공용 복기는 오늘 행동 화면이 아니라 과거 공용 판단이 실제로 어떻게 끝났는지 되돌아보는 공간입니다."}
-              </p>
-            </div>
-            <div className="rounded-[22px] border border-border/80 bg-[hsl(42_42%_96%)] px-4 py-3 text-sm text-muted-foreground">
-              {activeTab === "candidates"
-                ? `오늘 후보 ${candidateCount}개 · 장초 확인 기준 ${openingCheckCount}개`
-                : `공용 추적 ${tracking.history.length}건`}
-            </div>
-          </CardContent>
-        </Card>
+        <div className="flex flex-wrap gap-2">
+          {activeTab === "candidates" ? (
+            <>
+              <Badge variant="neutral">공통 후보 {candidateCount}개</Badge>
+              <Badge variant="secondary">장초 확인 기준 {openingCheckCount}개</Badge>
+            </>
+          ) : (
+            <>
+              <Badge variant="neutral">공용 추적 {tracking.history.length}건</Badge>
+              <Badge variant="secondary">복기용 이력</Badge>
+            </>
+          )}
+        </div>
       </section>
 
       {activeTab === "candidates" ? (
@@ -130,38 +120,26 @@ export default async function SignalsPage({
 function SignalsTabLink({
   href,
   title,
-  note,
+  count,
   active
 }: {
   href: string;
   title: string;
-  note: string;
+  count: string;
   active: boolean;
 }) {
   return (
     <Link
       href={href}
       className={cn(
-        "inline-flex min-w-[200px] flex-1 items-center justify-between rounded-[24px] border px-4 py-3 transition",
+        "inline-flex min-w-[170px] flex-1 items-center justify-between rounded-[22px] border px-4 py-3 transition",
         active
-          ? "border-primary/28 bg-[linear-gradient(145deg,rgba(24,32,42,0.98),rgba(34,41,54,0.94))] text-primary-foreground shadow-[0_22px_52px_-34px_rgba(24,32,42,0.68)]"
-          : "border-border/80 bg-[hsl(42_40%_97%)] text-foreground/82 hover:border-primary/25 hover:bg-white"
+          ? "border-primary/24 bg-[linear-gradient(145deg,rgba(24,32,42,0.98),rgba(34,41,54,0.94))] text-primary-foreground shadow-[0_20px_48px_-34px_rgba(24,32,42,0.68)]"
+          : "border-border/80 bg-[hsl(42_40%_97%)] text-foreground hover:border-primary/24 hover:bg-white"
       )}
     >
-      <div>
-        <p className="text-sm font-semibold">{title}</p>
-        <p className={cn("mt-1 text-xs", active ? "text-primary-foreground/72" : "text-muted-foreground")}>{note}</p>
-      </div>
-      <span
-        className={cn(
-          "rounded-full border px-3 py-1 text-xs font-medium",
-          active
-            ? "border-primary/24 bg-primary/12 text-primary-foreground"
-            : "border-border/80 bg-white/85 text-foreground/72"
-        )}
-      >
-        {active ? "현재 보기" : "열기"}
-      </span>
+      <span className="text-sm font-semibold">{title}</span>
+      <Badge variant={active ? "neutral" : "secondary"}>{count}</Badge>
     </Link>
   );
 }

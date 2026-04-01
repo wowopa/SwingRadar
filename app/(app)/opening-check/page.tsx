@@ -21,17 +21,13 @@ export default async function OpeningCheckPage({
   const openingCandidates = response.dailyScan?.openingCheckCandidates ?? [];
 
   return (
-    <main className="space-y-5 pb-10">
-      <PageHeader
-        eyebrow="Today"
-        title="장초 확인"
-        description="오늘 먼저 볼 종목만 빠르게 체크하고 저장하세요. 통과한 종목만 Today의 매수 검토 영역으로 넘어갑니다."
-      />
+    <main className="space-y-4 pb-10">
+      <PageHeader eyebrow="Today" title="장초 확인" />
 
       <div className="flex flex-wrap gap-2">
         <Badge variant="neutral">오늘 대상 {openingCandidates.length}개</Badge>
         <Badge variant="secondary">3개 체크 후 저장</Badge>
-        <Badge variant="secondary">저장 후 다음으로 이동 가능</Badge>
+        <Badge variant="secondary">저장 후 다음 이동</Badge>
       </div>
 
       <DailyCandidatesPanel dailyScan={response.dailyScan} initialFocusTicker={initialFocusTicker} />

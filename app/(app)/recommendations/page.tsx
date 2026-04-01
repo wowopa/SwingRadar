@@ -26,11 +26,7 @@ export default async function RecommendationsPage({
 
   return (
     <main>
-      <PageHeader
-        eyebrow="Today"
-        title="내 오늘 행동"
-        description="서비스 공통 후보를 바탕으로, 내 계좌 기준 오늘 무엇을 해야 하는지만 남기는 화면입니다. 장초 확인을 마치고 실제 매수 검토와 보유 관리로 이어갑니다."
-      />
+      <PageHeader eyebrow="Today" title="내 오늘 행동" />
       <PublicDataStatusBarGroup summaries={statusSummaries} />
 
       <DashboardFocusBoard

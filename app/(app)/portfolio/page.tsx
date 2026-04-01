@@ -35,12 +35,8 @@ export default async function PortfolioPage({
   const statusSummary = buildPublicDataStatusSummary("recommendations", response.generatedAt);
 
   return (
-    <main className="space-y-6">
-      <PageHeader
-        eyebrow="Portfolio"
-        title="내 포트폴리오"
-        description="보유 중인 종목과 자산 현황, 실제 체결 기록까지 이 화면에서 관리합니다."
-      />
+    <main className="space-y-5">
+      <PageHeader eyebrow="Portfolio" title="내 자산과 보유" />
       <PublicDataStatusBar summary={statusSummary} />
       <PortfolioWorkspace
         initialProfile={{

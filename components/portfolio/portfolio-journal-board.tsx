@@ -153,10 +153,12 @@ function formatSignedPrice(value: number) {
 
 export function PortfolioJournalBoard({
   initialJournal,
-  positions
+  positions,
+  view = "journal"
 }: {
   initialJournal: PortfolioJournal;
   positions: PortfolioProfilePosition[];
+  view?: "journal" | "reviews";
 }) {
   const symbolFieldRef = useRef<HTMLDivElement | null>(null);
   const [journal, setJournal] = useState(initialJournal);
@@ -213,6 +215,11 @@ export function PortfolioJournalBoard({
     }
     return [...keys.values()].slice(0, 6);
   }, [positions]);
+  const closedGroups = useMemo(
+    () => groupedEvents.filter((group) => isClosingPortfolioTradeEventType(group.latestEvent.type)),
+    [groupedEvents]
+  );
+  const visibleGroups = view === "reviews" ? closedGroups : groupedEvents;
 
   const selectedSymbol = useMemo(() => {
     if (!form.ticker) {
@@ -317,21 +324,34 @@ export function PortfolioJournalBoard({
     }
   }
 
+  const boardTitle = view === "reviews" ? "종료 리뷰" : "거래 저널";
+  const boardDescription =
+    view === "reviews"
+      ? "이미 끝난 포지션만 모아 회고와 결과를 다시 보는 영역입니다."
+      : "첫 매수부터 부분 익절, 손절, 전량 매도까지 실제 체결 흐름을 남기는 영역입니다.";
+  const emptyTitle = view === "reviews" ? "아직 종료된 거래가 없습니다." : "아직 기록한 체결이 없습니다.";
+  const emptyDescription =
+    view === "reviews"
+      ? "전량 매도나 손절로 끝난 거래가 생기면 이 탭에서 회고를 다시 볼 수 있습니다."
+      : "첫 체결을 남기면 종목별 생애주기와 종료 결과를 한 번에 다시 볼 수 있습니다.";
+
   return (
-    <section className="space-y-6">
+    <section className="space-y-5">
       <Card className="border-border/80 bg-white/90 shadow-[0_22px_56px_-36px_rgba(24,32,42,0.24)]">
         <CardHeader className="space-y-4">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <CardTitle className="text-xl text-foreground">거래 저널</CardTitle>
-              <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
-                첫 매수부터 부분 익절, 손절, 전량 매도까지 실제 체결을 남기면 종목별 생애주기가 순서대로 쌓입니다.
-              </p>
+              <CardTitle className="text-xl text-foreground">{boardTitle}</CardTitle>
+              <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">{boardDescription}</p>
             </div>
-            <Button type="button" onClick={() => setIsDialogOpen(true)}>
-              <Plus className="h-4 w-4" />
-              체결 기록 추가
-            </Button>
+            {view === "journal" ? (
+              <Button type="button" onClick={() => setIsDialogOpen(true)}>
+                <Plus className="h-4 w-4" />
+                체결 기록 추가
+              </Button>
+            ) : (
+              <Badge variant="secondary">종료된 포지션만 보기</Badge>
+            )}
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -346,19 +366,27 @@ export function PortfolioJournalBoard({
             </div>
           ) : null}
 
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
-            <JournalMetric title="전체 체결" value={`${summary.totalEvents}건`} note="기록된 체결 이벤트 수" />
-            <JournalMetric title="보유 중 포지션" value={`${summary.activeCount}개`} note="마지막 이벤트가 종료가 아닌 종목" />
-            <JournalMetric title="종료된 포지션" value={`${summary.closedCount}개`} note="전량 매도나 손절로 마감된 종목" />
-            <JournalMetric title="부분 익절" value={`${summary.partialExitCount}건`} note="일부 수량만 먼저 정리한 기록" />
-            <JournalMetric title="손절" value={`${summary.stopLossCount}건`} note="손절로 종료된 기록" />
-          </div>
+          {view === "journal" ? (
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+              <JournalMetric title="전체 체결" value={`${summary.totalEvents}건`} note="기록된 체결 이벤트" />
+              <JournalMetric title="보유 중 포지션" value={`${summary.activeCount}개`} note="아직 종료되지 않은 종목" />
+              <JournalMetric title="종료된 포지션" value={`${summary.closedCount}개`} note="전량 매도나 손절로 끝난 종목" />
+              <JournalMetric title="부분 익절" value={`${summary.partialExitCount}건`} note="일부 수량만 먼저 정리한 기록" />
+              <JournalMetric title="손절" value={`${summary.stopLossCount}건`} note="손절로 종료한 기록" />
+            </div>
+          ) : (
+            <div className="grid gap-3 sm:grid-cols-3">
+              <JournalMetric title="종료된 포지션" value={`${summary.closedCount}개`} note="회고를 다시 볼 수 있는 종목" />
+              <JournalMetric title="손절 종료" value={`${summary.stopLossCount}건`} note="손절로 끝난 거래" />
+              <JournalMetric title="부분 익절 기록" value={`${summary.partialExitCount}건`} note="익절 후 종료로 이어진 흐름" />
+            </div>
+          )}
         </CardContent>
       </Card>
 
-      {groupedEvents.length ? (
+      {visibleGroups.length ? (
         <div className="grid gap-4 xl:grid-cols-2">
-          {groupedEvents.map((group) => {
+          {visibleGroups.map((group) => {
             const isClosed = isClosingPortfolioTradeEventType(group.latestEvent.type);
             const review = buildPortfolioCloseReview(group);
 
@@ -455,14 +483,18 @@ export function PortfolioJournalBoard({
               <ScrollText className="h-5 w-5" />
             </div>
             <div className="space-y-2">
-              <p className="text-base font-semibold text-foreground">아직 기록된 체결이 없습니다.</p>
-              <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
-                첫 매수나 부분 익절부터 기록하기 시작하면 여기서 종목별 생애주기와 종료 결과를 한 번에 볼 수 있습니다.
-              </p>
+              <p className="text-base font-semibold text-foreground">{emptyTitle}</p>
+              <p className="max-w-2xl text-sm leading-6 text-muted-foreground">{emptyDescription}</p>
             </div>
-            <Button type="button" variant="outline" onClick={() => setIsDialogOpen(true)}>
-              첫 체결 기록 추가
-            </Button>
+            {view === "journal" ? (
+              <Button type="button" variant="outline" onClick={() => setIsDialogOpen(true)}>
+                첫 체결 기록 추가
+              </Button>
+            ) : (
+              <Button asChild variant="outline">
+                <Link href="/portfolio">보유 화면 보기</Link>
+              </Button>
+            )}
           </CardContent>
         </Card>
       )}
@@ -471,9 +503,7 @@ export function PortfolioJournalBoard({
         <DialogContent className="max-h-[88vh] overflow-y-auto border-border/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.97),rgba(246,241,232,0.92))] shadow-[0_38px_110px_-44px_rgba(24,32,42,0.34)]">
           <DialogHeader>
             <DialogTitle>체결 기록 추가</DialogTitle>
-            <DialogDescription>
-              첫 매수, 추가 매수, 부분 익절, 전량 매도, 손절 가운데 실제 체결에 맞는 항목을 선택해 기록합니다.
-            </DialogDescription>
+            <DialogDescription>첫 매수, 추가 매수, 부분 익절, 전량 매도, 손절 중 하나를 골라 기록합니다.</DialogDescription>
           </DialogHeader>
 
           <div className="space-y-5">
@@ -556,9 +586,7 @@ export function PortfolioJournalBoard({
                               onClick={() => applySelectedSymbol(item)}
                               className={cn(
                                 "flex w-full items-center justify-between rounded-[16px] px-3 py-3 text-left transition",
-                                form.ticker === item.ticker
-                                  ? "bg-primary/10 text-foreground"
-                                  : "hover:bg-[hsl(42_40%_96%)]"
+                                form.ticker === item.ticker ? "bg-primary/10 text-foreground" : "hover:bg-[hsl(42_40%_96%)]"
                               )}
                             >
                               <div className="min-w-0">

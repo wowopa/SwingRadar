@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { ArrowUpRight, History, Search, Sparkles } from "lucide-react";
 
 import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
 
 type SearchItem = {
   ticker: string;
@@ -74,7 +75,7 @@ function writeRecentSearches(items: SearchItem[]) {
   window.localStorage.setItem(RECENT_SEARCH_STORAGE_KEY, JSON.stringify(items.slice(0, MAX_RECENT_SEARCHES)));
 }
 
-export function GlobalSymbolSearch() {
+export function GlobalSymbolSearch({ compact = false }: { compact?: boolean }) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [inputValue, setInputValue] = useState("");
   const [query, setQuery] = useState("");
@@ -98,7 +99,7 @@ export function GlobalSymbolSearch() {
       setMode("recent");
       setDescription(
         recentItems.length
-          ? "최근에 봤던 종목입니다. 다시 이어보거나 검색어를 입력해 다른 종목을 찾을 수 있습니다."
+          ? "최근에 보던 종목입니다. 다시 이어보거나 검색어를 입력해 다른 종목을 찾을 수 있습니다."
           : "검색어를 입력해 종목을 찾을 수 있습니다."
       );
       return () => {
@@ -162,13 +163,28 @@ export function GlobalSymbolSearch() {
 
   return (
     <div ref={containerRef} className="relative z-[220] w-full">
-      <div className="rounded-[28px] border border-border/70 bg-white/88 p-2 shadow-panel backdrop-blur-xl">
-        <div className="flex items-center gap-3 rounded-[22px] border border-border/60 bg-background/85 px-4 py-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-accent/70 text-foreground">
-            <Search className="h-4 w-4" />
+      <div
+        className={cn(
+          "border border-border/70 bg-white/88 shadow-panel backdrop-blur-xl",
+          compact ? "rounded-[22px] p-1.5" : "rounded-[28px] p-2"
+        )}
+      >
+        <div
+          className={cn(
+            "flex items-center gap-3 border border-border/60 bg-background/85",
+            compact ? "rounded-[18px] px-3 py-2" : "rounded-[22px] px-4 py-3"
+          )}
+        >
+          <div
+            className={cn(
+              "flex items-center justify-center rounded-full bg-accent/70 text-foreground",
+              compact ? "h-8 w-8" : "h-10 w-10"
+            )}
+          >
+            <Search className={compact ? "h-3.5 w-3.5" : "h-4 w-4"} />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">종목 검색</p>
+            {!compact ? <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">종목 검색</p> : null}
             <Input
               value={inputValue}
               onChange={(event) => {
@@ -188,11 +204,19 @@ export function GlobalSymbolSearch() {
                 setFocused(true);
               }}
               onFocus={() => setFocused(true)}
-              placeholder="티커, 종목명, 섹터로 검색"
-              className="h-auto border-0 bg-transparent px-0 pb-0 pt-1 text-base shadow-none focus-visible:ring-0"
+              placeholder={compact ? "티커, 종목명 검색" : "티커, 종목명, 섹터로 검색"}
+              className={cn(
+                "h-auto border-0 bg-transparent px-0 shadow-none focus-visible:ring-0",
+                compact ? "pb-0 pt-0 text-sm" : "pb-0 pt-1 text-base"
+              )}
             />
           </div>
-          <div className="hidden rounded-full border border-border/70 bg-white px-3 py-1.5 text-xs text-muted-foreground sm:block">
+          <div
+            className={cn(
+              "hidden rounded-full border border-border/70 bg-white text-xs text-muted-foreground sm:block",
+              compact ? "px-2.5 py-1" : "px-3 py-1.5"
+            )}
+          >
             KRX 우선
           </div>
         </div>

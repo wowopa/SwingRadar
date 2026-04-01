@@ -10,28 +10,24 @@ const navItems = [
   {
     href: "/recommendations",
     label: "Today",
-    description: "내 오늘 행동",
     icon: LayoutGrid,
     match: ["/recommendations", "/opening-check"]
   },
   {
     href: "/portfolio",
     label: "Portfolio",
-    description: "내 자산과 보유",
     icon: WalletCards,
     match: ["/portfolio"]
   },
   {
     href: "/signals",
     label: "Signals",
-    description: "공통 후보와 복기",
     icon: Compass,
     match: ["/signals", "/ranking", "/tracking", "/analysis"]
   },
   {
     href: "/account",
     label: "Account",
-    description: "계정과 세션",
     icon: UserRound,
     match: ["/account", "/admin", "/support", "/maintenance"]
   }
@@ -51,24 +47,23 @@ export function PrivateNav() {
             key={item.href}
             href={item.href}
             className={cn(
-              "inline-flex min-w-[170px] shrink-0 snap-start items-center gap-3 rounded-[24px] border px-4 py-3 transition-all duration-200 sm:min-w-0",
+              "inline-flex min-w-[132px] shrink-0 snap-start items-center gap-2.5 rounded-[20px] border px-3 py-2.5 transition-all duration-200 sm:min-w-0",
               isActive
-                ? "border-primary/30 bg-primary/10 text-primary shadow-sm"
-                : "border-border/80 bg-white/90 text-foreground/78 hover:-translate-y-0.5 hover:border-primary/30 hover:bg-white"
+                ? "border-primary/24 bg-[linear-gradient(145deg,rgba(24,32,42,0.98),rgba(34,41,54,0.94))] text-primary-foreground shadow-[0_18px_40px_-30px_rgba(24,32,42,0.62)]"
+                : "border-border/80 bg-white/90 text-foreground/82 hover:-translate-y-0.5 hover:border-primary/24 hover:bg-white"
             )}
           >
             <div
               className={cn(
-                "flex h-10 w-10 items-center justify-center rounded-2xl",
-                isActive ? "bg-primary/15 text-primary" : "bg-secondary/45 text-foreground/70"
+                "flex h-9 w-9 items-center justify-center rounded-2xl",
+                isActive ? "bg-primary/18 text-primary" : "bg-secondary/55 text-foreground/70"
               )}
             >
               <Icon className="h-4 w-4" />
             </div>
-            <div className="min-w-0">
-              <p className="text-sm font-semibold">{item.label}</p>
-              <p className={cn("text-xs", isActive ? "text-primary/80" : "text-muted-foreground")}>{item.description}</p>
-            </div>
+            <p className={cn("min-w-0 text-sm font-semibold", isActive ? "text-primary-foreground" : "text-foreground")}>
+              {item.label}
+            </p>
           </Link>
         );
       })}

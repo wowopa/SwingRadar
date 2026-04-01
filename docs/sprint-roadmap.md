@@ -160,6 +160,8 @@ Suggested scope:
 Reference:
 - `docs/service-operating-model.md`
 - `docs/action-first-ux-roadmap.md`
+- `docs/authenticated-app-ui-rules.md`
+- `docs/product-rebuild-workstreams.md`
 
 ## Recommended next sprint
 Recommended focus: Sprint 9 action-first product repositioning
