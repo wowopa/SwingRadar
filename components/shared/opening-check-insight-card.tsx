@@ -14,10 +14,10 @@ export function OpeningCheckInsightCard({
 }) {
   if (!insight) {
     return (
-      <Card className="border-border/70 bg-white/82 shadow-sm">
+      <Card className="border-border/80 bg-white/88 shadow-[0_18px_44px_-34px_rgba(24,32,42,0.2)]">
         <CardHeader>
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-secondary/35 text-foreground/70">
+            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary/10 text-primary">
               <Clock3 className="h-4 w-4" />
             </div>
             <div>
@@ -33,11 +33,11 @@ export function OpeningCheckInsightCard({
   }
 
   return (
-    <Card className="border-border/70 bg-white/82 shadow-sm">
+    <Card className="border-border/80 bg-white/88 shadow-[0_18px_44px_-34px_rgba(24,32,42,0.2)]">
       <CardHeader className="space-y-3">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-secondary/35 text-foreground/70">
+            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary/10 text-primary">
               <Clock3 className="h-4 w-4" />
             </div>
             <div>
@@ -54,7 +54,7 @@ export function OpeningCheckInsightCard({
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="rounded-[20px] border border-border/70 bg-secondary/20 px-4 py-4">
+        <div className="rounded-[20px] border border-border/80 bg-[hsl(42_38%_97%)] px-4 py-4">
           <p className="text-sm font-semibold text-foreground">{insight.statusDescription}</p>
           <p className="mt-2 text-sm leading-6 text-muted-foreground">{normalizeActionLanguage(insight.outcomeNote)}</p>
         </div>
@@ -68,7 +68,7 @@ export function OpeningCheckInsightCard({
         ) : null}
 
         {insight.note ? (
-          <div className="rounded-[20px] border border-border/70 bg-background/80 px-4 py-4">
+          <div className="rounded-[20px] border border-border/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.94),rgba(246,241,232,0.88))] px-4 py-4">
             <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">기록 메모</p>
             <p className="mt-2 text-sm leading-6 text-muted-foreground">{normalizeActionLanguage(insight.note)}</p>
           </div>

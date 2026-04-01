@@ -26,19 +26,19 @@ export function AnalysisTradePlanPanel({
     });
 
   return (
-    <Card>
+    <Card className="border-border/80 bg-white/92 shadow-[0_22px_56px_-36px_rgba(24,32,42,0.24)]">
       <CardHeader className="space-y-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex flex-wrap items-center gap-2">
             <ActionBucketBadge bucket={plan.bucket} />
             <SignalToneBadge tone={analysis.signalTone} />
             {featuredRank ? (
-              <span className="rounded-full border border-border/70 bg-secondary/35 px-3 py-1 text-xs font-medium text-foreground/76">
+              <span className="rounded-full border border-primary/22 bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
                 {getFeaturedRankLabel(featuredRank)}
               </span>
             ) : null}
           </div>
-          <span className="rounded-full border border-border/70 bg-secondary/25 px-3 py-1 text-xs font-medium text-muted-foreground">
+          <span className="rounded-full border border-border/80 bg-[hsl(42_40%_97%)] px-3 py-1 text-xs font-medium text-muted-foreground">
             {plan.bucketDescription}
           </span>
         </div>
@@ -48,7 +48,7 @@ export function AnalysisTradePlanPanel({
           <p className="text-sm leading-7 text-muted-foreground">{plan.summary}</p>
         </div>
 
-        <div className="rounded-[28px] border border-border/70 bg-secondary/20 p-5">
+        <div className="rounded-[28px] border border-border/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(246,241,232,0.9))] p-5">
           <p className="text-sm leading-7 text-foreground/84">{plan.headline}</p>
         </div>
 
@@ -63,7 +63,7 @@ export function AnalysisTradePlanPanel({
       </CardHeader>
 
       <CardContent className="space-y-4">
-        <div className="rounded-[28px] border border-primary/20 bg-primary/8 p-5">
+        <div className="rounded-[28px] border border-primary/24 bg-[linear-gradient(180deg,rgba(139,107,46,0.1),rgba(255,255,255,0.94))] p-5">
           <p className="text-xs font-medium uppercase tracking-[0.18em] text-primary">다음 행동</p>
           <p className="mt-3 text-sm leading-7 text-foreground/84">{plan.nextStep}</p>
         </div>
@@ -95,14 +95,14 @@ function MetricCard({
   icon: typeof ArrowUpRight;
 }) {
   return (
-    <div className="rounded-[24px] border border-border/70 bg-secondary/25 p-4">
+    <div className="rounded-[24px] border border-border/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.95),rgba(246,241,232,0.9))] p-4">
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-xs text-muted-foreground">{label}</p>
           <p className="mt-2 text-lg font-semibold text-foreground">{value}</p>
           <p className="mt-2 text-xs leading-5 text-muted-foreground">{note}</p>
         </div>
-        <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-background/80 text-foreground/70">
+        <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-primary/10 text-primary">
           <Icon className="h-4 w-4" />
         </div>
       </div>
@@ -112,7 +112,7 @@ function MetricCard({
 
 function DetailCard({ title, body }: { title: string; body: string }) {
   return (
-    <div className="rounded-[24px] border border-border/70 bg-secondary/20 p-4">
+    <div className="rounded-[24px] border border-border/80 bg-[hsl(42_38%_97%)] p-4">
       <p className="text-sm font-semibold text-foreground">{title}</p>
       <p className="mt-3 text-sm leading-7 text-foreground/80">{body}</p>
     </div>
@@ -121,7 +121,7 @@ function DetailCard({ title, body }: { title: string; body: string }) {
 
 function BulletCard({ title, items }: { title: string; items: string[] }) {
   return (
-    <div className="rounded-[24px] border border-border/70 bg-secondary/20 p-4">
+    <div className="rounded-[24px] border border-border/80 bg-[hsl(42_38%_97%)] p-4">
       <p className="text-sm font-semibold text-foreground">{title}</p>
       <div className="mt-3 space-y-2">
         {items.map((item) => (

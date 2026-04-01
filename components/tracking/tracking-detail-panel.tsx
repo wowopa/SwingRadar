@@ -130,7 +130,7 @@ export function TrackingDetailPanel({ history, details }: TrackingDetailPanelPro
               <select
                 value={resultFilter}
                 onChange={(event) => setResultFilter(event.target.value as ResultFilter)}
-                className="flex h-11 w-full rounded-2xl border border-border bg-background px-3 text-sm text-foreground outline-none transition focus:border-primary/50"
+                className="flex h-11 w-full rounded-2xl border border-border/80 bg-[hsl(42_40%_97%)] px-3 text-sm text-foreground outline-none transition focus:border-primary/35 focus:bg-white"
               >
                 <option value="all">전체 상태</option>
                 <option value="감시중">감시중</option>
@@ -142,7 +142,7 @@ export function TrackingDetailPanel({ history, details }: TrackingDetailPanelPro
               <select
                 value={sectorFilter}
                 onChange={(event) => setSectorFilter(event.target.value)}
-                className="flex h-11 w-full rounded-2xl border border-border bg-background px-3 text-sm text-foreground outline-none transition focus:border-primary/50"
+                className="flex h-11 w-full rounded-2xl border border-border/80 bg-[hsl(42_40%_97%)] px-3 text-sm text-foreground outline-none transition focus:border-primary/35 focus:bg-white"
               >
                 <option value="all">전체 업종</option>
                 {sectors.map((sector) => (
@@ -154,7 +154,7 @@ export function TrackingDetailPanel({ history, details }: TrackingDetailPanelPro
               <select
                 value={favoriteFilter}
                 onChange={(event) => setFavoriteFilter(event.target.value as FavoriteFilter)}
-                className="flex h-11 w-full rounded-2xl border border-border bg-background px-3 text-sm text-foreground outline-none transition focus:border-primary/50"
+                className="flex h-11 w-full rounded-2xl border border-border/80 bg-[hsl(42_40%_97%)] px-3 text-sm text-foreground outline-none transition focus:border-primary/35 focus:bg-white"
               >
                 <option value="all">전체</option>
                 <option value="favorites">즐겨찾기만</option>
@@ -175,7 +175,7 @@ export function TrackingDetailPanel({ history, details }: TrackingDetailPanelPro
                 onToggleFavorite={toggleFavorite}
               />
             ) : (
-              <div className="rounded-2xl border border-border/70 bg-secondary/20 px-4 py-6 text-sm leading-6 text-muted-foreground">
+              <div className="rounded-2xl border border-border/80 bg-[hsl(42_40%_97%)] px-4 py-6 text-sm leading-6 text-muted-foreground">
                 조건에 맞는 공용 관찰 기록이 아직 없습니다. 검색어와 상태, 업종 필터를 조금 넓혀 보세요.
               </div>
             )}
@@ -199,9 +199,9 @@ export function TrackingDetailPanel({ history, details }: TrackingDetailPanelPro
           }}
         >
           {activeEntry && activeDetail ? (
-            <DialogContent className="max-h-[88vh] max-w-6xl overflow-hidden border-border/70 bg-card p-0">
+            <DialogContent className="max-h-[88vh] max-w-6xl overflow-hidden border-border/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.97),rgba(246,241,232,0.92))] p-0 shadow-[0_38px_110px_-44px_rgba(24,32,42,0.34)]">
               <div className="flex max-h-[88vh] flex-col">
-                <DialogHeader className="border-b border-border/70 px-6 pb-5 pt-6">
+                <DialogHeader className="border-b border-border/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.95),rgba(246,241,232,0.78))] px-6 pb-5 pt-6">
                   <div className="flex items-start gap-3 pr-10">
                     <div className="min-w-0 flex-1">
                       <DialogTitle className="text-xl leading-tight text-foreground">
@@ -239,7 +239,10 @@ export function TrackingDetailPanel({ history, details }: TrackingDetailPanelPro
                       </CardContent>
                       <CardContent className="grid gap-4 pt-0 md:grid-cols-2 xl:grid-cols-4">
                         {activeDetail.metrics.map((metric) => (
-                          <div key={metric.label} className="rounded-2xl border border-border/70 bg-secondary/35 p-4">
+                          <div
+                            key={metric.label}
+                            className="rounded-2xl border border-border/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.94),rgba(246,241,232,0.88))] p-4"
+                          >
                             <p className="text-xs text-muted-foreground">{metric.label}</p>
                             <p className="mt-2 text-lg font-semibold text-foreground">{metric.value}</p>
                             <p className="mt-2 text-sm leading-6 text-muted-foreground">{metric.note}</p>
@@ -289,7 +292,7 @@ function SummaryMetric({
   emphasis?: string;
 }) {
   return (
-    <div className="rounded-2xl border border-border/70 bg-secondary/35 p-4">
+    <div className="rounded-2xl border border-border/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.95),rgba(246,241,232,0.9))] p-4">
       <p className="text-xs text-muted-foreground">{label}</p>
       <p className={`mt-2 text-lg font-semibold text-foreground ${emphasis ?? ""}`}>{value}</p>
     </div>
