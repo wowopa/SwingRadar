@@ -21,6 +21,8 @@ describe("ScoreLogPanel", () => {
     expect(html).toContain("-3.2점");
     expect(html).toContain("누적 9.3점");
     expect(html).toContain("추격 억제:");
-    expect(html).not.toContain("%");
+    expect(html).not.toContain("12.5%");
+    expect(html).not.toContain("3.2%");
+    expect(html).not.toContain("9.3%");
   });
 });
