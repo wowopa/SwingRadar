@@ -4,28 +4,28 @@
 
 @layer base {
   :root {
-    --background: 32 24% 94%;
-    --foreground: 210 18% 15%;
-    --card: 34 20% 97%;
-    --card-foreground: 210 18% 15%;
-    --popover: 34 20% 97%;
-    --popover-foreground: 210 18% 15%;
-    --primary: 38 42% 32%;
+    --background: 39 28% 95%;
+    --foreground: 220 22% 14%;
+    --card: 36 26% 98%;
+    --card-foreground: 220 22% 14%;
+    --popover: 36 26% 98%;
+    --popover-foreground: 220 22% 14%;
+    --primary: 42 57% 38%;
     --primary-foreground: 40 38% 97%;
-    --secondary: 34 21% 90%;
-    --secondary-foreground: 210 18% 18%;
-    --muted: 34 17% 91%;
-    --muted-foreground: 210 8% 38%;
-    --accent: 26 33% 84%;
-    --accent-foreground: 210 18% 18%;
-    --destructive: 2 67% 48%;
+    --secondary: 34 23% 91%;
+    --secondary-foreground: 220 18% 18%;
+    --muted: 35 18% 92%;
+    --muted-foreground: 220 10% 34%;
+    --accent: 39 30% 84%;
+    --accent-foreground: 220 18% 18%;
+    --destructive: 356 58% 47%;
     --destructive-foreground: 40 38% 97%;
-    --border: 32 17% 78%;
-    --input: 34 18% 84%;
-    --ring: 38 42% 32%;
-    --positive: 152 26% 32%;
-    --neutral: 39 53% 45%;
-    --caution: 16 66% 48%;
+    --border: 34 18% 79%;
+    --input: 34 18% 85%;
+    --ring: 42 57% 38%;
+    --positive: 154 53% 34%;
+    --neutral: 40 79% 46%;
+    --caution: 355 63% 53%;
     --radius: 1.35rem;
     color-scheme: light;
   }
@@ -42,9 +42,9 @@
     @apply bg-background text-foreground antialiased;
     min-height: 100vh;
     background:
-      radial-gradient(circle at top left, hsl(38 42% 80% / 0.22), transparent 32%),
-      radial-gradient(circle at top right, hsl(26 30% 79% / 0.18), transparent 28%),
-      linear-gradient(180deg, hsl(37 23% 96%) 0%, hsl(34 18% 92%) 45%, hsl(31 16% 88%) 100%);
+      radial-gradient(circle at top left, hsl(42 58% 68% / 0.12), transparent 28%),
+      radial-gradient(circle at top right, hsl(218 38% 30% / 0.08), transparent 24%),
+      linear-gradient(180deg, hsl(40 28% 97%) 0%, hsl(38 22% 94%) 44%, hsl(35 18% 90%) 100%);
     font-family: var(--font-body), sans-serif;
   }
 
@@ -54,8 +54,8 @@
     inset: 0;
     pointer-events: none;
     background-image:
-      linear-gradient(hsl(38 20% 24% / 0.05) 1px, transparent 1px),
-      linear-gradient(90deg, hsl(38 20% 24% / 0.05) 1px, transparent 1px);
+      linear-gradient(hsl(220 18% 18% / 0.04) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(220 18% 18% / 0.04) 1px, transparent 1px);
     background-size: 36px 36px;
     mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.32), transparent 72%);
   }
@@ -66,7 +66,7 @@
     inset: 0;
     pointer-events: none;
     background:
-      linear-gradient(135deg, transparent 0%, hsl(38 32% 28% / 0.035) 48%, transparent 100%);
+      linear-gradient(135deg, transparent 0%, hsl(42 46% 32% / 0.03) 48%, transparent 100%);
     mix-blend-mode: multiply;
     opacity: 0.7;
   }
@@ -93,12 +93,12 @@
   .surface-panel {
     @apply border border-border/80 shadow-panel backdrop-blur-xl;
     background-image:
-      linear-gradient(180deg, hsl(35 23% 98% / 0.92), hsl(33 18% 96% / 0.96)),
-      linear-gradient(135deg, hsl(38 28% 84% / 0.12), transparent 42%);
+      linear-gradient(180deg, hsl(37 28% 99% / 0.94), hsl(35 20% 96% / 0.98)),
+      linear-gradient(135deg, hsl(42 44% 74% / 0.12), transparent 42%);
   }
 
   .data-chip {
-    @apply rounded-full border border-border/70 bg-secondary/85 px-3 py-1.5 text-xs text-foreground/85;
+    @apply rounded-full border border-border/80 bg-white/80 px-3 py-1.5 text-xs text-foreground/90;
   }
 
   .eyebrow-label {
@@ -112,73 +112,73 @@
   }
 
   .public-shell-link {
-    color: hsl(38 20% 84% / 0.68);
+    color: hsl(40 22% 86% / 0.72);
   }
 
   .public-shell-link:hover {
-    color: hsl(38 24% 96% / 0.96);
+    color: hsl(42 32% 97% / 0.96);
   }
 
   .public-shell-copy {
-    color: hsl(217 12% 35%);
+    color: hsl(219 16% 28%);
   }
 
   .public-shell-copy-soft {
-    color: hsl(217 10% 44%);
+    color: hsl(220 10% 38%);
   }
 
   .public-hero-badge {
-    border-color: hsl(38 18% 92% / 0.18);
-    background: hsl(38 14% 96% / 0.06);
-    color: hsl(40 24% 95%);
+    border-color: hsl(42 26% 88% / 0.18);
+    background: hsl(42 18% 96% / 0.06);
+    color: hsl(39 28% 95%);
   }
 
   .public-hero-title {
-    color: hsl(39 28% 96%);
+    color: hsl(38 32% 96%);
   }
 
   .public-hero-copy {
-    color: hsl(35 18% 80%);
+    color: hsl(37 18% 82%);
   }
 
   .public-hero-label {
-    color: hsl(36 18% 72%);
+    color: hsl(40 28% 74%);
   }
 
   .public-hero-note {
-    color: hsl(36 15% 78%);
+    color: hsl(39 14% 79%);
   }
 
   .public-panel-kicker {
-    color: hsl(214 10% 58%);
+    color: hsl(39 20% 69%);
   }
 
   .public-panel-title {
-    color: hsl(39 24% 95%);
+    color: hsl(38 26% 95%);
   }
 
   .public-panel-copy {
-    color: hsl(214 14% 76%);
+    color: hsl(218 14% 79%);
   }
 
   .public-panel-note {
-    color: hsl(214 12% 68%);
+    color: hsl(218 10% 70%);
   }
 
   .public-section-kicker {
-    color: hsl(35 26% 42%);
+    color: hsl(42 54% 36%);
   }
 
   .public-section-title {
-    color: hsl(219 22% 16%);
+    color: hsl(220 24% 15%);
   }
 
   .public-section-copy {
-    color: hsl(216 13% 35%);
+    color: hsl(219 14% 31%);
   }
 
   .public-section-copy-soft {
-    color: hsl(216 10% 42%);
+    color: hsl(219 10% 38%);
   }
 
   .brand-mark {
