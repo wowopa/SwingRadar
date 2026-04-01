@@ -5,7 +5,7 @@ import { SignalToneBadge } from "@/components/shared/signal-tone-badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { getValidationBasisDisplayLabel } from "@/lib/copy/action-language";
-import { formatPercent } from "@/lib/utils";
+import { cn, formatPercent } from "@/lib/utils";
 import type { Recommendation } from "@/types/recommendation";
 
 function resolveValidationBasis(item: Recommendation) {
@@ -30,7 +30,7 @@ export function RecommendationTable({
   onToggleFavorite: (ticker: string) => void;
 }) {
   return (
-    <Card>
+    <Card className="border-border/80 bg-white/90 shadow-[0_18px_46px_-32px_rgba(24,32,42,0.2)]">
       <CardHeader>
         <CardTitle>종목 비교표</CardTitle>
       </CardHeader>
@@ -38,7 +38,7 @@ export function RecommendationTable({
         <ScrollArea className="w-full">
           <table className="min-w-[980px] w-full table-fixed text-left text-sm">
             <thead className="text-xs uppercase tracking-[0.22em] text-muted-foreground">
-              <tr className="border-b border-border">
+              <tr className="border-b border-border/80">
                 <th className="w-[72px] whitespace-nowrap pb-3 pr-6">순위</th>
                 <th className="w-[88px] whitespace-nowrap pb-3 pr-6">즐겨찾기</th>
                 <th className="w-[150px] whitespace-nowrap pb-3 pr-6">종목</th>
@@ -58,9 +58,15 @@ export function RecommendationTable({
               {items.map((item, index) => {
                 const displayRank = item.featuredRank ?? index + 1;
                 return (
-                  <tr key={item.ticker} className="border-b border-border/60 text-foreground/80 last:border-0">
+                  <tr
+                    key={item.ticker}
+                    className={cn(
+                      "border-b border-border/60 text-foreground/82 transition hover:bg-[hsl(42_38%_97%)] last:border-0",
+                      item.featuredRank && item.featuredRank <= 5 ? "bg-primary/[0.035]" : ""
+                    )}
+                  >
                     <td className="py-4 pr-6">
-                      <span className="rounded-full border border-primary/30 bg-primary/10 px-2 py-1 text-[11px] font-medium text-primary">
+                      <span className="rounded-full border border-primary/24 bg-primary/10 px-2 py-1 text-[11px] font-medium text-primary">
                         #{displayRank}
                       </span>
                     </td>
@@ -84,8 +90,11 @@ export function RecommendationTable({
                     <td className="py-4 pr-6">{formatPercent(item.validation.avgReturn)}</td>
                     <td className="py-4 pr-6">{formatPercent(item.invalidationDistance)}</td>
                     <td className="py-4">
-                      <Link className="text-primary hover:text-primary/80" href={`/analysis/${item.ticker}`}>
-                        분석 보기
+                      <Link
+                        className="inline-flex h-8 items-center rounded-full border border-primary/24 bg-primary/10 px-3 text-xs font-medium text-primary transition hover:bg-primary/14"
+                        href={`/analysis/${item.ticker}`}
+                      >
+                        상세 보기
                       </Link>
                     </td>
                   </tr>

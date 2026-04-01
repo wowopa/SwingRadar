@@ -56,10 +56,10 @@ function getActionBucket(item: Recommendation) {
 
 function getToneClasses(tone: "emerald" | "sky" | "amber" | "stone") {
   const tones = {
-    emerald: "border-emerald-200 bg-emerald-50 text-emerald-700",
-    sky: "border-sky-200 bg-sky-50 text-sky-700",
-    amber: "border-amber-200 bg-amber-50 text-amber-700",
-    stone: "border-stone-200 bg-stone-50 text-stone-700"
+    emerald: "border-positive/24 bg-[hsl(var(--positive)/0.1)] text-[hsl(var(--positive))]",
+    sky: "border-primary/24 bg-primary/10 text-primary",
+    amber: "border-neutral/24 bg-[hsl(var(--neutral)/0.12)] text-[hsl(var(--neutral))]",
+    stone: "border-border/80 bg-[hsl(42_40%_97%)] text-foreground/78"
   };
 
   return tones[tone];
@@ -173,7 +173,7 @@ export function RecommendationExplorer({ items }: { items: Recommendation[] }) {
 
   return (
     <div className="space-y-8">
-      <section className="grid gap-4 rounded-3xl border border-border/70 bg-card/50 p-5 lg:grid-cols-[minmax(0,1.5fr)_repeat(5,minmax(0,0.75fr))] lg:items-end">
+      <section className="grid gap-4 rounded-3xl border border-border/80 bg-white/90 p-5 shadow-[0_18px_46px_-32px_rgba(24,32,42,0.22)] lg:grid-cols-[minmax(0,1.5fr)_repeat(5,minmax(0,0.75fr))] lg:items-end">
         <div>
           <p className="mb-2 text-sm text-muted-foreground">종목명, 티커, 섹터로 바로 찾을 수 있습니다.</p>
           <Input
@@ -216,7 +216,7 @@ export function RecommendationExplorer({ items }: { items: Recommendation[] }) {
       </section>
 
       <section className="grid gap-4 xl:grid-cols-[minmax(0,1.25fr)_minmax(0,0.95fr)]">
-        <div className="space-y-4 rounded-3xl border border-border/70 bg-card/40 p-5">
+        <div className="space-y-4 rounded-3xl border border-border/80 bg-white/90 p-5 shadow-[0_18px_46px_-32px_rgba(24,32,42,0.18)]">
           <div className="border-b border-border/60 pb-4">
             <p className="text-sm font-semibold text-foreground">행동 중심으로 먼저 봅니다</p>
             <p className="mt-2 text-sm leading-6 text-muted-foreground">
@@ -231,7 +231,7 @@ export function RecommendationExplorer({ items }: { items: Recommendation[] }) {
           </div>
         </div>
 
-        <div className="rounded-3xl border border-border/70 bg-card/40 p-5">
+        <div className="rounded-3xl border border-border/80 bg-white/90 p-5 shadow-[0_18px_46px_-32px_rgba(24,32,42,0.18)]">
           <div className="flex flex-col gap-4 border-b border-border/60 pb-4 sm:flex-row sm:items-start sm:justify-between">
             <div className="min-w-0 flex-1">
               <p className="text-sm font-semibold text-foreground">검증 근거 분포</p>
@@ -241,7 +241,7 @@ export function RecommendationExplorer({ items }: { items: Recommendation[] }) {
                   : "현재 필터 결과와 전체 종목의 검증 근거를 한 번에 비교합니다."}
               </p>
             </div>
-            <div className="rounded-2xl border border-border/70 bg-secondary/35 px-3 py-2 text-sm text-muted-foreground">
+            <div className="rounded-2xl border border-border/80 bg-[hsl(42_42%_96%)] px-3 py-2 text-sm text-muted-foreground">
               {countsMatchAll ? `현재는 전체 동일 ${items.length}개` : `현재 ${filteredItems.length}개 / 전체 ${items.length}개`}
             </div>
           </div>
@@ -271,14 +271,14 @@ export function RecommendationExplorer({ items }: { items: Recommendation[] }) {
                 이 화면은 카드보다 비교표 중심으로 봅니다. 필터와 정렬로 종목을 좁힌 뒤, 필요한 종목만 상세 분석으로 들어가면 됩니다.
               </p>
             </div>
-            <div className="rounded-2xl border border-border/70 bg-secondary/35 px-4 py-3 text-sm text-muted-foreground">
+            <div className="rounded-2xl border border-border/80 bg-[hsl(42_42%_96%)] px-4 py-3 text-sm text-muted-foreground">
               오늘 매수 검토 {bucketedItems.buy_now.length}개 · 관찰 {bucketedItems.watch_only.length}개 · 보류 {bucketedItems.avoid.length}개
             </div>
           </div>
           <RecommendationTable items={filteredItems} favorites={favorites} onToggleFavorite={toggleFavorite} />
         </section>
       ) : (
-        <section className="rounded-3xl border border-border/70 bg-card/40 p-8 text-center">
+        <section className="rounded-3xl border border-border/80 bg-white/90 p-8 text-center shadow-[0_18px_46px_-32px_rgba(24,32,42,0.18)]">
           <p className="text-lg font-semibold text-foreground">조건에 맞는 종목이 없습니다.</p>
           <p className="mt-3 text-sm leading-6 text-muted-foreground">
             검색어 또는 섹터, 검증 기준 조건을 조금 더 넓히면 더 많은 종목을 볼 수 있습니다.
@@ -307,7 +307,7 @@ function FilterSelect<T extends string>({
       <select
         value={value}
         onChange={(event) => onChange(event.target.value as T)}
-        className="flex h-11 w-full rounded-2xl border border-border bg-background px-3 text-sm text-foreground outline-none transition focus:border-primary/50"
+        className="flex h-11 w-full rounded-2xl border border-border/80 bg-[hsl(42_40%_97%)] px-3 text-sm text-foreground outline-none transition focus:border-primary/55 focus:bg-white"
       >
         {children}
       </select>
@@ -327,7 +327,7 @@ function SummaryCard({
   tone: "emerald" | "sky" | "amber" | "stone";
 }) {
   return (
-    <div className={`rounded-3xl border px-4 py-4 ${getToneClasses(tone)}`}>
+    <div className={`rounded-3xl border px-4 py-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.35)] ${getToneClasses(tone)}`}>
       <p className="text-xs font-medium">{label}</p>
       <p className="mt-2 text-2xl font-semibold">{value}</p>
       <p className="mt-2 text-xs leading-5 opacity-80">{detail}</p>
@@ -347,7 +347,7 @@ function BasisRow({
   const isSame = filteredCount === totalCount;
 
   return (
-    <div className="flex items-center justify-between gap-4 rounded-2xl border border-border/70 bg-background/50 px-4 py-3">
+    <div className="flex items-center justify-between gap-4 rounded-2xl border border-border/80 bg-[hsl(42_40%_97%)] px-4 py-3">
       <div>
         <p className="text-sm font-medium text-foreground">{getValidationBasisDisplayLabel(label)}</p>
         <p className="text-xs text-muted-foreground">{isSame ? "현재와 전체 기준이 동일합니다." : "현재 필터와 전체 기준 비교"}</p>
@@ -359,10 +359,10 @@ function BasisRow({
           </span>
         ) : (
           <>
-            <span className="rounded-full border border-primary/20 bg-primary/10 px-3 py-1 font-medium text-primary">
+            <span className="rounded-full border border-primary/24 bg-primary/10 px-3 py-1 font-medium text-primary">
               현재 {filteredCount}
             </span>
-            <span className="rounded-full border border-border/70 bg-secondary/35 px-3 py-1 text-muted-foreground">
+            <span className="rounded-full border border-border/80 bg-white/82 px-3 py-1 text-muted-foreground">
               전체 {totalCount}
             </span>
           </>

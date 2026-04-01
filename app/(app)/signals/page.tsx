@@ -92,7 +92,7 @@ export default async function SignalsPage({
           />
         </div>
 
-        <Card className="border-border/70 bg-white/82 shadow-sm">
+        <Card className="border-border/80 bg-white/90 shadow-[0_18px_46px_-32px_rgba(24,32,42,0.22)]">
           <CardContent className="flex flex-wrap items-start justify-between gap-4 p-5">
             <div className="max-w-3xl">
               <p className="text-sm font-semibold text-foreground">
@@ -104,7 +104,7 @@ export default async function SignalsPage({
                   : "공용 복기는 오늘 행동 화면이 아니라 과거 공용 판단이 실제로 어떻게 끝났는지 되돌아보는 공간입니다."}
               </p>
             </div>
-            <div className="rounded-[22px] border border-border/70 bg-secondary/20 px-4 py-3 text-sm text-muted-foreground">
+            <div className="rounded-[22px] border border-border/80 bg-[hsl(42_42%_96%)] px-4 py-3 text-sm text-muted-foreground">
               {activeTab === "candidates"
                 ? `오늘 후보 ${candidateCount}개 · 장초 확인 기준 ${openingCheckCount}개`
                 : `공용 추적 ${tracking.history.length}건`}
@@ -144,20 +144,20 @@ function SignalsTabLink({
       className={cn(
         "inline-flex min-w-[200px] flex-1 items-center justify-between rounded-[24px] border px-4 py-3 transition",
         active
-          ? "border-primary/30 bg-primary/10 text-primary shadow-sm"
-          : "border-border/70 bg-white/82 text-foreground/80 hover:border-primary/25 hover:bg-white"
+          ? "border-primary/28 bg-[linear-gradient(145deg,rgba(24,32,42,0.98),rgba(34,41,54,0.94))] text-primary-foreground shadow-[0_22px_52px_-34px_rgba(24,32,42,0.68)]"
+          : "border-border/80 bg-[hsl(42_40%_97%)] text-foreground/82 hover:border-primary/25 hover:bg-white"
       )}
     >
       <div>
         <p className="text-sm font-semibold">{title}</p>
-        <p className={cn("mt-1 text-xs", active ? "text-primary/80" : "text-muted-foreground")}>{note}</p>
+        <p className={cn("mt-1 text-xs", active ? "text-primary-foreground/72" : "text-muted-foreground")}>{note}</p>
       </div>
       <span
         className={cn(
           "rounded-full border px-3 py-1 text-xs font-medium",
           active
-            ? "border-primary/25 bg-primary/10 text-primary"
-            : "border-border/70 bg-secondary/30 text-foreground/70"
+            ? "border-primary/24 bg-primary/12 text-primary-foreground"
+            : "border-border/80 bg-white/85 text-foreground/72"
         )}
       >
         {active ? "현재 보기" : "열기"}
