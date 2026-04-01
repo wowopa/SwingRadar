@@ -263,6 +263,28 @@ export function DailyCandidatesPanel({
     () => buildOpeningRecheckCounts(visibleCandidates.map((item) => item.ticker), decisions),
     [decisions, visibleCandidates]
   );
+  const pendingCandidates = useMemo(
+    () => visibleCandidates.filter((item) => (decisions[item.ticker]?.status ?? "pending") === "pending"),
+    [decisions, visibleCandidates]
+  );
+  const completedCandidatesCount = visibleCandidates.length - pendingCandidates.length;
+  const nextFocusTicker = useMemo(
+    () =>
+      focusedCandidate ? getNextFocusTicker(focusedCandidate.ticker, visibleCandidates, decisions) : null,
+    [decisions, focusedCandidate, visibleCandidates]
+  );
+  const nextFocusCandidate = useMemo(
+    () =>
+      nextFocusTicker ? visibleCandidates.find((item) => item.ticker === nextFocusTicker) ?? null : null,
+    [nextFocusTicker, visibleCandidates]
+  );
+  const compactQueueCandidates = useMemo(
+    () =>
+      pendingCandidates
+        .filter((item) => item.ticker !== focusedCandidate?.ticker)
+        .slice(0, 4),
+    [focusedCandidate?.ticker, pendingCandidates]
+  );
 
   function updateDraft(ticker: string, patch: Partial<OpeningDraft>) {
     setDrafts((current) => {
@@ -839,7 +861,13 @@ export function DailyCandidatesPanel({
                               }
                             />
                           </div>
-                          <div className="flex flex-col justify-end gap-2">
+                          <div className="flex flex-col justify-end gap-2 lg:min-w-[212px]">
+                            {nextFocusCandidate && nextFocusCandidate.ticker !== focusedCandidate.ticker ? (
+                              <div className="rounded-2xl border border-border/70 bg-secondary/20 px-3 py-2 text-xs leading-5 text-muted-foreground">
+                                다음 종목
+                                <span className="ml-2 font-semibold text-foreground">{nextFocusCandidate.company}</span>
+                              </div>
+                            ) : null}
                             <Button
                               type="button"
                               size="sm"
@@ -882,7 +910,7 @@ export function DailyCandidatesPanel({
               </div>
 
               <div className="rounded-3xl border border-border/70 bg-background/80 p-5">
-                <div className="flex items-center justify-between gap-3">
+                <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
                     <p className="text-sm font-semibold text-foreground">장초 확인 목록</p>
                     <p className="mt-1 text-xs leading-5 text-muted-foreground">
@@ -893,6 +921,67 @@ export function DailyCandidatesPanel({
                 </div>
 
                 <div className="mt-4 space-y-3">
+                  {focusedCandidate ? (
+                    <div className="rounded-2xl border border-primary/25 bg-primary/8 px-4 py-4">
+                      <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">현재 확인 중</p>
+                      <div className="mt-2 flex items-center justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-semibold text-foreground">{focusedCandidate.company}</p>
+                          <p className="mt-1 text-xs text-muted-foreground">
+                            {focusedCandidate.ticker} · {focusedCandidate.sector}
+                          </p>
+                        </div>
+                        <Badge
+                          variant={getOpeningRecheckStatusMeta(focusedDecision?.status ?? "pending").variant}
+                        >
+                          {getOpeningRecheckStatusMeta(focusedDecision?.status ?? "pending").label}
+                        </Badge>
+                      </div>
+                    </div>
+                  ) : null}
+
+                  <div className="grid gap-2">
+                    {compactQueueCandidates.length ? (
+                      compactQueueCandidates.map((item, index) => (
+                        <button
+                          key={`compact-${item.ticker}`}
+                          type="button"
+                          className="flex w-full items-center justify-between rounded-2xl border border-border/70 bg-secondary/20 px-4 py-3 text-left transition hover:border-primary/25 hover:bg-secondary/30"
+                          onClick={() => setFocusTicker(item.ticker)}
+                        >
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className="rounded-full border border-border/70 bg-background/80 px-2 py-0.5 text-[11px] text-muted-foreground">
+                                다음 {index + 1}
+                              </span>
+                              <p className="truncate text-sm font-medium text-foreground">{item.company}</p>
+                            </div>
+                            <p className="mt-1 text-xs text-muted-foreground">
+                              {item.ticker} · {item.tradePlan?.entryLabel ?? "진입 구간 확인"}
+                            </p>
+                          </div>
+                          <Badge variant="secondary">바로 이동</Badge>
+                        </button>
+                      ))
+                    ) : (
+                      <div className="rounded-2xl border border-border/70 bg-secondary/20 px-4 py-4 text-sm text-muted-foreground">
+                        남은 종목이 많지 않습니다. 현재 종목만 저장하면 장초 확인이 거의 마무리됩니다.
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <details className="mt-4 rounded-2xl border border-border/70 bg-secondary/15">
+                  <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-sm font-medium text-foreground [&::-webkit-details-marker]:hidden">
+                    전체 목록 보기
+                    <div className="flex flex-wrap gap-2">
+                      <Badge variant="secondary">남음 {pendingCandidates.length}개</Badge>
+                      <Badge variant="secondary">완료 {completedCandidatesCount}개</Badge>
+                    </div>
+                  </summary>
+
+                  <div className="border-t border-border/70 px-3 py-3">
+                <div className="mt-3 space-y-3">
                   {visibleCandidates.map((item, index) => {
                     const actionBucket =
                       item.actionBucket ??
@@ -975,6 +1064,8 @@ export function DailyCandidatesPanel({
                     );
                   })}
                 </div>
+                  </div>
+                </details>
               </div>
             </div>
 
