@@ -4,10 +4,10 @@ import { buildResponseMeta, withRouteTelemetry } from "@/lib/server/telemetry";
 import { getDataProvider } from "@/lib/providers";
 import { getDailyCandidates } from "@/lib/repositories/daily-candidates";
 import {
+  getSymbolMaster,
   getFeaturedSymbolItems,
   searchSymbolItems,
-  symbolMaster
-} from "@/lib/symbols/master";
+} from "@/lib/server/runtime-symbol-master";
 
 async function loadSymbolMetaSnapshot() {
   const cached = getCachedSymbolMetaSnapshot();
@@ -49,8 +49,8 @@ export function GET(request: Request) {
     const query = searchParams.get("q") ?? "";
     const limit = Number(searchParams.get("limit") ?? "8");
     const isSearchMode = Boolean(query.trim());
-    const { readyTickers, featuredTickerOrder } = await loadSymbolMetaSnapshot();
-    const resolvedItems = symbolMaster.map((item) => ({
+  const { readyTickers, featuredTickerOrder } = await loadSymbolMetaSnapshot();
+  const resolvedItems = getSymbolMaster().map((item) => ({
       ...item,
       status: readyTickers.has(item.ticker) ? "ready" : item.status
     }));

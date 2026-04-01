@@ -1,8 +1,8 @@
 import type { TickerAnalysisDto } from "@/lib/api-contracts/swing-radar";
 import { ApiError } from "@/lib/server/api-error";
 import type { AnalysisQuery } from "@/lib/server/query-schemas";
+import { resolveTicker } from "@/lib/server/runtime-symbol-master";
 import { resolveTickerAnalysisForQuery } from "@/lib/services/analysis-resolver";
-import { resolveTicker } from "@/lib/symbols/master";
 
 export async function getTickerAnalysis(ticker: string, query: AnalysisQuery): Promise<TickerAnalysisDto> {
   const resolvedTicker = resolveTicker(ticker);

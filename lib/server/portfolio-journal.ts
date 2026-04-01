@@ -4,7 +4,7 @@ import path from "node:path";
 
 import { loadRuntimeDocument, saveRuntimeDocument } from "@/lib/server/runtime-documents";
 import { getRuntimePaths } from "@/lib/server/runtime-paths";
-import { getSymbolByTicker, resolveTicker } from "@/lib/symbols/master";
+import { getSymbolByTicker, resolveTicker } from "@/lib/server/runtime-symbol-master";
 import type { PortfolioJournal, PortfolioTradeEvent, PortfolioTradeEventType } from "@/types/recommendation";
 
 const USER_PORTFOLIO_JOURNALS_DOCUMENT_NAME = "user-portfolio-journals";

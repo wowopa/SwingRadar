@@ -3,9 +3,9 @@
 import { jsonOk } from "@/lib/server/api-response";
 import { assertAdminRequest } from "@/lib/server/admin-auth";
 import { recordAuditLog } from "@/lib/server/audit-log";
+import { getFeaturedSymbols, getSymbolSuggestionByTicker, searchSymbols } from "@/lib/server/runtime-symbol-master";
 import { addSymbolToWatchlist, listWatchlistEntries, updateWatchlistEntry } from "@/lib/server/watchlist-manager";
 import { listWatchlistSyncStatuses } from "@/lib/server/watchlist-sync-status";
-import { getFeaturedSymbols, getSymbolSuggestionByTicker, searchSymbols } from "@/lib/symbols/master";
 import { buildResponseMeta, withRouteTelemetry } from "@/lib/server/telemetry";
 
 const addPayloadSchema = z.object({

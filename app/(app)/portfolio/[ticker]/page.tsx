@@ -12,7 +12,7 @@ import { getCurrentUserSession } from "@/lib/server/user-auth";
 import { findPortfolioJournalGroup } from "@/lib/portfolio/journal-insights";
 import { listRecommendations } from "@/lib/services/recommendations-service";
 import { getTrackingSnapshot } from "@/lib/services/tracking-service";
-import { resolveTicker } from "@/lib/symbols/master";
+import { resolveTicker } from "@/lib/server/runtime-symbol-master";
 
 export const dynamic = "force-dynamic";
 

@@ -4,7 +4,7 @@ import { buildOpeningRecheckTickerInsight } from "@/lib/recommendations/opening-
 import { listOpeningRecheckScans } from "@/lib/server/opening-recheck-board";
 import { getLatestTrackingNewsByTicker } from "@/lib/server/latest-news";
 import type { TrackingQuery } from "@/lib/server/query-schemas";
-import { resolveTicker } from "@/lib/symbols/master";
+import { resolveTicker } from "@/lib/server/runtime-symbol-master";
 
 export async function getTrackingSnapshot(query: TrackingQuery): Promise<TrackingResponseDto> {
   const [source, openingRecheckScans] = await Promise.all([

@@ -3,7 +3,7 @@ import path from "node:path";
 
 import { loadRuntimeDocument, saveRuntimeDocument } from "@/lib/server/runtime-documents";
 import { getRuntimePaths } from "@/lib/server/runtime-paths";
-import { getSymbolByTicker, resolveTicker } from "@/lib/symbols/master";
+import { getSymbolByTicker, resolveTicker } from "@/lib/server/runtime-symbol-master";
 import type { PortfolioProfile, PortfolioProfilePosition } from "@/types/recommendation";
 
 const PORTFOLIO_PROFILE_DOCUMENT_NAME = "portfolio-profile";

@@ -1,7 +1,7 @@
 import { ApiError } from "@/lib/server/api-error";
 import { saveUniverseCandidateReview } from "@/lib/server/universe-candidate-reviews";
+import { getSymbolByTicker } from "@/lib/server/runtime-symbol-master";
 import { addSymbolToWatchlist } from "@/lib/server/watchlist-manager";
-import { getSymbolByTicker } from "@/lib/symbols/master";
 
 export async function promoteUniverseCandidate(input: {
   ticker: string;

@@ -24,9 +24,9 @@ import {
   loadPortfolioProfileDocument,
   loadPortfolioProfileForUser
 } from "@/lib/server/portfolio-profile";
+import { getSymbolByTicker } from "@/lib/server/runtime-symbol-master";
 import { listUserOpeningRecheckDecisions } from "@/lib/server/user-opening-recheck-board";
 import type { RecommendationsQuery } from "@/lib/server/query-schemas";
-import { getSymbolByTicker } from "@/lib/symbols/master";
 import { formatPrice } from "@/lib/utils";
 
 const DEFAULT_OPENING_CHECK_LIMIT = 5;

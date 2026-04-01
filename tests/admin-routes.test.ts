@@ -104,7 +104,7 @@ vi.mock("@/lib/server/watchlist-sync-status", () => ({
   listWatchlistSyncStatuses: mocks.listWatchlistSyncStatuses
 }));
 
-vi.mock("@/lib/symbols/master", () => ({
+vi.mock("@/lib/server/runtime-symbol-master", () => ({
   getFeaturedSymbols: mocks.getFeaturedSymbols,
   getSymbolSuggestionByTicker: mocks.getSymbolSuggestionByTicker,
   searchSymbols: mocks.searchSymbols

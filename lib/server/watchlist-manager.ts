@@ -5,7 +5,7 @@ import { promisify } from "node:util";
 
 import { ApiError } from "@/lib/server/api-error";
 import { saveWatchlistSyncStatus } from "@/lib/server/watchlist-sync-status";
-import { buildMarketSymbol, buildSymbolSuggestion, type SymbolMasterItem } from "@/lib/symbols/master";
+import { buildMarketSymbol, buildSymbolSuggestion, type SymbolMasterItem } from "@/lib/server/runtime-symbol-master";
 
 const execFileAsync = promisify(execFile);
 const projectRoot = process.cwd();

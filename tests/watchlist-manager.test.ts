@@ -15,7 +15,7 @@ vi.mock("node:child_process", () => ({
   execFile: mocks.execFile
 }));
 
-vi.mock("@/lib/symbols/master", () => ({
+vi.mock("@/lib/server/runtime-symbol-master", () => ({
   buildSymbolSuggestion: mocks.buildSymbolSuggestion,
   buildMarketSymbol: mocks.buildMarketSymbol
 }));

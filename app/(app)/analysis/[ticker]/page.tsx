@@ -22,7 +22,12 @@ import { getDailyCandidates } from "@/lib/repositories/daily-candidates";
 import { getTrackingPayload } from "@/lib/repositories/tracking";
 import { getCompanyOverviewLines } from "@/lib/server/company-overview";
 import { buildPublicDataStatusSummary } from "@/lib/server/public-data-status";
-import { buildTradingViewSymbol, getReadySymbols, getSymbolByTicker, resolveTicker } from "@/lib/symbols/master";
+import {
+  buildTradingViewSymbol,
+  getReadySymbols,
+  getSymbolByTicker,
+  resolveTicker
+} from "@/lib/server/runtime-symbol-master";
 
 export const dynamic = "force-dynamic";
 

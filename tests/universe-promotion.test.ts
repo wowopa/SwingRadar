@@ -6,7 +6,7 @@ const mocks = vi.hoisted(() => ({
   saveUniverseCandidateReview: vi.fn()
 }));
 
-vi.mock("@/lib/symbols/master", () => ({
+vi.mock("@/lib/server/runtime-symbol-master", () => ({
   getSymbolByTicker: mocks.getSymbolByTicker
 }));
 
