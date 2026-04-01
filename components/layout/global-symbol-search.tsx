@@ -223,75 +223,95 @@ export function GlobalSymbolSearch({ compact = false }: { compact?: boolean }) {
       </div>
 
       {showDropdown ? (
-        <div className="absolute left-0 right-0 top-[calc(100%+0.75rem)] z-[400] rounded-[28px] border border-border/80 bg-white p-2 shadow-[0_28px_60px_rgba(66,50,34,0.18)]">
-          <div className="flex items-center justify-between px-3 py-2">
-            <div className="flex items-center gap-2 text-xs uppercase tracking-[0.24em] text-muted-foreground">
-              {mode === "recent" ? <History className="h-3.5 w-3.5" /> : <Sparkles className="h-3.5 w-3.5" />}
-              {mode === "recent" ? "최근 검색" : "검색 결과"}
+        <>
+          <button
+            type="button"
+            aria-label="검색 결과 닫기"
+            className="fixed inset-0 z-[360] bg-[rgba(24,32,42,0.06)] sm:hidden"
+            onClick={() => setFocused(false)}
+          />
+          <div
+            className={cn(
+              "z-[400] rounded-[28px] border border-border/80 bg-white p-2 shadow-[0_28px_60px_rgba(66,50,34,0.18)]",
+              compact
+                ? "fixed left-3 right-3 top-[5.35rem] max-h-[min(70vh,34rem)] overflow-y-auto sm:absolute sm:left-0 sm:right-0 sm:top-[calc(100%+0.75rem)] sm:max-h-[32rem]"
+                : "absolute left-0 right-0 top-[calc(100%+0.75rem)]"
+            )}
+          >
+            <div className="flex items-center justify-between px-3 py-2">
+              <div className="flex items-center gap-2 text-xs uppercase tracking-[0.24em] text-muted-foreground">
+                {mode === "recent" ? <History className="h-3.5 w-3.5" /> : <Sparkles className="h-3.5 w-3.5" />}
+                {mode === "recent" ? "최근 검색" : "검색 결과"}
+              </div>
+              <p className="text-xs text-muted-foreground">{displayedItems.length}개</p>
             </div>
-            <p className="text-xs text-muted-foreground">{displayedItems.length}개</p>
-          </div>
-          <p className="px-3 pb-2 text-xs leading-5 text-muted-foreground">{description}</p>
+            <p className="px-3 pb-2 text-xs leading-5 text-muted-foreground sm:hidden">
+              {query.trim() ? "관련 종목을 선택해 바로 이동하세요." : "최근에 본 종목을 다시 열 수 있습니다."}
+            </p>
+            <p className="hidden px-3 pb-2 text-xs leading-5 text-muted-foreground sm:block">{description}</p>
 
-          {displayedItems.length ? (
-            displayedItems.map((item) =>
-              item.status === "ready" ? (
-                <Link
-                  key={item.ticker}
-                  href={`/analysis/${item.ticker}`}
-                  className="block rounded-[22px] px-4 py-3 transition hover:bg-secondary/72"
-                  onClick={() => {
-                    rememberItem(item);
-                    setInputValue("");
-                    setQuery("");
-                  }}
-                >
-                  <div className="flex items-center justify-between gap-4">
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-semibold text-foreground">{item.company}</p>
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        {item.ticker} / {item.market} / {item.sector}
-                      </p>
+            {displayedItems.length ? (
+              displayedItems.map((item) =>
+                item.status === "ready" ? (
+                  <Link
+                    key={item.ticker}
+                    href={`/analysis/${item.ticker}`}
+                    className="block rounded-[22px] px-4 py-3 transition hover:bg-secondary/72"
+                    onClick={() => {
+                      rememberItem(item);
+                      setInputValue("");
+                      setQuery("");
+                      setFocused(false);
+                    }}
+                  >
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-semibold text-foreground">{item.company}</p>
+                        <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                          {item.ticker} / {item.market} / {item.sector}
+                        </p>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2 sm:shrink-0 sm:justify-end">
+                        <StatusBadge status={item.status} />
+                        <span className="inline-flex items-center gap-1 text-xs font-medium text-primary">
+                          분석 보기
+                          <ArrowUpRight className="h-3.5 w-3.5" />
+                        </span>
+                      </div>
                     </div>
-                    <div className="flex shrink-0 items-center gap-2">
-                      <StatusBadge status={item.status} />
-                      <span className="inline-flex items-center gap-1 text-xs font-medium text-primary">
-                        분석 보기
-                        <ArrowUpRight className="h-3.5 w-3.5" />
-                      </span>
+                  </Link>
+                ) : (
+                  <Link
+                    key={item.ticker}
+                    href={`/admin?tab=watchlist&q=${encodeURIComponent(item.ticker)}&returnTo=${encodeURIComponent(`/analysis/${item.ticker}`)}`}
+                    className="block rounded-[22px] px-4 py-3 transition hover:bg-secondary/72"
+                    onClick={() => {
+                      rememberItem(item);
+                      setInputValue("");
+                      setQuery("");
+                      setFocused(false);
+                    }}
+                  >
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-semibold text-foreground">{item.company}</p>
+                        <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                          {item.ticker} / {item.market} / {item.sector}
+                        </p>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2 sm:shrink-0 sm:justify-end">
+                        <StatusBadge status={item.status} />
+                        <span className="text-xs font-medium text-primary">운영에 추가</span>
+                      </div>
                     </div>
-                  </div>
-                </Link>
-              ) : (
-                <Link
-                  key={item.ticker}
-                  href={`/admin?tab=watchlist&q=${encodeURIComponent(item.ticker)}&returnTo=${encodeURIComponent(`/analysis/${item.ticker}`)}`}
-                  className="block rounded-[22px] px-4 py-3 transition hover:bg-secondary/72"
-                  onClick={() => {
-                    rememberItem(item);
-                    setInputValue("");
-                    setQuery("");
-                  }}
-                >
-                  <div className="flex items-center justify-between gap-4">
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-semibold text-foreground">{item.company}</p>
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        {item.ticker} / {item.market} / {item.sector}
-                      </p>
-                    </div>
-                    <div className="flex shrink-0 items-center gap-2">
-                      <StatusBadge status={item.status} />
-                      <span className="text-xs font-medium text-primary">운영에 추가</span>
-                    </div>
-                  </div>
-                </Link>
+                  </Link>
+                )
               )
-            )
-          ) : (
-            <div className="px-4 py-6 text-sm text-muted-foreground">일치하는 종목이 없습니다.</div>
-          )}
-        </div>
+            ) : (
+              <div className="px-4 py-6 text-sm text-muted-foreground">일치하는 종목이 없습니다.</div>
+            )}
+          </div>
+        </>
       ) : null}
     </div>
   );
