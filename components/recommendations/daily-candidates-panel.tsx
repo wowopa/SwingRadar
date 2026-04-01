@@ -465,7 +465,7 @@ export function DailyCandidatesPanel({
 
   return (
     <Card>
-      <CardContent className="space-y-4 pt-6">
+      <CardContent className="space-y-3 pt-5 sm:space-y-4 sm:pt-6">
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border/80 bg-[hsl(42_44%_96%)] px-4 py-3">
           <div className="flex flex-wrap gap-2">
             <Badge variant="secondary">전체 {visibleCandidates.length}개</Badge>
@@ -518,8 +518,8 @@ export function DailyCandidatesPanel({
 
         {hasCandidates ? (
           <>
-            <div className="grid gap-4 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
-              <div className="rounded-3xl border border-border/80 bg-white/90 p-5 shadow-[0_20px_48px_-32px_rgba(24,32,42,0.24)]">
+            <div className="grid gap-3 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)] xl:gap-4">
+              <div className="rounded-3xl border border-border/80 bg-white/90 p-4 shadow-[0_20px_48px_-32px_rgba(24,32,42,0.24)] sm:p-5">
                 {focusedCandidate && focusedDraft ? (
                   <>
                     <div className="flex flex-wrap items-start justify-between gap-3">
@@ -554,7 +554,7 @@ export function DailyCandidatesPanel({
                       </div>
                     </div>
 
-                    <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                    <div className="mt-3 grid gap-2 sm:mt-4 sm:gap-3 sm:grid-cols-3">
                       <div className="sm:col-span-3 rounded-2xl border border-border/80 bg-[hsl(42_38%_97%)] px-4 py-3 text-sm text-muted-foreground">
                         <span className="font-medium text-foreground">진입</span>{" "}
                         {focusedCandidate.tradePlan?.entryLabel ?? "분석 확인"}
@@ -567,15 +567,15 @@ export function DailyCandidatesPanel({
                       </div>
                     </div>
 
-                    <div className="mt-4 grid gap-4">
-                      <div className="rounded-2xl border border-border/80 bg-[hsl(42_40%_97%)] p-4">
+                    <div className="mt-3 grid gap-3 sm:mt-4 sm:gap-4">
+                      <div className="rounded-2xl border border-border/80 bg-[hsl(42_40%_97%)] p-3.5 sm:p-4">
                         <div className="flex items-start justify-between gap-3">
                           <p className="text-sm font-semibold text-foreground">1. 갭 상태</p>
                           <Badge variant={focusedDraft.gap ? getOpeningGapMeta(focusedDraft.gap).variant : "secondary"}>
                             {focusedDraft.gap ? getOpeningGapMeta(focusedDraft.gap).label : "선택 전"}
                           </Badge>
                         </div>
-                        <div className="mt-3 grid gap-2 sm:grid-cols-3">
+                        <div className="mt-2.5 grid gap-2 sm:mt-3 sm:grid-cols-3">
                           {OPENING_GAP_CHECKS.map((gap) => {
                             const meta = getOpeningGapMeta(gap);
                             return (
@@ -585,13 +585,13 @@ export function DailyCandidatesPanel({
                                 variant="outline"
                                 size="sm"
                                 className={cn(
-                                  "h-auto min-h-[78px] flex-col items-start rounded-2xl px-4 py-3 text-left",
+                                  "h-auto min-h-[64px] flex-col items-start rounded-2xl px-3 py-2.5 text-left sm:min-h-[78px] sm:px-4 sm:py-3",
                                   getChoiceButtonClasses(meta.variant, focusedDraft.gap === gap)
                                 )}
                                 onClick={() => updateDraft(focusedCandidate.ticker, { gap })}
                               >
                                 <span className="w-full text-sm font-semibold">{meta.label}</span>
-                                <span className="w-full whitespace-normal text-xs leading-5 text-current/80">
+                                <span className="w-full whitespace-normal text-[11px] leading-4 text-current/80 sm:text-xs sm:leading-5">
                                   {meta.description}
                                 </span>
                               </Button>
@@ -600,7 +600,7 @@ export function DailyCandidatesPanel({
                         </div>
                       </div>
 
-                      <div className="rounded-2xl border border-border/80 bg-[hsl(42_40%_97%)] p-4">
+                      <div className="rounded-2xl border border-border/80 bg-[hsl(42_40%_97%)] p-3.5 sm:p-4">
                         <div className="flex items-start justify-between gap-3">
                           <p className="text-sm font-semibold text-foreground">2. 확인 가격 반응</p>
                           <Badge
@@ -615,7 +615,7 @@ export function DailyCandidatesPanel({
                               : "선택 전"}
                           </Badge>
                         </div>
-                        <div className="mt-3 grid gap-2 sm:grid-cols-3">
+                        <div className="mt-2.5 grid gap-2 sm:mt-3 sm:grid-cols-3">
                           {OPENING_CONFIRMATION_CHECKS.map((confirmation) => {
                             const meta = getOpeningConfirmationMeta(confirmation);
                             return (
@@ -625,13 +625,13 @@ export function DailyCandidatesPanel({
                                 variant="outline"
                                 size="sm"
                                 className={cn(
-                                  "h-auto min-h-[78px] flex-col items-start rounded-2xl px-4 py-3 text-left",
+                                  "h-auto min-h-[64px] flex-col items-start rounded-2xl px-3 py-2.5 text-left sm:min-h-[78px] sm:px-4 sm:py-3",
                                   getChoiceButtonClasses(meta.variant, focusedDraft.confirmation === confirmation)
                                 )}
                                 onClick={() => updateDraft(focusedCandidate.ticker, { confirmation })}
                               >
                                 <span className="w-full text-sm font-semibold">{meta.label}</span>
-                                <span className="w-full whitespace-normal text-xs leading-5 text-current/80">
+                                <span className="w-full whitespace-normal text-[11px] leading-4 text-current/80 sm:text-xs sm:leading-5">
                                   {meta.description}
                                 </span>
                               </Button>
@@ -640,7 +640,7 @@ export function DailyCandidatesPanel({
                         </div>
                       </div>
 
-                      <div className="rounded-2xl border border-border/80 bg-[hsl(42_40%_97%)] p-4">
+                      <div className="rounded-2xl border border-border/80 bg-[hsl(42_40%_97%)] p-3.5 sm:p-4">
                         <div className="flex items-start justify-between gap-3">
                           <p className="text-sm font-semibold text-foreground">3. 오늘 행동</p>
                           <Badge
@@ -651,7 +651,7 @@ export function DailyCandidatesPanel({
                             {focusedDraft.action ? getOpeningActionIntentMeta(focusedDraft.action).label : "선택 전"}
                           </Badge>
                         </div>
-                        <div className="mt-3 grid gap-2 sm:grid-cols-3">
+                        <div className="mt-2.5 grid gap-2 sm:mt-3 sm:grid-cols-3">
                           {OPENING_ACTION_INTENTS.map((action) => {
                             const meta = getOpeningActionIntentMeta(action);
                             return (
@@ -661,13 +661,13 @@ export function DailyCandidatesPanel({
                                 variant="outline"
                                 size="sm"
                                 className={cn(
-                                  "h-auto min-h-[78px] flex-col items-start rounded-2xl px-4 py-3 text-left",
+                                  "h-auto min-h-[64px] flex-col items-start rounded-2xl px-3 py-2.5 text-left sm:min-h-[78px] sm:px-4 sm:py-3",
                                   getChoiceButtonClasses(meta.variant, focusedDraft.action === action)
                                 )}
                                 onClick={() => updateDraft(focusedCandidate.ticker, { action })}
                               >
                                 <span className="w-full text-sm font-semibold">{meta.label}</span>
-                                <span className="w-full whitespace-normal text-xs leading-5 text-current/80">
+                                <span className="w-full whitespace-normal text-[11px] leading-4 text-current/80 sm:text-xs sm:leading-5">
                                   {meta.description}
                                 </span>
                               </Button>
@@ -676,7 +676,7 @@ export function DailyCandidatesPanel({
                         </div>
                       </div>
 
-                      <div className="rounded-2xl border border-border/80 bg-[linear-gradient(180deg,rgba(246,241,232,0.9),rgba(255,255,255,0.92))] p-4">
+                      <div className="rounded-2xl border border-border/80 bg-[linear-gradient(180deg,rgba(246,241,232,0.9),rgba(255,255,255,0.92))] p-3.5 sm:p-4">
                         <div className="flex flex-wrap items-center justify-between gap-3">
                           <div>
                             <p className="text-sm font-semibold text-foreground">자동 제안 상태</p>
@@ -689,10 +689,10 @@ export function DailyCandidatesPanel({
                           </Badge>
                         </div>
 
-                        <div className="mt-4 flex flex-col gap-2 lg:flex-row lg:items-center">
+                        <div className="mt-3 flex flex-col gap-2 lg:mt-4 lg:flex-row lg:items-center">
                           <Button
                             type="button"
-                            className="lg:flex-1"
+                            className="h-10 lg:h-11 lg:flex-1"
                             onClick={() => void saveFocused(false)}
                             disabled={!canManageBoard || savingKey === focusedCandidate.ticker || !resolvedStatus}
                           >
@@ -702,7 +702,7 @@ export function DailyCandidatesPanel({
                           <Button
                             type="button"
                             variant="secondary"
-                            className="lg:flex-1"
+                            className="h-10 lg:h-11 lg:flex-1"
                             onClick={() => void saveFocused(true)}
                             disabled={!canManageBoard || savingKey === focusedCandidate.ticker || !resolvedStatus}
                           >
@@ -852,7 +852,7 @@ export function DailyCandidatesPanel({
                 )}
               </div>
 
-              <div className="rounded-3xl border border-border/80 bg-[hsl(42_34%_97%)] p-5">
+                <div className="rounded-3xl border border-border/80 bg-[hsl(42_34%_97%)] p-4 sm:p-5">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
                     <p className="text-sm font-semibold text-foreground">장초 확인 목록</p>
@@ -863,7 +863,7 @@ export function DailyCandidatesPanel({
                   <Badge variant="secondary">{visibleCandidates.length}개</Badge>
                 </div>
 
-                <div className="mt-4 space-y-3">
+                <div className="mt-3 space-y-2.5 sm:mt-4 sm:space-y-3">
                   {focusedCandidate ? (
                     <div className="rounded-2xl border border-primary/28 bg-[linear-gradient(145deg,rgba(24,32,42,0.98),rgba(34,41,54,0.94))] px-4 py-4 shadow-[0_22px_52px_-34px_rgba(24,32,42,0.68)]">
                       <p className="text-[11px] uppercase tracking-[0.18em] text-primary-foreground/65">현재 확인 중</p>
