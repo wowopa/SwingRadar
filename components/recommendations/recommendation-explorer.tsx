@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { useMemo, useState } from "react";
 
 import { RecommendationTable } from "@/components/recommendations/recommendation-table";
+import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { getValidationBasisDisplayLabel } from "@/lib/copy/action-language";
 import {
@@ -170,10 +171,77 @@ export function RecommendationExplorer({ items }: { items: Recommendation[] }) {
   const enoughInvalidationCount = filteredItems.filter((item) => item.invalidationDistance <= -6).length;
   const verifiedCount = filteredItems.filter((item) => resolveValidationBasis(item) !== "보수 계산").length;
   const countsMatchAll = filteredItems.length === items.length;
+  const tableSummary = `매수 검토 ${bucketedItems.buy_now.length}개 · 관찰 ${bucketedItems.watch_only.length}개 · 보류 ${bucketedItems.avoid.length}개`;
 
   return (
-    <div className="space-y-8">
-      <section className="grid gap-4 rounded-3xl border border-border/80 bg-white/90 p-5 shadow-[0_18px_46px_-32px_rgba(24,32,42,0.22)] lg:grid-cols-[minmax(0,1.5fr)_repeat(5,minmax(0,0.75fr))] lg:items-end">
+    <div className="space-y-6 lg:space-y-8">
+      <div className="space-y-3 lg:hidden">
+        <details className="rounded-3xl border border-border/80 bg-white/90 shadow-[0_18px_46px_-32px_rgba(24,32,42,0.22)]">
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-sm font-semibold text-foreground [&::-webkit-details-marker]:hidden">
+            필터 / 검색
+            <Badge variant="secondary">{filteredItems.length}개 표시</Badge>
+          </summary>
+          <div className="border-t border-border/60 px-4 py-4">
+            <MobileFilterPanel
+              query={query}
+              setQuery={setQuery}
+              tone={tone}
+              setTone={setTone}
+              sector={sector}
+              setSector={setSector}
+              sectors={sectors}
+              favoriteFilter={favoriteFilter}
+              setFavoriteFilter={setFavoriteFilter}
+              trustFilter={trustFilter}
+              setTrustFilter={setTrustFilter}
+              sort={sort}
+              setSort={setSort}
+            />
+          </div>
+        </details>
+
+        <details className="rounded-3xl border border-border/80 bg-white/90 shadow-[0_18px_46px_-32px_rgba(24,32,42,0.18)]">
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-sm font-semibold text-foreground [&::-webkit-details-marker]:hidden">
+            요약 / 검증 분포
+            <Badge variant="secondary">{actionableCount}개 행동 가능</Badge>
+          </summary>
+          <div className="border-t border-border/60 px-4 py-4">
+            <div className="space-y-4">
+              <div className="grid gap-3 sm:grid-cols-2">
+                <SummaryCard label="오늘 볼 종목" value={`${actionableCount}개`} detail="매수 검토 + 관찰 종목" tone="emerald" />
+                <SummaryCard label="오늘 매수 검토" value={`${bucketedItems.buy_now.length}개`} detail="장초 확인 통과 시 실제로 볼 종목" tone="sky" />
+                <SummaryCard label="조금 더 관찰" value={`${bucketedItems.watch_only.length}개`} detail="확인 가격과 반응을 더 볼 종목" tone="amber" />
+                <SummaryCard label="보류" value={`${bucketedItems.avoid.length}개`} detail="기본 카드에서는 뒤로 미룹니다" tone="stone" />
+              </div>
+
+              <div className="rounded-3xl border border-border/80 bg-[hsl(42_41%_97%)] p-4">
+                <div className="flex flex-col gap-3 border-b border-border/60 pb-3">
+                  <p className="text-sm font-semibold text-foreground">검증 근거 분포</p>
+                  <div className="rounded-2xl border border-border/80 bg-white px-3 py-2 text-sm text-muted-foreground">
+                    {countsMatchAll ? `현재는 전체 동일 ${items.length}개` : `현재 ${filteredItems.length}개 / 전체 ${items.length}개`}
+                  </div>
+                </div>
+                <div className="mt-3 space-y-3">
+                  {VALIDATION_BASIS_OPTIONS.map((basis) => (
+                    <BasisRow
+                      key={basis}
+                      label={basis}
+                      filteredCount={filteredTrustSummary[basis]}
+                      totalCount={trustSummary[basis]}
+                    />
+                  ))}
+                </div>
+                <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                  <SummaryCard label="손절 여유" value={`${enoughInvalidationCount}개`} detail="손절 거리 -6% 이하" tone="amber" />
+                  <SummaryCard label="실측 외 검증" value={`${verifiedCount}개`} detail="보수 계산만으로 보지 않는 후보" tone="sky" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </details>
+      </div>
+
+      <section className="hidden gap-4 rounded-3xl border border-border/80 bg-white/90 p-5 shadow-[0_18px_46px_-32px_rgba(24,32,42,0.22)] lg:grid lg:grid-cols-[minmax(0,1.5fr)_repeat(5,minmax(0,0.75fr))] lg:items-end">
         <div>
           <p className="mb-2 text-sm text-muted-foreground">종목명, 티커, 섹터로 바로 찾을 수 있습니다.</p>
           <Input
@@ -215,7 +283,7 @@ export function RecommendationExplorer({ items }: { items: Recommendation[] }) {
         </FilterSelect>
       </section>
 
-      <section className="grid gap-4 xl:grid-cols-[minmax(0,1.25fr)_minmax(0,0.95fr)]">
+      <section className="hidden gap-4 xl:grid xl:grid-cols-[minmax(0,1.25fr)_minmax(0,0.95fr)]">
         <div className="space-y-4 rounded-3xl border border-border/80 bg-white/90 p-5 shadow-[0_18px_46px_-32px_rgba(24,32,42,0.18)]">
           <div className="border-b border-border/60 pb-4">
             <p className="text-sm font-semibold text-foreground">행동 중심으로 먼저 봅니다</p>
@@ -263,7 +331,7 @@ export function RecommendationExplorer({ items }: { items: Recommendation[] }) {
       </section>
 
       {filteredItems.length ? (
-        <section className="space-y-4">
+        <section id="signals-ranking-table" className="space-y-4">
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
               <h2 className="text-lg font-semibold text-foreground">전체 종목 순위표</h2>
@@ -272,7 +340,7 @@ export function RecommendationExplorer({ items }: { items: Recommendation[] }) {
               </p>
             </div>
             <div className="rounded-2xl border border-border/80 bg-[hsl(42_42%_96%)] px-4 py-3 text-sm text-muted-foreground">
-              오늘 매수 검토 {bucketedItems.buy_now.length}개 · 관찰 {bucketedItems.watch_only.length}개 · 보류 {bucketedItems.avoid.length}개
+              {tableSummary}
             </div>
           </div>
           <RecommendationTable items={filteredItems} favorites={favorites} onToggleFavorite={toggleFavorite} />
@@ -287,6 +355,80 @@ export function RecommendationExplorer({ items }: { items: Recommendation[] }) {
       )}
 
     </div>
+  );
+}
+
+function MobileFilterPanel({
+  query,
+  setQuery,
+  tone,
+  setTone,
+  sector,
+  setSector,
+  sectors,
+  favoriteFilter,
+  setFavoriteFilter,
+  trustFilter,
+  setTrustFilter,
+  sort,
+  setSort
+}: {
+  query: string;
+  setQuery: (value: string) => void;
+  tone: ToneFilter;
+  setTone: (value: ToneFilter) => void;
+  sector: SectorFilter;
+  setSector: (value: SectorFilter) => void;
+  sectors: string[];
+  favoriteFilter: FavoriteFilter;
+  setFavoriteFilter: (value: FavoriteFilter) => void;
+  trustFilter: TrustFilter;
+  setTrustFilter: (value: TrustFilter) => void;
+  sort: SortKey;
+  setSort: (value: SortKey) => void;
+}) {
+  return (
+    <section className="grid gap-4">
+      <div>
+        <p className="mb-2 text-sm text-muted-foreground">종목명, 티커, 섹터로 바로 찾을 수 있습니다.</p>
+        <Input
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+          placeholder="예: 삼성전자, 005930, 반도체"
+        />
+      </div>
+      <FilterSelect label="신호 톤" value={tone} onChange={setTone}>
+        <option value="all">전체</option>
+        <option value="긍정">긍정</option>
+        <option value="중립">중립</option>
+        <option value="주의">주의</option>
+      </FilterSelect>
+      <FilterSelect label="섹터" value={sector} onChange={setSector}>
+        <option value="all">전체</option>
+        {sectors.map((sectorItem) => (
+          <option key={sectorItem} value={sectorItem}>
+            {sectorItem}
+          </option>
+        ))}
+      </FilterSelect>
+      <FilterSelect label="즐겨찾기" value={favoriteFilter} onChange={setFavoriteFilter}>
+        <option value="all">전체</option>
+        <option value="favorites">즐겨찾기만</option>
+      </FilterSelect>
+      <FilterSelect label="검증 기준" value={trustFilter} onChange={setTrustFilter}>
+        <option value="all">전체</option>
+        {VALIDATION_BASIS_OPTIONS.map((basis) => (
+          <option key={basis} value={basis}>
+            {getValidationBasisDisplayLabel(basis)}
+          </option>
+        ))}
+      </FilterSelect>
+      <FilterSelect label="정렬" value={sort} onChange={setSort}>
+        <option value="score_desc">행동 우선순위</option>
+        <option value="score_asc">점수 낮은 순</option>
+        <option value="name">종목명순</option>
+      </FilterSelect>
+    </section>
   );
 }
 
