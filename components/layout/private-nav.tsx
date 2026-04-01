@@ -12,7 +12,7 @@ const navItems = [
     label: "Dashboard",
     description: "오늘 행동",
     icon: LayoutGrid,
-    match: ["/recommendations"]
+    match: ["/recommendations", "/opening-check"]
   },
   {
     href: "/portfolio",
@@ -24,7 +24,7 @@ const navItems = [
   {
     href: "/tracking",
     label: "Watchlist",
-    description: "공용 관찰",
+    description: "공용 이력 복기",
     icon: Binoculars,
     match: ["/tracking"]
   },

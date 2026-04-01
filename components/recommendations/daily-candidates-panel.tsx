@@ -147,6 +147,18 @@ function getDefaultFocusTicker(
   );
 }
 
+function resolveInitialFocusTicker(
+  initialFocusTicker: string | null | undefined,
+  items: DailyScanSummaryDto["topCandidates"],
+  decisions: Record<string, OpeningRecheckDecisionDto>
+) {
+  if (initialFocusTicker && items.some((item) => item.ticker === initialFocusTicker)) {
+    return initialFocusTicker;
+  }
+
+  return getDefaultFocusTicker(items, decisions);
+}
+
 function getNextFocusTicker(
   currentTicker: string,
   items: DailyScanSummaryDto["topCandidates"],
@@ -190,10 +202,16 @@ async function parseResponse<T>(response: Response): Promise<T> {
   return json;
 }
 
-export function DailyCandidatesPanel({ dailyScan }: { dailyScan: DailyScanSummaryDto | null }) {
+export function DailyCandidatesPanel({
+  dailyScan,
+  initialFocusTicker
+}: {
+  dailyScan: DailyScanSummaryDto | null;
+  initialFocusTicker?: string | null;
+}) {
   const router = useRouter();
   const { authHeaders } = useAdminToken();
-  const visibleCandidates = useMemo(() => dailyScan?.topCandidates.slice(0, 6) ?? [], [dailyScan]);
+  const visibleCandidates = useMemo(() => dailyScan?.topCandidates ?? [], [dailyScan]);
   const initialDecisions = useMemo(() => createInitialDecisions(visibleCandidates), [visibleCandidates]);
   const scanKey = dailyScan?.generatedAt ?? "";
   const canManageBoard = Boolean(authHeaders);
@@ -209,11 +227,11 @@ export function DailyCandidatesPanel({ dailyScan }: { dailyScan: DailyScanSummar
   useEffect(() => {
     setDecisions(initialDecisions);
     setDrafts({});
-    setFocusTicker(getDefaultFocusTicker(visibleCandidates, initialDecisions));
+    setFocusTicker(resolveInitialFocusTicker(initialFocusTicker, visibleCandidates, initialDecisions));
     setSavingKey(null);
     setBoardMessage(null);
     setBoardError(null);
-  }, [initialDecisions, scanKey, visibleCandidates]);
+  }, [initialDecisions, initialFocusTicker, scanKey, visibleCandidates]);
 
   const focusedCandidate = useMemo(
     () => visibleCandidates.find((item) => item.ticker === focusTicker) ?? visibleCandidates[0] ?? null,

@@ -29,7 +29,7 @@ export default async function TrackingPage() {
       <PageHeader
         eyebrow="Watchlist"
         title="공용 관찰 기록"
-        description="서비스가 먼저 본 종목과 관찰 기록을 보는 화면입니다. 내 실제 포트폴리오와는 분리된 공용 히스토리입니다."
+        description="서비스가 먼저 본 종목과 관찰 결과를 복기하는 화면입니다. 오늘 장초 확인을 진행하는 곳이 아니라, 공용 이력을 다시 보는 참고 화면입니다."
       />
       <PublicDataStatusBar summary={statusSummary} />
       <TrackingSelectionGuide {...trackingConfig} />

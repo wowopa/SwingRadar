@@ -224,6 +224,37 @@ export function DashboardFocusBoard({
               "실시간 자동 신호가 아니라 장전 계획과 장초 확인 결과를 묶어 보여주는 보드입니다. 오늘 신규 매수는 소수만 남기고, 나머지는 관찰 또는 보유 관리로 분리합니다."}
           </div>
 
+          <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_auto]">
+            <div className="rounded-[22px] border border-border/70 bg-secondary/20 p-4">
+              <p className="text-xs font-medium tracking-[0.12em] text-muted-foreground">1. 장초 확인 시작</p>
+              <p className="mt-2 text-sm font-semibold text-foreground">오늘 먼저 볼 종목을 하나씩 체크합니다.</p>
+              <p className="mt-2 text-xs leading-5 text-muted-foreground">갭 상태, 확인 가격 반응, 오늘 행동만 고르면 통과와 보류가 정리됩니다.</p>
+            </div>
+            <div className="rounded-[22px] border border-border/70 bg-secondary/20 p-4">
+              <p className="text-xs font-medium tracking-[0.12em] text-muted-foreground">2. 오늘 매수 검토</p>
+              <p className="mt-2 text-sm font-semibold text-foreground">통과한 종목만 실제 검토 대상으로 남습니다.</p>
+              <p className="mt-2 text-xs leading-5 text-muted-foreground">장초 확인을 마친 뒤에만 오늘 매수 검토 카드가 의미를 가집니다.</p>
+            </div>
+            <div className="rounded-[22px] border border-border/70 bg-secondary/20 p-4">
+              <p className="text-xs font-medium tracking-[0.12em] text-muted-foreground">3. Portfolio 관리</p>
+              <p className="mt-2 text-sm font-semibold text-foreground">보유 종목 관리와 체결 기록은 따로 봅니다.</p>
+              <p className="mt-2 text-xs leading-5 text-muted-foreground">익절, 손절, 시간 점검은 Dashboard가 아니라 Portfolio에서 이어갑니다.</p>
+            </div>
+            <Link
+              href="/opening-check"
+              className="inline-flex min-h-[138px] min-w-[220px] items-center justify-between rounded-[22px] border border-primary/25 bg-primary px-5 py-4 text-primary-foreground shadow-sm transition hover:bg-primary/92"
+            >
+              <div>
+                <p className="text-xs font-medium tracking-[0.12em] text-primary-foreground/75">다음 행동</p>
+                <p className="mt-2 text-base font-semibold">장초 확인 시작</p>
+                <p className="mt-2 text-xs leading-5 text-primary-foreground/80">
+                  오늘 확인할 종목을 열고 바로 체크를 이어갑니다.
+                </p>
+              </div>
+              <ArrowRight className="h-4 w-4 shrink-0" />
+            </Link>
+          </div>
+
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
             {summaryMetrics.map((metric) => (
               <div key={metric.title} className="rounded-[22px] border border-border/70 bg-secondary/20 p-4">
@@ -349,13 +380,21 @@ export function DashboardFocusBoard({
                     <Clock3 className="h-4 w-4" />
                   </div>
                   <div>
-                    <CardTitle className="text-base text-foreground">장초 확인 대기</CardTitle>
-                    <p className="mt-1 text-xs leading-5 text-muted-foreground">장 시작 후 판단이 아직 남은 후보입니다.</p>
+                    <CardTitle className="text-base text-foreground">장초 확인 시작</CardTitle>
+                    <p className="mt-1 text-xs leading-5 text-muted-foreground">오늘 먼저 볼 종목을 하나씩 확인하는 전용 단계입니다.</p>
                   </div>
                 </div>
-                <Badge variant={openingSummary.counts.pending ? "neutral" : "secondary"}>
-                  {formatQueueCount(openingSummary.counts.pending)}
-                </Badge>
+                <div className="flex items-center gap-2">
+                  <Badge variant={openingSummary.counts.pending ? "neutral" : "secondary"}>
+                    {formatQueueCount(openingSummary.counts.pending)}
+                  </Badge>
+                  <Link
+                    href="/opening-check"
+                    className="inline-flex h-9 items-center rounded-full border border-primary/20 bg-primary/8 px-3 text-xs font-medium text-primary transition hover:bg-primary/12"
+                  >
+                    전체 열기
+                  </Link>
+                </div>
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -364,7 +403,7 @@ export function DashboardFocusBoard({
                   {openingSummary.pendingItems.map((item) => (
                     <Link
                       key={item.ticker}
-                      href="/tracking"
+                      href={`/opening-check?ticker=${item.ticker}`}
                       className="block rounded-[22px] border border-border/70 bg-secondary/20 px-4 py-3 transition hover:border-primary/35 hover:bg-secondary/35"
                     >
                       <p className="text-sm font-semibold text-foreground">
@@ -389,6 +428,9 @@ export function DashboardFocusBoard({
                   추격 금지 {formatQueueCount(openingSummary.counts.avoid)}
                 </span>
               </div>
+              <p className="text-xs leading-5 text-muted-foreground">
+                공용 관찰 기록은 따로 복기용 화면으로 보고, 오늘 장초 확인은 이 단계에서 끝내는 흐름이 가장 자연스럽습니다.
+              </p>
             </CardContent>
           </Card>
         </div>
@@ -397,16 +439,16 @@ export function DashboardFocusBoard({
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {[
           {
+            href: "/opening-check",
+            title: "Opening Check",
+            description: "오늘 먼저 볼 종목 장초 확인",
+            icon: Clock3
+          },
+          {
             href: "/portfolio",
             title: "Portfolio",
             description: "내 보유 종목과 다음 행동 보기",
             icon: WalletCards
-          },
-          {
-            href: "/tracking",
-            title: "Watchlist",
-            description: "공용 관찰 기록 보기",
-            icon: Clock3
           },
           {
             href: "/ranking",
