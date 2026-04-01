@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   buildPortfolioCloseReview,
+  buildPortfolioReviewCalendarDashboard,
   buildPortfolioReviewSummary,
   calculatePortfolioJournalGroupMetrics,
   groupPortfolioJournalByTicker,
@@ -69,5 +70,23 @@ describe("portfolio journal insights", () => {
     expect(summary.lossCount).toBe(1);
     expect(summary.stopLossCount).toBe(1);
     expect(summary.patterns.find((pattern) => pattern.key === "partial_take")?.count).toBe(1);
+  });
+
+  it("builds monthly calendar and weekly review dashboard", () => {
+    const groups = groupPortfolioJournalByTicker([
+      createEvent({ ticker: "005930", company: "삼성전자", type: "stop_loss", quantity: 5, price: 64000, tradedAt: "2026-04-03T09:00:00+09:00", note: "손절 실행" }),
+      createEvent({ ticker: "005930", company: "삼성전자", type: "buy", quantity: 5, price: 70000, tradedAt: "2026-03-31T09:00:00+09:00" }),
+      createEvent({ ticker: "000660", company: "SK하이닉스", type: "exit_full", quantity: 5, price: 135000, tradedAt: "2026-04-07T09:00:00+09:00" }),
+      createEvent({ ticker: "000660", company: "SK하이닉스", type: "take_profit_partial", quantity: 2, price: 132000, tradedAt: "2026-04-05T09:00:00+09:00" }),
+      createEvent({ ticker: "000660", company: "SK하이닉스", type: "buy", quantity: 5, price: 120000, tradedAt: "2026-03-31T09:00:00+09:00" })
+    ]);
+
+    const dashboard = buildPortfolioReviewCalendarDashboard(groups);
+    expect(dashboard.monthKey).toBe("2026-04");
+    expect(dashboard.days.find((day) => day.dayOfMonth === 3)?.stopLossCount).toBe(1);
+    expect(dashboard.days.find((day) => day.dayOfMonth === 7)?.closedCount).toBe(1);
+    expect(dashboard.weeks[0]?.closedCount).toBeGreaterThan(0);
+    expect(dashboard.behavior.memoCoverageRate).toBe(50);
+    expect(dashboard.behavior.partialTakeUsageRate).toBe(50);
   });
 });
