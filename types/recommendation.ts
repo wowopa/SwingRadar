@@ -133,6 +133,12 @@ export interface OpeningRecheckReview {
   patterns: OpeningRecheckReviewPattern[];
 }
 
+export interface OpeningCheckLearningInsight {
+  headline: string;
+  primaryLesson: string;
+  secondaryLesson?: string;
+}
+
 export interface OpeningRecheckTickerInsight {
   scanKey: string;
   signalDate: string;

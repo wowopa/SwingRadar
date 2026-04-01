@@ -11,6 +11,7 @@ import type {
   DailyScanSummaryDto,
   HoldingActionBoardDto,
   HoldingActionStatusDto,
+  OpeningCheckLearningInsightDto,
   OpeningRecheckReviewDto,
   TodayActionBoardDto,
   TodayActionBoardItemDto,
@@ -182,6 +183,7 @@ export function DashboardFocusBoard({
   todayActionBoard,
   holdingActionBoard,
   dailyScan,
+  openingCheckLearning,
   openingReview,
   openingCheckCompleted = false
 }: {
@@ -189,6 +191,7 @@ export function DashboardFocusBoard({
   todayActionBoard?: TodayActionBoardDto;
   holdingActionBoard?: HoldingActionBoardDto;
   dailyScan: DailyScanSummaryDto | null;
+  openingCheckLearning?: OpeningCheckLearningInsightDto;
   openingReview?: OpeningRecheckReviewDto;
   openingCheckCompleted?: boolean;
 }) {
@@ -223,6 +226,8 @@ export function DashboardFocusBoard({
               <Badge variant="neutral">지금은 아래 3가지만 먼저 보면 됩니다</Badge>
             </div>
           )}
+
+          {openingCheckLearning ? <CompactLearningBanner insight={openingCheckLearning} /> : null}
 
           <div className="grid gap-3 xl:grid-cols-3">
             <PrimaryActionCard
@@ -489,6 +494,23 @@ function CompactCompletionBanner({ hasBuyReview }: { hasBuyReview: boolean }) {
           {hasBuyReview ? "매수 검토 보기" : "보유 관리 보기"}
         </Link>
       </div>
+    </div>
+  );
+}
+
+function CompactLearningBanner({ insight }: { insight: OpeningCheckLearningInsightDto }) {
+  return (
+    <div className="rounded-[24px] border border-primary/18 bg-primary/8 px-4 py-3">
+      <div className="flex flex-wrap items-center gap-2">
+        <Badge variant="secondary" className="whitespace-nowrap">
+          최근 장초 학습
+        </Badge>
+        <p className="text-sm font-medium text-foreground">{insight.headline}</p>
+      </div>
+      <p className="mt-1 text-sm text-muted-foreground">{insight.primaryLesson}</p>
+      {insight.secondaryLesson ? (
+        <p className="mt-1 text-xs leading-5 text-muted-foreground/90">{insight.secondaryLesson}</p>
+      ) : null}
     </div>
   );
 }

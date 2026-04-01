@@ -19,7 +19,11 @@ export default async function OpeningCheckPage({
 
   return (
     <main className="pb-10">
-      <DailyCandidatesPanel dailyScan={response.dailyScan} initialFocusTicker={initialFocusTicker} />
+      <DailyCandidatesPanel
+        dailyScan={response.dailyScan}
+        openingCheckLearning={response.openingCheckLearning}
+        initialFocusTicker={initialFocusTicker}
+      />
     </main>
   );
 }

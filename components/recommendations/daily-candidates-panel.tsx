@@ -11,7 +11,11 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
-import type { DailyScanSummaryDto, OpeningRecheckDecisionDto } from "@/lib/api-contracts/swing-radar";
+import type {
+  DailyScanSummaryDto,
+  OpeningCheckLearningInsightDto,
+  OpeningRecheckDecisionDto
+} from "@/lib/api-contracts/swing-radar";
 import { resolveRecommendationActionBucket } from "@/lib/recommendations/action-plan";
 import {
   buildOpeningRecheckCounts,
@@ -209,9 +213,11 @@ async function parseResponse<T>(response: Response): Promise<T> {
 
 export function DailyCandidatesPanel({
   dailyScan,
+  openingCheckLearning,
   initialFocusTicker
 }: {
   dailyScan: DailyScanSummaryDto | null;
+  openingCheckLearning?: OpeningCheckLearningInsightDto;
   initialFocusTicker?: string | null;
 }) {
   const router = useRouter();
@@ -486,6 +492,16 @@ export function DailyCandidatesPanel({
 
         {boardMessage ? <p className="text-sm text-positive">{boardMessage}</p> : null}
         {boardError ? <p className="text-sm text-destructive">{boardError}</p> : null}
+
+        {openingCheckLearning ? (
+          <div className="rounded-2xl border border-primary/18 bg-primary/8 px-4 py-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge variant="secondary">최근 학습</Badge>
+              <p className="text-sm font-medium text-foreground">{openingCheckLearning.headline}</p>
+            </div>
+            <p className="mt-1 text-xs leading-5 text-muted-foreground">{openingCheckLearning.primaryLesson}</p>
+          </div>
+        ) : null}
 
         {allChecksCompleted ? (
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-positive/30 bg-[hsl(var(--positive)/0.12)] px-4 py-3">

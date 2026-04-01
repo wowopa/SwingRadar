@@ -11,7 +11,9 @@ const mocks = vi.hoisted(() => ({
   getDailyCandidates: vi.fn(),
   listOpeningRecheckDecisions: vi.fn(),
   listUserOpeningRecheckDecisions: vi.fn(),
+  listUserOpeningRecheckScans: vi.fn(),
   listOpeningRecheckScans: vi.fn(),
+  loadPortfolioJournalForUser: vi.fn(),
   loadPortfolioProfileDocument: vi.fn(),
   loadPortfolioProfileForUser: vi.fn(),
   isPortfolioProfileConfigured: vi.fn()
@@ -35,7 +37,12 @@ vi.mock("@/lib/server/opening-recheck-board", () => ({
 }));
 
 vi.mock("@/lib/server/user-opening-recheck-board", () => ({
-  listUserOpeningRecheckDecisions: mocks.listUserOpeningRecheckDecisions
+  listUserOpeningRecheckDecisions: mocks.listUserOpeningRecheckDecisions,
+  listUserOpeningRecheckScans: mocks.listUserOpeningRecheckScans
+}));
+
+vi.mock("@/lib/server/portfolio-journal", () => ({
+  loadPortfolioJournalForUser: mocks.loadPortfolioJournalForUser
 }));
 
 vi.mock("@/lib/server/portfolio-profile", () => ({
@@ -153,6 +160,14 @@ function createEmptyProfile() {
   };
 }
 
+function createEmptyJournal() {
+  return {
+    events: [],
+    updatedAt: "1970-01-01T00:00:00.000Z",
+    updatedBy: "system"
+  };
+}
+
 describe("listRecommendations", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -168,7 +183,9 @@ describe("listRecommendations", () => {
     mocks.getDailyCandidates.mockResolvedValue(null);
     mocks.listOpeningRecheckDecisions.mockResolvedValue({});
     mocks.listUserOpeningRecheckDecisions.mockResolvedValue({});
+    mocks.listUserOpeningRecheckScans.mockResolvedValue([]);
     mocks.listOpeningRecheckScans.mockResolvedValue([]);
+    mocks.loadPortfolioJournalForUser.mockResolvedValue(createEmptyJournal());
     mocks.loadPortfolioProfileDocument.mockResolvedValue(createEmptyProfile());
     mocks.loadPortfolioProfileForUser.mockResolvedValue(createEmptyProfile());
     mocks.isPortfolioProfileConfigured.mockReturnValue(false);
@@ -592,5 +609,95 @@ describe("listRecommendations", () => {
     });
     expect(result.todayActionBoard?.summary.buyReviewCount).toBe(0);
     expect(result.todayActionBoard?.summary.watchCount).toBe(1);
+  });
+
+  it("builds a compact opening check learning insight from user review history", async () => {
+    mocks.getRecommendations.mockResolvedValue({
+      generatedAt: "2026-03-08T00:00:00.000Z",
+      items: [createRecommendation({ ticker: "AAA001", company: "Alpha", sector: "Tech", score: 82 })]
+    });
+    mocks.getDailyCandidates.mockResolvedValue({
+      generatedAt: "2026-03-08T01:00:00.000Z",
+      batchSize: 20,
+      concurrency: 2,
+      topCandidatesLimit: 10,
+      totalTickers: 100,
+      totalBatches: 5,
+      succeededBatches: 5,
+      failedBatches: [],
+      topCandidates: [createCandidate({ ticker: "AAA001", company: "Alpha", sector: "Tech" })],
+      batchSummaries: []
+    });
+    mocks.loadPortfolioProfileForUser.mockResolvedValue({
+      name: "User profile",
+      totalCapital: 10_000_000,
+      availableCash: 3_000_000,
+      maxRiskPerTradePercent: 1,
+      maxConcurrentPositions: 2,
+      sectorLimit: 1,
+      positions: [],
+      updatedAt: "2026-03-08T00:45:00.000Z",
+      updatedBy: "user-1@example.com"
+    });
+    mocks.isPortfolioProfileConfigured.mockReturnValue(true);
+    mocks.loadPortfolioJournalForUser.mockResolvedValue({
+      events: [
+        {
+          id: "exit-1",
+          ticker: "AAA001",
+          company: "Alpha",
+          sector: "Tech",
+          type: "exit_full",
+          quantity: 10,
+          price: 42_500,
+          fees: 0,
+          tradedAt: "2026-03-11T00:40:00.000Z",
+          note: "목표가 도달 후 종료",
+          createdAt: "2026-03-11T00:40:00.000Z",
+          createdBy: "user-1@example.com"
+        },
+        {
+          id: "buy-1",
+          ticker: "AAA001",
+          company: "Alpha",
+          sector: "Tech",
+          type: "buy",
+          quantity: 10,
+          price: 40_000,
+          fees: 0,
+          tradedAt: "2026-03-08T00:40:00.000Z",
+          note: "장초 확인 통과 후 첫 진입",
+          createdAt: "2026-03-08T00:40:00.000Z",
+          createdBy: "user-1@example.com"
+        }
+      ],
+      updatedAt: "2026-03-11T00:40:00.000Z",
+      updatedBy: "user-1@example.com"
+    });
+    mocks.listUserOpeningRecheckScans.mockResolvedValue([
+      {
+        scanKey: "2026-03-08T01:00:00.000Z",
+        updatedAt: "2026-03-08T01:05:00.000Z",
+        items: {
+          AAA001: {
+            ticker: "AAA001",
+            status: "passed",
+            updatedAt: "2026-03-08T01:05:00.000Z",
+            updatedBy: "user-1@example.com",
+            checklist: {
+              gap: "normal",
+              confirmation: "confirmed",
+              action: "review"
+            }
+          }
+        }
+      }
+    ]);
+
+    const result = await listRecommendations({ sort: "score_desc" }, { userId: "user-1" });
+
+    expect(result.openingCheckLearning).toBeDefined();
+    expect(result.openingCheckLearning?.headline).toContain("통과");
+    expect(result.openingCheckLearning?.primaryLesson).toContain("승률");
   });
 });

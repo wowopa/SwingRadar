@@ -108,6 +108,12 @@ export interface OpeningRecheckReviewDto {
   patterns: OpeningRecheckReviewPatternDto[];
 }
 
+export interface OpeningCheckLearningInsightDto {
+  headline: string;
+  primaryLesson: string;
+  secondaryLesson?: string;
+}
+
 export interface OpeningRecheckTickerInsightDto {
   scanKey: string;
   signalDate: string;
@@ -400,6 +406,7 @@ export interface RecommendationsResponseDto {
   todayActionBoard?: TodayActionBoardDto;
   holdingActionBoard?: HoldingActionBoardDto;
   openingReview?: OpeningRecheckReviewDto;
+  openingCheckLearning?: OpeningCheckLearningInsightDto;
 }
 
 export interface AnalysisSummaryMetricDto {

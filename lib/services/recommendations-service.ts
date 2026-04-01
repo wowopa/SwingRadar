@@ -1,11 +1,16 @@
 import type {
   DailyCandidateDto,
+  OpeningCheckLearningInsightDto,
   OpeningRecheckDecisionDto,
   RecommendationListItemDto,
   RecommendationsResponseDto,
   TickerAnalysisDto
 } from "@/lib/api-contracts/swing-radar";
 import { buildAnalysisTradePlan } from "@/lib/analysis/action-plan";
+import {
+  buildPortfolioOpeningCheckAnalytics,
+  groupPortfolioJournalByTicker
+} from "@/lib/portfolio/journal-insights";
 import { getDataProvider } from "@/lib/providers";
 import { getDailyCandidates, type DailyCandidate } from "@/lib/repositories/daily-candidates";
 import {
@@ -19,13 +24,14 @@ import {
 import { buildHoldingActionBoard } from "@/lib/recommendations/holding-management";
 import { buildOpeningRecheckReview } from "@/lib/recommendations/opening-recheck-review";
 import { listOpeningRecheckDecisions, listOpeningRecheckScans } from "@/lib/server/opening-recheck-board";
+import { loadPortfolioJournalForUser } from "@/lib/server/portfolio-journal";
 import {
   isPortfolioProfileConfigured,
   loadPortfolioProfileDocument,
   loadPortfolioProfileForUser
 } from "@/lib/server/portfolio-profile";
 import { getSymbolByTicker } from "@/lib/server/runtime-symbol-master";
-import { listUserOpeningRecheckDecisions } from "@/lib/server/user-opening-recheck-board";
+import { listUserOpeningRecheckDecisions, listUserOpeningRecheckScans } from "@/lib/server/user-opening-recheck-board";
 import type { RecommendationsQuery } from "@/lib/server/query-schemas";
 import { formatPrice } from "@/lib/utils";
 
@@ -42,6 +48,49 @@ function parsePositiveInt(value: string | undefined, fallback: number) {
 
 function getOpeningCheckLimit() {
   return parsePositiveInt(process.env.SWING_RADAR_OPENING_CHECK_LIMIT, DEFAULT_OPENING_CHECK_LIMIT);
+}
+
+function buildOpeningCheckLearningInsight(
+  analytics: ReturnType<typeof buildPortfolioOpeningCheckAnalytics>
+): OpeningCheckLearningInsightDto | undefined {
+  if (!analytics) {
+    return undefined;
+  }
+
+  const bestStatus = [...analytics.statusInsights].sort((left, right) => {
+    if (right.count !== left.count) {
+      return right.count - left.count;
+    }
+
+    return right.winRate - left.winRate;
+  })[0];
+  const bestPattern = analytics.patterns[0];
+
+  if (!bestStatus && !bestPattern) {
+    return undefined;
+  }
+
+  const headline = bestStatus
+    ? `${bestStatus.label} ${bestStatus.count}건, 승률 ${bestStatus.winRate}%`
+    : analytics.headline;
+  const primaryLesson = bestPattern
+    ? `${bestPattern.title} 조합 ${bestPattern.count}건 · 승률 ${bestPattern.winRate}%`
+    : analytics.summary;
+
+  let secondaryLesson: string | undefined;
+  if (analytics.overrideCount > 0) {
+    secondaryLesson = `보류/제외인데 진입한 거래 ${analytics.overrideCount}건`;
+  } else if (analytics.lossCount > 0) {
+    secondaryLesson = `손실 종료 ${analytics.lossCount}건도 함께 복기해 보세요.`;
+  } else if (analytics.unmatchedCount > 0) {
+    secondaryLesson = `장초 기록이 없는 종료 거래 ${analytics.unmatchedCount}건`;
+  }
+
+  return {
+    headline,
+    primaryLesson,
+    secondaryLesson
+  };
 }
 
 function formatRiskRewardRatio(entryPrice?: number | null, targetPrice?: number | null, invalidationPrice?: number | null) {
@@ -198,12 +247,15 @@ export async function listRecommendations(
 ): Promise<RecommendationsResponseDto> {
   const provider = getDataProvider();
   const emptyOpeningRecheckByTicker: Record<string, OpeningRecheckDecisionDto> = {};
-  const [source, analysisSource, dailyCandidates, tracking, portfolioProfile] = await Promise.all([
+  const [source, analysisSource, dailyCandidates, tracking, portfolioProfile, portfolioJournal, userOpeningRecheckScans] =
+    await Promise.all([
     provider.getRecommendations(),
     provider.getAnalysis().catch(() => null),
     getDailyCandidates(),
     provider.getTracking(),
-    options?.userId ? loadPortfolioProfileForUser(options.userId) : loadPortfolioProfileDocument()
+    options?.userId ? loadPortfolioProfileForUser(options.userId) : loadPortfolioProfileDocument(),
+    options?.userId ? loadPortfolioJournalForUser(options.userId) : Promise.resolve(null),
+    options?.userId ? listUserOpeningRecheckScans(options.userId) : Promise.resolve([])
   ]);
   const [sharedOpeningRecheckByTicker, userOpeningRecheckByTicker, openingRecheckScans] = await Promise.all([
     dailyCandidates
@@ -437,6 +489,14 @@ export async function listRecommendations(
         })
       : undefined;
   const openingReview = buildOpeningRecheckReview(openingRecheckScans, tracking.history);
+  const openingCheckLearning = buildOpeningCheckLearningInsight(
+    portfolioJournal
+      ? buildPortfolioOpeningCheckAnalytics(
+          groupPortfolioJournalByTicker(portfolioJournal.events),
+          userOpeningRecheckScans
+        )
+      : undefined
+  );
 
   return {
     generatedAt: dailyCandidates?.generatedAt ?? source.generatedAt,
@@ -460,6 +520,7 @@ export async function listRecommendations(
     operatingWorkflow: buildTodayOperatingWorkflow(todaySummary),
     todayActionBoard,
     holdingActionBoard,
-    openingReview
+    openingReview,
+    openingCheckLearning
   };
 }
