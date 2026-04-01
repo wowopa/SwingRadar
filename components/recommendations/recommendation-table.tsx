@@ -56,11 +56,12 @@ export function RecommendationTable({
             </thead>
             <tbody>
               {items.map((item, index) => {
+                const displayRank = item.featuredRank ?? index + 1;
                 return (
                   <tr key={item.ticker} className="border-b border-border/60 text-foreground/80 last:border-0">
                     <td className="py-4 pr-6">
                       <span className="rounded-full border border-primary/30 bg-primary/10 px-2 py-1 text-[11px] font-medium text-primary">
-                        #{index + 1}
+                        #{displayRank}
                       </span>
                     </td>
                     <td className="py-4 pr-6">
