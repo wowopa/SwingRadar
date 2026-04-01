@@ -93,6 +93,40 @@ export interface PortfolioReviewCalendarDashboard {
   behavior: PortfolioReviewBehaviorSummary;
 }
 
+export interface PortfolioReviewRuleMetric {
+  key: "memo_coverage" | "partial_take" | "winner_hold" | "loser_hold";
+  label: string;
+  value: string;
+  note: string;
+  tone: "positive" | "neutral" | "caution";
+}
+
+export interface PortfolioReviewDistributionItem {
+  key: string;
+  label: string;
+  count: number;
+  ratio: number;
+  note: string;
+  tone: "positive" | "neutral" | "caution" | "secondary";
+}
+
+export interface PortfolioReviewTagInsight {
+  key: string;
+  label: string;
+  count: number;
+  ratio: number;
+  note: string;
+}
+
+export interface PortfolioReviewAnalytics {
+  headline: string;
+  summary: string;
+  ruleMetrics: PortfolioReviewRuleMetric[];
+  holdDistribution: PortfolioReviewDistributionItem[];
+  pnlDistribution: PortfolioReviewDistributionItem[];
+  tagInsights: PortfolioReviewTagInsight[];
+}
+
 export function isClosingPortfolioTradeEventType(type: PortfolioTradeEventType) {
   return closingPortfolioTradeEventTypes.has(type);
 }
@@ -154,6 +188,44 @@ function formatWeekLabel(start: Date) {
     day: "2-digit"
   }).format(end);
   return `${startLabel} - ${endLabel}`;
+}
+
+function roundRatio(count: number, total: number) {
+  if (!total) {
+    return 0;
+  }
+
+  return Math.round((count / total) * 100);
+}
+
+function formatHoldingDayValue(days: number | null) {
+  if (days === null || Number.isNaN(days)) {
+    return "-";
+  }
+
+  return `${Math.round(days)}일`;
+}
+
+function getGrossEntryCapital(group: PortfolioJournalGroup) {
+  return group.events.reduce((sum, event) => {
+    if (event.type === "buy" || event.type === "add") {
+      return sum + event.price * event.quantity + (event.fees ?? 0);
+    }
+
+    return sum;
+  }, 0);
+}
+
+function collectGroupNotes(group: PortfolioJournalGroup) {
+  return group.events
+    .map((event) => event.note?.trim())
+    .filter((note): note is string => Boolean(note))
+    .join(" ")
+    .toLowerCase();
+}
+
+function hasAnyKeyword(source: string, keywords: string[]) {
+  return keywords.some((keyword) => source.includes(keyword));
 }
 
 export function calculatePortfolioJournalGroupMetrics(events: PortfolioTradeEvent[]): PortfolioJournalGroupMetrics {
@@ -506,5 +578,236 @@ export function buildPortfolioReviewCalendarDashboard(
       quickCloseRate: Math.round((quickCloseCount / closedGroups.length) * 100),
       extendedHoldRate: Math.round((extendedHoldCount / closedGroups.length) * 100)
     }
+  };
+}
+
+export function buildPortfolioReviewAnalytics(groups: PortfolioJournalGroup[]): PortfolioReviewAnalytics {
+  const closedGroups = groups.filter((group) => isClosingPortfolioTradeEventType(group.latestEvent.type));
+
+  if (!closedGroups.length) {
+    return {
+      headline: "종료 거래가 쌓이면 규칙 분석이 시작됩니다.",
+      summary: "종료된 거래가 생기면 보유 기간, 손익 구간, 메모 패턴을 묶어서 어떤 행동이 잘 맞는지 다시 볼 수 있습니다.",
+      ruleMetrics: [
+        {
+          key: "memo_coverage",
+          label: "메모 기록률",
+          value: "0%",
+          note: "종료 거래 메모가 아직 없습니다.",
+          tone: "neutral"
+        },
+        {
+          key: "partial_take",
+          label: "부분 익절 활용",
+          value: "0%",
+          note: "부분 익절을 쓴 종료 거래가 아직 없습니다.",
+          tone: "neutral"
+        },
+        {
+          key: "winner_hold",
+          label: "수익 종료 평균 보유",
+          value: "-",
+          note: "수익 종료 데이터가 아직 없습니다.",
+          tone: "positive"
+        },
+        {
+          key: "loser_hold",
+          label: "손실 종료 평균 보유",
+          value: "-",
+          note: "손실 종료 데이터가 아직 없습니다.",
+          tone: "caution"
+        }
+      ],
+      holdDistribution: [],
+      pnlDistribution: [],
+      tagInsights: []
+    };
+  }
+
+  const memoGroups = closedGroups.filter((group) => {
+    return group.events.some((event) => Boolean(event.note?.trim()));
+  }).length;
+  const partialTakeGroups = closedGroups.filter((group) => group.partialExitCount > 0).length;
+  const winnerGroups = closedGroups.filter((group) => group.metrics.realizedPnl > 0);
+  const loserGroups = closedGroups.filter((group) => group.metrics.realizedPnl < 0);
+
+  const averageWinnerHoldDays = winnerGroups.length
+    ? winnerGroups.reduce((sum, group) => sum + group.holdingDays, 0) / winnerGroups.length
+    : null;
+  const averageLoserHoldDays = loserGroups.length
+    ? loserGroups.reduce((sum, group) => sum + group.holdingDays, 0) / loserGroups.length
+    : null;
+
+  const holdBucketDefinitions = [
+    {
+      key: "quick",
+      label: "1-3일",
+      tone: "neutral" as const,
+      matcher: (group: PortfolioJournalGroup) => group.holdingDays <= 3,
+      note: "짧게 끝난 거래"
+    },
+    {
+      key: "swing_core",
+      label: "4-7일",
+      tone: "positive" as const,
+      matcher: (group: PortfolioJournalGroup) => group.holdingDays >= 4 && group.holdingDays <= 7,
+      note: "핵심 스윙 보유 구간"
+    },
+    {
+      key: "extended",
+      label: "8-14일",
+      tone: "caution" as const,
+      matcher: (group: PortfolioJournalGroup) => group.holdingDays >= 8 && group.holdingDays <= 14,
+      note: "길어진 보유"
+    },
+    {
+      key: "long_tail",
+      label: "15일+",
+      tone: "secondary" as const,
+      matcher: (group: PortfolioJournalGroup) => group.holdingDays >= 15,
+      note: "교체 규칙 점검 필요"
+    }
+  ];
+
+  const holdDistribution = holdBucketDefinitions.map((bucket) => {
+    const count = closedGroups.filter(bucket.matcher).length;
+    return {
+      key: bucket.key,
+      label: bucket.label,
+      count,
+      ratio: roundRatio(count, closedGroups.length),
+      note: bucket.note,
+      tone: bucket.tone
+    };
+  });
+
+  const pnlBucketDefinitions = [
+    {
+      key: "deep_loss",
+      label: "-5% 이하",
+      tone: "caution" as const,
+      matcher: (ratio: number) => ratio <= -5,
+      note: "손실 폭이 큰 종료"
+    },
+    {
+      key: "small_loss",
+      label: "-5% ~ 0%",
+      tone: "neutral" as const,
+      matcher: (ratio: number) => ratio > -5 && ratio < 0,
+      note: "작게 끝난 손실"
+    },
+    {
+      key: "small_gain",
+      label: "0% ~ 5%",
+      tone: "positive" as const,
+      matcher: (ratio: number) => ratio >= 0 && ratio < 5,
+      note: "작게 챙긴 수익"
+    },
+    {
+      key: "strong_gain",
+      label: "5% 이상",
+      tone: "positive" as const,
+      matcher: (ratio: number) => ratio >= 5,
+      note: "확실히 챙긴 수익"
+    }
+  ];
+
+  const pnlDistribution = pnlBucketDefinitions.map((bucket) => {
+    const count = closedGroups.filter((group) => {
+      const entryCapital = getGrossEntryCapital(group);
+      const ratio = entryCapital > 0 ? (group.metrics.realizedPnl / entryCapital) * 100 : 0;
+      return bucket.matcher(ratio);
+    }).length;
+
+    return {
+      key: bucket.key,
+      label: bucket.label,
+      count,
+      ratio: roundRatio(count, closedGroups.length),
+      note: bucket.note,
+      tone: bucket.tone
+    };
+  });
+
+  const tagDefinitions = [
+    {
+      key: "opening_check",
+      label: "장초/시초 메모",
+      keywords: ["장초", "시초", "갭", "확인", "opening", "preopen", "gap"],
+      note: "장초 확인 내용을 남긴 거래"
+    },
+    {
+      key: "risk_control",
+      label: "손절/리스크 메모",
+      keywords: ["손절", "리스크", "보호", "컷", "stop", "risk", "loss"],
+      note: "리스크 대응을 적어둔 거래"
+    },
+    {
+      key: "scale_out",
+      label: "부분 익절 메모",
+      keywords: ["부분 익절", "분할", "익절", "partial", "scale", "profit"],
+      note: "나눠서 챙긴 흐름이 적힌 거래"
+    },
+    {
+      key: "hold_management",
+      label: "보유/관찰 메모",
+      keywords: ["보유", "관찰", "유지", "홀드", "hold", "watch", "manage"],
+      note: "보유 유지 판단이 적힌 거래"
+    }
+  ];
+
+  const tagInsights = tagDefinitions
+    .map((tag) => {
+      const count = closedGroups.filter((group) => {
+        return hasAnyKeyword(collectGroupNotes(group), tag.keywords);
+      }).length;
+
+      return {
+        key: tag.key,
+        label: tag.label,
+        count,
+        ratio: roundRatio(count, closedGroups.length),
+        note: tag.note
+      };
+    })
+    .filter((tag) => tag.count > 0)
+    .sort((left, right) => right.count - left.count);
+
+  return {
+    headline: "종료 거래에서 반복되는 규칙과 습관을 바로 읽을 수 있습니다.",
+    summary: "보유 기간, 손익 구간, 메모 패턴을 함께 보면 어떤 스윙 행동이 자주 먹히고 어디서 자주 흔들리는지 더 빨리 보입니다.",
+    ruleMetrics: [
+      {
+        key: "memo_coverage",
+        label: "메모 기록률",
+        value: `${roundRatio(memoGroups, closedGroups.length)}%`,
+        note: "종료 거래 중 메모가 남아 있는 비율",
+        tone: memoGroups === closedGroups.length ? "positive" : "neutral"
+      },
+      {
+        key: "partial_take",
+        label: "부분 익절 활용",
+        value: `${roundRatio(partialTakeGroups, closedGroups.length)}%`,
+        note: "부분 익절을 거친 종료 거래 비율",
+        tone: partialTakeGroups > 0 ? "positive" : "neutral"
+      },
+      {
+        key: "winner_hold",
+        label: "수익 종료 평균 보유",
+        value: formatHoldingDayValue(averageWinnerHoldDays),
+        note: "수익으로 끝난 거래의 평균 보유 기간",
+        tone: "positive"
+      },
+      {
+        key: "loser_hold",
+        label: "손실 종료 평균 보유",
+        value: formatHoldingDayValue(averageLoserHoldDays),
+        note: "손실로 끝난 거래의 평균 보유 기간",
+        tone: "caution"
+      }
+    ],
+    holdDistribution,
+    pnlDistribution,
+    tagInsights
   };
 }

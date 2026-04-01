@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   buildPortfolioCloseReview,
+  buildPortfolioReviewAnalytics,
   buildPortfolioReviewCalendarDashboard,
   buildPortfolioReviewSummary,
   groupPortfolioJournalByTicker,
@@ -29,6 +30,7 @@ export function PortfolioReviewsBoard({ journal }: { journal: PortfolioJournal }
   });
   const summary = buildPortfolioReviewSummary(closedGroups);
   const calendar = buildPortfolioReviewCalendarDashboard(closedGroups);
+  const analytics = buildPortfolioReviewAnalytics(closedGroups);
 
   if (!closedGroups.length) {
     return (
@@ -83,6 +85,8 @@ export function PortfolioReviewsBoard({ journal }: { journal: PortfolioJournal }
         <ReviewCalendarCard calendar={calendar} />
         <ReviewBehaviorCard calendar={calendar} />
       </div>
+
+      <ReviewStrategyCard analytics={analytics} />
 
       <div className="grid gap-4 xl:grid-cols-2">
         {closedGroups.map((group) => (
@@ -217,6 +221,45 @@ function ReviewBehaviorCard({
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+function ReviewStrategyCard({
+  analytics
+}: {
+  analytics: ReturnType<typeof buildPortfolioReviewAnalytics>;
+}) {
+  return (
+    <Card className="border-border/80 bg-white/90 shadow-[0_18px_44px_-34px_rgba(24,32,42,0.2)]">
+      <CardHeader className="space-y-3">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <CardTitle className="text-lg text-foreground">규칙 분석</CardTitle>
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">{analytics.summary}</p>
+          </div>
+          <Badge variant="secondary">종료 거래 기준</Badge>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-5">
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          {analytics.ruleMetrics.map((metric) => (
+            <BehaviorMetric
+              key={metric.key}
+              title={metric.label}
+              value={metric.value}
+              note={metric.note}
+              tone={metric.tone}
+            />
+          ))}
+        </div>
+
+        <div className="grid gap-5 xl:grid-cols-3">
+          <DistributionCard title="보유 기간 분포" items={analytics.holdDistribution} />
+          <DistributionCard title="손익 구간 분포" items={analytics.pnlDistribution} />
+          <TagInsightCard analytics={analytics} />
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -371,6 +414,91 @@ function ReviewBlock({
           ))
         ) : (
           <p className="text-sm leading-6 text-muted-foreground">{emptyLabel}</p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function DistributionCard({
+  title,
+  items
+}: {
+  title: string;
+  items: ReturnType<typeof buildPortfolioReviewAnalytics>["holdDistribution"];
+}) {
+  return (
+    <div className="rounded-[24px] border border-border/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.95),rgba(246,241,232,0.9))] p-4">
+      <p className="text-sm font-semibold text-foreground">{title}</p>
+      <div className="mt-4 space-y-3">
+        {items.map((item) => (
+          <div key={item.key} className="space-y-2">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-sm font-medium text-foreground">{item.label}</p>
+                <p className="text-xs text-muted-foreground">{item.note}</p>
+              </div>
+              <Badge
+                variant={
+                  item.tone === "positive"
+                    ? "positive"
+                    : item.tone === "neutral"
+                      ? "neutral"
+                      : item.tone === "caution"
+                        ? "caution"
+                        : "secondary"
+                }
+              >
+                {item.count}건
+              </Badge>
+            </div>
+            <div className="h-2.5 overflow-hidden rounded-full bg-[hsl(42_32%_92%)]">
+              <div
+                className={
+                  item.tone === "positive"
+                    ? "h-full rounded-full bg-[hsl(var(--positive))]"
+                    : item.tone === "neutral"
+                      ? "h-full rounded-full bg-[hsl(var(--primary))]"
+                      : item.tone === "caution"
+                        ? "h-full rounded-full bg-[hsl(var(--caution))]"
+                        : "h-full rounded-full bg-[hsl(var(--muted-foreground)/0.55)]"
+                }
+                style={{ width: `${Math.max(item.ratio, item.count > 0 ? 10 : 0)}%` }}
+              />
+            </div>
+            <p className="text-xs text-muted-foreground">{item.ratio}%</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function TagInsightCard({
+  analytics
+}: {
+  analytics: ReturnType<typeof buildPortfolioReviewAnalytics>;
+}) {
+  return (
+    <div className="rounded-[24px] border border-border/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.95),rgba(246,241,232,0.9))] p-4">
+      <p className="text-sm font-semibold text-foreground">메모에서 자주 보인 태그</p>
+      <div className="mt-4 space-y-3">
+        {analytics.tagInsights.length ? (
+          analytics.tagInsights.map((tag) => (
+            <div key={tag.key} className="rounded-[18px] border border-border/80 bg-white/80 px-3 py-3">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-sm font-medium text-foreground">{tag.label}</p>
+                <Badge variant="secondary">
+                  {tag.count}건 · {tag.ratio}%
+                </Badge>
+              </div>
+              <p className="mt-2 text-xs leading-5 text-muted-foreground">{tag.note}</p>
+            </div>
+          ))
+        ) : (
+          <div className="rounded-[18px] border border-border/80 bg-white/80 px-3 py-4 text-sm leading-6 text-muted-foreground">
+            아직 메모 안에서 반복되는 태그가 충분히 쌓이지 않았습니다.
+          </div>
         )}
       </div>
     </div>
