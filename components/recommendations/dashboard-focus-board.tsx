@@ -1,13 +1,6 @@
 import Link from "next/link";
-import {
-  ArrowRight,
-  ArrowUpRight,
-  Clock3,
-  Compass,
-  ShieldAlert,
-  Target,
-  WalletCards
-} from "lucide-react";
+import type { ReactNode } from "react";
+import { ArrowRight, ArrowUpRight, Clock3, ShieldAlert, Target } from "lucide-react";
 
 import { OpeningCheckReviewCard } from "@/components/recommendations/opening-check-review-card";
 import { SignalToneBadge } from "@/components/shared/signal-tone-badge";
@@ -84,57 +77,6 @@ function getBuyReviewItems(board?: TodayActionBoardDto) {
   return board?.sections.find((section) => section.status === "buy_review")?.items.slice(0, 2) ?? [];
 }
 
-function getSummaryMetrics({
-  summary,
-  todayActionBoard,
-  holdingActionBoard,
-  openingSummary
-}: {
-  summary?: TodayActionSummaryDto;
-  todayActionBoard?: TodayActionBoardDto;
-  holdingActionBoard?: HoldingActionBoardDto;
-  openingSummary: ReturnType<typeof getOpeningCheckSummary>;
-}) {
-  return [
-    {
-      title: "오늘 매수 검토",
-      value: formatQueueCount(todayActionBoard?.summary.buyReviewCount ?? 0),
-      note: "오늘 실제로 새로 볼 종목"
-    },
-    {
-      title: "보유 우선 관리",
-      value: formatQueueCount(getHoldingAttentionCount(holdingActionBoard)),
-      note: "손절, 익절, 시간 점검이 필요한 보유"
-    },
-    {
-      title: "장초 확인 대기",
-      value: formatQueueCount(openingSummary.counts.pending),
-      note: "장 시작 후 확인이 아직 남은 후보"
-    },
-    {
-      title: "가용 현금",
-      value:
-        typeof todayActionBoard?.summary.availableCash === "number"
-          ? formatPrice(todayActionBoard.summary.availableCash)
-          : "확인 필요",
-      note:
-        typeof todayActionBoard?.summary.availableCash === "number"
-          ? "권장 수량 계산 기준"
-          : "포트폴리오 설정에서 입력 필요"
-    },
-    {
-      title: "신규 매수 여유",
-      value: formatQueueCount(todayActionBoard?.summary.remainingNewPositions ?? summary?.maxNewPositions ?? 0),
-      note: "오늘 추가로 열 수 있는 신규 포지션"
-    },
-    {
-      title: "포트폴리오 슬롯",
-      value: formatQueueCount(todayActionBoard?.summary.remainingPortfolioSlots ?? 0),
-      note: "동시 관리 한도 안에서 남은 자리"
-    }
-  ];
-}
-
 function buildBuyReviewNote(item: TodayActionBoardItemDto) {
   const plan = item.tradePlan;
   if (!plan) {
@@ -150,9 +92,9 @@ function buildBuyReviewSizing(item: TodayActionBoardItemDto) {
     return null;
   }
 
-  return `${formatPrice(sizing.suggestedCapital)} · ${sizing.suggestedWeightPercent.toFixed(1)}% · ${new Intl.NumberFormat("ko-KR").format(
-    sizing.suggestedQuantity
-  )}주`;
+  return `${formatPrice(sizing.suggestedCapital)} · ${sizing.suggestedWeightPercent.toFixed(1)}% · ${new Intl.NumberFormat(
+    "ko-KR"
+  ).format(sizing.suggestedQuantity)}주`;
 }
 
 function buildHoldingBadge(status: HoldingActionStatusDto) {
@@ -187,87 +129,76 @@ export function DashboardFocusBoard({
   const buyReviewItems = getBuyReviewItems(todayActionBoard);
   const holdingAttentionItems = getHoldingAttentionItems(holdingActionBoard);
   const openingSummary = getOpeningCheckSummary(dailyScan);
-  const summaryMetrics = getSummaryMetrics({
-    summary,
-    todayActionBoard,
-    holdingActionBoard,
-    openingSummary
-  });
+  const remainingSlots = todayActionBoard?.summary.remainingPortfolioSlots ?? 0;
+  const remainingNewPositions = todayActionBoard?.summary.remainingNewPositions ?? summary?.maxNewPositions ?? 0;
 
   return (
     <section className="space-y-4">
       <Card className="border-border/70 bg-white/82 shadow-sm">
-        <CardHeader className="space-y-4">
+        <CardHeader className="space-y-3">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="space-y-3">
               <p className="eyebrow-label">Today Dashboard</p>
               <CardTitle className="text-[clamp(1.8rem,2.5vw,2.4rem)] text-foreground">
-                {summary?.marketStanceLabel ?? "오늘 할 일을 먼저 확인하세요"}
+                {summary?.marketStanceLabel ?? "오늘 먼저 할 일을 확인하세요"}
               </CardTitle>
               <p className="max-w-3xl text-sm leading-7 text-muted-foreground">
                 {summary?.summary ??
-                  "대시보드는 오늘 실제로 해야 할 것만 먼저 보여줍니다. 신규 매수 검토, 보유 우선 관리, 장초 확인 대기만 남겼습니다."}
+                  "Today는 오늘 바로 해야 할 행동만 남기는 화면입니다. 장초 확인, 오늘 매수 검토, 보유 우선 관리 순서로만 움직이면 됩니다."}
               </p>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2">
-              <Badge variant={todayActionBoard?.summary.buyReviewCount ? "positive" : "secondary"}>
-                {todayActionBoard?.summary.headline ?? "장전 계획 기준"}
-              </Badge>
-              <Badge variant="secondary">전일 데이터 기준</Badge>
-            </div>
+            <Badge variant={todayActionBoard?.summary.buyReviewCount ? "positive" : "secondary"}>
+              {todayActionBoard?.summary.headline ?? "오늘 행동 기준"}
+            </Badge>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="rounded-[24px] border border-primary/20 bg-primary/8 p-4 text-sm leading-6 text-foreground/82">
-            {todayActionBoard?.summary.note ??
-              "실시간 자동 신호가 아니라 장전 계획과 장초 확인 결과를 묶어 보여주는 보드입니다. 오늘 신규 매수는 소수만 남기고, 나머지는 관찰 또는 보유 관리로 분리합니다."}
-          </div>
-
-          <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_auto]">
-            <div className="rounded-[22px] border border-border/70 bg-secondary/20 p-4">
-              <p className="text-xs font-medium tracking-[0.12em] text-muted-foreground">1. 장초 확인 시작</p>
-              <p className="mt-2 text-sm font-semibold text-foreground">오늘 먼저 볼 종목을 하나씩 체크합니다.</p>
-              <p className="mt-2 text-xs leading-5 text-muted-foreground">갭 상태, 확인 가격 반응, 오늘 행동만 고르면 통과와 보류가 정리됩니다.</p>
-            </div>
-            <div className="rounded-[22px] border border-border/70 bg-secondary/20 p-4">
-              <p className="text-xs font-medium tracking-[0.12em] text-muted-foreground">2. 오늘 매수 검토</p>
-              <p className="mt-2 text-sm font-semibold text-foreground">통과한 종목만 실제 검토 대상으로 남습니다.</p>
-              <p className="mt-2 text-xs leading-5 text-muted-foreground">장초 확인을 마친 뒤에만 오늘 매수 검토 카드가 의미를 가집니다.</p>
-            </div>
-            <div className="rounded-[22px] border border-border/70 bg-secondary/20 p-4">
-              <p className="text-xs font-medium tracking-[0.12em] text-muted-foreground">3. Portfolio 관리</p>
-              <p className="mt-2 text-sm font-semibold text-foreground">보유 종목 관리와 체결 기록은 따로 봅니다.</p>
-              <p className="mt-2 text-xs leading-5 text-muted-foreground">익절, 손절, 시간 점검은 Dashboard가 아니라 Portfolio에서 이어갑니다.</p>
-            </div>
-            <Link
+          <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)]">
+            <ActionStepCard
               href="/opening-check"
-              className="inline-flex min-h-[138px] min-w-[220px] items-center justify-between rounded-[22px] border border-primary/25 bg-primary px-5 py-4 text-primary-foreground shadow-sm transition hover:bg-primary/92"
-            >
-              <div>
-                <p className="text-xs font-medium tracking-[0.12em] text-primary-foreground/75">다음 행동</p>
-                <p className="mt-2 text-base font-semibold">장초 확인 시작</p>
-                <p className="mt-2 text-xs leading-5 text-primary-foreground/80">
-                  오늘 확인할 종목을 열고 바로 체크를 이어갑니다.
-                </p>
-              </div>
-              <ArrowRight className="h-4 w-4 shrink-0" />
-            </Link>
+              title="장초 확인 시작"
+              count={formatQueueCount(openingSummary.counts.pending)}
+              description="오늘 먼저 볼 종목을 하나씩 체크하고 저장합니다."
+              note="통과한 종목만 오늘 매수 검토로 넘어갑니다."
+              accent="primary"
+              icon={<Clock3 className="h-4 w-4" />}
+            />
+            <ActionStepCard
+              href={buyReviewItems[0] ? `/analysis/${buyReviewItems[0].ticker}` : "/opening-check"}
+              title="오늘 매수 검토"
+              count={formatQueueCount(buyReviewItems.length)}
+              description="실제로 다시 볼 종목만 남긴 영역입니다."
+              note={buyReviewItems.length ? "첫 종목 분석으로 바로 이동할 수 있습니다." : "장초 확인을 끝내면 이 영역이 채워집니다."}
+              accent={buyReviewItems.length ? "positive" : "muted"}
+              icon={<Target className="h-4 w-4" />}
+            />
+            <ActionStepCard
+              href="/portfolio"
+              title="보유 우선 관리"
+              count={formatQueueCount(getHoldingAttentionCount(holdingActionBoard))}
+              description="즉시 점검, 익절, 시간 점검이 필요한 보유 종목입니다."
+              note="체결 기록과 보유 관리는 Portfolio에서 이어집니다."
+              accent={holdingAttentionItems.length ? "caution" : "muted"}
+              icon={<ShieldAlert className="h-4 w-4" />}
+            />
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-            {summaryMetrics.map((metric) => (
-              <div key={metric.title} className="rounded-[22px] border border-border/70 bg-secondary/20 p-4">
-                <p className="text-xs font-medium tracking-[0.12em] text-muted-foreground">{metric.title}</p>
-                <p className="mt-2 text-2xl font-semibold text-foreground">{metric.value}</p>
-                <p className="mt-2 text-xs leading-5 text-muted-foreground">{metric.note}</p>
-              </div>
-            ))}
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <MetricCard label="오늘 매수 검토" value={formatQueueCount(todayActionBoard?.summary.buyReviewCount ?? 0)} />
+            <MetricCard label="장초 확인 대기" value={formatQueueCount(openingSummary.counts.pending)} />
+            <MetricCard
+              label="가용 현금"
+              value={
+                typeof todayActionBoard?.summary.availableCash === "number"
+                  ? formatPrice(todayActionBoard.summary.availableCash)
+                  : "확인 필요"
+              }
+            />
+            <MetricCard label="남은 슬롯" value={`${formatQueueCount(remainingNewPositions)} / ${formatQueueCount(remainingSlots)}`} />
           </div>
         </CardContent>
       </Card>
-
-      <OpeningCheckReviewCard review={openingReview} />
 
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)]">
         <Card className="border-border/70 bg-white/82 shadow-sm">
@@ -279,7 +210,7 @@ export function DashboardFocusBoard({
                 </div>
                 <div>
                   <CardTitle className="text-lg text-foreground">오늘 매수 검토</CardTitle>
-                  <p className="mt-1 text-sm text-muted-foreground">실제로 새로 볼 종목만 남긴 영역입니다.</p>
+                  <p className="mt-1 text-sm text-muted-foreground">오늘 실제로 다시 볼 종목만 남긴 영역입니다.</p>
                 </div>
               </div>
               <Badge variant={buyReviewItems.length ? "positive" : "secondary"}>{formatQueueCount(buyReviewItems.length)}</Badge>
@@ -315,7 +246,7 @@ export function DashboardFocusBoard({
                 ))}
               </div>
             ) : (
-              <DashboardEmptyState message="아직 오늘 실제 매수 검토로 확정된 종목은 없습니다." />
+              <DashboardEmptyState message="아직 오늘 실제 매수 검토로 확정된 종목이 없습니다." />
             )}
           </CardContent>
         </Card>
@@ -330,7 +261,7 @@ export function DashboardFocusBoard({
                   </div>
                   <div>
                     <CardTitle className="text-base text-foreground">보유 우선 관리</CardTitle>
-                    <p className="mt-1 text-xs leading-5 text-muted-foreground">지금 먼저 손봐야 할 보유 종목입니다.</p>
+                    <p className="mt-1 text-xs leading-5 text-muted-foreground">지금 먼저 손봐야 하는 보유 종목입니다.</p>
                   </div>
                 </div>
                 <Badge variant={holdingAttentionItems.length ? "caution" : "secondary"}>
@@ -367,7 +298,7 @@ export function DashboardFocusBoard({
                   })}
                 </div>
               ) : (
-                <DashboardEmptyState message="지금 당장 점검이 필요한 보유 종목은 많지 않습니다." />
+                <DashboardEmptyState message="지금 즉시 점검이 필요한 보유 종목은 많지 않습니다." />
               )}
             </CardContent>
           </Card>
@@ -380,8 +311,8 @@ export function DashboardFocusBoard({
                     <Clock3 className="h-4 w-4" />
                   </div>
                   <div>
-                    <CardTitle className="text-base text-foreground">장초 확인 시작</CardTitle>
-                    <p className="mt-1 text-xs leading-5 text-muted-foreground">오늘 먼저 볼 종목을 하나씩 확인하는 전용 단계입니다.</p>
+                    <CardTitle className="text-base text-foreground">장초 확인 대기</CardTitle>
+                    <p className="mt-1 text-xs leading-5 text-muted-foreground">아침에 하나씩 확인하고 넘기면 됩니다.</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
@@ -392,7 +323,7 @@ export function DashboardFocusBoard({
                     href="/opening-check"
                     className="inline-flex h-9 items-center rounded-full border border-primary/20 bg-primary/8 px-3 text-xs font-medium text-primary transition hover:bg-primary/12"
                   >
-                    전체 열기
+                    열기
                   </Link>
                 </div>
               </div>
@@ -414,76 +345,90 @@ export function DashboardFocusBoard({
                   ))}
                 </div>
               ) : (
-                <DashboardEmptyState message="상단 후보의 장초 확인은 대부분 완료되었습니다." />
+                <DashboardEmptyState message="상단 후보의 장초 확인은 대부분 끝났습니다." />
               )}
-
-              <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
-                <span className="rounded-full border border-border/70 bg-background/80 px-3 py-1">
-                  통과 {formatQueueCount(openingSummary.counts.passed)}
-                </span>
-                <span className="rounded-full border border-border/70 bg-background/80 px-3 py-1">
-                  관찰 유지 {formatQueueCount(openingSummary.counts.watch)}
-                </span>
-                <span className="rounded-full border border-border/70 bg-background/80 px-3 py-1">
-                  추격 금지 {formatQueueCount(openingSummary.counts.avoid)}
-                </span>
-              </div>
-              <p className="text-xs leading-5 text-muted-foreground">
-                공용 관찰 기록은 따로 복기용 화면으로 보고, 오늘 장초 확인은 이 단계에서 끝내는 흐름이 가장 자연스럽습니다.
-              </p>
             </CardContent>
           </Card>
         </div>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        {[
-          {
-            href: "/opening-check",
-            title: "Opening Check",
-            description: "오늘 먼저 볼 종목 장초 확인",
-            icon: Clock3
-          },
-          {
-            href: "/portfolio",
-            title: "Portfolio",
-            description: "내 보유 종목과 다음 행동 보기",
-            icon: WalletCards
-          },
-          {
-            href: "/signals",
-            title: "Signals",
-            description: "공통 후보와 공용 복기 보기",
-            icon: Compass
-          },
-          {
-            href: "/account",
-            title: "Account",
-            description: "자산, 현금, 손실 한도 조정",
-            icon: ShieldAlert
-          }
-        ].map((item) => {
-          const Icon = item.icon;
-
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className="rounded-[22px] border border-border/70 bg-white/82 p-4 shadow-sm transition hover:border-primary/30 hover:bg-white"
-            >
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-2 text-foreground">
-                  <Icon className="h-4 w-4 text-primary" />
-                  <p className="text-sm font-semibold">{item.title}</p>
-                </div>
-                <ArrowRight className="h-4 w-4 text-foreground/45" />
-              </div>
-              <p className="mt-2 text-sm leading-6 text-muted-foreground">{item.description}</p>
-            </Link>
-          );
-        })}
-      </div>
+      <details className="group rounded-[28px] border border-border/70 bg-white/82 shadow-sm">
+        <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-5 py-4 [&::-webkit-details-marker]:hidden">
+          <div>
+            <p className="text-sm font-semibold text-foreground">오늘 보조 정보</p>
+            <p className="mt-1 text-xs leading-5 text-muted-foreground">
+              회고와 세부 수치는 필요할 때만 펼쳐서 봅니다.
+            </p>
+          </div>
+          <span className="rounded-full border border-border/70 bg-secondary/35 px-3 py-1 text-xs font-medium text-foreground/78 transition group-open:bg-primary/10 group-open:text-primary">
+            펼치기
+          </span>
+        </summary>
+        <div className="space-y-4 border-t border-border/70 px-5 pb-5 pt-4">
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <MetricCard label="통과" value={formatQueueCount(openingSummary.counts.passed)} />
+            <MetricCard label="관찰 유지" value={formatQueueCount(openingSummary.counts.watch)} />
+            <MetricCard label="추격 금지" value={formatQueueCount(openingSummary.counts.avoid)} />
+            <MetricCard label="제외" value={formatQueueCount(openingSummary.counts.excluded)} />
+          </div>
+          <OpeningCheckReviewCard review={openingReview} />
+        </div>
+      </details>
     </section>
+  );
+}
+
+function ActionStepCard({
+  href,
+  title,
+  count,
+  description,
+  note,
+  accent,
+  icon
+}: {
+  href: string;
+  title: string;
+  count: string;
+  description: string;
+  note: string;
+  accent: "primary" | "positive" | "caution" | "muted";
+  icon: ReactNode;
+}) {
+  const toneByAccent = {
+    primary: "border-primary/25 bg-primary text-primary-foreground hover:bg-primary/92",
+    positive: "border-positive/25 bg-positive/10 text-positive hover:bg-positive/15",
+    caution: "border-caution/25 bg-caution/10 text-caution hover:bg-caution/15",
+    muted: "border-border/70 bg-secondary/20 text-foreground hover:border-primary/25 hover:bg-secondary/35"
+  } as const;
+
+  return (
+    <Link
+      href={href}
+      className={`rounded-[24px] border p-4 shadow-sm transition ${toneByAccent[accent]}`}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 text-sm font-semibold">
+            {icon}
+            <span>{title}</span>
+          </div>
+          <p className="text-2xl font-semibold tracking-[-0.04em]">{count}</p>
+        </div>
+        <ArrowRight className="mt-1 h-4 w-4 shrink-0" />
+      </div>
+      <p className="mt-3 text-sm leading-6">{description}</p>
+      <p className="mt-2 text-xs leading-5 opacity-80">{note}</p>
+    </Link>
+  );
+}
+
+function MetricCard({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-[22px] border border-border/70 bg-secondary/20 p-4">
+      <p className="text-xs font-medium tracking-[0.12em] text-muted-foreground">{label}</p>
+      <p className="mt-2 text-2xl font-semibold text-foreground">{value}</p>
+    </div>
   );
 }
 
