@@ -186,13 +186,15 @@ export function DashboardFocusBoard({
   todayActionBoard,
   holdingActionBoard,
   dailyScan,
-  openingReview
+  openingReview,
+  openingCheckCompleted = false
 }: {
   summary?: TodayActionSummaryDto;
   todayActionBoard?: TodayActionBoardDto;
   holdingActionBoard?: HoldingActionBoardDto;
   dailyScan: DailyScanSummaryDto | null;
   openingReview?: OpeningRecheckReviewDto;
+  openingCheckCompleted?: boolean;
 }) {
   const buyReviewItems = getBuyReviewItems(todayActionBoard);
   const holdingAttentionItems = getHoldingAttentionItems(holdingActionBoard);
@@ -223,6 +225,35 @@ export function DashboardFocusBoard({
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
+          {openingCheckCompleted ? (
+            <div className="rounded-[26px] border border-positive/25 bg-positive/8 p-4">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <p className="text-sm font-semibold text-foreground">장초 확인이 모두 저장되었습니다</p>
+                  <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                    이제 Today에서 오늘 매수 검토와 보유 우선 관리만 보면 됩니다.
+                  </p>
+                </div>
+                <Badge variant="positive">장초 확인 완료</Badge>
+              </div>
+
+              <div className="mt-4 flex flex-wrap gap-2">
+                <Link
+                  href={buyReviewItems.length ? "#today-buy-review" : "#today-holding-review"}
+                  className="inline-flex h-10 items-center rounded-full border border-positive/20 bg-positive/10 px-4 text-sm font-medium text-positive transition hover:bg-positive/15"
+                >
+                  {buyReviewItems.length ? "오늘 매수 검토 보기" : "보유 관리 보기"}
+                </Link>
+                <Link
+                  href="/opening-check"
+                  className="inline-flex h-10 items-center rounded-full border border-border/70 bg-white/78 px-4 text-sm font-medium text-foreground transition hover:border-primary/25 hover:bg-secondary/20"
+                >
+                  장초 확인 다시 보기
+                </Link>
+              </div>
+            </div>
+          ) : null}
+
           {setupChecklist.needsSetupChecklist ? (
             <div className="rounded-[26px] border border-primary/20 bg-primary/6 p-4">
               <div className="flex flex-wrap items-start justify-between gap-3">
@@ -323,7 +354,7 @@ export function DashboardFocusBoard({
       </Card>
 
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)]">
-        <Card className="border-border/70 bg-white/82 shadow-sm">
+        <Card id="today-buy-review" className="border-border/70 bg-white/82 shadow-sm">
           <CardHeader className="space-y-3">
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-3">
@@ -376,7 +407,7 @@ export function DashboardFocusBoard({
         </Card>
 
         <div className="grid gap-4">
-          <Card className="border-border/70 bg-white/82 shadow-sm">
+          <Card id="today-holding-review" className="border-border/70 bg-white/82 shadow-sm">
             <CardHeader className="space-y-3">
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3">

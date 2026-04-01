@@ -267,6 +267,7 @@ export function DailyCandidatesPanel({
     () => visibleCandidates.filter((item) => (decisions[item.ticker]?.status ?? "pending") === "pending"),
     [decisions, visibleCandidates]
   );
+  const allChecksCompleted = hasCandidates && pendingCandidates.length === 0;
   const completedCandidatesCount = visibleCandidates.length - pendingCandidates.length;
   const nextFocusTicker = useMemo(
     () =>
@@ -346,8 +347,18 @@ export function DailyCandidatesPanel({
         [input.ticker]: createDraft(json.decision ?? undefined)
       }));
 
+      const remainingPendingCount = visibleCandidates.filter(
+        (item) => (nextDecisions[item.ticker]?.status ?? "pending") === "pending"
+      ).length;
+
       if (input.advance) {
-        setFocusTicker(getNextFocusTicker(input.ticker, visibleCandidates, nextDecisions));
+        if (remainingPendingCount === 0) {
+          startTransition(() => {
+            router.push("/recommendations?opening-check=done");
+          });
+        } else {
+          setFocusTicker(getNextFocusTicker(input.ticker, visibleCandidates, nextDecisions));
+        }
       }
 
       const resolvedMeta =
@@ -355,9 +366,11 @@ export function DailyCandidatesPanel({
           ? getOpeningRecheckStatusMeta("pending")
           : getOpeningRecheckStatusMeta(input.status as OpeningDecisionStatus);
       setBoardMessage(`${input.ticker}에 대한 내 장초 확인을 ${resolvedMeta.label}로 저장했습니다.`);
-      startTransition(() => {
-        router.refresh();
-      });
+      if (!(input.advance && remainingPendingCount === 0)) {
+        startTransition(() => {
+          router.refresh();
+        });
+      }
     } catch (error) {
       setBoardError(error instanceof Error ? error.message : "장초 확인 저장에 실패했습니다.");
     } finally {
@@ -505,6 +518,25 @@ export function DailyCandidatesPanel({
 
           {boardMessage ? <p className="mt-3 text-sm text-positive">{boardMessage}</p> : null}
           {boardError ? <p className="mt-3 text-sm text-destructive">{boardError}</p> : null}
+
+          {allChecksCompleted ? (
+            <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-positive/25 bg-positive/8 px-4 py-3">
+              <div>
+                <p className="text-sm font-semibold text-foreground">장초 확인이 모두 끝났습니다</p>
+                <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                  Today로 돌아가서 오늘 매수 검토와 보유 우선 관리만 확인하면 됩니다.
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <Button asChild size="sm">
+                  <Link href="/recommendations?opening-check=done">Today로 돌아가기</Link>
+                </Button>
+                <Button asChild variant="secondary" size="sm">
+                  <Link href="/portfolio">Portfolio 보기</Link>
+                </Button>
+              </div>
+            </div>
+          ) : null}
 
           <div className="mt-4 flex flex-wrap gap-2">
             {OPENING_RECHECK_STATUSES.map((status) => {
