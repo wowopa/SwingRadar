@@ -319,7 +319,7 @@ export function PortfolioJournalBoard({
 
   return (
     <section className="space-y-6">
-      <Card className="border-border/70 bg-white/82 shadow-sm">
+      <Card className="border-border/80 bg-white/90 shadow-[0_22px_56px_-36px_rgba(24,32,42,0.24)]">
         <CardHeader className="space-y-4">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
@@ -336,12 +336,12 @@ export function PortfolioJournalBoard({
         </CardHeader>
         <CardContent className="space-y-4">
           {message ? (
-            <div className="rounded-[20px] border border-primary/20 bg-primary/8 px-4 py-3 text-sm text-foreground/82">
+            <div className="rounded-[20px] border border-primary/24 bg-[linear-gradient(180deg,rgba(139,107,46,0.08),rgba(255,255,255,0.94))] px-4 py-3 text-sm text-foreground/82">
               {message}
             </div>
           ) : null}
           {error ? (
-            <div className="rounded-[20px] border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-destructive">
+            <div className="rounded-[20px] border border-caution/22 bg-[hsl(var(--caution)/0.08)] px-4 py-3 text-sm text-caution">
               {error}
             </div>
           ) : null}
@@ -363,7 +363,7 @@ export function PortfolioJournalBoard({
             const review = buildPortfolioCloseReview(group);
 
             return (
-              <Card key={group.ticker} className="border-border/70 bg-white/82 shadow-sm">
+              <Card key={group.ticker} className="border-border/80 bg-white/90 shadow-[0_18px_44px_-34px_rgba(24,32,42,0.2)]">
                 <CardHeader className="space-y-4">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
@@ -397,7 +397,7 @@ export function PortfolioJournalBoard({
 
                 <CardContent className="space-y-3">
                   {isClosed ? (
-                    <div className="rounded-[20px] border border-border/70 bg-background/80 px-4 py-4">
+                    <div className="rounded-[20px] border border-border/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.94),rgba(246,241,232,0.88))] px-4 py-4">
                       <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">종료 회고</p>
                       <p className="mt-2 text-sm font-semibold text-foreground">{review.headline}</p>
                       <p className="mt-2 text-sm leading-6 text-muted-foreground">{review.summary}</p>
@@ -413,10 +413,10 @@ export function PortfolioJournalBoard({
                           <span className="text-[11px] font-medium text-muted-foreground">
                             {index === 0 ? "latest" : `#${index + 1}`}
                           </span>
-                          {index !== group.events.length - 1 ? <span className="mt-2 h-full w-px bg-border/70" /> : null}
+                          {index !== group.events.length - 1 ? <span className="mt-2 h-full w-px bg-border/80" /> : null}
                         </div>
 
-                        <div className="flex-1 rounded-[20px] border border-border/70 bg-secondary/20 px-4 py-4">
+                        <div className="flex-1 rounded-[20px] border border-border/80 bg-[hsl(42_38%_97%)] px-4 py-4">
                           <div className="flex flex-wrap items-center justify-between gap-2">
                             <div className="flex flex-wrap items-center gap-2">
                               <Badge variant={meta.variant}>{meta.label}</Badge>
@@ -435,7 +435,7 @@ export function PortfolioJournalBoard({
                           </div>
 
                           {event.note ? (
-                            <p className="mt-3 rounded-2xl border border-border/70 bg-background/80 px-3 py-3 text-xs leading-5 text-muted-foreground">
+                            <p className="mt-3 rounded-2xl border border-border/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.94),rgba(246,241,232,0.88))] px-3 py-3 text-xs leading-5 text-muted-foreground">
                               {event.note}
                             </p>
                           ) : null}
@@ -449,9 +449,9 @@ export function PortfolioJournalBoard({
           })}
         </div>
       ) : (
-        <Card className="border-border/70 bg-white/82 shadow-sm">
+        <Card className="border-border/80 bg-white/90 shadow-[0_18px_44px_-34px_rgba(24,32,42,0.2)]">
           <CardContent className="flex flex-col items-center justify-center gap-3 px-6 py-10 text-center">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-secondary/45 text-foreground/70">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
               <ScrollText className="h-5 w-5" />
             </div>
             <div className="space-y-2">
@@ -468,7 +468,7 @@ export function PortfolioJournalBoard({
       )}
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-h-[88vh] overflow-y-auto">
+        <DialogContent className="max-h-[88vh] overflow-y-auto border-border/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.97),rgba(246,241,232,0.92))] shadow-[0_38px_110px_-44px_rgba(24,32,42,0.34)]">
           <DialogHeader>
             <DialogTitle>체결 기록 추가</DialogTitle>
             <DialogDescription>
@@ -491,7 +491,7 @@ export function PortfolioJournalBoard({
                     "rounded-[20px] border px-4 py-4 text-left transition",
                     form.type === type
                       ? "border-primary/30 bg-primary/10"
-                      : "border-border/70 bg-secondary/20 hover:border-primary/20 hover:bg-secondary/30"
+                      : "border-border/80 bg-[hsl(42_40%_97%)] hover:border-primary/20 hover:bg-white"
                   )}
                 >
                   <Badge variant={meta.variant}>{meta.label}</Badge>
@@ -508,7 +508,7 @@ export function PortfolioJournalBoard({
                     <button
                       key={position.ticker}
                       type="button"
-                      className="rounded-full border border-border/70 bg-secondary/20 px-3 py-1.5 text-xs text-muted-foreground transition hover:border-primary/20 hover:bg-secondary/30 hover:text-foreground"
+                      className="rounded-full border border-border/80 bg-[hsl(42_40%_97%)] px-3 py-1.5 text-xs text-muted-foreground transition hover:border-primary/20 hover:bg-white hover:text-foreground"
                       onClick={() => applySelectedSymbol({ ticker: position.ticker, company: position.company })}
                     >
                       {position.company} · {position.ticker}
@@ -532,17 +532,17 @@ export function PortfolioJournalBoard({
                   />
 
                   {selectedSymbol ? (
-                    <div className="rounded-[18px] border border-primary/20 bg-primary/8 px-3 py-3 text-sm text-foreground/82">
+                    <div className="rounded-[18px] border border-primary/24 bg-[linear-gradient(180deg,rgba(139,107,46,0.08),rgba(255,255,255,0.94))] px-3 py-3 text-sm text-foreground/82">
                       선택된 종목: {selectedSymbol.company} · {form.ticker}
                     </div>
                   ) : form.ticker ? (
-                    <div className="rounded-[18px] border border-border/70 bg-secondary/20 px-3 py-3 text-sm text-muted-foreground">
+                    <div className="rounded-[18px] border border-border/80 bg-[hsl(42_40%_97%)] px-3 py-3 text-sm text-muted-foreground">
                       선택된 종목 코드: {form.ticker}
                     </div>
                   ) : null}
 
                   {isSymbolDropdownOpen ? (
-                    <div className="absolute left-0 right-0 top-[calc(100%+0.5rem)] z-30 rounded-[20px] border border-border/70 bg-white p-2 shadow-[0_24px_48px_rgba(28,28,35,0.14)]">
+                    <div className="absolute left-0 right-0 top-[calc(100%+0.5rem)] z-30 rounded-[20px] border border-border/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(246,241,232,0.94))] p-2 shadow-[0_24px_48px_rgba(28,28,35,0.14)]">
                       <div className="px-2 pb-2 pt-1 text-xs leading-5 text-muted-foreground">
                         {symbolSearchLoading ? "종목을 찾는 중입니다..." : symbolDescription}
                       </div>
@@ -558,7 +558,7 @@ export function PortfolioJournalBoard({
                                 "flex w-full items-center justify-between rounded-[16px] px-3 py-3 text-left transition",
                                 form.ticker === item.ticker
                                   ? "bg-primary/10 text-foreground"
-                                  : "hover:bg-secondary/45"
+                                  : "hover:bg-[hsl(42_40%_96%)]"
                               )}
                             >
                               <div className="min-w-0">
@@ -652,7 +652,7 @@ export function PortfolioJournalBoard({
 
 function JournalMetric({ title, value, note }: { title: string; value: string; note: string }) {
   return (
-    <div className="rounded-[22px] border border-border/70 bg-secondary/20 p-4">
+    <div className="rounded-[22px] border border-border/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.95),rgba(246,241,232,0.9))] p-4">
       <p className="text-xs font-medium tracking-[0.12em] text-muted-foreground">{title}</p>
       <p className="mt-2 text-2xl font-semibold text-foreground">{value}</p>
       <p className="mt-2 text-xs leading-5 text-muted-foreground">{note}</p>
@@ -662,7 +662,7 @@ function JournalMetric({ title, value, note }: { title: string; value: string; n
 
 function JournalMiniMetric({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-2xl border border-border/70 bg-background/80 px-3 py-3">
+    <div className="rounded-2xl border border-border/80 bg-[hsl(42_40%_97%)] px-3 py-3">
       <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">{label}</p>
       <p className="mt-1 text-sm font-semibold text-foreground">{value}</p>
     </div>

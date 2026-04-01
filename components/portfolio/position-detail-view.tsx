@@ -81,7 +81,7 @@ export function PositionDetailView({
 
   return (
     <section className="space-y-6">
-      <Card className="border-border/70 bg-white/82 shadow-sm">
+      <Card className="border-border/80 bg-white/90 shadow-[0_22px_56px_-36px_rgba(24,32,42,0.24)]">
         <CardHeader className="space-y-4">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="space-y-3">
@@ -137,7 +137,7 @@ export function PositionDetailView({
       </Card>
 
       <div className="grid gap-6 xl:grid-cols-[1.3fr,0.9fr]">
-        <Card className="border-border/70 bg-white/82 shadow-sm">
+        <Card className="border-border/80 bg-white/90 shadow-[0_18px_44px_-34px_rgba(24,32,42,0.2)]">
           <CardHeader>
             <CardTitle className="text-lg text-foreground">포지션 타임라인</CardTitle>
           </CardHeader>
@@ -149,9 +149,9 @@ export function PositionDetailView({
                     <span className="text-[11px] font-medium text-muted-foreground">
                       {index === 0 ? "latest" : `#${index + 1}`}
                     </span>
-                    {index !== journalGroup.events.length - 1 ? <span className="mt-2 h-full w-px bg-border/70" /> : null}
+                    {index !== journalGroup.events.length - 1 ? <span className="mt-2 h-full w-px bg-border/80" /> : null}
                   </div>
-                  <div className="flex-1 rounded-[20px] border border-border/70 bg-secondary/20 px-4 py-4">
+                  <div className="flex-1 rounded-[20px] border border-border/80 bg-[hsl(42_38%_97%)] px-4 py-4">
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <div className="flex flex-wrap items-center gap-2">
                         <Badge variant={event.type === "stop_loss" ? "caution" : event.type === "take_profit_partial" ? "neutral" : event.type === "buy" ? "positive" : "secondary"}>
@@ -182,7 +182,7 @@ export function PositionDetailView({
                 </div>
               ))
             ) : (
-              <div className="rounded-[24px] border border-border/70 bg-secondary/20 px-5 py-6 text-sm leading-6 text-muted-foreground">
+              <div className="rounded-[24px] border border-border/80 bg-[hsl(42_40%_97%)] px-5 py-6 text-sm leading-6 text-muted-foreground">
                 아직 이 종목의 실제 체결 기록이 없습니다. 포트폴리오 페이지에서 첫 매수나 부분 익절을 먼저 기록해 주세요.
               </div>
             )}
@@ -195,14 +195,14 @@ export function PositionDetailView({
             emptyMessage="이 종목은 아직 장초 확인과 연결된 기록이 없거나, 오늘 먼저 볼 종목에서 벗어나 바로 포트폴리오에 들어왔습니다."
           />
 
-          <Card className="border-border/70 bg-white/82 shadow-sm">
+          <Card className="border-border/80 bg-white/90 shadow-[0_18px_44px_-34px_rgba(24,32,42,0.2)]">
             <CardHeader>
               <CardTitle className="text-lg text-foreground">현재 계획과 다음 행동</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               {actionItem ? (
                 <>
-                  <div className="rounded-[20px] border border-border/70 bg-secondary/20 px-4 py-4">
+                  <div className="rounded-[20px] border border-primary/24 bg-[linear-gradient(180deg,rgba(139,107,46,0.08),rgba(255,255,255,0.94))] px-4 py-4">
                     <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">다음 행동</p>
                     <p className="mt-2 text-sm font-semibold text-foreground">{actionItem.actionLabel}</p>
                     <p className="mt-2 text-sm leading-6 text-muted-foreground">{actionItem.nextAction}</p>
@@ -231,27 +231,27 @@ export function PositionDetailView({
                     />
                   </div>
 
-                  <div className="rounded-[20px] border border-border/70 bg-background/80 px-4 py-4">
+                  <div className="rounded-[20px] border border-border/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.94),rgba(246,241,232,0.88))] px-4 py-4">
                     <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">운용 메모</p>
                     <p className="mt-2 text-sm leading-6 text-muted-foreground">{actionItem.actionReason}</p>
                   </div>
                 </>
               ) : (
-                <div className="rounded-[24px] border border-border/70 bg-secondary/20 px-5 py-6 text-sm leading-6 text-muted-foreground">
+                <div className="rounded-[24px] border border-border/80 bg-[hsl(42_40%_97%)] px-5 py-6 text-sm leading-6 text-muted-foreground">
                   오늘 기준 보유 관리 계획이 아직 연결되지 않았습니다. 현재는 체결 기록과 자산 정보만 먼저 볼 수 있습니다.
                 </div>
               )}
             </CardContent>
           </Card>
 
-          <Card className="border-border/70 bg-white/82 shadow-sm">
+          <Card className="border-border/80 bg-white/90 shadow-[0_18px_44px_-34px_rgba(24,32,42,0.2)]">
             <CardHeader>
               <CardTitle className="text-lg text-foreground">{isClosed ? "종료 회고" : "현재 포지션 메모"}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               {review ? (
                 <>
-                  <div className="rounded-[20px] border border-border/70 bg-secondary/20 px-4 py-4">
+                  <div className="rounded-[20px] border border-border/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.94),rgba(246,241,232,0.88))] px-4 py-4">
                     <p className="text-sm font-semibold text-foreground">{review.headline}</p>
                     <p className="mt-2 text-sm leading-6 text-muted-foreground">{review.summary}</p>
                   </div>
@@ -273,13 +273,13 @@ export function PositionDetailView({
                   ) : null}
                 </>
               ) : (
-                <div className="rounded-[24px] border border-border/70 bg-secondary/20 px-5 py-6 text-sm leading-6 text-muted-foreground">
+                <div className="rounded-[24px] border border-border/80 bg-[hsl(42_40%_97%)] px-5 py-6 text-sm leading-6 text-muted-foreground">
                   아직 종료 회고를 만들 만큼 체결 기록이 충분하지 않습니다. 첫 매수와 청산 이벤트를 남기면 이 자리에 자동 회고가 표시됩니다.
                 </div>
               )}
 
               {position?.note ? (
-                <div className="rounded-[20px] border border-border/70 bg-background/80 px-4 py-4">
+                <div className="rounded-[20px] border border-border/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.94),rgba(246,241,232,0.88))] px-4 py-4">
                   <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">보유 메모</p>
                   <p className="mt-2 text-sm leading-6 text-muted-foreground">{position.note}</p>
                 </div>
@@ -294,7 +294,7 @@ export function PositionDetailView({
 
 function DetailMetric({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-[20px] border border-border/70 bg-secondary/20 px-4 py-4">
+    <div className="rounded-[20px] border border-border/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.95),rgba(246,241,232,0.9))] px-4 py-4">
       <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">{label}</p>
       <p className="mt-2 text-base font-semibold text-foreground">{value}</p>
     </div>
@@ -314,8 +314,8 @@ function ReviewList({
     <div
       className={
         tone === "positive"
-          ? "rounded-[20px] border border-emerald-200 bg-emerald-50/80 px-4 py-4"
-          : "rounded-[20px] border border-amber-200 bg-amber-50/80 px-4 py-4"
+          ? "rounded-[20px] border border-positive/22 bg-[hsl(var(--positive)/0.1)] px-4 py-4"
+          : "rounded-[20px] border border-caution/22 bg-[hsl(var(--caution)/0.1)] px-4 py-4"
       }
     >
       <p className="text-sm font-semibold text-foreground">{title}</p>

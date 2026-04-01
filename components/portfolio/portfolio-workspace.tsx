@@ -65,7 +65,7 @@ export function PortfolioWorkspace({
       <PortfolioJournalBoard initialJournal={initialJournal} positions={profile.positions} />
 
       <Dialog open={isSettingsOpen} onOpenChange={handleSettingsOpenChange}>
-        <DialogContent className="max-h-[88vh] overflow-y-auto">
+        <DialogContent className="max-h-[88vh] overflow-y-auto border-border/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.97),rgba(246,241,232,0.92))] shadow-[0_38px_110px_-44px_rgba(24,32,42,0.34)]">
           <DialogHeader>
             <DialogTitle>자산 설정</DialogTitle>
             <DialogDescription>
