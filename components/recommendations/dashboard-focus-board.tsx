@@ -113,6 +113,7 @@ function buildSetupChecklist(
 
   return {
     steps,
+    doneCount: steps.filter((step) => step.state === "done").length,
     needsSetupChecklist: steps.some((step) => step.state === "action")
   };
 }
@@ -240,7 +241,33 @@ export function DashboardFocusBoard({
                 ))}
               </div>
             </div>
-          ) : null}
+          ) : (
+            <div className="rounded-[26px] border border-border/70 bg-secondary/18 p-4">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <p className="text-sm font-semibold text-foreground">오늘 시작 준비 완료</p>
+                  <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                    기본 설정은 끝났습니다. 이제 Today에서는 장초 확인, 오늘 매수 검토, 보유 관리를 순서대로 보면 됩니다.
+                  </p>
+                </div>
+                <Badge variant="positive">{setupChecklist.doneCount}단계 완료</Badge>
+              </div>
+
+              <div className="mt-4 flex flex-wrap gap-2">
+                {setupChecklist.steps.map((step) => (
+                  <Badge key={step.key} variant={step.state === "done" ? "positive" : "secondary"}>
+                    {step.title}
+                  </Badge>
+                ))}
+                <Link
+                  href="/portfolio?asset-settings=1"
+                  className="inline-flex h-8 items-center rounded-full border border-primary/20 bg-primary/8 px-3 text-xs font-medium text-primary transition hover:bg-primary/12"
+                >
+                  자산 설정 다시 열기
+                </Link>
+              </div>
+            </div>
+          )}
 
           <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)]">
             <ActionStepCard
