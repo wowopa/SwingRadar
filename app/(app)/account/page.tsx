@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
+import { LogoutButton } from "@/components/auth/logout-button";
 import { PageHeader } from "@/components/shared/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -29,8 +30,9 @@ export default async function AccountPage() {
 
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
         <Card className="border-border/70 bg-white/82 shadow-sm">
-          <CardHeader>
+          <CardHeader className="flex flex-row items-start justify-between gap-3 space-y-0">
             <CardTitle>계정 정보</CardTitle>
+            <LogoutButton variant="ghost" size="sm" />
           </CardHeader>
           <CardContent className="grid gap-3 sm:grid-cols-2">
             <AccountMetric label="이름" value={session.user.displayName} />

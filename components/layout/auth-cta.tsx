@@ -1,22 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 
+import { LogoutButton } from "@/components/auth/logout-button";
 import { Button } from "@/components/ui/button";
 import type { AuthSession } from "@/types/auth";
 
 export function AuthCta({ session }: { session: AuthSession | null }) {
-  const router = useRouter();
-
-  async function logout() {
-    await fetch("/api/auth/logout", {
-      method: "POST"
-    });
-    router.push("/");
-    router.refresh();
-  }
-
   if (!session) {
     return (
       <div className="flex flex-wrap items-center gap-2">
@@ -35,9 +25,7 @@ export function AuthCta({ session }: { session: AuthSession | null }) {
       <Button asChild variant="secondary" size="sm">
         <Link href="/account">내 계정</Link>
       </Button>
-      <Button variant="ghost" size="sm" onClick={() => void logout()}>
-        로그아웃
-      </Button>
+      <LogoutButton variant="ghost" size="sm" />
     </div>
   );
 }
