@@ -430,20 +430,29 @@ export function DailyCandidatesPanel({
 
   return (
     <Card>
-      <CardHeader className="flex flex-row items-start justify-between gap-4">
-        <div>
+      <CardHeader className="space-y-3">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <CardTitle>장초 확인 워크스페이스</CardTitle>
+            <p className="mt-2 text-sm text-muted-foreground">
+              종목을 하나씩 확인하고 저장 후 다음으로 넘기면 됩니다. 이 화면의 저장 결과가 Today에 바로 반영됩니다.
+            </p>
+          </div>
+          <Badge variant="secondary">오늘 대상 {visibleCandidates.length}개</Badge>
+        </div>
+        <div className="hidden">
           <CardTitle>오늘 먼저 볼 종목</CardTitle>
           <p className="mt-2 text-sm text-muted-foreground">
             최신 유니버스 스캔에서 지금 먼저 확인할 종목만 추렸습니다. 이 목록은 전일 종가 기준 장전 관찰 목록이며, 장초
             확인을 통과하기 전까지는 실제 매수 신호가 아닙니다.
           </p>
         </div>
-        <div className="rounded-2xl border border-border/70 bg-secondary/35 px-4 py-3 text-sm text-muted-foreground">
+        <div className="hidden rounded-2xl border border-border/70 bg-secondary/35 px-4 py-3 text-sm text-muted-foreground">
           배치 {dailyScan.succeededBatches}/{dailyScan.totalBatches} 성공
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="rounded-2xl border border-primary/20 bg-primary/8 p-4 text-sm leading-6 text-foreground/82">
+        <div className="hidden rounded-2xl border border-primary/20 bg-primary/8 p-4 text-sm leading-6 text-foreground/82">
           장 시작 후 5~10분 동안 시초가와 계획 기준의 거리, 확인 가격 반응, 오늘 행동 의도를 다시 보고 저장하면
           시스템이 오늘 상태를 자동으로 제안합니다.
         </div>
@@ -456,7 +465,7 @@ export function DailyCandidatesPanel({
                 내가 저장한 장초 확인 결과를 기준으로 오늘 행동을 정리합니다. 현재 노출 {visibleCandidates.length}개
                 기준이며, 마지막 스캔 시각은 {formatDateTimeShort(dailyScan.generatedAt)}입니다.
               </p>
-              <p className="mt-2 text-xs leading-5 text-muted-foreground">
+              <p className="hidden mt-2 text-xs leading-5 text-muted-foreground">
                 공용 판단은 참고로만 보여주고, Today와 Today Action 보드는 내 장초 확인 기준으로 따로 계산됩니다.
               </p>
             </div>
@@ -475,17 +484,17 @@ export function DailyCandidatesPanel({
           {boardMessage ? <p className="mt-3 text-sm text-positive">{boardMessage}</p> : null}
           {boardError ? <p className="mt-3 text-sm text-destructive">{boardError}</p> : null}
 
-          <div className="mt-4 grid gap-3 md:grid-cols-5">
+          <div className="mt-4 flex flex-wrap gap-2">
             {OPENING_RECHECK_STATUSES.map((status) => {
               const meta = getOpeningRecheckStatusMeta(status);
 
               return (
-                <div key={status} className="rounded-2xl border border-border/70 bg-background/80 px-4 py-3">
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="text-sm font-medium text-foreground">{meta.label}</p>
+                <div key={status} className="rounded-full border border-border/70 bg-background/80 px-3 py-1.5">
+                  <div className="flex items-center gap-2">
+                    <p className="text-xs font-medium text-foreground">{meta.label}</p>
                     <Badge variant={meta.variant}>{counts[status]}개</Badge>
                   </div>
-                  <p className="mt-2 text-xs leading-5 text-muted-foreground">{meta.description}</p>
+                  <p className="hidden mt-2 text-xs leading-5 text-muted-foreground">{meta.description}</p>
                 </div>
               );
             })}
