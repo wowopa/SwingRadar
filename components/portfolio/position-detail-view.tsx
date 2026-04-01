@@ -1,23 +1,28 @@
 import Link from "next/link";
 import { ArrowLeft, ArrowUpRight } from "lucide-react";
 
+import { PortfolioPositionChartCard } from "@/components/portfolio/portfolio-position-chart-card";
 import { OpeningCheckInsightCard } from "@/components/shared/opening-check-insight-card";
 import { SignalToneBadge } from "@/components/shared/signal-tone-badge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import type { HoldingActionItemDto } from "@/lib/api-contracts/swing-radar";
+import type { HoldingActionItemDto, TickerAnalysisDto } from "@/lib/api-contracts/swing-radar";
 import {
   buildPortfolioCloseReview,
   isClosingPortfolioTradeEventType,
   type PortfolioJournalGroup
 } from "@/lib/portfolio/journal-insights";
+import {
+  buildPositionPlanComparison,
+  getPortfolioEventLabel
+} from "@/lib/portfolio/position-detail";
 import { formatPercent, formatPrice } from "@/lib/utils";
 import type { OpeningRecheckTickerInsight, PortfolioProfilePosition } from "@/types/recommendation";
 
 function formatDate(value?: string | null) {
   if (!value) {
-    return "미입력";
+    return "미기록";
   }
 
   const date = new Date(value);
@@ -52,6 +57,26 @@ function formatSignedPrice(value: number) {
   return `${value > 0 ? "+" : "-"}${formatPrice(Math.abs(value))}`;
 }
 
+function getEventTone(type: PortfolioJournalGroup["events"][number]["type"]) {
+  if (type === "buy") {
+    return "positive" as const;
+  }
+
+  if (type === "add") {
+    return "default" as const;
+  }
+
+  if (type === "take_profit_partial") {
+    return "neutral" as const;
+  }
+
+  if (type === "stop_loss") {
+    return "caution" as const;
+  }
+
+  return "secondary" as const;
+}
+
 export function PositionDetailView({
   ticker,
   company,
@@ -59,7 +84,8 @@ export function PositionDetailView({
   position,
   journalGroup,
   actionItem,
-  openingCheckInsight
+  openingCheckInsight,
+  analysis
 }: {
   ticker: string;
   company: string;
@@ -68,6 +94,7 @@ export function PositionDetailView({
   journalGroup?: PortfolioJournalGroup | null;
   actionItem?: HoldingActionItemDto | null;
   openingCheckInsight?: OpeningRecheckTickerInsight | null;
+  analysis?: TickerAnalysisDto | null;
 }) {
   const isClosed = journalGroup ? isClosingPortfolioTradeEventType(journalGroup.latestEvent.type) : false;
   const review = journalGroup ? buildPortfolioCloseReview(journalGroup) : null;
@@ -78,6 +105,13 @@ export function PositionDetailView({
     ? journalGroup.metrics.averageCost || position?.averagePrice || actionItem?.averagePrice || 0
     : (position?.averagePrice ?? actionItem?.averagePrice ?? 0);
   const enteredAt = journalGroup?.firstEntryAt ?? position?.enteredAt ?? actionItem?.enteredAt;
+  const tradePlan = actionItem?.tradePlan ?? analysis?.tradePlan ?? null;
+  const planComparison = buildPositionPlanComparison({
+    tradePlan,
+    journalGroup,
+    averagePrice,
+    currentPrice: actionItem?.currentPrice ?? tradePlan?.currentPrice ?? null
+  });
 
   return (
     <section className="space-y-6">
@@ -136,10 +170,78 @@ export function PositionDetailView({
         </CardContent>
       </Card>
 
-      <div className="grid gap-6 xl:grid-cols-[1.3fr,0.9fr]">
+      <div className="grid gap-6 xl:grid-cols-[1.4fr,0.92fr]">
+        <PortfolioPositionChartCard
+          company={company}
+          chartPoints={analysis?.chartSeries ?? []}
+          journalGroup={journalGroup}
+          tradePlan={tradePlan}
+          averagePrice={averagePrice}
+        />
+
+        <div className="space-y-6">
+          <Card className="border-border/80 bg-white/90 shadow-[0_18px_44px_-34px_rgba(24,32,42,0.2)]">
+            <CardHeader>
+              <CardTitle className="text-lg text-foreground">계획 대비 실제</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="rounded-[20px] border border-primary/24 bg-[linear-gradient(180deg,rgba(139,107,46,0.08),rgba(255,255,255,0.94))] px-4 py-4">
+                <p className="text-sm font-semibold text-foreground">{planComparison.headline}</p>
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">{planComparison.summary}</p>
+              </div>
+
+              <div className="space-y-3">
+                {planComparison.items.map((item) => (
+                  <div
+                    key={item.key}
+                    className={
+                      item.tone === "positive"
+                        ? "rounded-[20px] border border-positive/22 bg-[hsl(var(--positive)/0.08)] px-4 py-4"
+                        : item.tone === "neutral"
+                          ? "rounded-[20px] border border-primary/22 bg-[hsl(var(--primary)/0.08)] px-4 py-4"
+                          : item.tone === "caution"
+                            ? "rounded-[20px] border border-caution/22 bg-[hsl(var(--caution)/0.08)] px-4 py-4"
+                            : "rounded-[20px] border border-border/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.94),rgba(246,241,232,0.88))] px-4 py-4"
+                    }
+                  >
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <p className="text-sm font-semibold text-foreground">{item.label}</p>
+                      <Badge
+                        variant={
+                          item.tone === "positive"
+                            ? "positive"
+                            : item.tone === "neutral"
+                              ? "neutral"
+                              : item.tone === "caution"
+                                ? "caution"
+                                : "secondary"
+                        }
+                      >
+                        {item.statusLabel}
+                      </Badge>
+                    </div>
+                    <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                      <PlanValue label="계획" value={item.planned} />
+                      <PlanValue label="실제" value={item.actual} />
+                    </div>
+                    <p className="mt-3 text-sm leading-6 text-muted-foreground">{item.note}</p>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          <OpeningCheckInsightCard
+            insight={openingCheckInsight}
+            emptyMessage="이 종목은 포트폴리오에서 바로 들어온 상태라 장초 확인 기록이 아직 연결되지 않았습니다."
+          />
+        </div>
+      </div>
+
+      <div className="grid gap-6 xl:grid-cols-[1.16fr,0.84fr]">
         <Card className="border-border/80 bg-white/90 shadow-[0_18px_44px_-34px_rgba(24,32,42,0.2)]">
           <CardHeader>
-            <CardTitle className="text-lg text-foreground">포지션 타임라인</CardTitle>
+            <CardTitle className="text-lg text-foreground">체결 타임라인</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             {journalGroup?.events.length ? (
@@ -154,19 +256,7 @@ export function PositionDetailView({
                   <div className="flex-1 rounded-[20px] border border-border/80 bg-[hsl(42_38%_97%)] px-4 py-4">
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <div className="flex flex-wrap items-center gap-2">
-                        <Badge variant={event.type === "stop_loss" ? "caution" : event.type === "take_profit_partial" ? "neutral" : event.type === "buy" ? "positive" : "secondary"}>
-                          {event.type === "buy"
-                            ? "첫 매수"
-                            : event.type === "add"
-                              ? "추가 매수"
-                              : event.type === "take_profit_partial"
-                                ? "부분 익절"
-                                : event.type === "exit_full"
-                                  ? "전량 매도"
-                                  : event.type === "stop_loss"
-                                    ? "손절"
-                                    : "수동 종료"}
-                        </Badge>
+                        <Badge variant={getEventTone(event.type)}>{getPortfolioEventLabel(event.type)}</Badge>
                         <span className="text-xs text-muted-foreground">{formatDate(event.tradedAt)}</span>
                       </div>
                       <span className="text-sm font-semibold text-foreground">
@@ -176,25 +266,23 @@ export function PositionDetailView({
                     {event.note ? (
                       <p className="mt-3 text-sm leading-6 text-muted-foreground">{event.note}</p>
                     ) : (
-                      <p className="mt-3 text-sm leading-6 text-muted-foreground">메모 없이 기록된 체결입니다.</p>
+                      <p className="mt-3 text-sm leading-6 text-muted-foreground">
+                        별도 메모 없이 기록된 체결입니다.
+                      </p>
                     )}
                   </div>
                 </div>
               ))
             ) : (
               <div className="rounded-[24px] border border-border/80 bg-[hsl(42_40%_97%)] px-5 py-6 text-sm leading-6 text-muted-foreground">
-                아직 이 종목의 실제 체결 기록이 없습니다. 포트폴리오 페이지에서 첫 매수나 부분 익절을 먼저 기록해 주세요.
+                아직 이 종목의 실제 체결 기록이 없습니다. 포트폴리오 페이지에서 첫 매수나 부분 익절을
+                기록하면 타임라인이 여기에서 이어집니다.
               </div>
             )}
           </CardContent>
         </Card>
 
         <div className="space-y-6">
-          <OpeningCheckInsightCard
-            insight={openingCheckInsight}
-            emptyMessage="이 종목은 아직 장초 확인과 연결된 기록이 없거나, 오늘 먼저 볼 종목에서 벗어나 바로 포트폴리오에 들어왔습니다."
-          />
-
           <Card className="border-border/80 bg-white/90 shadow-[0_18px_44px_-34px_rgba(24,32,42,0.2)]">
             <CardHeader>
               <CardTitle className="text-lg text-foreground">현재 계획과 다음 행동</CardTitle>
@@ -238,7 +326,8 @@ export function PositionDetailView({
                 </>
               ) : (
                 <div className="rounded-[24px] border border-border/80 bg-[hsl(42_40%_97%)] px-5 py-6 text-sm leading-6 text-muted-foreground">
-                  오늘 기준 보유 관리 계획이 아직 연결되지 않았습니다. 현재는 체결 기록과 자산 정보만 먼저 볼 수 있습니다.
+                  오늘 기준 보유 관리 계획은 아직 연결되지 않았습니다. 현재는 체결 기록과 자산 정보만 먼저
+                  보여주고 있습니다.
                 </div>
               )}
             </CardContent>
@@ -246,7 +335,7 @@ export function PositionDetailView({
 
           <Card className="border-border/80 bg-white/90 shadow-[0_18px_44px_-34px_rgba(24,32,42,0.2)]">
             <CardHeader>
-              <CardTitle className="text-lg text-foreground">{isClosed ? "종료 회고" : "현재 포지션 메모"}</CardTitle>
+              <CardTitle className="text-lg text-foreground">{isClosed ? "종료 회고" : "포지션 메모"}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               {review ? (
@@ -257,24 +346,17 @@ export function PositionDetailView({
                   </div>
 
                   {review.strengths.length ? (
-                    <ReviewList
-                      title="좋았던 점"
-                      items={review.strengths}
-                      tone="positive"
-                    />
+                    <ReviewList title="잘한 점" items={review.strengths} tone="positive" />
                   ) : null}
 
                   {review.watchouts.length ? (
-                    <ReviewList
-                      title="다음에 다시 볼 점"
-                      items={review.watchouts}
-                      tone="caution"
-                    />
+                    <ReviewList title="다음에 다시 볼 점" items={review.watchouts} tone="caution" />
                   ) : null}
                 </>
               ) : (
                 <div className="rounded-[24px] border border-border/80 bg-[hsl(42_40%_97%)] px-5 py-6 text-sm leading-6 text-muted-foreground">
-                  아직 종료 회고를 만들 만큼 체결 기록이 충분하지 않습니다. 첫 매수와 청산 이벤트를 남기면 이 자리에 자동 회고가 표시됩니다.
+                  아직 종료 회고를 만들 만큼 체결 기록이 충분하지 않습니다. 첫 매수와 청산 이벤트를 함께
+                  남기면 이 영역에 자동 회고가 채워집니다.
                 </div>
               )}
 
@@ -297,6 +379,15 @@ function DetailMetric({ label, value }: { label: string; value: string }) {
     <div className="rounded-[20px] border border-border/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.95),rgba(246,241,232,0.9))] px-4 py-4">
       <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">{label}</p>
       <p className="mt-2 text-base font-semibold text-foreground">{value}</p>
+    </div>
+  );
+}
+
+function PlanValue({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-[18px] border border-border/80 bg-white/80 px-3 py-3">
+      <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">{label}</p>
+      <p className="mt-1 text-sm font-semibold text-foreground">{value}</p>
     </div>
   );
 }
