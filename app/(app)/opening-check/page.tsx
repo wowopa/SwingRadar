@@ -10,11 +10,14 @@ export const dynamic = "force-dynamic";
 export default async function OpeningCheckPage({
   searchParams
 }: {
-  searchParams?: Promise<{ ticker?: string }> | { ticker?: string };
+  searchParams?: Promise<{ ticker?: string | string[] }>;
 }) {
-  const resolvedSearchParams = await Promise.resolve(searchParams ?? {});
+  const resolvedSearchParams = (await searchParams) ?? {};
+  const tickerParam = Array.isArray(resolvedSearchParams.ticker)
+    ? resolvedSearchParams.ticker[0]
+    : resolvedSearchParams.ticker;
   const initialFocusTicker =
-    typeof resolvedSearchParams.ticker === "string" ? resolvedSearchParams.ticker.toUpperCase() : null;
+    typeof tickerParam === "string" ? tickerParam.toUpperCase() : null;
   const session = await getCurrentUserSession();
   const response = await listRecommendations({ sort: "score_desc" }, { userId: session?.user.id });
   const statusSummaries = [
