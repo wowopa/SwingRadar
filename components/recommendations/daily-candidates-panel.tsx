@@ -88,22 +88,22 @@ function createDraft(decision?: OpeningRecheckDecisionDto): OpeningDraft {
 
 function getStatusButtonClasses(status: OpeningRecheckStatus, isActive: boolean) {
   if (!isActive) {
-    return "bg-background/80 text-foreground/80 hover:bg-background";
+    return "border-border/80 bg-[hsl(42_36%_97%)] text-foreground/78 hover:border-border hover:bg-white";
   }
 
   if (status === "passed") {
-    return "border-positive/35 bg-positive/10 text-positive hover:bg-positive/15";
+    return "border-positive/45 bg-[hsl(var(--positive)/0.18)] text-positive shadow-sm hover:bg-[hsl(var(--positive)/0.24)]";
   }
 
   if (status === "watch") {
-    return "border-neutral/35 bg-neutral/10 text-neutral hover:bg-neutral/15";
+    return "border-neutral/45 bg-[hsl(var(--neutral)/0.18)] text-neutral shadow-sm hover:bg-[hsl(var(--neutral)/0.24)]";
   }
 
   if (status === "avoid") {
-    return "border-caution/35 bg-caution/10 text-caution hover:bg-caution/15";
+    return "border-caution/45 bg-[hsl(var(--caution)/0.16)] text-caution shadow-sm hover:bg-[hsl(var(--caution)/0.22)]";
   }
 
-  return "border-border/80 bg-secondary/40 text-foreground hover:bg-secondary/50";
+  return "border-primary/40 bg-primary/12 text-primary shadow-sm hover:bg-primary/16";
 }
 
 function getChoiceButtonClasses(
@@ -111,22 +111,22 @@ function getChoiceButtonClasses(
   isActive: boolean
 ) {
   if (!isActive) {
-    return "border-border/70 bg-background/80 text-foreground/80 hover:bg-background";
+    return "border-border/80 bg-[hsl(42_36%_97%)] text-foreground/80 hover:border-border hover:bg-white";
   }
 
   if (variant === "positive") {
-    return "border-positive/35 bg-positive/10 text-positive hover:bg-positive/15";
+    return "border-positive/45 bg-[hsl(var(--positive)/0.18)] text-positive shadow-sm hover:bg-[hsl(var(--positive)/0.24)]";
   }
 
   if (variant === "neutral") {
-    return "border-neutral/35 bg-neutral/10 text-neutral hover:bg-neutral/15";
+    return "border-neutral/45 bg-[hsl(var(--neutral)/0.18)] text-neutral shadow-sm hover:bg-[hsl(var(--neutral)/0.24)]";
   }
 
   if (variant === "caution") {
-    return "border-caution/35 bg-caution/10 text-caution hover:bg-caution/15";
+    return "border-caution/45 bg-[hsl(var(--caution)/0.16)] text-caution shadow-sm hover:bg-[hsl(var(--caution)/0.22)]";
   }
 
-  return "border-primary/35 bg-primary/10 text-primary hover:bg-primary/15";
+  return "border-primary/45 bg-primary/12 text-primary shadow-sm hover:bg-primary/16";
 }
 
 function buildChecklist(draft: OpeningDraft): OpeningRecheckChecklist | null {
@@ -492,7 +492,7 @@ export function DailyCandidatesPanel({
           시스템이 오늘 상태를 자동으로 제안합니다.
         </div>
 
-        <div className="rounded-2xl border border-border/70 bg-secondary/20 p-4">
+        <div className="rounded-2xl border border-border/80 bg-[hsl(42_44%_96%)] p-4">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <p className="text-sm font-semibold text-foreground">오늘 실제 행동 보드</p>
@@ -520,7 +520,7 @@ export function DailyCandidatesPanel({
           {boardError ? <p className="mt-3 text-sm text-destructive">{boardError}</p> : null}
 
           {allChecksCompleted ? (
-            <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-positive/25 bg-positive/8 px-4 py-3">
+            <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-positive/30 bg-[hsl(var(--positive)/0.12)] px-4 py-3">
               <div>
                 <p className="text-sm font-semibold text-foreground">장초 확인이 모두 끝났습니다</p>
                 <p className="mt-1 text-xs leading-5 text-muted-foreground">
@@ -543,7 +543,10 @@ export function DailyCandidatesPanel({
               const meta = getOpeningRecheckStatusMeta(status);
 
               return (
-                <div key={status} className="rounded-full border border-border/70 bg-background/80 px-3 py-1.5">
+                <div
+                  key={status}
+                  className="rounded-full border border-border/80 bg-[hsl(42_40%_97%)] px-3 py-1.5"
+                >
                   <div className="flex items-center gap-2">
                     <p className="text-xs font-medium text-foreground">{meta.label}</p>
                     <Badge variant={meta.variant}>{counts[status]}개</Badge>
@@ -558,7 +561,7 @@ export function DailyCandidatesPanel({
         {hasCandidates ? (
           <>
             <div className="grid gap-4 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
-              <div className="rounded-3xl border border-border/70 bg-secondary/25 p-5">
+              <div className="rounded-3xl border border-border/80 bg-white/90 p-5 shadow-[0_20px_48px_-32px_rgba(24,32,42,0.24)]">
                 {focusedCandidate && focusedDraft ? (
                   <>
                     <div className="flex flex-wrap items-start justify-between gap-3">
@@ -566,7 +569,7 @@ export function DailyCandidatesPanel({
                         <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">장초 확인</p>
                         <div className="mt-2 flex flex-wrap items-center gap-2">
                           <p className="text-xl font-semibold text-foreground">{focusedCandidate.company}</p>
-                          <span className="rounded-full border border-border/70 bg-background/80 px-3 py-1 text-xs text-muted-foreground">
+                          <span className="rounded-full border border-border/80 bg-[hsl(42_40%_97%)] px-3 py-1 text-xs text-muted-foreground">
                             {focusedCandidate.ticker} · 오늘 먼저 볼 종목{" "}
                             {visibleCandidates.findIndex((item) => item.ticker === focusedCandidate.ticker) + 1}
                           </span>
@@ -594,19 +597,19 @@ export function DailyCandidatesPanel({
                     </div>
 
                     <div className="mt-4 grid gap-3 sm:grid-cols-3">
-                      <div className="rounded-2xl border border-border/70 bg-background/80 px-4 py-3">
+                      <div className="rounded-2xl border border-border/80 bg-[hsl(42_38%_97%)] px-4 py-3">
                         <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">진입 구간</p>
                         <p className="mt-1 text-sm font-semibold text-foreground">
                           {focusedCandidate.tradePlan?.entryLabel ?? "분석 확인"}
                         </p>
                       </div>
-                      <div className="rounded-2xl border border-border/70 bg-background/80 px-4 py-3">
+                      <div className="rounded-2xl border border-border/80 bg-[hsl(42_38%_97%)] px-4 py-3">
                         <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">손절 기준</p>
                         <p className="mt-1 text-sm font-semibold text-foreground">
                           {focusedCandidate.tradePlan?.stopLabel ?? "분석 확인"}
                         </p>
                       </div>
-                      <div className="rounded-2xl border border-border/70 bg-background/80 px-4 py-3">
+                      <div className="rounded-2xl border border-border/80 bg-[hsl(42_38%_97%)] px-4 py-3">
                         <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">유동성</p>
                         <p className="mt-1 text-sm font-semibold text-foreground">
                           {focusedCandidate.liquidityRating ?? formatTurnover(focusedCandidate.averageTurnover20)}
@@ -614,7 +617,7 @@ export function DailyCandidatesPanel({
                       </div>
                     </div>
 
-                    <details className="mt-4 group rounded-2xl border border-border/70 bg-background/80">
+                    <details className="mt-4 group rounded-2xl border border-border/80 bg-[hsl(42_38%_97%)]">
                       <summary className="flex cursor-pointer list-none items-start justify-between gap-3 px-4 py-4 [&::-webkit-details-marker]:hidden">
                         <div className="min-w-0">
                           <p className="text-sm font-semibold text-foreground">서비스 공통 판단 참고</p>
@@ -698,7 +701,7 @@ export function DailyCandidatesPanel({
                     </details>
 
                     <div className="mt-4 grid gap-4">
-                      <div className="rounded-2xl border border-border/70 bg-background/70 p-4">
+                      <div className="rounded-2xl border border-border/80 bg-[hsl(42_40%_97%)] p-4">
                         <div className="flex items-start justify-between gap-3">
                           <div>
                             <p className="text-sm font-semibold text-foreground">1. 갭 상태</p>
@@ -735,7 +738,7 @@ export function DailyCandidatesPanel({
                         </div>
                       </div>
 
-                      <div className="rounded-2xl border border-border/70 bg-background/70 p-4">
+                      <div className="rounded-2xl border border-border/80 bg-[hsl(42_40%_97%)] p-4">
                         <div className="flex items-start justify-between gap-3">
                           <div>
                             <p className="text-sm font-semibold text-foreground">2. 확인 가격 반응</p>
@@ -780,7 +783,7 @@ export function DailyCandidatesPanel({
                         </div>
                       </div>
 
-                      <div className="rounded-2xl border border-border/70 bg-background/70 p-4">
+                      <div className="rounded-2xl border border-border/80 bg-[hsl(42_40%_97%)] p-4">
                         <div className="flex items-start justify-between gap-3">
                           <div>
                             <p className="text-sm font-semibold text-foreground">3. 오늘 행동</p>
@@ -821,7 +824,7 @@ export function DailyCandidatesPanel({
                         </div>
                       </div>
 
-                      <div className="rounded-2xl border border-border/70 bg-background/80 p-4">
+                      <div className="rounded-2xl border border-border/80 bg-[linear-gradient(180deg,rgba(246,241,232,0.9),rgba(255,255,255,0.92))] p-4">
                         <div className="flex flex-wrap items-start justify-between gap-3">
                           <div>
                             <p className="text-sm font-semibold text-foreground">자동 제안 상태</p>
@@ -895,7 +898,7 @@ export function DailyCandidatesPanel({
                           </div>
                           <div className="flex flex-col justify-end gap-2 lg:min-w-[212px]">
                             {nextFocusCandidate && nextFocusCandidate.ticker !== focusedCandidate.ticker ? (
-                              <div className="rounded-2xl border border-border/70 bg-secondary/20 px-3 py-2 text-xs leading-5 text-muted-foreground">
+                              <div className="rounded-2xl border border-border/80 bg-[hsl(42_42%_96%)] px-3 py-2 text-xs leading-5 text-muted-foreground">
                                 다음 종목
                                 <span className="ml-2 font-semibold text-foreground">{nextFocusCandidate.company}</span>
                               </div>
@@ -935,13 +938,13 @@ export function DailyCandidatesPanel({
                     </div>
                   </>
                 ) : (
-                  <div className="rounded-2xl border border-border/70 bg-background/70 p-5 text-sm text-muted-foreground">
+                  <div className="rounded-2xl border border-border/80 bg-[hsl(42_40%_97%)] p-5 text-sm text-muted-foreground">
                     장초 확인할 종목이 없습니다.
                   </div>
                 )}
               </div>
 
-              <div className="rounded-3xl border border-border/70 bg-background/80 p-5">
+              <div className="rounded-3xl border border-border/80 bg-[hsl(42_34%_97%)] p-5">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
                     <p className="text-sm font-semibold text-foreground">장초 확인 목록</p>
@@ -954,12 +957,12 @@ export function DailyCandidatesPanel({
 
                 <div className="mt-4 space-y-3">
                   {focusedCandidate ? (
-                    <div className="rounded-2xl border border-primary/25 bg-primary/8 px-4 py-4">
-                      <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">현재 확인 중</p>
+                    <div className="rounded-2xl border border-primary/28 bg-[linear-gradient(145deg,rgba(24,32,42,0.98),rgba(34,41,54,0.94))] px-4 py-4 shadow-[0_22px_52px_-34px_rgba(24,32,42,0.68)]">
+                      <p className="text-[11px] uppercase tracking-[0.18em] text-primary-foreground/65">현재 확인 중</p>
                       <div className="mt-2 flex items-center justify-between gap-3">
                         <div className="min-w-0">
-                          <p className="truncate text-sm font-semibold text-foreground">{focusedCandidate.company}</p>
-                          <p className="mt-1 text-xs text-muted-foreground">
+                          <p className="truncate text-sm font-semibold text-primary-foreground">{focusedCandidate.company}</p>
+                          <p className="mt-1 text-xs text-primary-foreground/70">
                             {focusedCandidate.ticker} · {focusedCandidate.sector}
                           </p>
                         </div>
@@ -978,12 +981,12 @@ export function DailyCandidatesPanel({
                         <button
                           key={`compact-${item.ticker}`}
                           type="button"
-                          className="flex w-full items-center justify-between rounded-2xl border border-border/70 bg-secondary/20 px-4 py-3 text-left transition hover:border-primary/25 hover:bg-secondary/30"
+                          className="flex w-full items-center justify-between rounded-2xl border border-border/80 bg-white/78 px-4 py-3 text-left transition hover:border-primary/25 hover:bg-white"
                           onClick={() => setFocusTicker(item.ticker)}
                         >
                           <div className="min-w-0">
                             <div className="flex items-center gap-2">
-                              <span className="rounded-full border border-border/70 bg-background/80 px-2 py-0.5 text-[11px] text-muted-foreground">
+                              <span className="rounded-full border border-border/80 bg-[hsl(42_40%_97%)] px-2 py-0.5 text-[11px] text-muted-foreground">
                                 다음 {index + 1}
                               </span>
                               <p className="truncate text-sm font-medium text-foreground">{item.company}</p>
@@ -996,14 +999,14 @@ export function DailyCandidatesPanel({
                         </button>
                       ))
                     ) : (
-                      <div className="rounded-2xl border border-border/70 bg-secondary/20 px-4 py-4 text-sm text-muted-foreground">
+                      <div className="rounded-2xl border border-border/80 bg-white/80 px-4 py-4 text-sm text-muted-foreground">
                         남은 종목이 많지 않습니다. 현재 종목만 저장하면 장초 확인이 거의 마무리됩니다.
                       </div>
                     )}
                   </div>
                 </div>
 
-                <details className="mt-4 rounded-2xl border border-border/70 bg-secondary/15">
+                <details className="mt-4 rounded-2xl border border-border/80 bg-[hsl(42_38%_97%)]">
                   <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-sm font-medium text-foreground [&::-webkit-details-marker]:hidden">
                     전체 목록 보기
                     <div className="flex flex-wrap gap-2">
@@ -1035,15 +1038,15 @@ export function DailyCandidatesPanel({
                         className={cn(
                           "w-full rounded-2xl border px-4 py-4 text-left transition",
                           isFocused
-                            ? "border-primary/35 bg-primary/8 shadow-sm"
-                            : "border-border/70 bg-secondary/25 hover:border-primary/25 hover:bg-secondary/35"
+                            ? "border-primary/32 bg-primary/10 shadow-sm"
+                            : "border-border/80 bg-white/78 hover:border-primary/25 hover:bg-white"
                         )}
                         onClick={() => setFocusTicker(item.ticker)}
                       >
                         <div className="flex items-start justify-between gap-3">
                           <div>
                             <div className="flex flex-wrap items-center gap-2">
-                              <span className="rounded-full border border-border/70 bg-background/80 px-2.5 py-1 text-[11px] text-muted-foreground">
+                              <span className="rounded-full border border-border/80 bg-[hsl(42_40%_97%)] px-2.5 py-1 text-[11px] text-muted-foreground">
                                 {index + 1}
                               </span>
                               <p className="text-sm font-semibold text-foreground">{item.company}</p>
@@ -1101,7 +1104,7 @@ export function DailyCandidatesPanel({
               </div>
             </div>
 
-            <div className="rounded-2xl border border-border/70 bg-secondary/25 p-4 text-sm text-muted-foreground">
+            <div className="rounded-2xl border border-border/80 bg-[hsl(42_42%_96%)] p-4 text-sm text-muted-foreground">
               총 {dailyScan.totalTickers}개 종목을 스캔했고, 그중 오늘 먼저 볼 종목만 자동 정렬했습니다. 장초 확인이 끝나기
               전까지는 이 목록 전체를 곧바로 실행 신호로 보지 않는 편이 안전합니다.{" "}
               <Link className="font-medium text-primary hover:text-primary/80" href="/ranking">

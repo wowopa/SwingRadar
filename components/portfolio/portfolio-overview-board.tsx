@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { HoldingActionBoardDto, HoldingActionItemDto } from "@/lib/api-contracts/swing-radar";
-import { formatPercent, formatPrice } from "@/lib/utils";
+import { cn, formatPercent, formatPrice } from "@/lib/utils";
 import type { PortfolioProfile } from "@/types/recommendation";
 
 function formatEnteredAt(value?: string) {
@@ -98,7 +98,7 @@ export function PortfolioOverviewBoard({
 
   return (
     <section className="space-y-6">
-      <Card className="border-border/70 bg-white/82 shadow-sm">
+      <Card className="border-border/80 bg-white/90 shadow-[0_22px_56px_-34px_rgba(24,32,42,0.26)]">
         <CardHeader className="space-y-4">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
@@ -165,7 +165,7 @@ export function PortfolioOverviewBoard({
         </CardContent>
       </Card>
 
-      <Card className="border-border/70 bg-white/82 shadow-sm">
+      <Card className="border-border/80 bg-white/90 shadow-[0_18px_46px_-32px_rgba(24,32,42,0.22)]">
         <CardHeader className="space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
@@ -188,7 +188,7 @@ export function PortfolioOverviewBoard({
                   <Link
                     key={position.ticker}
                     href={`/portfolio/${position.ticker}`}
-                    className="block rounded-[24px] border border-border/70 bg-secondary/20 p-4 transition hover:border-primary/35 hover:bg-secondary/35"
+                    className="block rounded-[24px] border border-border/80 bg-[hsl(42_38%_97%)] p-4 transition hover:border-primary/28 hover:bg-white"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
@@ -227,7 +227,18 @@ export function PortfolioOverviewBoard({
                       />
                     </div>
 
-                    <div className="mt-4 rounded-[20px] border border-border/70 bg-background/80 px-4 py-3">
+                    <div
+                      className={cn(
+                        "mt-4 rounded-[20px] border px-4 py-3",
+                        actionMeta.variant === "caution"
+                          ? "border-caution/24 bg-[hsl(var(--caution)/0.1)]"
+                          : actionMeta.variant === "positive"
+                            ? "border-positive/24 bg-[hsl(var(--positive)/0.1)]"
+                            : actionMeta.variant === "neutral"
+                              ? "border-neutral/24 bg-[hsl(var(--neutral)/0.1)]"
+                              : "border-border/80 bg-[hsl(42_38%_97%)]"
+                      )}
+                    >
                       <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">다음 행동</p>
                       <p className="mt-2 text-sm leading-6 text-foreground/82">
                         {actionItem?.nextAction ?? "현재는 보유 계획을 유지하며 추가 점검만 이어갑니다."}
@@ -243,7 +254,7 @@ export function PortfolioOverviewBoard({
               })}
             </div>
           ) : (
-            <div className="rounded-[24px] border border-border/70 bg-secondary/20 px-5 py-6 text-sm leading-6 text-muted-foreground">
+            <div className="rounded-[24px] border border-border/80 bg-[hsl(42_40%_97%)] px-5 py-6 text-sm leading-6 text-muted-foreground">
               아직 등록된 보유 종목이 없습니다. 먼저 자산 설정에서 보유 종목과 현금 기준을 입력해 주세요.
             </div>
           )}
@@ -265,14 +276,14 @@ function SummaryMetric({
   icon: typeof WalletCards;
 }) {
   return (
-    <div className="rounded-[22px] border border-border/70 bg-secondary/20 p-4">
+    <div className="rounded-[22px] border border-border/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.92),rgba(246,241,232,0.9))] p-4">
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-xs font-medium tracking-[0.12em] text-muted-foreground">{title}</p>
           <p className="mt-2 text-2xl font-semibold text-foreground">{value}</p>
           <p className="mt-2 text-xs leading-5 text-muted-foreground">{note}</p>
         </div>
-        <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-background/80 text-foreground/72">
+        <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary/12 text-primary">
           <Icon className="h-4 w-4" />
         </div>
       </div>
@@ -291,8 +302,15 @@ function ActionCountCard({
   note: string;
   variant: "secondary" | "positive" | "neutral" | "caution";
 }) {
+  const toneByVariant = {
+    secondary: "border-border/80 bg-[hsl(42_40%_97%)]",
+    positive: "border-positive/22 bg-[hsl(var(--positive)/0.1)]",
+    neutral: "border-neutral/22 bg-[hsl(var(--neutral)/0.1)]",
+    caution: "border-caution/22 bg-[hsl(var(--caution)/0.1)]"
+  } as const;
+
   return (
-    <div className="rounded-[22px] border border-border/70 bg-secondary/20 p-4">
+    <div className={cn("rounded-[22px] border p-4", toneByVariant[variant])}>
       <div className="flex items-center justify-between gap-3">
         <p className="text-sm font-semibold text-foreground">{title}</p>
         <Badge variant={variant}>{count}개</Badge>
@@ -304,7 +322,7 @@ function ActionCountCard({
 
 function MiniMetric({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-2xl border border-border/70 bg-background/80 px-3 py-3">
+    <div className="rounded-2xl border border-border/80 bg-[hsl(42_40%_97%)] px-3 py-3">
       <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">{label}</p>
       <p className="mt-1 text-sm font-semibold text-foreground">{value}</p>
     </div>

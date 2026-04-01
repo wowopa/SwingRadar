@@ -17,7 +17,7 @@ import type {
   TodayActionBoardSummaryDto,
   TodayActionSummaryDto
 } from "@/lib/api-contracts/swing-radar";
-import { formatPrice } from "@/lib/utils";
+import { cn, formatPrice } from "@/lib/utils";
 
 const holdingPriority: HoldingActionStatusDto[] = [
   "exit_review",
@@ -205,7 +205,7 @@ export function DashboardFocusBoard({
 
   return (
     <section className="space-y-4">
-      <Card className="border-border/70 bg-white/82 shadow-sm">
+      <Card className="border-border/80 bg-white/90 shadow-[0_22px_56px_-34px_rgba(24,32,42,0.28)]">
         <CardHeader className="space-y-3">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="space-y-3">
@@ -226,7 +226,7 @@ export function DashboardFocusBoard({
         </CardHeader>
         <CardContent className="space-y-4">
           {openingCheckCompleted ? (
-            <div className="rounded-[26px] border border-positive/25 bg-positive/8 p-4">
+            <div className="rounded-[26px] border border-positive/30 bg-[hsl(var(--positive)/0.12)] p-4">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <p className="text-sm font-semibold text-foreground">장초 확인이 모두 저장되었습니다</p>
@@ -240,13 +240,13 @@ export function DashboardFocusBoard({
               <div className="mt-4 flex flex-wrap gap-2">
                 <Link
                   href={buyReviewItems.length ? "#today-buy-review" : "#today-holding-review"}
-                  className="inline-flex h-10 items-center rounded-full border border-positive/20 bg-positive/10 px-4 text-sm font-medium text-positive transition hover:bg-positive/15"
+                  className="inline-flex h-10 items-center rounded-full border border-positive/25 bg-[hsl(var(--positive)/0.14)] px-4 text-sm font-medium text-positive transition hover:bg-[hsl(var(--positive)/0.18)]"
                 >
                   {buyReviewItems.length ? "오늘 매수 검토 보기" : "보유 관리 보기"}
                 </Link>
                 <Link
                   href="/opening-check"
-                  className="inline-flex h-10 items-center rounded-full border border-border/70 bg-white/78 px-4 text-sm font-medium text-foreground transition hover:border-primary/25 hover:bg-secondary/20"
+                  className="inline-flex h-10 items-center rounded-full border border-border/80 bg-[hsl(42_40%_97%)] px-4 text-sm font-medium text-foreground transition hover:border-primary/25 hover:bg-white"
                 >
                   장초 확인 다시 보기
                 </Link>
@@ -255,7 +255,7 @@ export function DashboardFocusBoard({
           ) : null}
 
           {setupChecklist.needsSetupChecklist ? (
-            <div className="rounded-[26px] border border-primary/20 bg-primary/6 p-4">
+            <div className="rounded-[26px] border border-primary/24 bg-primary/10 p-4">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <p className="text-sm font-semibold text-foreground">오늘 시작 체크리스트</p>
@@ -273,7 +273,7 @@ export function DashboardFocusBoard({
               </div>
             </div>
           ) : (
-            <div className="rounded-[26px] border border-border/70 bg-secondary/18 p-4">
+            <div className="rounded-[26px] border border-border/80 bg-[hsl(42_44%_96%)] p-4">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <p className="text-sm font-semibold text-foreground">오늘 시작 준비 완료</p>
@@ -292,7 +292,7 @@ export function DashboardFocusBoard({
                 ))}
                 <Link
                   href="/portfolio?asset-settings=1"
-                  className="inline-flex h-8 items-center rounded-full border border-primary/20 bg-primary/8 px-3 text-xs font-medium text-primary transition hover:bg-primary/12"
+                  className="inline-flex h-8 items-center rounded-full border border-primary/24 bg-primary/10 px-3 text-xs font-medium text-primary transition hover:bg-primary/14"
                 >
                   자산 설정 다시 열기
                 </Link>
@@ -354,11 +354,14 @@ export function DashboardFocusBoard({
       </Card>
 
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)]">
-        <Card id="today-buy-review" className="border-border/70 bg-white/82 shadow-sm">
+        <Card
+          id="today-buy-review"
+          className="border-border/80 bg-white/90 shadow-[0_18px_46px_-32px_rgba(24,32,42,0.22)]"
+        >
           <CardHeader className="space-y-3">
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary/12 text-primary">
                   <Target className="h-4 w-4" />
                 </div>
                 <div>
@@ -378,7 +381,7 @@ export function DashboardFocusBoard({
                   <Link
                     key={item.ticker}
                     href={`/analysis/${item.ticker}`}
-                    className="block rounded-[24px] border border-border/70 bg-secondary/20 p-4 transition hover:border-primary/35 hover:bg-secondary/35"
+                    className="block rounded-[24px] border border-border/80 bg-[hsl(42_38%_97%)] p-4 transition hover:border-primary/28 hover:bg-white"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
@@ -407,11 +410,14 @@ export function DashboardFocusBoard({
         </Card>
 
         <div className="grid gap-4">
-          <Card id="today-holding-review" className="border-border/70 bg-white/82 shadow-sm">
+          <Card
+            id="today-holding-review"
+            className="border-border/80 bg-white/90 shadow-[0_18px_46px_-32px_rgba(24,32,42,0.22)]"
+          >
             <CardHeader className="space-y-3">
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-secondary/35 text-foreground/75">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[hsl(var(--caution)/0.12)] text-caution">
                     <ShieldAlert className="h-4 w-4" />
                   </div>
                   <div>
@@ -434,7 +440,7 @@ export function DashboardFocusBoard({
                       <Link
                         key={item.ticker}
                         href="/portfolio"
-                        className="block rounded-[22px] border border-border/70 bg-secondary/20 px-4 py-3 transition hover:border-primary/35 hover:bg-secondary/35"
+                        className="block rounded-[22px] border border-border/80 bg-[hsl(42_38%_97%)] px-4 py-3 transition hover:border-primary/28 hover:bg-white"
                       >
                         <div className="flex items-start justify-between gap-3">
                           <div className="min-w-0">
@@ -458,11 +464,11 @@ export function DashboardFocusBoard({
             </CardContent>
           </Card>
 
-          <Card className="border-border/70 bg-white/82 shadow-sm">
+          <Card className="border-border/80 bg-white/90 shadow-[0_18px_46px_-32px_rgba(24,32,42,0.22)]">
             <CardHeader className="space-y-3">
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-secondary/35 text-foreground/75">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[hsl(var(--neutral)/0.14)] text-neutral">
                     <Clock3 className="h-4 w-4" />
                   </div>
                   <div>
@@ -476,7 +482,7 @@ export function DashboardFocusBoard({
                   </Badge>
                   <Link
                     href="/opening-check"
-                    className="inline-flex h-9 items-center rounded-full border border-primary/20 bg-primary/8 px-3 text-xs font-medium text-primary transition hover:bg-primary/12"
+                    className="inline-flex h-9 items-center rounded-full border border-primary/24 bg-primary/10 px-3 text-xs font-medium text-primary transition hover:bg-primary/14"
                   >
                     시작하기
                   </Link>
@@ -490,7 +496,7 @@ export function DashboardFocusBoard({
                     <Link
                       key={item.ticker}
                       href={`/opening-check?ticker=${item.ticker}`}
-                      className="block rounded-[22px] border border-border/70 bg-secondary/20 px-4 py-3 transition hover:border-primary/35 hover:bg-secondary/35"
+                      className="block rounded-[22px] border border-border/80 bg-[hsl(42_38%_97%)] px-4 py-3 transition hover:border-primary/28 hover:bg-white"
                     >
                       <p className="text-sm font-semibold text-foreground">
                         {item.company} <span className="text-xs font-medium text-muted-foreground">{item.ticker}</span>
@@ -507,7 +513,7 @@ export function DashboardFocusBoard({
         </div>
       </div>
 
-      <details className="group rounded-[28px] border border-border/70 bg-white/82 shadow-sm">
+      <details className="group rounded-[28px] border border-border/80 bg-white/90 shadow-[0_18px_46px_-32px_rgba(24,32,42,0.2)]">
         <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-5 py-4 [&::-webkit-details-marker]:hidden">
           <div>
             <p className="text-sm font-semibold text-foreground">오늘 보조 정보</p>
@@ -515,7 +521,7 @@ export function DashboardFocusBoard({
               장초 확인이 끝난 뒤 회고나 상태 분포가 필요할 때만 펼쳐서 보면 됩니다.
             </p>
           </div>
-          <span className="rounded-full border border-border/70 bg-secondary/35 px-3 py-1 text-xs font-medium text-foreground/78 transition group-open:bg-primary/10 group-open:text-primary">
+          <span className="rounded-full border border-border/80 bg-[hsl(42_40%_97%)] px-3 py-1 text-xs font-medium text-foreground/78 transition group-open:border-primary/24 group-open:bg-primary/10 group-open:text-primary">
             펼치기
           </span>
         </summary>
@@ -542,10 +548,10 @@ function SetupStepCard({ index, step }: { index: number; step: SetupStep }) {
         : { label: "필요", variant: "neutral" as const };
 
   return (
-    <div className="rounded-[24px] border border-border/70 bg-white/78 p-4">
+    <div className="rounded-[24px] border border-border/80 bg-[hsl(42_42%_97%)] p-4">
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-full border border-border/70 bg-secondary/25 text-sm font-semibold text-foreground">
+          <div className="flex h-9 w-9 items-center justify-center rounded-full border border-border/80 bg-white/80 text-sm font-semibold text-foreground">
             {index}
           </div>
           <div>
@@ -559,7 +565,7 @@ function SetupStepCard({ index, step }: { index: number; step: SetupStep }) {
       <div className="mt-4">
         <Link
           href={step.href}
-          className="inline-flex h-10 items-center rounded-full border border-primary/20 bg-primary/8 px-4 text-sm font-medium text-primary transition hover:bg-primary/12"
+          className="inline-flex h-10 items-center rounded-full border border-primary/24 bg-primary/10 px-4 text-sm font-medium text-primary transition hover:bg-primary/14"
         >
           {step.cta}
         </Link>
@@ -586,11 +592,16 @@ function ActionStepCard({
   icon: ReactNode;
 }) {
   const toneByAccent = {
-    primary: "border-primary/25 bg-primary text-primary-foreground hover:bg-primary/92",
-    positive: "border-positive/25 bg-positive/10 text-positive hover:bg-positive/15",
-    caution: "border-caution/25 bg-caution/10 text-caution hover:bg-caution/15",
-    muted: "border-border/70 bg-secondary/20 text-foreground hover:border-primary/25 hover:bg-secondary/35"
+    primary:
+      "border-primary/28 bg-[linear-gradient(145deg,rgba(24,32,42,0.98),rgba(34,41,54,0.94))] text-primary-foreground shadow-[0_24px_56px_-34px_rgba(24,32,42,0.7)] hover:-translate-y-0.5 hover:border-primary/46",
+    positive:
+      "border-positive/28 bg-[hsl(var(--positive)/0.09)] text-foreground hover:-translate-y-0.5 hover:border-positive/42 hover:bg-[hsl(var(--positive)/0.15)]",
+    caution:
+      "border-caution/28 bg-[hsl(var(--caution)/0.08)] text-foreground hover:-translate-y-0.5 hover:border-caution/42 hover:bg-[hsl(var(--caution)/0.14)]",
+    muted:
+      "border-border/80 bg-[hsl(42_40%_96%)] text-foreground hover:-translate-y-0.5 hover:border-primary/28 hover:bg-white"
   } as const;
+  const isPrimary = accent === "primary";
 
   return (
     <Link href={href} className={`rounded-[24px] border p-4 shadow-sm transition ${toneByAccent[accent]}`}>
@@ -604,15 +615,19 @@ function ActionStepCard({
         </div>
         <ArrowRight className="mt-1 h-4 w-4 shrink-0" />
       </div>
-      <p className="mt-3 text-sm leading-6">{description}</p>
-      <p className="mt-2 text-xs leading-5 opacity-80">{note}</p>
+      <p className={cn("mt-3 text-sm leading-6", isPrimary ? "text-primary-foreground/88" : "text-foreground/82")}>
+        {description}
+      </p>
+      <p className={cn("mt-2 text-xs leading-5", isPrimary ? "text-primary-foreground/72" : "text-muted-foreground")}>
+        {note}
+      </p>
     </Link>
   );
 }
 
 function MetricCard({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-[22px] border border-border/70 bg-secondary/20 p-4">
+    <div className="rounded-[22px] border border-border/80 bg-[hsl(42_40%_97%)] p-4">
       <p className="text-xs font-medium tracking-[0.12em] text-muted-foreground">{label}</p>
       <p className="mt-2 text-2xl font-semibold text-foreground">{value}</p>
     </div>
@@ -621,7 +636,7 @@ function MetricCard({ label, value }: { label: string; value: string }) {
 
 function DashboardEmptyState({ message }: { message: string }) {
   return (
-    <div className="rounded-[22px] border border-border/70 bg-secondary/20 px-4 py-5 text-sm leading-6 text-muted-foreground">
+    <div className="rounded-[22px] border border-border/80 bg-[hsl(42_40%_97%)] px-4 py-5 text-sm leading-6 text-muted-foreground">
       {message}
     </div>
   );
