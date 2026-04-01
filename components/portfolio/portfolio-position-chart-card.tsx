@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   CandlestickSeries,
   ColorType,
@@ -19,6 +19,26 @@ import type { AnalysisChartPointDto, RecommendationTradePlanDto } from "@/lib/ap
 import type { PortfolioJournalGroup } from "@/lib/portfolio/journal-insights";
 
 const MAX_POINTS = 60;
+const EVENT_BADGE_HORIZONTAL_PADDING = 56;
+const EVENT_BADGE_STACK_OFFSET = 30;
+
+type EventBadgeTone = "positive" | "caution" | "negative";
+type EventBadgePlacement = "above" | "below";
+
+interface EventBadgeDefinition {
+  id: string;
+  date: string;
+  time: BusinessDay;
+  price: number;
+  label: string;
+  tone: EventBadgeTone;
+  placement: EventBadgePlacement;
+}
+
+interface EventBadgePosition extends EventBadgeDefinition {
+  x: number;
+  y: number;
+}
 
 function toBusinessDay(value: string): BusinessDay | null {
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
@@ -137,11 +157,47 @@ function buildEventMarkers(
         time: toBusinessDay(date)!,
         position,
         color: isBuy ? "#1F8A63" : isTakeProfit ? "#C58A1B" : "#C74A47",
-        shape,
-        text: getPortfolioEventLabel(event.type)
+        shape
       };
     })
     .filter((item): item is NonNullable<typeof item> => item !== null);
+}
+
+function buildEventBadgeDefinitions(
+  group: PortfolioJournalGroup | null | undefined,
+  availableDates: Set<string>
+): EventBadgeDefinition[] {
+  if (!group) {
+    return [];
+  }
+
+  return [...group.events]
+    .sort((left, right) => new Date(left.tradedAt).getTime() - new Date(right.tradedAt).getTime())
+    .map((event) => {
+      const date = event.tradedAt.slice(0, 10);
+      if (!availableDates.has(date)) {
+        return null;
+      }
+
+      const isBuy = event.type === "buy" || event.type === "add";
+      const isTakeProfit = event.type === "take_profit_partial";
+
+      return {
+        id: `${event.type}-${event.tradedAt}-${event.price}-${event.quantity}`,
+        date,
+        time: toBusinessDay(date)!,
+        price: event.price,
+        label: getPortfolioEventLabel(event.type),
+        tone: isBuy ? "positive" : isTakeProfit ? "caution" : "negative",
+        placement: isBuy ? "below" : "above"
+      };
+    })
+    .filter((item): item is EventBadgeDefinition => item !== null);
+}
+
+function clampBadgeX(x: number, width: number) {
+  const horizontalPadding = Math.min(EVENT_BADGE_HORIZONTAL_PADDING, Math.max(24, width / 4));
+  return Math.max(horizontalPadding, Math.min(width - horizontalPadding, x));
 }
 
 export function PortfolioPositionChartCard({
@@ -161,6 +217,7 @@ export function PortfolioPositionChartCard({
 }) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const chartRef = useRef<IChartApi | null>(null);
+  const [eventBadges, setEventBadges] = useState<EventBadgePosition[]>([]);
 
   const visiblePoints = useMemo(() => chartPoints.slice(-MAX_POINTS), [chartPoints]);
   const latestPoint = visiblePoints.at(-1);
@@ -168,6 +225,7 @@ export function PortfolioPositionChartCard({
 
   useEffect(() => {
     if (!containerRef.current || !visiblePoints.length) {
+      setEventBadges([]);
       return;
     }
 
@@ -304,7 +362,44 @@ export function PortfolioPositionChartCard({
       createSeriesMarkers(priceSeries, markers);
     }
 
+    const eventBadgeDefinitions = buildEventBadgeDefinitions(journalGroup, availableDates);
+
+    const syncEventBadges = () => {
+      if (!containerRef.current) {
+        return;
+      }
+
+      const width = containerRef.current.clientWidth;
+      const stackCounts = new Map<string, number>();
+      const nextBadges = eventBadgeDefinitions
+        .map((badge) => {
+          const x = chart.timeScale().timeToCoordinate(badge.time);
+          const y = priceSeries.priceToCoordinate(badge.price);
+
+          if (x === null || y === null) {
+            return null;
+          }
+
+          const stackKey = `${badge.date}:${badge.placement}`;
+          const stackIndex = stackCounts.get(stackKey) ?? 0;
+          stackCounts.set(stackKey, stackIndex + 1);
+
+          return {
+            ...badge,
+            x: clampBadgeX(x, width),
+            y:
+              badge.placement === "above"
+                ? y - stackIndex * EVENT_BADGE_STACK_OFFSET
+                : y + stackIndex * EVENT_BADGE_STACK_OFFSET
+          };
+        })
+        .filter((item): item is EventBadgePosition => item !== null);
+
+      setEventBadges(nextBadges);
+    };
+
     chart.timeScale().fitContent();
+    requestAnimationFrame(syncEventBadges);
     chartRef.current = chart;
 
     const resizeObserver = new ResizeObserver(() => {
@@ -314,14 +409,22 @@ export function PortfolioPositionChartCard({
 
       chartRef.current.applyOptions({ width: containerRef.current.clientWidth });
       chartRef.current.timeScale().fitContent();
+      requestAnimationFrame(syncEventBadges);
     });
 
+    const handleVisibleRangeChange = () => {
+      requestAnimationFrame(syncEventBadges);
+    };
+
+    chart.timeScale().subscribeVisibleLogicalRangeChange(handleVisibleRangeChange);
     resizeObserver.observe(containerRef.current);
 
     return () => {
+      chart.timeScale().unsubscribeVisibleLogicalRangeChange(handleVisibleRangeChange);
       resizeObserver.disconnect();
       chart.remove();
       chartRef.current = null;
+      setEventBadges([]);
     };
   }, [averagePrice, generatedAt, journalGroup, latestPoint?.date, tradePlan, visiblePoints]);
 
@@ -375,7 +478,38 @@ export function PortfolioPositionChartCard({
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="overflow-hidden rounded-[28px] border border-border/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(246,241,232,0.92))] p-3">
-          <div ref={containerRef} className="h-[360px] w-full" />
+          <div className="relative h-[360px] w-full">
+            <div ref={containerRef} className="h-full w-full" />
+            <div className="pointer-events-none absolute inset-0">
+              {eventBadges.map((badge) => (
+                <div
+                  key={badge.id}
+                  className="absolute"
+                  style={{
+                    left: badge.x,
+                    top: badge.y,
+                    transform:
+                      badge.placement === "above"
+                        ? "translate(-50%, calc(-100% - 10px))"
+                        : "translate(-50%, 10px)"
+                  }}
+                >
+                  <div
+                    className={[
+                      "max-w-[128px] whitespace-nowrap rounded-full border px-2.5 py-1 text-[11px] font-semibold shadow-[0_12px_24px_-18px_rgba(24,32,42,0.65)] backdrop-blur-sm",
+                      badge.tone === "positive"
+                        ? "border-positive/45 bg-[rgba(31,138,99,0.92)] text-white"
+                        : badge.tone === "caution"
+                          ? "border-caution/45 bg-[rgba(197,138,27,0.92)] text-white"
+                          : "border-destructive/45 bg-[rgba(199,74,71,0.94)] text-white"
+                    ].join(" ")}
+                  >
+                    {badge.label}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           {metricItems.map((item) => (
