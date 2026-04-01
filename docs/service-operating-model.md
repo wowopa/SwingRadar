@@ -46,6 +46,9 @@ The default user journey should be:
 
 The app should never force the user to reverse-engineer its intent from raw scores.
 
+For logged-in screen composition rules, see:
+- `docs/authenticated-app-ui-rules.md`
+
 ## Decision hierarchy
 The system should make decisions in this order.
 

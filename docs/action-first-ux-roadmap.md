@@ -5,6 +5,9 @@ Turn the current app into a product that answers:
 "What should I do now?" faster than it answers:
 "How does this scoring system work?"
 
+Authenticated app composition and copy rules are codified in:
+- `docs/authenticated-app-ui-rules.md`
+
 ## Product diagnosis
 The current experience still feels closer to a research console than a guided decision product.
 
