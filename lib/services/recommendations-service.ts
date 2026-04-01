@@ -24,6 +24,7 @@ import {
   loadPortfolioProfileDocument,
   loadPortfolioProfileForUser
 } from "@/lib/server/portfolio-profile";
+import { listUserOpeningRecheckDecisions } from "@/lib/server/user-opening-recheck-board";
 import type { RecommendationsQuery } from "@/lib/server/query-schemas";
 import { getSymbolByTicker } from "@/lib/symbols/master";
 import { formatPrice } from "@/lib/utils";
@@ -121,7 +122,8 @@ function enrichRecommendationItem(item: RecommendationListItemDto, dailyCandidat
 function enrichDailyCandidateItem(
   candidate: DailyCandidate,
   sourceItem?: RecommendationListItemDto,
-  openingRecheck?: DailyCandidateDto["openingRecheck"]
+  openingRecheck?: DailyCandidateDto["openingRecheck"],
+  sharedOpeningRecheck?: DailyCandidateDto["sharedOpeningRecheck"]
 ): DailyCandidateDto {
   const activationScore = sourceItem?.activationScore ?? candidate.activationScore;
   const riskRewardRatio =
@@ -142,6 +144,7 @@ function enrichDailyCandidateItem(
     activationScore,
     actionBucket,
     openingRecheck,
+    sharedOpeningRecheck,
     tradePlan: buildRecommendationTradePlan({
       item: {
         signalTone: candidate.signalTone,
@@ -202,9 +205,12 @@ export async function listRecommendations(
     provider.getTracking(),
     options?.userId ? loadPortfolioProfileForUser(options.userId) : loadPortfolioProfileDocument()
   ]);
-  const [openingRecheckByTicker, openingRecheckScans] = await Promise.all([
+  const [sharedOpeningRecheckByTicker, userOpeningRecheckByTicker, openingRecheckScans] = await Promise.all([
     dailyCandidates
       ? listOpeningRecheckDecisions(dailyCandidates.generatedAt)
+      : Promise.resolve(emptyOpeningRecheckByTicker),
+    dailyCandidates && options?.userId
+      ? listUserOpeningRecheckDecisions(options.userId, dailyCandidates.generatedAt)
       : Promise.resolve(emptyOpeningRecheckByTicker),
     listOpeningRecheckScans()
   ]);
@@ -306,10 +312,10 @@ export async function listRecommendations(
   const todaySummary = buildTodayOperatingSummary(items);
   const dailyScanCandidates = dailyCandidates
     ? dailyCandidates.topCandidates.map((candidate) =>
-        enrichDailyCandidateItem(
-          candidate,
-          sourceByTicker.get(candidate.ticker),
-          openingRecheckByTicker[candidate.ticker]
+        enrichDailyCandidateItem(candidate, sourceByTicker.get(candidate.ticker), options?.userId
+          ? userOpeningRecheckByTicker[candidate.ticker]
+          : sharedOpeningRecheckByTicker[candidate.ticker],
+          sharedOpeningRecheckByTicker[candidate.ticker]
         )
       )
     : null;

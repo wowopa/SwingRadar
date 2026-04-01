@@ -30,7 +30,7 @@ export default async function OpeningCheckPage({
       <PageHeader
         eyebrow="Today"
         title="장초 확인"
-        description="서비스 공통 후보 중 오늘 먼저 볼 종목만 다시 확인하는 단계입니다. 갭, 확인 가격 반응, 오늘 행동을 체크하고 실제 매수 검토 후보를 좁힙니다."
+        description="서비스 공통 후보를 참고로 보면서, 내 계좌 기준 오늘 먼저 볼 종목을 다시 확인하는 단계입니다. 갭, 확인 가격 반응, 오늘 행동을 체크하고 내 실제 매수 검토 후보를 좁힙니다."
       />
       <PublicDataStatusBarGroup summaries={statusSummaries} />
 

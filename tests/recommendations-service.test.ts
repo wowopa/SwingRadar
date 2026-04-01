@@ -10,6 +10,7 @@ const mocks = vi.hoisted(() => ({
   getTracking: vi.fn(),
   getDailyCandidates: vi.fn(),
   listOpeningRecheckDecisions: vi.fn(),
+  listUserOpeningRecheckDecisions: vi.fn(),
   listOpeningRecheckScans: vi.fn(),
   loadPortfolioProfileDocument: vi.fn(),
   loadPortfolioProfileForUser: vi.fn(),
@@ -31,6 +32,10 @@ vi.mock("@/lib/repositories/daily-candidates", () => ({
 vi.mock("@/lib/server/opening-recheck-board", () => ({
   listOpeningRecheckDecisions: mocks.listOpeningRecheckDecisions,
   listOpeningRecheckScans: mocks.listOpeningRecheckScans
+}));
+
+vi.mock("@/lib/server/user-opening-recheck-board", () => ({
+  listUserOpeningRecheckDecisions: mocks.listUserOpeningRecheckDecisions
 }));
 
 vi.mock("@/lib/server/portfolio-profile", () => ({
@@ -162,6 +167,7 @@ describe("listRecommendations", () => {
     });
     mocks.getDailyCandidates.mockResolvedValue(null);
     mocks.listOpeningRecheckDecisions.mockResolvedValue({});
+    mocks.listUserOpeningRecheckDecisions.mockResolvedValue({});
     mocks.listOpeningRecheckScans.mockResolvedValue([]);
     mocks.loadPortfolioProfileDocument.mockResolvedValue(createEmptyProfile());
     mocks.loadPortfolioProfileForUser.mockResolvedValue(createEmptyProfile());
@@ -525,5 +531,66 @@ describe("listRecommendations", () => {
     expect(mocks.loadPortfolioProfileForUser).toHaveBeenCalledWith("user-1");
     expect(result.todayActionBoard?.summary.portfolioProfileName).toBe("User profile");
     expect(result.todayActionBoard?.summary.availableCash).toBe(3_000_000);
+  });
+
+  it("prefers a user opening check while keeping the shared decision for reference", async () => {
+    mocks.getRecommendations.mockResolvedValue({
+      generatedAt: "2026-03-08T00:00:00.000Z",
+      items: [createRecommendation({ ticker: "AAA001", company: "Alpha", sector: "Tech", score: 82 })]
+    });
+    mocks.getDailyCandidates.mockResolvedValue({
+      generatedAt: "2026-03-08T01:00:00.000Z",
+      batchSize: 20,
+      concurrency: 2,
+      topCandidatesLimit: 10,
+      totalTickers: 100,
+      totalBatches: 5,
+      succeededBatches: 5,
+      failedBatches: [],
+      topCandidates: [createCandidate({ ticker: "AAA001", company: "Alpha", sector: "Tech" })],
+      batchSummaries: []
+    });
+    mocks.listOpeningRecheckDecisions.mockResolvedValue({
+      AAA001: {
+        status: "passed",
+        updatedAt: "2026-03-08T01:05:00.000Z",
+        updatedBy: "shared-operator"
+      }
+    });
+    mocks.listUserOpeningRecheckDecisions.mockResolvedValue({
+      AAA001: {
+        status: "watch",
+        updatedAt: "2026-03-08T01:07:00.000Z",
+        updatedBy: "user-1@example.com"
+      }
+    });
+    mocks.loadPortfolioProfileForUser.mockResolvedValue({
+      name: "User profile",
+      totalCapital: 10_000_000,
+      availableCash: 3_000_000,
+      maxRiskPerTradePercent: 1,
+      maxConcurrentPositions: 2,
+      sectorLimit: 1,
+      positions: [],
+      updatedAt: "2026-03-08T00:45:00.000Z",
+      updatedBy: "user-1@example.com"
+    });
+    mocks.isPortfolioProfileConfigured.mockReturnValue(true);
+
+    const result = await listRecommendations({ sort: "score_desc" }, { userId: "user-1" });
+
+    expect(result.dailyScan?.topCandidates[0]).toMatchObject({
+      ticker: "AAA001",
+      openingRecheck: {
+        status: "watch",
+        updatedBy: "user-1@example.com"
+      },
+      sharedOpeningRecheck: {
+        status: "passed",
+        updatedBy: "shared-operator"
+      }
+    });
+    expect(result.todayActionBoard?.summary.buyReviewCount).toBe(0);
+    expect(result.todayActionBoard?.summary.watchCount).toBe(1);
   });
 });

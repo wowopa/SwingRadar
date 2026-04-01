@@ -367,6 +367,7 @@ export interface DailyCandidateDto {
   actionBucket?: RecommendationActionBucketDto;
   tradePlan?: RecommendationTradePlanDto;
   openingRecheck?: OpeningRecheckDecisionDto;
+  sharedOpeningRecheck?: OpeningRecheckDecisionDto;
 }
 
 export interface FailedUniverseBatchDto {

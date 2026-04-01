@@ -113,7 +113,7 @@ export function TodayActionBoard({ board }: { board?: TodayActionBoardDto }) {
             <div>
               <CardTitle className="text-xl text-foreground">오늘 실제 행동 보드</CardTitle>
               <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                저장된 장초 확인과 현재 보유 포지션, 섹터 한도까지 함께 반영한 오늘의 실행 보드입니다.
+                내가 저장한 장초 확인과 현재 보유 포지션, 섹터 한도까지 함께 반영한 오늘의 실행 보드입니다.
               </p>
             </div>
             <Badge variant={board.summary.buyReviewCount > 0 ? "positive" : "secondary"}>{board.summary.headline}</Badge>
@@ -232,7 +232,7 @@ export function TodayActionBoard({ board }: { board?: TodayActionBoardDto }) {
 
                     {item.openingRecheck ? (
                       <p className="mt-3 text-xs text-muted-foreground">
-                        마지막 저장 {formatDateTimeShort(item.openingRecheck.updatedAt)}
+                        내 장초 확인 저장 {formatDateTimeShort(item.openingRecheck.updatedAt)}
                       </p>
                     ) : null}
                   </Link>

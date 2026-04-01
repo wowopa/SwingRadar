@@ -26,7 +26,6 @@ import {
   OPENING_RECHECK_STATUSES,
   suggestOpeningRecheckStatus
 } from "@/lib/recommendations/opening-recheck";
-import { useAdminToken } from "@/lib/use-admin-token";
 import { cn, formatDateTimeShort } from "@/lib/utils";
 import type {
   OpeningActionIntent,
@@ -58,6 +57,12 @@ function formatTurnover(value?: number | null) {
 function createInitialDecisions(items: DailyScanSummaryDto["topCandidates"]) {
   return Object.fromEntries(
     items.flatMap((item) => (item.openingRecheck ? [[item.ticker, item.openingRecheck]] : []))
+  ) as Record<string, OpeningRecheckDecisionDto>;
+}
+
+function createInitialSharedDecisions(items: DailyScanSummaryDto["topCandidates"]) {
+  return Object.fromEntries(
+    items.flatMap((item) => (item.sharedOpeningRecheck ? [[item.ticker, item.sharedOpeningRecheck]] : []))
   ) as Record<string, OpeningRecheckDecisionDto>;
 }
 
@@ -210,17 +215,18 @@ export function DailyCandidatesPanel({
   initialFocusTicker?: string | null;
 }) {
   const router = useRouter();
-  const { authHeaders } = useAdminToken();
   const visibleCandidates = useMemo(
     () => dailyScan?.openingCheckCandidates ?? dailyScan?.topCandidates ?? [],
     [dailyScan]
   );
   const initialDecisions = useMemo(() => createInitialDecisions(visibleCandidates), [visibleCandidates]);
+  const initialSharedDecisions = useMemo(() => createInitialSharedDecisions(visibleCandidates), [visibleCandidates]);
   const scanKey = dailyScan?.generatedAt ?? "";
-  const canManageBoard = Boolean(authHeaders);
+  const canManageBoard = Boolean(scanKey);
   const hasCandidates = visibleCandidates.length > 0;
 
   const [decisions, setDecisions] = useState<Record<string, OpeningRecheckDecisionDto>>({});
+  const [sharedDecisions, setSharedDecisions] = useState<Record<string, OpeningRecheckDecisionDto>>({});
   const [drafts, setDrafts] = useState<Record<string, OpeningDraft>>({});
   const [focusTicker, setFocusTicker] = useState<string | null>(null);
   const [savingKey, setSavingKey] = useState<string | null>(null);
@@ -229,12 +235,13 @@ export function DailyCandidatesPanel({
 
   useEffect(() => {
     setDecisions(initialDecisions);
+    setSharedDecisions(initialSharedDecisions);
     setDrafts({});
     setFocusTicker(resolveInitialFocusTicker(initialFocusTicker, visibleCandidates, initialDecisions));
     setSavingKey(null);
     setBoardMessage(null);
     setBoardError(null);
-  }, [initialDecisions, initialFocusTicker, scanKey, visibleCandidates]);
+  }, [initialDecisions, initialSharedDecisions, initialFocusTicker, scanKey, visibleCandidates]);
 
   const focusedCandidate = useMemo(
     () => visibleCandidates.find((item) => item.ticker === focusTicker) ?? visibleCandidates[0] ?? null,
@@ -242,6 +249,7 @@ export function DailyCandidatesPanel({
   );
 
   const focusedDecision = focusedCandidate ? decisions[focusedCandidate.ticker] : undefined;
+  const focusedSharedDecision = focusedCandidate ? sharedDecisions[focusedCandidate.ticker] : undefined;
   const focusedDraft = focusedCandidate
     ? (drafts[focusedCandidate.ticker] ?? createDraft(focusedDecision))
     : null;
@@ -277,7 +285,7 @@ export function DailyCandidatesPanel({
     note?: string;
     advance?: boolean;
   }) {
-    if (!authHeaders || !scanKey) {
+    if (!scanKey) {
       return;
     }
 
@@ -286,11 +294,10 @@ export function DailyCandidatesPanel({
     setBoardMessage(null);
 
     try {
-      const response = await fetch("/api/admin/opening-recheck", {
+      const response = await fetch("/api/account/opening-check", {
         method: "PUT",
         headers: {
-          "Content-Type": "application/json",
-          ...authHeaders
+          "Content-Type": "application/json"
         },
         body: JSON.stringify({
           scanKey,
@@ -325,7 +332,7 @@ export function DailyCandidatesPanel({
         input.status === "pending"
           ? getOpeningRecheckStatusMeta("pending")
           : getOpeningRecheckStatusMeta(input.status as OpeningDecisionStatus);
-      setBoardMessage(`${input.ticker} 장초 확인을 ${resolvedMeta.label}로 저장했습니다.`);
+      setBoardMessage(`${input.ticker}에 대한 내 장초 확인을 ${resolvedMeta.label}로 저장했습니다.`);
       startTransition(() => {
         router.refresh();
       });
@@ -371,7 +378,7 @@ export function DailyCandidatesPanel({
   }
 
   async function clearBoard() {
-    if (!authHeaders || !scanKey) {
+    if (!scanKey) {
       return;
     }
 
@@ -380,11 +387,10 @@ export function DailyCandidatesPanel({
     setBoardMessage(null);
 
     try {
-      const response = await fetch("/api/admin/opening-recheck", {
+      const response = await fetch("/api/account/opening-check", {
         method: "DELETE",
         headers: {
-          "Content-Type": "application/json",
-          ...authHeaders
+          "Content-Type": "application/json"
         },
         body: JSON.stringify({
           scanKey
@@ -396,7 +402,7 @@ export function DailyCandidatesPanel({
       setDecisions({});
       setDrafts({});
       setFocusTicker(visibleCandidates[0]?.ticker ?? null);
-      setBoardMessage("오늘 장초 확인 보드를 초기화했습니다.");
+      setBoardMessage("오늘 내 장초 확인 기록을 초기화했습니다.");
       startTransition(() => {
         router.refresh();
       });
@@ -447,20 +453,11 @@ export function DailyCandidatesPanel({
             <div>
               <p className="text-sm font-semibold text-foreground">오늘 실제 행동 보드</p>
               <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                서버에 저장된 장초 확인 결과를 기준으로 오늘 행동을 정리합니다. 현재 노출 {visibleCandidates.length}개
+                내가 저장한 장초 확인 결과를 기준으로 오늘 행동을 정리합니다. 현재 노출 {visibleCandidates.length}개
                 기준이며, 마지막 스캔 시각은 {formatDateTimeShort(dailyScan.generatedAt)}입니다.
               </p>
               <p className="mt-2 text-xs leading-5 text-muted-foreground">
-                {canManageBoard ? (
-                  "현재 브라우저에 관리자 세션이 있어 여기서 바로 저장할 수 있습니다."
-                ) : (
-                  <>
-                    운영 콘솔에서 관리자 비밀번호를 입력한 뒤 같은 탭으로 돌아오면 여기서 바로 저장할 수 있습니다.{" "}
-                    <Link className="font-medium text-primary hover:text-primary/80" href="/admin">
-                      운영 콘솔 열기
-                    </Link>
-                  </>
-                )}
+                공용 판단은 참고로만 보여주고, Today와 Today Action 보드는 내 장초 확인 기준으로 따로 계산됩니다.
               </p>
             </div>
             <Button
@@ -552,6 +549,63 @@ export function DailyCandidatesPanel({
                           {focusedCandidate.liquidityRating ?? formatTurnover(focusedCandidate.averageTurnover20)}
                         </p>
                       </div>
+                    </div>
+
+                    <div className="mt-4 rounded-2xl border border-border/70 bg-background/80 p-4">
+                      <div className="flex flex-wrap items-start justify-between gap-3">
+                        <div>
+                          <p className="text-sm font-semibold text-foreground">서비스 공통 판단</p>
+                          <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                            공용 레이어에서 먼저 저장된 판단입니다. 내 Today 보드는 아래에서 저장하는 내 장초 확인을 기준으로 움직입니다.
+                          </p>
+                        </div>
+                        <Badge
+                          variant={
+                            focusedSharedDecision
+                              ? getOpeningRecheckStatusMeta(focusedSharedDecision.status).variant
+                              : "secondary"
+                          }
+                        >
+                          {focusedSharedDecision
+                            ? getOpeningRecheckStatusMeta(focusedSharedDecision.status).label
+                            : "공용 판단 없음"}
+                        </Badge>
+                      </div>
+
+                      {focusedSharedDecision ? (
+                        <div className="mt-3 space-y-3">
+                          {focusedSharedDecision.checklist ? (
+                            <div className="flex flex-wrap gap-2">
+                              <Badge variant={getOpeningGapMeta(focusedSharedDecision.checklist.gap).variant}>
+                                {getOpeningGapMeta(focusedSharedDecision.checklist.gap).label}
+                              </Badge>
+                              <Badge
+                                variant={
+                                  getOpeningConfirmationMeta(focusedSharedDecision.checklist.confirmation).variant
+                                }
+                              >
+                                {getOpeningConfirmationMeta(focusedSharedDecision.checklist.confirmation).label}
+                              </Badge>
+                              <Badge variant={getOpeningActionIntentMeta(focusedSharedDecision.checklist.action).variant}>
+                                {getOpeningActionIntentMeta(focusedSharedDecision.checklist.action).label}
+                              </Badge>
+                            </div>
+                          ) : null}
+
+                          <div className="grid gap-2 text-xs text-muted-foreground sm:grid-cols-2">
+                            <p>마지막 저장 {formatDateTimeShort(focusedSharedDecision.updatedAt)}</p>
+                            <p>{focusedSharedDecision.updatedBy ? `저장 주체 ${focusedSharedDecision.updatedBy}` : "공용 판단 기록"}</p>
+                          </div>
+
+                          {focusedSharedDecision.note ? (
+                            <p className="text-sm leading-6 text-foreground/82">{focusedSharedDecision.note}</p>
+                          ) : null}
+                        </div>
+                      ) : (
+                        <p className="mt-3 text-sm leading-6 text-muted-foreground">
+                          아직 공용 판단이 저장되지 않았습니다. 이 경우에도 아래에서 내 장초 확인을 바로 저장할 수 있습니다.
+                        </p>
+                      )}
                     </div>
 
                     <div className="mt-4 grid gap-4">
@@ -743,7 +797,7 @@ export function DailyCandidatesPanel({
                             <Textarea
                               id={`opening-note-${focusedCandidate.ticker}`}
                               className="mt-2 min-h-[112px]"
-                              placeholder="예: 시초가가 확인 가격 위에서 출발했지만 반응이 약해 조금 더 지켜보기"
+                              placeholder="예: 공용 판단은 통과였지만 내 계좌 기준으로는 시초가 반응이 약해 조금 더 지켜보기"
                               value={focusedDraft.note}
                               onChange={(event) =>
                                 updateDraft(focusedCandidate.ticker, { note: event.target.value })
@@ -760,7 +814,7 @@ export function DailyCandidatesPanel({
                               {savingKey === focusedCandidate.ticker ? (
                                 <Loader2 className="h-4 w-4 animate-spin" />
                               ) : null}
-                              저장
+                              내 판단 저장
                             </Button>
                             <Button
                               type="button"
@@ -769,7 +823,7 @@ export function DailyCandidatesPanel({
                               onClick={() => void saveFocused(true)}
                               disabled={!canManageBoard || savingKey === focusedCandidate.ticker || !resolvedStatus}
                             >
-                              저장 후 다음
+                              저장 후 다음 종목
                             </Button>
                             <Button
                               type="button"
@@ -813,6 +867,7 @@ export function DailyCandidatesPanel({
                         activationScore: item.activationScore
                       });
                     const recheckDecision = decisions[item.ticker];
+                    const sharedDecision = sharedDecisions[item.ticker];
                     const recheckStatus = recheckDecision?.status ?? "pending";
                     const recheckMeta = getOpeningRecheckStatusMeta(recheckStatus);
                     const isFocused = focusedCandidate?.ticker === item.ticker;
@@ -862,6 +917,11 @@ export function DailyCandidatesPanel({
                               </Badge>
                             </>
                           ) : null}
+                          {!recheckDecision && sharedDecision ? (
+                            <Badge variant={getOpeningRecheckStatusMeta(sharedDecision.status).variant}>
+                              서비스 판단 {getOpeningRecheckStatusMeta(sharedDecision.status).label}
+                            </Badge>
+                          ) : null}
                         </div>
 
                         <div className="mt-3 grid gap-2 text-xs text-muted-foreground sm:grid-cols-2">
@@ -872,7 +932,9 @@ export function DailyCandidatesPanel({
                         <p className="mt-3 line-clamp-2 text-sm leading-6 text-foreground/82">
                           {recheckDecision?.note?.trim()
                             ? recheckDecision.note
-                            : item.tradePlan?.nextStep ?? "이 종목의 장초 반응을 확인해 주세요."}
+                            : sharedDecision?.note?.trim()
+                              ? sharedDecision.note
+                              : item.tradePlan?.nextStep ?? "이 종목의 장초 반응을 확인해 주세요."}
                         </p>
                       </button>
                     );

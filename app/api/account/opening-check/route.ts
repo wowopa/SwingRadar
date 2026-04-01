@@ -1,0 +1,89 @@
+import { z } from "zod";
+
+import { jsonOk } from "@/lib/server/api-response";
+import {
+  clearUserOpeningRecheckDecisions,
+  listUserOpeningRecheckDecisions,
+  saveUserOpeningRecheckDecision
+} from "@/lib/server/user-opening-recheck-board";
+import { buildResponseMeta, withRouteTelemetry } from "@/lib/server/telemetry";
+import { requireUserSession } from "@/lib/server/user-auth";
+
+const decisionPayloadSchema = z.object({
+  scanKey: z.string().trim().min(1).max(64),
+  ticker: z.string().trim().min(1).max(16).regex(/^[A-Za-z0-9._-]+$/),
+  status: z.enum(["pending", "passed", "watch", "avoid", "excluded"]),
+  suggestedStatus: z.enum(["passed", "watch", "avoid", "excluded"]).optional(),
+  checklist: z
+    .object({
+      gap: z.enum(["normal", "elevated", "overheated"]),
+      confirmation: z.enum(["confirmed", "mixed", "failed"]),
+      action: z.enum(["review", "watch", "hold"])
+    })
+    .optional(),
+  note: z.string().trim().max(1000).optional()
+});
+
+const clearPayloadSchema = z.object({
+  scanKey: z.string().trim().min(1).max(64)
+});
+
+export async function GET(request: Request) {
+  return withRouteTelemetry(request, { route: "/api/account/opening-check" }, async (context) => {
+    const session = await requireUserSession(request);
+    const scanKey = new URL(request.url).searchParams.get("scanKey")?.trim() ?? "";
+
+    return jsonOk(
+      {
+        ok: true,
+        requestId: context.requestId,
+        scanKey,
+        items: scanKey ? await listUserOpeningRecheckDecisions(session.user.id, scanKey) : {}
+      },
+      buildResponseMeta(context, 0)
+    );
+  });
+}
+
+export async function PUT(request: Request) {
+  return withRouteTelemetry(request, { route: "/api/account/opening-check" }, async (context) => {
+    const session = await requireUserSession(request);
+    const body = decisionPayloadSchema.parse(await request.json());
+    const decision = await saveUserOpeningRecheckDecision({
+      userId: session.user.id,
+      scanKey: body.scanKey,
+      ticker: body.ticker,
+      status: body.status,
+      suggestedStatus: body.suggestedStatus,
+      checklist: body.checklist,
+      note: body.note,
+      updatedBy: session.user.email
+    });
+
+    return jsonOk(
+      {
+        ok: true,
+        requestId: context.requestId,
+        decision
+      },
+      buildResponseMeta(context, 0)
+    );
+  });
+}
+
+export async function DELETE(request: Request) {
+  return withRouteTelemetry(request, { route: "/api/account/opening-check" }, async (context) => {
+    const session = await requireUserSession(request);
+    const body = clearPayloadSchema.parse(await request.json());
+    await clearUserOpeningRecheckDecisions(session.user.id, body.scanKey);
+
+    return jsonOk(
+      {
+        ok: true,
+        requestId: context.requestId,
+        cleared: true
+      },
+      buildResponseMeta(context, 0)
+    );
+  });
+}
