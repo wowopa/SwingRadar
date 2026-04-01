@@ -25,6 +25,12 @@ interface UserOpeningRecheckBoardScan {
   items: Record<string, UserOpeningRecheckBoardEntry>;
 }
 
+export interface UserOpeningRecheckScanSnapshot {
+  scanKey: string;
+  updatedAt: string;
+  items: Record<string, UserOpeningRecheckBoardEntry>;
+}
+
 interface UserOpeningRecheckBoardDocument {
   scans: Record<string, UserOpeningRecheckBoardScan>;
 }
@@ -199,6 +205,19 @@ export async function listUserOpeningRecheckDecisions(userId: string | null | un
 
   const document = await loadDocument();
   return document.boards[userId]?.scans[scanKey]?.items ?? {};
+}
+
+export async function listUserOpeningRecheckScans(
+  userId: string | null | undefined
+): Promise<UserOpeningRecheckScanSnapshot[]> {
+  if (!userId) {
+    return [];
+  }
+
+  const document = await loadDocument();
+  return Object.values(document.boards[userId]?.scans ?? {}).sort((left, right) => {
+    return right.updatedAt.localeCompare(left.updatedAt);
+  });
 }
 
 export async function saveUserOpeningRecheckDecision(input: {

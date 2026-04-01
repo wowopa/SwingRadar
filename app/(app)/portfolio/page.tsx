@@ -6,6 +6,7 @@ import { PublicDataStatusBar } from "@/components/shared/public-data-status-bar"
 import { loadPortfolioJournalForUser } from "@/lib/server/portfolio-journal";
 import { loadPortfolioProfileForUser } from "@/lib/server/portfolio-profile";
 import { buildPublicDataStatusSummary } from "@/lib/server/public-data-status";
+import { listUserOpeningRecheckScans } from "@/lib/server/user-opening-recheck-board";
 import { getCurrentUserSession } from "@/lib/server/user-auth";
 import { listRecommendations } from "@/lib/services/recommendations-service";
 
@@ -27,10 +28,11 @@ export default async function PortfolioPage({
     redirect("/?auth=login&next=%2Fportfolio");
   }
 
-  const [profile, journal, response] = await Promise.all([
+  const [profile, journal, response, openingCheckScans] = await Promise.all([
     loadPortfolioProfileForUser(session.user.id),
     loadPortfolioJournalForUser(session.user.id),
-    listRecommendations({ sort: "score_desc" }, { userId: session.user.id })
+    listRecommendations({ sort: "score_desc" }, { userId: session.user.id }),
+    listUserOpeningRecheckScans(session.user.id)
   ]);
   const statusSummary = buildPublicDataStatusSummary("recommendations", response.generatedAt);
 
@@ -47,6 +49,7 @@ export default async function PortfolioPage({
               : `${session.user.displayName} 포트폴리오`
         }}
         initialJournal={journal}
+        openingCheckScans={openingCheckScans}
         holdingActionBoard={response.holdingActionBoard}
         initialSettingsOpen={initialSettingsOpen}
       />

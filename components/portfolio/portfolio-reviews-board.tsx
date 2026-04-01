@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   buildPortfolioCloseReview,
+  buildPortfolioOpeningCheckAnalytics,
   buildPortfolioReviewAnalytics,
   buildPortfolioReviewCalendarDashboard,
   buildPortfolioReviewSummary,
@@ -14,6 +15,7 @@ import {
   type PortfolioJournalGroup
 } from "@/lib/portfolio/journal-insights";
 import { formatPrice } from "@/lib/utils";
+import type { UserOpeningRecheckScanSnapshot } from "@/lib/server/user-opening-recheck-board";
 import type { PortfolioJournal } from "@/types/recommendation";
 
 function formatSignedPrice(value: number) {
@@ -24,13 +26,20 @@ function formatSignedPrice(value: number) {
   return `${value > 0 ? "+" : "-"}${formatPrice(Math.abs(value))}`;
 }
 
-export function PortfolioReviewsBoard({ journal }: { journal: PortfolioJournal }) {
+export function PortfolioReviewsBoard({
+  journal,
+  openingCheckScans
+}: {
+  journal: PortfolioJournal;
+  openingCheckScans: UserOpeningRecheckScanSnapshot[];
+}) {
   const closedGroups = groupPortfolioJournalByTicker(journal.events).filter((group) => {
     return ["exit_full", "stop_loss", "manual_exit"].includes(group.latestEvent.type);
   });
   const summary = buildPortfolioReviewSummary(closedGroups);
   const calendar = buildPortfolioReviewCalendarDashboard(closedGroups);
   const analytics = buildPortfolioReviewAnalytics(closedGroups);
+  const openingCheckAnalytics = buildPortfolioOpeningCheckAnalytics(closedGroups, openingCheckScans);
 
   if (!closedGroups.length) {
     return (
@@ -87,6 +96,8 @@ export function PortfolioReviewsBoard({ journal }: { journal: PortfolioJournal }
       </div>
 
       <ReviewStrategyCard analytics={analytics} />
+
+      {openingCheckAnalytics ? <OpeningCheckQualityCard analytics={openingCheckAnalytics} /> : null}
 
       <div className="grid gap-4 xl:grid-cols-2">
         {closedGroups.map((group) => (
@@ -257,6 +268,114 @@ function ReviewStrategyCard({
           <DistributionCard title="보유 기간 분포" items={analytics.holdDistribution} />
           <DistributionCard title="손익 구간 분포" items={analytics.pnlDistribution} />
           <TagInsightCard analytics={analytics} />
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function OpeningCheckQualityCard({
+  analytics
+}: {
+  analytics: NonNullable<ReturnType<typeof buildPortfolioOpeningCheckAnalytics>>;
+}) {
+  return (
+    <Card className="border-border/80 bg-white/90 shadow-[0_18px_44px_-34px_rgba(24,32,42,0.2)]">
+      <CardHeader className="space-y-3">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <CardTitle className="text-lg text-foreground">장초 판단 품질</CardTitle>
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">{analytics.summary}</p>
+          </div>
+          <Badge variant="secondary">{analytics.matchedCount}건 연결</Badge>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-5">
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <BehaviorMetric
+            title="연결된 종료 거래"
+            value={`${analytics.matchedCount}건`}
+            note={analytics.unmatchedCount > 0 ? `아직 연결되지 않은 종료 거래 ${analytics.unmatchedCount}건` : "종료 거래와 장초 판단을 연결했습니다."}
+            tone="neutral"
+          />
+          <BehaviorMetric
+            title="수익 종료"
+            value={`${analytics.profitableCount}건`}
+            note="장초 판단 기록이 있는 종료 거래 중 수익으로 끝난 건수"
+            tone="positive"
+          />
+          <BehaviorMetric
+            title="손실 종료"
+            value={`${analytics.lossCount}건`}
+            note="장초 판단 기록이 있는 종료 거래 중 손실로 끝난 건수"
+            tone="caution"
+          />
+          <BehaviorMetric
+            title="보류 후 진입"
+            value={`${analytics.overrideCount}건`}
+            note="보류/제외 판단인데 실제로 진입한 거래 수"
+            tone={analytics.overrideCount > 0 ? "caution" : "positive"}
+          />
+        </div>
+
+        <div className="grid gap-5 xl:grid-cols-2">
+          <div className="rounded-[24px] border border-border/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.95),rgba(246,241,232,0.9))] p-4">
+            <p className="text-sm font-semibold text-foreground">상태별 종료 결과</p>
+            <div className="mt-4 space-y-3">
+              {analytics.statusInsights.map((item) => (
+                <div key={item.status} className="rounded-[18px] border border-border/80 bg-white/85 px-4 py-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-sm font-medium text-foreground">{item.label}</p>
+                    <Badge
+                      variant={
+                        item.status === "passed"
+                          ? "positive"
+                          : item.status === "watch"
+                            ? "neutral"
+                            : "caution"
+                      }
+                    >
+                      승률 {item.winRate}%
+                    </Badge>
+                  </div>
+                  <p className="mt-2 text-sm leading-6 text-muted-foreground">{item.note}</p>
+                  <div className="mt-3 flex flex-wrap gap-2 text-xs text-muted-foreground">
+                    <span>전체 {item.count}건</span>
+                    <span>수익 {item.profitableCount}건</span>
+                    <span>손실 {item.lossCount}건</span>
+                    <span>보합 {item.flatCount}건</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="rounded-[24px] border border-border/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.95),rgba(246,241,232,0.9))] p-4">
+            <p className="text-sm font-semibold text-foreground">자주 나온 장초 체크 조합</p>
+            <div className="mt-4 space-y-3">
+              {analytics.patterns.length ? (
+                analytics.patterns.map((pattern) => (
+                  <div key={pattern.id} className="rounded-[18px] border border-border/80 bg-white/85 px-4 py-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="text-sm font-medium text-foreground">{pattern.title}</p>
+                      <Badge variant={pattern.winRate >= 50 ? "positive" : "caution"}>{pattern.winRate}%</Badge>
+                    </div>
+                    <p className="mt-2 text-sm leading-6 text-muted-foreground">{pattern.note}</p>
+                    <div className="mt-3 flex flex-wrap gap-2 text-xs text-muted-foreground">
+                      <span>전체 {pattern.count}건</span>
+                      <span>수익 {pattern.profitableCount}건</span>
+                      <span>손실 {pattern.lossCount}건</span>
+                      <span>보합 {pattern.flatCount}건</span>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="rounded-[18px] border border-border/80 bg-white/85 px-4 py-4 text-sm leading-6 text-muted-foreground">
+                  아직 체크리스트가 함께 저장된 장초 확인 기록이 충분하지 않습니다.
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </CardContent>
     </Card>

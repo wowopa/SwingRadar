@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   buildPortfolioCloseReview,
+  buildPortfolioOpeningCheckAnalytics,
   buildPortfolioReviewAnalytics,
   buildPortfolioReviewCalendarDashboard,
   buildPortfolioReviewSummary,
@@ -145,5 +146,71 @@ describe("portfolio journal insights", () => {
     expect(analytics.pnlDistribution.find((bucket) => bucket.key === "strong_gain")?.count).toBe(1);
     expect(analytics.tagInsights.find((tag) => tag.key === "risk_control")?.count).toBe(1);
     expect(analytics.tagInsights.find((tag) => tag.key === "scale_out")?.count).toBe(1);
+  });
+
+  it("matches user opening checks to closed trades and summarizes quality", () => {
+    const groups = groupPortfolioJournalByTicker([
+      createEvent({
+        ticker: "005930",
+        company: "?쇱꽦?꾩옄",
+        type: "stop_loss",
+        quantity: 5,
+        price: 64000,
+        tradedAt: "2026-04-03T09:00:00+09:00"
+      }),
+      createEvent({
+        ticker: "005930",
+        company: "?쇱꽦?꾩옄",
+        type: "buy",
+        quantity: 5,
+        price: 70000,
+        tradedAt: "2026-03-31T09:00:00+09:00"
+      }),
+      createEvent({
+        ticker: "000660",
+        company: "SK?섏씠?됱뒪",
+        type: "exit_full",
+        quantity: 5,
+        price: 135000,
+        tradedAt: "2026-04-07T09:00:00+09:00"
+      }),
+      createEvent({
+        ticker: "000660",
+        company: "SK?섏씠?됱뒪",
+        type: "buy",
+        quantity: 5,
+        price: 120000,
+        tradedAt: "2026-03-31T09:00:00+09:00"
+      })
+    ]);
+
+    const analytics = buildPortfolioOpeningCheckAnalytics(groups, [
+      {
+        scanKey: "2026-03-31T08:30:00+09:00",
+        updatedAt: "2026-03-31T09:06:00+09:00",
+        items: {
+          "005930": {
+            ticker: "005930",
+            status: "avoid",
+            updatedAt: "2026-03-31T09:06:00+09:00",
+            checklist: { gap: "overheated", confirmation: "mixed", action: "hold" }
+          },
+          "000660": {
+            ticker: "000660",
+            status: "passed",
+            updatedAt: "2026-03-31T09:07:00+09:00",
+            checklist: { gap: "normal", confirmation: "confirmed", action: "review" }
+          }
+        }
+      }
+    ]);
+
+    expect(analytics?.matchedCount).toBe(2);
+    expect(analytics?.overrideCount).toBe(1);
+    expect(analytics?.profitableCount).toBe(1);
+    expect(analytics?.lossCount).toBe(1);
+    expect(analytics?.statusInsights.find((item) => item.status === "passed")?.winRate).toBe(100);
+    expect(analytics?.statusInsights.find((item) => item.status === "avoid")?.lossCount).toBe(1);
+    expect(analytics?.patterns[0]?.count).toBeGreaterThan(0);
   });
 });

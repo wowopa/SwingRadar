@@ -1,4 +1,15 @@
-import type { PortfolioTradeEvent, PortfolioTradeEventType } from "@/types/recommendation";
+import {
+  getOpeningActionIntentMeta,
+  getOpeningConfirmationMeta,
+  getOpeningGapMeta,
+  getOpeningRecheckStatusMeta
+} from "@/lib/recommendations/opening-recheck";
+import type {
+  OpeningRecheckDecision,
+  OpeningRecheckStatus,
+  PortfolioTradeEvent,
+  PortfolioTradeEventType
+} from "@/types/recommendation";
 
 export const closingPortfolioTradeEventTypes = new Set<PortfolioTradeEventType>([
   "exit_full",
@@ -127,6 +138,46 @@ export interface PortfolioReviewAnalytics {
   tagInsights: PortfolioReviewTagInsight[];
 }
 
+export interface PortfolioOpeningCheckScanSnapshot {
+  scanKey: string;
+  updatedAt: string;
+  items: Record<string, ({ ticker: string } & OpeningRecheckDecision) | undefined>;
+}
+
+export interface PortfolioOpeningCheckStatusInsight {
+  status: Exclude<OpeningRecheckStatus, "pending">;
+  label: string;
+  count: number;
+  profitableCount: number;
+  lossCount: number;
+  flatCount: number;
+  winRate: number;
+  note: string;
+}
+
+export interface PortfolioOpeningCheckPatternInsight {
+  id: string;
+  title: string;
+  count: number;
+  profitableCount: number;
+  lossCount: number;
+  flatCount: number;
+  winRate: number;
+  note: string;
+}
+
+export interface PortfolioOpeningCheckAnalytics {
+  headline: string;
+  summary: string;
+  matchedCount: number;
+  unmatchedCount: number;
+  overrideCount: number;
+  profitableCount: number;
+  lossCount: number;
+  statusInsights: PortfolioOpeningCheckStatusInsight[];
+  patterns: PortfolioOpeningCheckPatternInsight[];
+}
+
 export function isClosingPortfolioTradeEventType(type: PortfolioTradeEventType) {
   return closingPortfolioTradeEventTypes.has(type);
 }
@@ -226,6 +277,52 @@ function collectGroupNotes(group: PortfolioJournalGroup) {
 
 function hasAnyKeyword(source: string, keywords: string[]) {
   return keywords.some((keyword) => source.includes(keyword));
+}
+
+function outcomeFromGroup(group: PortfolioJournalGroup) {
+  if (group.metrics.realizedPnl > 0) {
+    return "success" as const;
+  }
+
+  if (group.metrics.realizedPnl < 0) {
+    return "failure" as const;
+  }
+
+  return "flat" as const;
+}
+
+function flattenOpeningCheckDecisions(scans: PortfolioOpeningCheckScanSnapshot[]) {
+  return scans.flatMap((scan) => {
+    const signalDate = formatDateKey(scan.scanKey);
+
+    return Object.values(scan.items)
+      .filter((item): item is NonNullable<typeof item> => {
+        return Boolean(item && item.status !== "pending");
+      })
+      .map((item) => ({
+        scanKey: scan.scanKey,
+        signalDate,
+        ticker: item.ticker.toUpperCase(),
+        decision: item
+      }));
+  });
+}
+
+function findMatchedOpeningDecision(
+  group: PortfolioJournalGroup,
+  decisionsByTicker: Map<string, ReturnType<typeof flattenOpeningCheckDecisions>>
+) {
+  const tickerDecisions = decisionsByTicker.get(group.ticker.toUpperCase()) ?? [];
+  if (!tickerDecisions.length) {
+    return null;
+  }
+
+  const entryDate = formatDateKey(group.firstEntryAt);
+  return (
+    tickerDecisions.find((entry) => entry.signalDate <= entryDate) ??
+    tickerDecisions[tickerDecisions.length - 1] ??
+    null
+  );
 }
 
 export function calculatePortfolioJournalGroupMetrics(events: PortfolioTradeEvent[]): PortfolioJournalGroupMetrics {
@@ -809,5 +906,148 @@ export function buildPortfolioReviewAnalytics(groups: PortfolioJournalGroup[]): 
     holdDistribution,
     pnlDistribution,
     tagInsights
+  };
+}
+
+export function buildPortfolioOpeningCheckAnalytics(
+  groups: PortfolioJournalGroup[],
+  scans: PortfolioOpeningCheckScanSnapshot[]
+): PortfolioOpeningCheckAnalytics | undefined {
+  const closedGroups = groups.filter((group) => isClosingPortfolioTradeEventType(group.latestEvent.type));
+  if (!closedGroups.length || !scans.length) {
+    return undefined;
+  }
+
+  const flattened = flattenOpeningCheckDecisions(scans).sort((left, right) => {
+    return right.signalDate.localeCompare(left.signalDate);
+  });
+  const decisionsByTicker = flattened.reduce((map, item) => {
+    const current = map.get(item.ticker) ?? [];
+    current.push(item);
+    map.set(item.ticker, current);
+    return map;
+  }, new Map<string, typeof flattened>());
+
+  const matched = closedGroups
+    .map((group) => {
+      const matchedDecision = findMatchedOpeningDecision(group, decisionsByTicker);
+      if (!matchedDecision) {
+        return null;
+      }
+
+      return {
+        group,
+        decision: matchedDecision.decision,
+        signalDate: matchedDecision.signalDate,
+        outcome: outcomeFromGroup(group)
+      };
+    })
+    .filter((item): item is NonNullable<typeof item> => item !== null);
+
+  if (!matched.length) {
+    return undefined;
+  }
+
+  const matchedCount = matched.length;
+  const profitableCount = matched.filter((item) => item.outcome === "success").length;
+  const lossCount = matched.filter((item) => item.outcome === "failure").length;
+  const unmatchedCount = Math.max(closedGroups.length - matchedCount, 0);
+  const overrideCount = matched.filter((item) => {
+    return item.decision.status === "avoid" || item.decision.status === "excluded";
+  }).length;
+
+  const statusInsights = (["passed", "watch", "avoid", "excluded"] as const)
+    .map((status) => {
+      const items = matched.filter((item) => item.decision.status === status);
+      if (!items.length) {
+        return null;
+      }
+
+      const profitable = items.filter((item) => item.outcome === "success").length;
+      const loss = items.filter((item) => item.outcome === "failure").length;
+      const flat = items.filter((item) => item.outcome === "flat").length;
+      const resolved = profitable + loss + flat;
+
+      return {
+        status,
+        label: getOpeningRecheckStatusMeta(status).label,
+        count: items.length,
+        profitableCount: profitable,
+        lossCount: loss,
+        flatCount: flat,
+        winRate: resolved ? Math.round((profitable / resolved) * 100) : 0,
+        note:
+          status === "passed"
+            ? `통과로 본 거래 ${items.length}건 중 ${profitable}건이 수익 종료로 이어졌습니다.`
+            : status === "watch"
+              ? `관찰 유지로 둔 거래 ${items.length}건의 후속 결과를 묶어 봅니다.`
+              : `보류/제외인데도 실제 진입한 거래 ${items.length}건입니다.`
+      } satisfies PortfolioOpeningCheckStatusInsight;
+    })
+    .filter((item): item is PortfolioOpeningCheckStatusInsight => item !== null);
+
+  const patterns = Array.from(
+    matched.reduce((map, item) => {
+      if (!item.decision.checklist) {
+        return map;
+      }
+
+      const checklist = item.decision.checklist;
+      const id = `${checklist.gap}:${checklist.confirmation}:${checklist.action}`;
+      const current = map.get(id) ?? [];
+      current.push(item);
+      map.set(id, current);
+      return map;
+    }, new Map<string, typeof matched>())
+  )
+    .map(([id, items]) => {
+      const checklist = items[0]?.decision.checklist;
+      if (!checklist) {
+        return null;
+      }
+
+      const profitable = items.filter((item) => item.outcome === "success").length;
+      const loss = items.filter((item) => item.outcome === "failure").length;
+      const flat = items.filter((item) => item.outcome === "flat").length;
+      const resolved = profitable + loss + flat;
+
+      return {
+        id,
+        title: [
+          getOpeningGapMeta(checklist.gap).label,
+          getOpeningConfirmationMeta(checklist.confirmation).label,
+          getOpeningActionIntentMeta(checklist.action).label
+        ].join(" · "),
+        count: items.length,
+        profitableCount: profitable,
+        lossCount: loss,
+        flatCount: flat,
+        winRate: resolved ? Math.round((profitable / resolved) * 100) : 0,
+        note: `${items.length}건 중 ${profitable}건 수익, ${loss}건 손실 종료`
+      } satisfies PortfolioOpeningCheckPatternInsight;
+    })
+    .filter((item): item is PortfolioOpeningCheckPatternInsight => item !== null)
+    .sort((left, right) => {
+      if (right.count !== left.count) {
+        return right.count - left.count;
+      }
+
+      return right.winRate - left.winRate;
+    })
+    .slice(0, 4);
+
+  return {
+    headline: "장초 판단과 실제 종료 결과를 함께 복기합니다.",
+    summary:
+      overrideCount > 0
+        ? `보류/제외인데도 진입한 거래가 ${overrideCount}건 있어, 장초 판단과 실제 행동 차이를 같이 보는 편이 좋습니다.`
+        : "장초에 어떤 판단을 했고, 그 판단이 실제 종료 결과와 어떻게 이어졌는지 바로 읽을 수 있습니다.",
+    matchedCount,
+    unmatchedCount,
+    overrideCount,
+    profitableCount,
+    lossCount,
+    statusInsights,
+    patterns
   };
 }
