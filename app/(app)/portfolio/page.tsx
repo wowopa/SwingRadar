@@ -11,7 +11,16 @@ import { listRecommendations } from "@/lib/services/recommendations-service";
 
 export const dynamic = "force-dynamic";
 
-export default async function PortfolioPage() {
+export default async function PortfolioPage({
+  searchParams
+}: {
+  searchParams?: Promise<{ "asset-settings"?: string | string[] }>;
+}) {
+  const params = (await searchParams) ?? {};
+  const assetSettingsParam = Array.isArray(params["asset-settings"])
+    ? params["asset-settings"][0]
+    : params["asset-settings"];
+  const initialSettingsOpen = assetSettingsParam === "1";
   const session = await getCurrentUserSession();
 
   if (!session) {
@@ -30,7 +39,7 @@ export default async function PortfolioPage() {
       <PageHeader
         eyebrow="Portfolio"
         title="내 포트폴리오"
-        description="보유 중인 종목과 자산 현황, 실제 체결 기록을 한 화면에서 관리합니다."
+        description="보유 중인 종목과 자산 현황, 실제 체결 기록까지 이 화면에서 관리합니다."
       />
       <PublicDataStatusBar summary={statusSummary} />
       <PortfolioWorkspace
@@ -43,6 +52,7 @@ export default async function PortfolioPage() {
         }}
         initialJournal={journal}
         holdingActionBoard={response.holdingActionBoard}
+        initialSettingsOpen={initialSettingsOpen}
       />
     </main>
   );

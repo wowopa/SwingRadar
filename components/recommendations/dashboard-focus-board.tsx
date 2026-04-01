@@ -14,6 +14,7 @@ import type {
   OpeningRecheckReviewDto,
   TodayActionBoardDto,
   TodayActionBoardItemDto,
+  TodayActionBoardSummaryDto,
   TodayActionSummaryDto
 } from "@/lib/api-contracts/swing-radar";
 import { formatPrice } from "@/lib/utils";
@@ -24,6 +25,17 @@ const holdingPriority: HoldingActionStatusDto[] = [
   "tighten_stop",
   "time_stop_review"
 ];
+
+type SetupStepState = "done" | "action" | "optional";
+
+interface SetupStep {
+  key: string;
+  title: string;
+  description: string;
+  href: string;
+  cta: string;
+  state: SetupStepState;
+}
 
 function formatQueueCount(value: number, suffix = "개") {
   return `${value}${suffix}`;
@@ -46,7 +58,62 @@ function getOpeningCheckSummary(dailyScan: DailyScanSummaryDto | null) {
 
   return {
     counts,
+    completedCount: counts.passed + counts.watch + counts.avoid + counts.excluded,
     pendingItems: candidates.filter((item) => (item.openingRecheck?.status ?? "pending") === "pending")
+  };
+}
+
+function hasPortfolioSettings(summary?: TodayActionBoardSummaryDto) {
+  if (!summary) {
+    return false;
+  }
+
+  return (
+    Boolean(summary.portfolioProfileName) ||
+    typeof summary.availableCash === "number" ||
+    typeof summary.riskBudgetPerTrade === "number"
+  );
+}
+
+function buildSetupChecklist(
+  todayActionBoard: TodayActionBoardDto | undefined,
+  holdingActionBoard: HoldingActionBoardDto | undefined,
+  openingSummary: ReturnType<typeof getOpeningCheckSummary>
+) {
+  const portfolioReady = hasPortfolioSettings(todayActionBoard?.summary);
+  const holdingCount = holdingActionBoard?.summary.holdingCount ?? 0;
+  const openingChecked = openingSummary.completedCount > 0;
+
+  const steps: SetupStep[] = [
+    {
+      key: "assets",
+      title: "자산 설정",
+      description: "총 자산, 가용 현금, 손실 한도를 먼저 입력해 내 기준 행동판을 준비합니다.",
+      href: "/portfolio?asset-settings=1",
+      cta: "자산 설정 열기",
+      state: portfolioReady ? "done" : "action"
+    },
+    {
+      key: "holdings",
+      title: "보유 종목 확인",
+      description: "이미 들고 있는 종목이 있다면 먼저 입력하세요. 현재 보유가 없다면 비워두고 진행해도 됩니다.",
+      href: "/portfolio?asset-settings=1",
+      cta: "보유 종목 점검",
+      state: holdingCount > 0 ? "done" : portfolioReady ? "optional" : "action"
+    },
+    {
+      key: "opening-check",
+      title: "장초 확인 시작",
+      description: "오늘 먼저 볼 종목 5개를 빠르게 체크해 통과, 관찰, 보류를 정리합니다.",
+      href: "/opening-check",
+      cta: "장초 확인으로 이동",
+      state: openingChecked ? "done" : "action"
+    }
+  ];
+
+  return {
+    steps,
+    needsSetupChecklist: steps.some((step) => step.state === "action")
   };
 }
 
@@ -131,6 +198,7 @@ export function DashboardFocusBoard({
   const openingSummary = getOpeningCheckSummary(dailyScan);
   const remainingSlots = todayActionBoard?.summary.remainingPortfolioSlots ?? 0;
   const remainingNewPositions = todayActionBoard?.summary.remainingNewPositions ?? summary?.maxNewPositions ?? 0;
+  const setupChecklist = buildSetupChecklist(todayActionBoard, holdingActionBoard, openingSummary);
 
   return (
     <section className="space-y-4">
@@ -140,11 +208,11 @@ export function DashboardFocusBoard({
             <div className="space-y-3">
               <p className="eyebrow-label">Today Dashboard</p>
               <CardTitle className="text-[clamp(1.8rem,2.5vw,2.4rem)] text-foreground">
-                {summary?.marketStanceLabel ?? "오늘 먼저 할 일을 확인하세요"}
+                {summary?.marketStanceLabel ?? "오늘 할 행동을 확인하세요"}
               </CardTitle>
               <p className="max-w-3xl text-sm leading-7 text-muted-foreground">
                 {summary?.summary ??
-                  "Today는 오늘 바로 해야 할 행동만 남기는 화면입니다. 장초 확인, 오늘 매수 검토, 보유 우선 관리 순서로만 움직이면 됩니다."}
+                  "Today는 오늘 바로 실행할 행동만 남기는 화면입니다. 장초 확인, 오늘 매수 검토, 보유 우선 관리 순서로만 움직이면 됩니다."}
               </p>
             </div>
 
@@ -154,12 +222,32 @@ export function DashboardFocusBoard({
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
+          {setupChecklist.needsSetupChecklist ? (
+            <div className="rounded-[26px] border border-primary/20 bg-primary/6 p-4">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <p className="text-sm font-semibold text-foreground">오늘 시작 체크리스트</p>
+                  <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                    첫 실행에 필요한 준비만 먼저 끝내면 이후에는 장초 확인과 보유 관리만 반복하면 됩니다.
+                  </p>
+                </div>
+                <Badge variant="neutral">먼저 준비할 항목</Badge>
+              </div>
+
+              <div className="mt-4 grid gap-3 xl:grid-cols-3">
+                {setupChecklist.steps.map((step, index) => (
+                  <SetupStepCard key={step.key} index={index + 1} step={step} />
+                ))}
+              </div>
+            </div>
+          ) : null}
+
           <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)]">
             <ActionStepCard
               href="/opening-check"
               title="장초 확인 시작"
               count={formatQueueCount(openingSummary.counts.pending)}
-              description="오늘 먼저 볼 종목을 하나씩 체크하고 저장합니다."
+              description="오늘 먼저 볼 종목을 하나씩 체크하고 통과, 관찰, 보류를 저장합니다."
               note="통과한 종목만 오늘 매수 검토로 넘어갑니다."
               accent="primary"
               icon={<Clock3 className="h-4 w-4" />}
@@ -168,8 +256,12 @@ export function DashboardFocusBoard({
               href={buyReviewItems[0] ? `/analysis/${buyReviewItems[0].ticker}` : "/opening-check"}
               title="오늘 매수 검토"
               count={formatQueueCount(buyReviewItems.length)}
-              description="실제로 다시 볼 종목만 남긴 영역입니다."
-              note={buyReviewItems.length ? "첫 종목 분석으로 바로 이동할 수 있습니다." : "장초 확인을 끝내면 이 영역이 채워집니다."}
+              description="장초 확인을 통과한 종목만 남겨 실제 검토 대상을 줄입니다."
+              note={
+                buyReviewItems.length
+                  ? "첫 번째 종목 분석으로 바로 들어갈 수 있습니다."
+                  : "장초 확인을 마치면 이 영역이 채워집니다."
+              }
               accent={buyReviewItems.length ? "positive" : "muted"}
               icon={<Target className="h-4 w-4" />}
             />
@@ -177,8 +269,8 @@ export function DashboardFocusBoard({
               href="/portfolio"
               title="보유 우선 관리"
               count={formatQueueCount(getHoldingAttentionCount(holdingActionBoard))}
-              description="즉시 점검, 익절, 시간 점검이 필요한 보유 종목입니다."
-              note="체결 기록과 보유 관리는 Portfolio에서 이어집니다."
+              description="즉시 점검, 익절, 시간 점검이 필요한 보유 종목만 먼저 보여줍니다."
+              note="체결 기록과 보유 관리 전체는 Portfolio에서 이어집니다."
               accent={holdingAttentionItems.length ? "caution" : "muted"}
               icon={<ShieldAlert className="h-4 w-4" />}
             />
@@ -192,10 +284,13 @@ export function DashboardFocusBoard({
               value={
                 typeof todayActionBoard?.summary.availableCash === "number"
                   ? formatPrice(todayActionBoard.summary.availableCash)
-                  : "확인 필요"
+                  : "설정 필요"
               }
             />
-            <MetricCard label="남은 슬롯" value={`${formatQueueCount(remainingNewPositions)} / ${formatQueueCount(remainingSlots)}`} />
+            <MetricCard
+              label="오늘 남은 여유"
+              value={`${formatQueueCount(remainingNewPositions)} / ${formatQueueCount(remainingSlots)}`}
+            />
           </div>
         </CardContent>
       </Card>
@@ -210,10 +305,12 @@ export function DashboardFocusBoard({
                 </div>
                 <div>
                   <CardTitle className="text-lg text-foreground">오늘 매수 검토</CardTitle>
-                  <p className="mt-1 text-sm text-muted-foreground">오늘 실제로 다시 볼 종목만 남긴 영역입니다.</p>
+                  <p className="mt-1 text-sm text-muted-foreground">장초 확인을 통과한 종목만 남긴 영역입니다.</p>
                 </div>
               </div>
-              <Badge variant={buyReviewItems.length ? "positive" : "secondary"}>{formatQueueCount(buyReviewItems.length)}</Badge>
+              <Badge variant={buyReviewItems.length ? "positive" : "secondary"}>
+                {formatQueueCount(buyReviewItems.length)}
+              </Badge>
             </div>
           </CardHeader>
           <CardContent>
@@ -261,7 +358,7 @@ export function DashboardFocusBoard({
                   </div>
                   <div>
                     <CardTitle className="text-base text-foreground">보유 우선 관리</CardTitle>
-                    <p className="mt-1 text-xs leading-5 text-muted-foreground">지금 먼저 손봐야 하는 보유 종목입니다.</p>
+                    <p className="mt-1 text-xs leading-5 text-muted-foreground">지금 먼저 살펴봐야 하는 보유 종목입니다.</p>
                   </div>
                 </div>
                 <Badge variant={holdingAttentionItems.length ? "caution" : "secondary"}>
@@ -312,7 +409,7 @@ export function DashboardFocusBoard({
                   </div>
                   <div>
                     <CardTitle className="text-base text-foreground">장초 확인 대기</CardTitle>
-                    <p className="mt-1 text-xs leading-5 text-muted-foreground">아침에 하나씩 확인하고 넘기면 됩니다.</p>
+                    <p className="mt-1 text-xs leading-5 text-muted-foreground">아직 순서가 남아 있는 장초 확인 종목입니다.</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
@@ -323,7 +420,7 @@ export function DashboardFocusBoard({
                     href="/opening-check"
                     className="inline-flex h-9 items-center rounded-full border border-primary/20 bg-primary/8 px-3 text-xs font-medium text-primary transition hover:bg-primary/12"
                   >
-                    열기
+                    시작하기
                   </Link>
                 </div>
               </div>
@@ -357,7 +454,7 @@ export function DashboardFocusBoard({
           <div>
             <p className="text-sm font-semibold text-foreground">오늘 보조 정보</p>
             <p className="mt-1 text-xs leading-5 text-muted-foreground">
-              회고와 세부 수치는 필요할 때만 펼쳐서 봅니다.
+              장초 확인이 끝난 뒤 회고나 상태 분포가 필요할 때만 펼쳐서 보면 됩니다.
             </p>
           </div>
           <span className="rounded-full border border-border/70 bg-secondary/35 px-3 py-1 text-xs font-medium text-foreground/78 transition group-open:bg-primary/10 group-open:text-primary">
@@ -375,6 +472,41 @@ export function DashboardFocusBoard({
         </div>
       </details>
     </section>
+  );
+}
+
+function SetupStepCard({ index, step }: { index: number; step: SetupStep }) {
+  const badge =
+    step.state === "done"
+      ? { label: "완료", variant: "positive" as const }
+      : step.state === "optional"
+        ? { label: "선택", variant: "secondary" as const }
+        : { label: "필요", variant: "neutral" as const };
+
+  return (
+    <div className="rounded-[24px] border border-border/70 bg-white/78 p-4">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className="flex h-9 w-9 items-center justify-center rounded-full border border-border/70 bg-secondary/25 text-sm font-semibold text-foreground">
+            {index}
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-foreground">{step.title}</p>
+            <p className="mt-1 text-xs leading-5 text-muted-foreground">{step.description}</p>
+          </div>
+        </div>
+        <Badge variant={badge.variant}>{badge.label}</Badge>
+      </div>
+
+      <div className="mt-4">
+        <Link
+          href={step.href}
+          className="inline-flex h-10 items-center rounded-full border border-primary/20 bg-primary/8 px-4 text-sm font-medium text-primary transition hover:bg-primary/12"
+        >
+          {step.cta}
+        </Link>
+      </div>
+    </div>
   );
 }
 
@@ -403,10 +535,7 @@ function ActionStepCard({
   } as const;
 
   return (
-    <Link
-      href={href}
-      className={`rounded-[24px] border p-4 shadow-sm transition ${toneByAccent[accent]}`}
-    >
+    <Link href={href} className={`rounded-[24px] border p-4 shadow-sm transition ${toneByAccent[accent]}`}>
       <div className="flex items-start justify-between gap-3">
         <div className="space-y-2">
           <div className="flex items-center gap-2 text-sm font-semibold">

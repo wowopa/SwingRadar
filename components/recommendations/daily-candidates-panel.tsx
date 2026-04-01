@@ -551,8 +551,33 @@ export function DailyCandidatesPanel({
                       </div>
                     </div>
 
-                    <div className="mt-4 rounded-2xl border border-border/70 bg-background/80 p-4">
-                      <div className="flex flex-wrap items-start justify-between gap-3">
+                    <details className="mt-4 group rounded-2xl border border-border/70 bg-background/80">
+                      <summary className="flex cursor-pointer list-none items-start justify-between gap-3 px-4 py-4 [&::-webkit-details-marker]:hidden">
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold text-foreground">서비스 공통 판단 참고</p>
+                          <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                            서비스가 먼저 저장한 공통 판단입니다. 내 장초 확인과 다르면 아래 체크 기준으로 그대로 저장하면 됩니다.
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Badge
+                            variant={
+                              focusedSharedDecision
+                                ? getOpeningRecheckStatusMeta(focusedSharedDecision.status).variant
+                                : "secondary"
+                            }
+                          >
+                            {focusedSharedDecision
+                              ? getOpeningRecheckStatusMeta(focusedSharedDecision.status).label
+                              : "기록 없음"}
+                          </Badge>
+                          <span className="rounded-full border border-border/70 bg-secondary/30 px-3 py-1 text-[11px] font-medium text-muted-foreground transition group-open:bg-primary/10 group-open:text-primary">
+                            펼치기
+                          </span>
+                        </div>
+                      </summary>
+                      <div className="border-t border-border/70 px-4 pb-4 pt-3">
+                        <div className="hidden">
                         <div>
                           <p className="text-sm font-semibold text-foreground">서비스 공통 판단</p>
                           <p className="mt-1 text-xs leading-5 text-muted-foreground">
@@ -606,7 +631,8 @@ export function DailyCandidatesPanel({
                           아직 공용 판단이 저장되지 않았습니다. 이 경우에도 아래에서 내 장초 확인을 바로 저장할 수 있습니다.
                         </p>
                       )}
-                    </div>
+                      </div>
+                    </details>
 
                     <div className="mt-4 grid gap-4">
                       <div className="rounded-2xl border border-border/70 bg-background/70 p-4">

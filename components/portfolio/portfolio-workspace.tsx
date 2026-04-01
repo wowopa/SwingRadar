@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import type { PortfolioProfilePayload } from "@/components/admin/dashboard-types";
 import { AccountPortfolioPanel } from "@/components/account/account-portfolio-panel";
@@ -14,23 +14,44 @@ import type { PortfolioJournal } from "@/types/recommendation";
 export function PortfolioWorkspace({
   initialProfile,
   initialJournal,
-  holdingActionBoard
+  holdingActionBoard,
+  initialSettingsOpen = false
 }: {
   initialProfile: PortfolioProfilePayload;
   initialJournal: PortfolioJournal;
   holdingActionBoard?: HoldingActionBoardDto;
+  initialSettingsOpen?: boolean;
 }) {
   const [profile, setProfile] = useState(initialProfile);
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(initialSettingsOpen);
   const [, startTransition] = useTransition();
+  const pathname = usePathname();
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  function clearSettingsQuery() {
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("asset-settings");
+    const nextHref = params.size ? `${pathname}?${params.toString()}` : pathname;
+    router.replace(nextHref, { scroll: false });
+  }
 
   function handleSaved(nextProfile: PortfolioProfilePayload) {
     setProfile(nextProfile);
     setIsSettingsOpen(false);
+    if (searchParams.get("asset-settings") === "1") {
+      clearSettingsQuery();
+    }
     startTransition(() => {
       router.refresh();
     });
+  }
+
+  function handleSettingsOpenChange(nextOpen: boolean) {
+    setIsSettingsOpen(nextOpen);
+    if (!nextOpen && searchParams.get("asset-settings") === "1") {
+      clearSettingsQuery();
+    }
   }
 
   return (
@@ -43,12 +64,12 @@ export function PortfolioWorkspace({
 
       <PortfolioJournalBoard initialJournal={initialJournal} positions={profile.positions} />
 
-      <Dialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
+      <Dialog open={isSettingsOpen} onOpenChange={handleSettingsOpenChange}>
         <DialogContent className="max-h-[88vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>자산 설정</DialogTitle>
             <DialogDescription>
-              총 자산, 가용 현금, 손실 한도, 보유 종목을 이 팝업 안에서 바로 수정할 수 있습니다.
+              총 자산, 가용 현금, 리스크 한도, 보유 종목을 이 팝업 안에서 바로 수정할 수 있습니다.
             </DialogDescription>
           </DialogHeader>
 
