@@ -262,7 +262,7 @@ export function DashboardFocusBoard({
             <p className="text-sm font-semibold text-foreground">세부 목록 보기</p>
             <p className="mt-1 text-xs leading-5 text-muted-foreground">매수 검토 후보, 보유 점검 종목, 장초 확인 남은 종목을 자세히 봅니다.</p>
           </div>
-          <span className="rounded-full border border-border/80 bg-[hsl(42_40%_97%)] px-3 py-1 text-xs font-medium text-foreground/78 transition group-open:border-primary/24 group-open:bg-primary/10 group-open:text-primary">
+          <span className="shrink-0 whitespace-nowrap rounded-full border border-border/80 bg-[hsl(42_40%_97%)] px-3 py-1 text-xs font-medium text-foreground/78 transition group-open:border-primary/24 group-open:bg-primary/10 group-open:text-primary">
             펼치기
           </span>
         </summary>
@@ -280,7 +280,12 @@ export function DashboardFocusBoard({
                       <p className="mt-1 text-sm text-muted-foreground">장초 확인을 통과한 종목만 남깁니다.</p>
                     </div>
                   </div>
-                  <Badge variant={buyReviewItems.length ? "positive" : "secondary"}>{formatQueueCount(buyReviewItems.length)}</Badge>
+                  <Badge
+                    variant={buyReviewItems.length ? "positive" : "secondary"}
+                    className="shrink-0 whitespace-nowrap"
+                  >
+                    {formatQueueCount(buyReviewItems.length)}
+                  </Badge>
                 </div>
               </CardHeader>
               <CardContent>
@@ -331,7 +336,10 @@ export function DashboardFocusBoard({
                         <p className="mt-1 text-xs leading-5 text-muted-foreground">먼저 확인할 보유 종목입니다.</p>
                       </div>
                     </div>
-                    <Badge variant={holdingAttentionItems.length ? "caution" : "secondary"}>
+                    <Badge
+                      variant={holdingAttentionItems.length ? "caution" : "secondary"}
+                      className="shrink-0 whitespace-nowrap"
+                    >
                       {formatQueueCount(getHoldingAttentionCount(holdingActionBoard))}
                     </Badge>
                   </div>
@@ -383,12 +391,15 @@ export function DashboardFocusBoard({
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Badge variant={openingSummary.counts.pending ? "neutral" : "secondary"}>
+                      <Badge
+                        variant={openingSummary.counts.pending ? "neutral" : "secondary"}
+                        className="shrink-0 whitespace-nowrap"
+                      >
                         {formatQueueCount(openingSummary.counts.pending)}
                       </Badge>
                       <Link
                         href="/opening-check"
-                        className="inline-flex h-9 items-center rounded-full border border-primary/24 bg-primary/10 px-3 text-xs font-medium text-primary transition hover:bg-primary/14"
+                        className="inline-flex h-9 shrink-0 items-center whitespace-nowrap rounded-full border border-primary/24 bg-primary/10 px-3.5 text-xs font-medium text-primary transition hover:bg-primary/14"
                       >
                         시작하기
                       </Link>
@@ -437,13 +448,15 @@ function CompactSetupBanner({ steps }: { steps: SetupStep[] }) {
   return (
     <div className="rounded-[24px] border border-primary/24 bg-primary/10 p-4">
       <div className="flex flex-wrap items-center gap-2">
-        <Badge variant="neutral">시작 전 준비</Badge>
+        <Badge variant="neutral" className="whitespace-nowrap">
+          시작 전 준비
+        </Badge>
         {steps.map((step) => (
           <Link
             key={step.key}
             href={step.href}
             className={cn(
-              "inline-flex h-9 items-center rounded-full border px-3 text-xs font-medium transition",
+              "inline-flex h-9 items-center whitespace-nowrap rounded-full border px-3 text-xs font-medium transition",
               step.state === "done"
                 ? "border-positive/24 bg-[hsl(var(--positive)/0.12)] text-positive"
                 : step.state === "optional"
@@ -464,12 +477,14 @@ function CompactCompletionBanner({ hasBuyReview }: { hasBuyReview: boolean }) {
     <div className="rounded-[24px] border border-positive/30 bg-[hsl(var(--positive)/0.12)] p-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-2">
-          <Badge variant="positive">장초 확인 완료</Badge>
+          <Badge variant="positive" className="whitespace-nowrap">
+            장초 확인 완료
+          </Badge>
           <span className="text-sm text-foreground/82">이제 실제 매수 검토와 보유 관리만 보면 됩니다.</span>
         </div>
         <Link
           href={hasBuyReview ? "#today-buy-review" : "#today-holding-review"}
-          className="inline-flex h-9 items-center rounded-full border border-positive/24 bg-white px-3 text-xs font-medium text-positive transition hover:bg-[hsl(var(--positive)/0.08)]"
+          className="inline-flex h-9 shrink-0 items-center whitespace-nowrap rounded-full border border-positive/24 bg-white px-3 text-xs font-medium text-positive transition hover:bg-[hsl(var(--positive)/0.08)]"
         >
           {hasBuyReview ? "매수 검토 보기" : "보유 관리 보기"}
         </Link>
