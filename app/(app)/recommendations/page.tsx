@@ -1,5 +1,4 @@
 import { DashboardFocusBoard } from "@/components/recommendations/dashboard-focus-board";
-import { PageHeader } from "@/components/shared/page-header";
 import { PublicDataStatusBarGroup } from "@/components/shared/public-data-status-bar";
 import { buildPublicDataStatusSummary } from "@/lib/server/public-data-status";
 import { getCurrentUserSession } from "@/lib/server/user-auth";
@@ -25,8 +24,7 @@ export default async function RecommendationsPage({
   ];
 
   return (
-    <main>
-      <PageHeader eyebrow="Today" title="내 오늘 행동" />
+    <main className="space-y-4">
       <PublicDataStatusBarGroup summaries={statusSummaries} />
 
       <DashboardFocusBoard
