@@ -1,0 +1,278 @@
+"use client";
+
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  buildPortfolioOpeningCheckAnalytics,
+  buildPortfolioPerformanceDashboard,
+  groupPortfolioJournalByTicker
+} from "@/lib/portfolio/journal-insights";
+import { formatPrice } from "@/lib/utils";
+import type { UserOpeningRecheckScanSnapshot } from "@/lib/server/user-opening-recheck-board";
+import type { PortfolioJournal } from "@/types/recommendation";
+
+function formatSignedPrice(value: number) {
+  if (value === 0) {
+    return formatPrice(0);
+  }
+
+  return `${value > 0 ? "+" : "-"}${formatPrice(Math.abs(value))}`;
+}
+
+export function PortfolioPerformanceBoard({
+  journal,
+  openingCheckScans
+}: {
+  journal: PortfolioJournal;
+  openingCheckScans: UserOpeningRecheckScanSnapshot[];
+}) {
+  const closedGroups = groupPortfolioJournalByTicker(journal.events).filter((group) =>
+    ["exit_full", "stop_loss", "manual_exit"].includes(group.latestEvent.type)
+  );
+  const performance = buildPortfolioPerformanceDashboard(closedGroups);
+  const openingAnalytics = buildPortfolioOpeningCheckAnalytics(closedGroups, openingCheckScans);
+
+  return (
+    <section className="space-y-5">
+      <Card className="border-border/80 bg-white/90 shadow-[0_22px_56px_-36px_rgba(24,32,42,0.24)]">
+        <CardHeader className="space-y-4">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <CardTitle className="text-xl text-foreground">계좌 성과</CardTitle>
+              <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">{performance.summary}</p>
+            </div>
+            <Badge variant="secondary">{performance.closedCount}개 종료 거래</Badge>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
+            <PerformanceMetric title="누적 실현손익" value={formatSignedPrice(performance.realizedPnlTotal)} tone="primary" />
+            <PerformanceMetric title="승률" value={`${performance.winRate}%`} tone="positive" />
+            <PerformanceMetric title="평균 보유일" value={`${performance.averageHoldingDays}일`} tone="neutral" />
+            <PerformanceMetric title="손절 비율" value={`${performance.stopLossRate}%`} tone="caution" />
+            <PerformanceMetric title="부분 익절 활용" value={`${performance.partialTakeUsageRate}%`} tone="positive" />
+            <PerformanceMetric title="수익/손실" value={`${performance.profitableCount}/${performance.lossCount}`} tone="neutral" />
+          </div>
+
+          <div className="grid gap-4 xl:grid-cols-2">
+            <HighlightCard
+              title="가장 좋았던 주간"
+              value={
+                performance.bestWeeklyPeriod
+                  ? `${performance.bestWeeklyPeriod.label} · ${formatSignedPrice(performance.bestWeeklyPeriod.realizedPnl)}`
+                  : "기록 대기"
+              }
+              note={
+                performance.bestWeeklyPeriod
+                  ? `${performance.bestWeeklyPeriod.closedCount}개 종료 · 승률 ${performance.bestWeeklyPeriod.winRate}%`
+                  : "주간 성과가 쌓이면 자동으로 표시됩니다."
+              }
+              tone="positive"
+            />
+            <HighlightCard
+              title="가장 흔들렸던 주간"
+              value={
+                performance.worstWeeklyPeriod
+                  ? `${performance.worstWeeklyPeriod.label} · ${formatSignedPrice(performance.worstWeeklyPeriod.realizedPnl)}`
+                  : "기록 대기"
+              }
+              note={
+                performance.worstWeeklyPeriod
+                  ? `${performance.worstWeeklyPeriod.closedCount}개 종료 · 승률 ${performance.worstWeeklyPeriod.winRate}%`
+                  : "손실 주간이 생기면 여기서 다시 복기할 수 있습니다."
+              }
+              tone="caution"
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      <div className="grid gap-5 xl:grid-cols-[1.2fr,0.8fr]">
+        <PeriodFlowCard
+          title="최근 주간 손익 흐름"
+          periods={performance.weekly}
+          emptyLabel="최근 주간 손익이 쌓이면 이 영역에서 계좌 리듬을 바로 볼 수 있습니다."
+        />
+        <PeriodFlowCard
+          title="최근 월간 손익 흐름"
+          periods={performance.monthly}
+          emptyLabel="월간 종료 거래가 쌓이면 이 영역에서 월별 흐름을 바로 볼 수 있습니다."
+        />
+      </div>
+
+      <Card className="border-border/80 bg-white/90 shadow-[0_18px_44px_-34px_rgba(24,32,42,0.2)]">
+        <CardHeader className="space-y-3">
+          <CardTitle className="text-lg text-foreground">운용 품질 신호</CardTitle>
+          <p className="text-sm leading-6 text-muted-foreground">
+            주간·월간 성과 외에, 장초 기록과 실제 종료가 얼마나 잘 연결되고 있는지도 함께 봅니다.
+          </p>
+        </CardHeader>
+        <CardContent className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <QualityMetric
+            title="장초 기록 연결"
+            value={openingAnalytics ? `${openingAnalytics.matchedCount}건` : "0건"}
+            note={
+              openingAnalytics
+                ? `종료 거래 ${openingAnalytics.matchedCount}건이 장초 판단과 연결됐습니다.`
+                : "아직 장초 판단과 연결된 종료 거래가 충분하지 않습니다."
+            }
+            tone="neutral"
+          />
+          <QualityMetric
+            title="보류 강행"
+            value={openingAnalytics ? `${openingAnalytics.overrideCount}건` : "0건"}
+            note="보류/제외였는데도 진입한 종료 거래 수입니다."
+            tone={openingAnalytics && openingAnalytics.overrideCount > 0 ? "caution" : "positive"}
+          />
+          <QualityMetric
+            title="장초 후 수익 종료"
+            value={openingAnalytics ? `${openingAnalytics.profitableCount}건` : "0건"}
+            note="장초 기록이 남아 있는 종료 거래 중 수익으로 끝난 건수입니다."
+            tone="positive"
+          />
+          <QualityMetric
+            title="장초 후 손실 종료"
+            value={openingAnalytics ? `${openingAnalytics.lossCount}건` : "0건"}
+            note="장초 기록이 남아 있는 종료 거래 중 손실로 끝난 건수입니다."
+            tone="caution"
+          />
+        </CardContent>
+      </Card>
+    </section>
+  );
+}
+
+function PerformanceMetric({
+  title,
+  value,
+  tone
+}: {
+  title: string;
+  value: string;
+  tone: "primary" | "positive" | "neutral" | "caution";
+}) {
+  const toneClass =
+    tone === "primary"
+      ? "border-primary/24 bg-primary/10"
+      : tone === "positive"
+        ? "border-positive/22 bg-[hsl(var(--positive)/0.08)]"
+        : tone === "neutral"
+          ? "border-border/80 bg-[hsl(42_40%_97%)]"
+          : "border-caution/22 bg-[hsl(var(--caution)/0.08)]";
+
+  return (
+    <div className={`rounded-[22px] border p-4 ${toneClass}`}>
+      <p className="text-xs font-medium tracking-[0.12em] text-muted-foreground">{title}</p>
+      <p className="mt-2 text-2xl font-semibold text-foreground">{value}</p>
+    </div>
+  );
+}
+
+function HighlightCard({
+  title,
+  value,
+  note,
+  tone
+}: {
+  title: string;
+  value: string;
+  note: string;
+  tone: "positive" | "caution";
+}) {
+  return (
+    <div
+      className={
+        tone === "positive"
+          ? "rounded-[24px] border border-positive/22 bg-[hsl(var(--positive)/0.1)] p-4"
+          : "rounded-[24px] border border-caution/22 bg-[hsl(var(--caution)/0.1)] p-4"
+      }
+    >
+      <p className="text-sm font-semibold text-foreground">{title}</p>
+      <p className="mt-3 text-lg font-semibold text-foreground">{value}</p>
+      <p className="mt-2 text-sm leading-6 text-muted-foreground">{note}</p>
+    </div>
+  );
+}
+
+function PeriodFlowCard({
+  title,
+  periods,
+  emptyLabel
+}: {
+  title: string;
+  periods: ReturnType<typeof buildPortfolioPerformanceDashboard>["weekly"];
+  emptyLabel: string;
+}) {
+  const maxMagnitude = Math.max(...periods.map((period) => Math.abs(period.realizedPnl)), 1);
+
+  return (
+    <Card className="border-border/80 bg-white/90 shadow-[0_18px_44px_-34px_rgba(24,32,42,0.2)]">
+      <CardHeader className="space-y-3">
+        <CardTitle className="text-lg text-foreground">{title}</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {periods.length ? (
+          periods.map((period) => {
+            const width = `${Math.max(16, Math.round((Math.abs(period.realizedPnl) / maxMagnitude) * 100))}%`;
+            const barClass =
+              period.realizedPnl > 0
+                ? "bg-[hsl(var(--positive))]"
+                : period.realizedPnl < 0
+                  ? "bg-[hsl(var(--caution))]"
+                  : "bg-[hsl(var(--muted-foreground)/0.5)]";
+
+            return (
+              <div key={period.key} className="rounded-[20px] border border-border/80 bg-[hsl(42_40%_97%)] px-4 py-4">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">{period.label}</p>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      종료 {period.closedCount}건 · 승률 {period.winRate}%
+                    </p>
+                  </div>
+                  <Badge variant={period.realizedPnl > 0 ? "positive" : period.realizedPnl < 0 ? "caution" : "secondary"}>
+                    {formatSignedPrice(period.realizedPnl)}
+                  </Badge>
+                </div>
+                <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-[hsl(42_32%_92%)]">
+                  <div className={`h-full rounded-full ${barClass}`} style={{ width }} />
+                </div>
+              </div>
+            );
+          })
+        ) : (
+          <div className="rounded-[20px] border border-border/80 bg-[hsl(42_40%_97%)] px-4 py-5 text-sm leading-6 text-muted-foreground">
+            {emptyLabel}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function QualityMetric({
+  title,
+  value,
+  note,
+  tone
+}: {
+  title: string;
+  value: string;
+  note: string;
+  tone: "positive" | "neutral" | "caution";
+}) {
+  const toneClass =
+    tone === "positive"
+      ? "border-positive/22 bg-[hsl(var(--positive)/0.08)]"
+      : tone === "neutral"
+        ? "border-primary/22 bg-[hsl(var(--primary)/0.08)]"
+        : "border-caution/22 bg-[hsl(var(--caution)/0.08)]";
+
+  return (
+    <div className={`rounded-[22px] border p-4 ${toneClass}`}>
+      <p className="text-xs font-medium tracking-[0.12em] text-muted-foreground">{title}</p>
+      <p className="mt-2 text-2xl font-semibold text-foreground">{value}</p>
+      <p className="mt-2 text-xs leading-5 text-muted-foreground">{note}</p>
+    </div>
+  );
+}

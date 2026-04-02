@@ -138,6 +138,33 @@ export interface PortfolioReviewAnalytics {
   tagInsights: PortfolioReviewTagInsight[];
 }
 
+export interface PortfolioPerformancePeriod {
+  key: string;
+  label: string;
+  realizedPnl: number;
+  closedCount: number;
+  profitableCount: number;
+  lossCount: number;
+  winRate: number;
+}
+
+export interface PortfolioPerformanceDashboard {
+  headline: string;
+  summary: string;
+  realizedPnlTotal: number;
+  closedCount: number;
+  profitableCount: number;
+  lossCount: number;
+  winRate: number;
+  averageHoldingDays: number;
+  stopLossRate: number;
+  partialTakeUsageRate: number;
+  weekly: PortfolioPerformancePeriod[];
+  monthly: PortfolioPerformancePeriod[];
+  bestWeeklyPeriod?: PortfolioPerformancePeriod;
+  worstWeeklyPeriod?: PortfolioPerformancePeriod;
+}
+
 export interface PortfolioOpeningCheckScanSnapshot {
   scanKey: string;
   updatedAt: string;
@@ -906,6 +933,104 @@ export function buildPortfolioReviewAnalytics(groups: PortfolioJournalGroup[]): 
     holdDistribution,
     pnlDistribution,
     tagInsights
+  };
+}
+
+export function buildPortfolioPerformanceDashboard(
+  groups: PortfolioJournalGroup[]
+): PortfolioPerformanceDashboard {
+  const closedGroups = groups.filter((group) => isClosingPortfolioTradeEventType(group.latestEvent.type));
+  const summary = buildPortfolioReviewSummary(closedGroups);
+  const calendar = buildPortfolioReviewCalendarDashboard(closedGroups);
+
+  if (!closedGroups.length) {
+    return {
+      headline: "종료 거래가 쌓이면 계좌 성과 흐름이 보입니다.",
+      summary: "전량 매도, 손절, 수동 종료가 쌓이면 주간·월간 손익과 운용 리듬을 계좌 기준으로 바로 읽을 수 있습니다.",
+      realizedPnlTotal: 0,
+      closedCount: 0,
+      profitableCount: 0,
+      lossCount: 0,
+      winRate: 0,
+      averageHoldingDays: 0,
+      stopLossRate: 0,
+      partialTakeUsageRate: 0,
+      weekly: [],
+      monthly: []
+    };
+  }
+
+  const monthlyMap = new Map<
+    string,
+    {
+      key: string;
+      label: string;
+      realizedPnl: number;
+      closedCount: number;
+      profitableCount: number;
+      lossCount: number;
+    }
+  >();
+
+  for (const group of closedGroups) {
+    const monthKey = formatMonthKey(group.latestEvent.tradedAt);
+    const current = monthlyMap.get(monthKey) ?? {
+      key: monthKey,
+      label: formatMonthLabel(monthKey),
+      realizedPnl: 0,
+      closedCount: 0,
+      profitableCount: 0,
+      lossCount: 0
+    };
+
+    current.realizedPnl += group.metrics.realizedPnl;
+    current.closedCount += 1;
+    current.profitableCount += group.metrics.realizedPnl > 0 ? 1 : 0;
+    current.lossCount += group.metrics.realizedPnl < 0 ? 1 : 0;
+    monthlyMap.set(monthKey, current);
+  }
+
+  const weekly = calendar.weeks.map((week) => ({
+    key: week.weekKey,
+    label: week.label,
+    realizedPnl: week.realizedPnl,
+    closedCount: week.closedCount,
+    profitableCount: week.profitableCount,
+    lossCount: week.lossCount,
+    winRate: roundRatio(week.profitableCount, week.closedCount)
+  }));
+
+  const monthly = [...monthlyMap.values()]
+    .sort((left, right) => left.key.localeCompare(right.key))
+    .slice(-6)
+    .map((month) => ({
+      key: month.key,
+      label: month.label,
+      realizedPnl: month.realizedPnl,
+      closedCount: month.closedCount,
+      profitableCount: month.profitableCount,
+      lossCount: month.lossCount,
+      winRate: roundRatio(month.profitableCount, month.closedCount)
+    }));
+
+  const bestWeeklyPeriod = [...weekly].sort((left, right) => right.realizedPnl - left.realizedPnl)[0];
+  const worstWeeklyPeriod = [...weekly].sort((left, right) => left.realizedPnl - right.realizedPnl)[0];
+
+  return {
+    headline: "계좌 성과를 주간·월간 흐름으로 다시 봅니다.",
+    summary: "지금까지 끝난 거래를 합쳐서, 어느 주에 잘했고 어느 달에 흔들렸는지 빠르게 읽는 화면입니다.",
+    realizedPnlTotal: summary.realizedPnlTotal,
+    closedCount: summary.closedCount,
+    profitableCount: summary.profitableCount,
+    lossCount: summary.lossCount,
+    winRate: roundRatio(summary.profitableCount, summary.closedCount),
+    averageHoldingDays: summary.averageHoldingDays,
+    stopLossRate: roundRatio(summary.stopLossCount, summary.closedCount),
+    partialTakeUsageRate: calendar.behavior.partialTakeUsageRate,
+    weekly,
+    monthly,
+    bestWeeklyPeriod,
+    worstWeeklyPeriod
   };
 }
 

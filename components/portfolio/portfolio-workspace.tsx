@@ -7,6 +7,7 @@ import type { PortfolioProfilePayload } from "@/components/admin/dashboard-types
 import { AccountPortfolioPanel } from "@/components/account/account-portfolio-panel";
 import { PortfolioJournalBoard } from "@/components/portfolio/portfolio-journal-board";
 import { PortfolioOverviewBoard } from "@/components/portfolio/portfolio-overview-board";
+import { PortfolioPerformanceBoard } from "@/components/portfolio/portfolio-performance-board";
 import { PortfolioReviewsBoard } from "@/components/portfolio/portfolio-reviews-board";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -74,6 +75,9 @@ export function PortfolioWorkspace({
           <TabsTrigger value="reviews" className="min-w-[120px]">
             Reviews
           </TabsTrigger>
+          <TabsTrigger value="performance" className="min-w-[120px]">
+            Performance
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="holdings" className="mt-0">
@@ -94,6 +98,10 @@ export function PortfolioWorkspace({
             openingCheckScans={openingCheckScans}
             closeReviews={closeReviews}
           />
+        </TabsContent>
+
+        <TabsContent value="performance" className="mt-0">
+          <PortfolioPerformanceBoard journal={initialJournal} openingCheckScans={openingCheckScans} />
         </TabsContent>
       </Tabs>
 
