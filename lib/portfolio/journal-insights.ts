@@ -148,6 +148,26 @@ export interface PortfolioPerformancePeriod {
   winRate: number;
 }
 
+export interface PortfolioPerformanceTagInsight {
+  key: string;
+  label: string;
+  count: number;
+  realizedPnl: number;
+  winRate: number;
+  note: string;
+}
+
+export interface PortfolioPerformanceExitReasonInsight {
+  key: "exit_full" | "stop_loss" | "manual_exit";
+  label: string;
+  count: number;
+  ratio: number;
+  realizedPnl: number;
+  winRate: number;
+  note: string;
+  tone: "positive" | "neutral" | "caution";
+}
+
 export interface PortfolioPerformanceDashboard {
   headline: string;
   summary: string;
@@ -161,6 +181,8 @@ export interface PortfolioPerformanceDashboard {
   partialTakeUsageRate: number;
   weekly: PortfolioPerformancePeriod[];
   monthly: PortfolioPerformancePeriod[];
+  strategyTags: PortfolioPerformanceTagInsight[];
+  exitReasons: PortfolioPerformanceExitReasonInsight[];
   bestWeeklyPeriod?: PortfolioPerformancePeriod;
   worstWeeklyPeriod?: PortfolioPerformancePeriod;
 }
@@ -302,7 +324,7 @@ function collectGroupNotes(group: PortfolioJournalGroup) {
     .toLowerCase();
 }
 
-function hasAnyKeyword(source: string, keywords: string[]) {
+function hasAnyKeyword(source: string, keywords: readonly string[]) {
   return keywords.some((keyword) => source.includes(keyword));
 }
 
@@ -317,6 +339,54 @@ function outcomeFromGroup(group: PortfolioJournalGroup) {
 
   return "flat" as const;
 }
+
+const portfolioTagDefinitions = [
+  {
+    key: "opening_check",
+    label: "?μ큹/?쒖큹 硫붾어",
+    keywords: ["?μ큹", "?쒖큹", "?뺤씤", "opening", "preopen", "gap"],
+    note: "?μ큹 ?뺤씤 ???곹엺?댁슜???묎컻??거래"
+  },
+  {
+    key: "risk_control",
+    label: "?먯젅/由ъ뒪??硫붾어",
+    keywords: ["?먯젅", "由ъ뒪??", "蹂댄샇", "stop", "risk", "loss"],
+    note: "손절과 리스크 기준을 남긴 거래"
+  },
+  {
+    key: "scale_out",
+    label: "遺遺??듭젅 硫붾어",
+    keywords: ["遺遺??듭젅", "遺꾪븷", "?듭젅", "partial", "scale", "profit"],
+    note: "부분 익절 계획을 남긴 거래"
+  },
+  {
+    key: "hold_management",
+    label: "蹂댁쑀/愿由?硫붾어",
+    keywords: ["蹂댁쑀", "愿李?", "?좎?", "???", "hold", "watch", "manage"],
+    note: "보유 관리 메모를 남긴 거래"
+  }
+] as const;
+
+const closingReasonDefinitions = [
+  {
+    key: "exit_full",
+    label: "?꾨웾 留ㅻ룄",
+    tone: "positive" as const,
+    note: "계획상 목표 도달 뒤 정리한 종료"
+  },
+  {
+    key: "stop_loss",
+    label: "?먯젅 醫낅즺",
+    tone: "caution" as const,
+    note: "손실 제한을 위해 종료한 거래"
+  },
+  {
+    key: "manual_exit",
+    label: "?섎룞 醫낅즺",
+    tone: "neutral" as const,
+    note: "계획 밖 판단으로 정리한 거래"
+  }
+] as const;
 
 function flattenOpeningCheckDecisions(scans: PortfolioOpeningCheckScanSnapshot[]) {
   return scans.flatMap((scan) => {
@@ -956,7 +1026,9 @@ export function buildPortfolioPerformanceDashboard(
       stopLossRate: 0,
       partialTakeUsageRate: 0,
       weekly: [],
-      monthly: []
+      monthly: [],
+      strategyTags: [],
+      exitReasons: []
     };
   }
 
@@ -1013,6 +1085,51 @@ export function buildPortfolioPerformanceDashboard(
       winRate: roundRatio(month.profitableCount, month.closedCount)
     }));
 
+  const strategyTags = portfolioTagDefinitions
+    .flatMap((tag): PortfolioPerformanceTagInsight[] => {
+      const taggedGroups = closedGroups.filter((group) => hasAnyKeyword(collectGroupNotes(group), tag.keywords));
+      if (!taggedGroups.length) {
+        return [];
+      }
+
+      const profitableCount = taggedGroups.filter((group) => group.metrics.realizedPnl > 0).length;
+
+      return [
+        {
+          key: tag.key,
+          label: tag.label,
+          count: taggedGroups.length,
+          realizedPnl: taggedGroups.reduce((sum, group) => sum + group.metrics.realizedPnl, 0),
+          winRate: roundRatio(profitableCount, taggedGroups.length),
+          note: tag.note
+        }
+      ];
+    })
+    .sort((left, right) => {
+      if (right.count !== left.count) {
+        return right.count - left.count;
+      }
+
+      return right.realizedPnl - left.realizedPnl;
+    })
+    .slice(0, 4);
+
+  const exitReasons = closingReasonDefinitions.map((reason) => {
+    const reasonGroups = closedGroups.filter((group) => group.latestEvent.type === reason.key);
+    const profitableCount = reasonGroups.filter((group) => group.metrics.realizedPnl > 0).length;
+
+    return {
+      key: reason.key,
+      label: reason.label,
+      count: reasonGroups.length,
+      ratio: roundRatio(reasonGroups.length, closedGroups.length),
+      realizedPnl: reasonGroups.reduce((sum, group) => sum + group.metrics.realizedPnl, 0),
+      winRate: roundRatio(profitableCount, reasonGroups.length),
+      note: reason.note,
+      tone: reason.tone
+    } satisfies PortfolioPerformanceExitReasonInsight;
+  });
+
   const bestWeeklyPeriod = [...weekly].sort((left, right) => right.realizedPnl - left.realizedPnl)[0];
   const worstWeeklyPeriod = [...weekly].sort((left, right) => left.realizedPnl - right.realizedPnl)[0];
 
@@ -1029,6 +1146,8 @@ export function buildPortfolioPerformanceDashboard(
     partialTakeUsageRate: calendar.behavior.partialTakeUsageRate,
     weekly,
     monthly,
+    strategyTags,
+    exitReasons,
     bestWeeklyPeriod,
     worstWeeklyPeriod
   };

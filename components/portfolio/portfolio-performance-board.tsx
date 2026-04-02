@@ -141,6 +141,54 @@ export function PortfolioPerformanceBoard({
         />
       </div>
 
+      <div className="grid gap-5 xl:grid-cols-2">
+        <Card className="border-border/80 bg-white/90 shadow-[0_18px_44px_-34px_rgba(24,32,42,0.2)]">
+          <CardHeader className="space-y-3">
+            <CardTitle className="text-lg text-foreground">전략 태그별 성과</CardTitle>
+            <p className="text-sm leading-6 text-muted-foreground">
+              메모에 반복해서 남긴 전략 태그를 기준으로, 어떤 방식이 실제 수익과 더 자주 연결되는지 빠르게 봅니다.
+            </p>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {performance.strategyTags.length ? (
+              performance.strategyTags.map((tag) => (
+                <InsightRow
+                  key={tag.key}
+                  title={tag.label}
+                  value={formatSignedPrice(tag.realizedPnl)}
+                  badge={`${tag.count}건 · 승률 ${tag.winRate}%`}
+                  note={tag.note}
+                  tone={tag.realizedPnl > 0 ? "positive" : tag.realizedPnl < 0 ? "caution" : "neutral"}
+                />
+              ))
+            ) : (
+              <EmptyInsight label="반복해서 남긴 전략 태그가 아직 충분하지 않습니다." />
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="border-border/80 bg-white/90 shadow-[0_18px_44px_-34px_rgba(24,32,42,0.2)]">
+          <CardHeader className="space-y-3">
+            <CardTitle className="text-lg text-foreground">종료 이유 분포</CardTitle>
+            <p className="text-sm leading-6 text-muted-foreground">
+              전량 매도, 손절, 수동 종료가 실제로 어떤 결과로 이어졌는지 종료 방식별로 나눠 봅니다.
+            </p>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {performance.exitReasons.map((reason) => (
+              <InsightRow
+                key={reason.key}
+                title={reason.label}
+                value={formatSignedPrice(reason.realizedPnl)}
+                badge={`${reason.count}건 · ${reason.ratio}%`}
+                note={`${reason.note} · 승률 ${reason.winRate}%`}
+                tone={reason.tone}
+              />
+            ))}
+          </CardContent>
+        </Card>
+      </div>
+
       <Card className="border-border/80 bg-white/90 shadow-[0_18px_44px_-34px_rgba(24,32,42,0.2)]">
         <CardHeader className="space-y-3">
           <CardTitle className="text-lg text-foreground">운용 품질 신호</CardTitle>
@@ -288,6 +336,50 @@ function PeriodFlowCard({
         )}
       </CardContent>
     </Card>
+  );
+}
+
+function InsightRow({
+  title,
+  value,
+  badge,
+  note,
+  tone
+}: {
+  title: string;
+  value: string;
+  badge: string;
+  note: string;
+  tone: "positive" | "neutral" | "caution";
+}) {
+  const toneClass =
+    tone === "positive"
+      ? "border-positive/22 bg-[hsl(var(--positive)/0.08)]"
+      : tone === "caution"
+        ? "border-caution/22 bg-[hsl(var(--caution)/0.08)]"
+        : "border-border/80 bg-[hsl(42_40%_97%)]";
+
+  return (
+    <div className={`rounded-[20px] border px-4 py-4 ${toneClass}`}>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <p className="text-sm font-semibold text-foreground">{title}</p>
+          <p className="mt-2 text-xl font-semibold text-foreground">{value}</p>
+        </div>
+        <Badge variant={tone === "positive" ? "positive" : tone === "caution" ? "caution" : "secondary"}>
+          {badge}
+        </Badge>
+      </div>
+      <p className="mt-3 text-sm leading-6 text-muted-foreground">{note}</p>
+    </div>
+  );
+}
+
+function EmptyInsight({ label }: { label: string }) {
+  return (
+    <div className="rounded-[20px] border border-border/80 bg-[hsl(42_40%_97%)] px-4 py-5 text-sm leading-6 text-muted-foreground">
+      {label}
+    </div>
   );
 }
 
