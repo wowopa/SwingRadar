@@ -24,6 +24,7 @@ import type {
   PortfolioCloseReviewEntry,
   PortfolioJournal,
   PortfolioPersonalRuleEntry,
+  PortfolioTradeEvent,
   PortfolioTradeEventType
 } from "@/types/recommendation";
 
@@ -36,7 +37,40 @@ type PortfolioTradeFollowUp = {
   detail: string;
   highlightTab: PortfolioWorkspaceTab;
   highlightLabel: string;
+  savedEventId?: string;
+  editPreset?: PortfolioTradeEventDialogPreset | null;
+  previousJournal?: PortfolioJournal;
+  previousProfile?: PortfolioProfilePayload;
 };
+
+function buildTradeEditPreset({
+  event,
+  previousProfile
+}: {
+  event: PortfolioTradeEvent;
+  previousProfile?: PortfolioProfilePayload;
+}) {
+  const previousPosition = previousProfile?.positions.find((item) => item.ticker === event.ticker);
+
+  return {
+    title: `${event.company} 기록 수정`,
+    description: "방금 기록을 되돌린 뒤 같은 값으로 다시 열었습니다. 필요한 부분만 빠르게 고쳐 저장하세요.",
+    saveButtonLabel: "수정 저장",
+    ticker: event.ticker,
+    company: event.company,
+    sector: event.sector,
+    type: event.type,
+    quantity: event.quantity,
+    price: event.price,
+    fees: event.fees ?? 0,
+    tradedAt: new Date(event.tradedAt).toISOString().slice(0, 16),
+    note: event.note ?? "",
+    syncProfilePosition: true,
+    maxQuantity: previousPosition?.quantity,
+    lockTicker: true,
+    lockType: true
+  } satisfies PortfolioTradeEventDialogPreset;
+}
 
 function buildTradeFollowUp({
   ticker,
@@ -144,8 +178,88 @@ export function PortfolioWorkspace({
     });
   }
 
-  function handleTradeSaved(payload: { journal: PortfolioJournal; profile?: PortfolioProfilePayload }) {
-    const savedEvent = payload.journal.events.at(-1) ?? null;
+  async function revertLatestTrade(followUp: PortfolioTradeFollowUp) {
+    if (!followUp.savedEventId || !followUp.previousJournal) {
+      return false;
+    }
+
+    const response = await fetch("/api/account/portfolio-journal", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        eventId: followUp.savedEventId,
+        journal: followUp.previousJournal,
+        profile: followUp.previousProfile
+      })
+    });
+
+    const payload = (await response.json().catch(() => ({}))) as {
+      message?: string;
+      journal?: PortfolioJournal;
+      profile?: PortfolioProfilePayload;
+    };
+
+    if (!response.ok || !payload.journal) {
+      throw new Error(payload.message ?? "방금 기록을 되돌리지 못했습니다.");
+    }
+
+    setJournal(payload.journal);
+    if (payload.profile) {
+      setProfile(payload.profile);
+    } else if (followUp.previousProfile) {
+      setProfile(followUp.previousProfile);
+    }
+
+    startTransition(() => {
+      router.refresh();
+    });
+
+    return true;
+  }
+
+  async function handleReopenRecentTrade() {
+    if (!tradeFollowUp?.editPreset) {
+      return;
+    }
+
+    const nextPreset = tradeFollowUp.editPreset;
+    const reverted = await revertLatestTrade(tradeFollowUp);
+    if (!reverted) {
+      return;
+    }
+
+    setTradeFollowUp(null);
+    setQuickTradePreset(nextPreset);
+  }
+
+  async function handleUndoRecentTrade() {
+    if (!tradeFollowUp) {
+      return;
+    }
+
+    const reverted = await revertLatestTrade(tradeFollowUp);
+    if (!reverted) {
+      return;
+    }
+
+    setTradeFollowUp({
+      ticker: tradeFollowUp.ticker,
+      company: tradeFollowUp.company,
+      headline: `${tradeFollowUp.company} 마지막 체결을 되돌렸습니다.`,
+      detail: "방금 기록은 저널과 포트폴리오에서 제거되었습니다. 필요하면 다시 기록해 주세요.",
+      highlightTab: "holdings",
+      highlightLabel: "Holdings 보기"
+    });
+  }
+
+  function handleTradeSaved(payload: {
+    event: PortfolioTradeEvent;
+    journal: PortfolioJournal;
+    profile?: PortfolioProfilePayload;
+    previousJournal?: PortfolioJournal;
+    previousProfile?: PortfolioProfilePayload;
+  }) {
+    const savedEvent = payload.event;
     setJournal(payload.journal);
     if (payload.profile) {
       setProfile(payload.profile);
@@ -159,7 +273,16 @@ export function PortfolioWorkspace({
         company: quickTradePreset?.company ?? fallbackCompany,
         type: savedEvent.type
       });
-      setTradeFollowUp(followUp);
+      setTradeFollowUp({
+        ...followUp,
+        savedEventId: savedEvent.id,
+        previousJournal: payload.previousJournal,
+        previousProfile: payload.previousProfile,
+        editPreset: buildTradeEditPreset({
+          event: savedEvent,
+          previousProfile: payload.previousProfile
+        })
+      });
       setActiveTab(followUp.highlightTab);
     }
 
@@ -202,6 +325,16 @@ export function PortfolioWorkspace({
                 >
                   {tradeFollowUp.highlightLabel}
                 </Button>
+                {tradeFollowUp.editPreset ? (
+                  <Button type="button" variant="outline" size="sm" onClick={() => void handleReopenRecentTrade()}>
+                    방금 기록 수정
+                  </Button>
+                ) : null}
+                {tradeFollowUp.savedEventId ? (
+                  <Button type="button" variant="ghost" size="sm" onClick={() => void handleUndoRecentTrade()}>
+                    되돌리기
+                  </Button>
+                ) : null}
                 <Button type="button" variant="ghost" size="sm" onClick={() => setTradeFollowUp(null)}>
                   닫기
                 </Button>
@@ -239,6 +372,7 @@ export function PortfolioWorkspace({
           <PortfolioJournalBoard
             journal={journal}
             positions={profile.positions}
+            currentProfile={profile}
             view="journal"
             focusTicker={tradeFollowUp?.highlightTab === "journal" ? tradeFollowUp.ticker : null}
             onJournalUpdated={handleTradeSaved}
@@ -285,6 +419,8 @@ export function PortfolioWorkspace({
         }}
         positions={profile.positions}
         recentEvents={journal.events}
+        currentJournal={journal}
+        currentProfile={profile}
         preset={quickTradePreset}
         onSaved={handleTradeSaved}
       />

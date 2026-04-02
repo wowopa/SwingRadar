@@ -19,7 +19,12 @@ import {
   isClosingPortfolioTradeEventType
 } from "@/lib/portfolio/journal-insights";
 import { formatPrice } from "@/lib/utils";
-import type { PortfolioJournal, PortfolioProfilePosition, PortfolioTradeEventType } from "@/types/recommendation";
+import type {
+  PortfolioJournal,
+  PortfolioProfilePosition,
+  PortfolioTradeEvent,
+  PortfolioTradeEventType
+} from "@/types/recommendation";
 
 const tradeTypeMeta: Record<
   PortfolioTradeEventType,
@@ -93,15 +98,23 @@ function formatSignedPrice(value: number) {
 export function PortfolioJournalBoard({
   journal,
   positions,
+  currentProfile,
   view = "journal",
   focusTicker = null,
   onJournalUpdated
 }: {
   journal: PortfolioJournal;
   positions: PortfolioProfilePosition[];
+  currentProfile?: PortfolioProfilePayload;
   view?: "journal" | "reviews";
   focusTicker?: string | null;
-  onJournalUpdated?: (payload: { journal: PortfolioJournal; profile?: PortfolioProfilePayload }) => void;
+  onJournalUpdated?: (payload: {
+    event: PortfolioTradeEvent;
+    journal: PortfolioJournal;
+    profile?: PortfolioProfilePayload;
+    previousJournal?: PortfolioJournal;
+    previousProfile?: PortfolioProfilePayload;
+  }) => void;
 }) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [dialogPreset, setDialogPreset] = useState<PortfolioTradeEventDialogPreset | null>(null);
@@ -144,7 +157,13 @@ export function PortfolioJournalBoard({
     setIsDialogOpen(true);
   }
 
-  function handleDialogSaved(payload: { journal: PortfolioJournal; profile?: PortfolioProfilePayload }) {
+  function handleDialogSaved(payload: {
+    event: PortfolioTradeEvent;
+    journal: PortfolioJournal;
+    profile?: PortfolioProfilePayload;
+    previousJournal?: PortfolioJournal;
+    previousProfile?: PortfolioProfilePayload;
+  }) {
     onJournalUpdated?.(payload);
   }
 
@@ -315,6 +334,8 @@ export function PortfolioJournalBoard({
         onOpenChange={setIsDialogOpen}
         positions={positions}
         recentEvents={journal.events}
+        currentJournal={journal}
+        currentProfile={currentProfile}
         preset={dialogPreset}
         onSaved={handleDialogSaved}
       />

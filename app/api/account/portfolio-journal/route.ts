@@ -3,9 +3,13 @@ import { z } from "zod";
 import { jsonOk } from "@/lib/server/api-response";
 import {
   appendPortfolioTradeEventForUser,
-  loadPortfolioJournalForUser
+  loadPortfolioJournalForUser,
+  savePortfolioJournalForUser
 } from "@/lib/server/portfolio-journal";
-import { syncPortfolioProfileWithTradeEventForUser } from "@/lib/server/portfolio-profile";
+import {
+  savePortfolioProfileForUser,
+  syncPortfolioProfileWithTradeEventForUser
+} from "@/lib/server/portfolio-profile";
 import { buildResponseMeta, withRouteTelemetry } from "@/lib/server/telemetry";
 import { requireUserSession } from "@/lib/server/user-auth";
 
@@ -18,6 +22,12 @@ const tradeEventSchema = z.object({
   tradedAt: z.string().trim().min(1),
   note: z.string().trim().max(400).optional().or(z.literal("")).or(z.null()),
   syncProfilePosition: z.boolean().optional().default(false)
+});
+
+const undoTradeEventSchema = z.object({
+  eventId: z.string().trim().min(1),
+  journal: z.unknown(),
+  profile: z.unknown().optional()
 });
 
 export async function GET(request: Request) {
@@ -66,6 +76,34 @@ export async function POST(request: Request) {
         requestId: context.requestId,
         event: result.event,
         journal: result.journal,
+        profile
+      },
+      buildResponseMeta(context, 0)
+    );
+  });
+}
+
+export async function PATCH(request: Request) {
+  return withRouteTelemetry(request, { route: "/api/account/portfolio-journal" }, async (context) => {
+    const session = await requireUserSession(request);
+    const payload = undoTradeEventSchema.parse(await request.json());
+    const currentJournal = await loadPortfolioJournalForUser(session.user.id);
+    const latestEvent = currentJournal.events[0] ?? null;
+
+    if (!latestEvent || latestEvent.id !== payload.eventId) {
+      throw new Error("마지막으로 기록한 체결만 되돌릴 수 있습니다.");
+    }
+
+    const journal = await savePortfolioJournalForUser(session.user.id, payload.journal);
+    const profile = payload.profile
+      ? await savePortfolioProfileForUser(session.user.id, payload.profile)
+      : undefined;
+
+    return jsonOk(
+      {
+        ok: true,
+        requestId: context.requestId,
+        journal,
         profile
       },
       buildResponseMeta(context, 0)

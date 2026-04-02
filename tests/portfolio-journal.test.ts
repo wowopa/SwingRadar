@@ -7,7 +7,8 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   appendPortfolioTradeEventForUser,
   createEmptyPortfolioJournal,
-  loadPortfolioJournalForUser
+  loadPortfolioJournalForUser,
+  savePortfolioJournalForUser
 } from "@/lib/server/portfolio-journal";
 
 describe("portfolio journal storage", () => {
@@ -84,5 +85,25 @@ describe("portfolio journal storage", () => {
       price: 71000
     });
     expect(otherJournal).toEqual(createEmptyPortfolioJournal());
+  });
+
+  it("can overwrite the journal for immediate undo flows", async () => {
+    const appended = await appendPortfolioTradeEventForUser("user-1", {
+      ticker: "005930",
+      type: "buy",
+      quantity: 5,
+      price: 71000,
+      fees: 0,
+      tradedAt: "2026-03-31T09:05:00+09:00",
+      note: "first buy",
+      createdBy: "tester@example.com"
+    });
+
+    const restored = await savePortfolioJournalForUser("user-1", createEmptyPortfolioJournal());
+    const reloaded = await loadPortfolioJournalForUser("user-1");
+
+    expect(appended.journal.events).toHaveLength(1);
+    expect(restored.events).toHaveLength(0);
+    expect(reloaded).toEqual(createEmptyPortfolioJournal());
   });
 });

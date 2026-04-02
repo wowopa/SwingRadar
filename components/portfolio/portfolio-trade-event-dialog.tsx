@@ -211,6 +211,8 @@ export function PortfolioTradeEventDialog({
   onOpenChange,
   positions,
   recentEvents = [],
+  currentJournal,
+  currentProfile,
   preset,
   onSaved
 }: {
@@ -218,8 +220,16 @@ export function PortfolioTradeEventDialog({
   onOpenChange: (open: boolean) => void;
   positions: PortfolioProfilePosition[];
   recentEvents?: PortfolioTradeEvent[];
+  currentJournal?: PortfolioJournal;
+  currentProfile?: PortfolioProfilePayload;
   preset?: PortfolioTradeEventDialogPreset | null;
-  onSaved?: (payload: { journal: PortfolioJournal; profile?: PortfolioProfilePayload }) => void;
+  onSaved?: (payload: {
+    event: PortfolioTradeEvent;
+    journal: PortfolioJournal;
+    profile?: PortfolioProfilePayload;
+    previousJournal?: PortfolioJournal;
+    previousProfile?: PortfolioProfilePayload;
+  }) => void;
 }) {
   const symbolFieldRef = useRef<HTMLDivElement | null>(null);
   const [form, setForm] = useState<TradeEventFormState>(() => createFormState(preset));
@@ -407,16 +417,23 @@ export function PortfolioTradeEventDialog({
       });
       const payload = (await response.json().catch(() => ({}))) as {
         message?: string;
+        event?: PortfolioTradeEvent;
         journal?: PortfolioJournal;
         profile?: PortfolioProfilePayload;
       };
 
-      if (!response.ok || !payload.journal) {
+      if (!response.ok || !payload.journal || !payload.event) {
         throw new Error(payload.message ?? `체결 기록 저장에 실패했습니다. (${response.status})`);
       }
 
       setMessage("체결 기록을 저장했습니다.");
-      onSaved?.({ journal: payload.journal, profile: payload.profile });
+      onSaved?.({
+        event: payload.event,
+        journal: payload.journal,
+        profile: payload.profile,
+        previousJournal: currentJournal,
+        previousProfile: currentProfile
+      });
       onOpenChange(false);
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : "체결 기록 저장에 실패했습니다.");

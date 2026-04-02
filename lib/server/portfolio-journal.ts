@@ -193,6 +193,13 @@ export async function loadPortfolioJournalForUser(userId?: string | null) {
   return normalizePortfolioJournal(document.journals[userId]);
 }
 
+export async function savePortfolioJournalForUser(userId: string, journal: unknown) {
+  const document = await loadUserPortfolioJournalsDocument();
+  document.journals[userId] = normalizePortfolioJournal(journal);
+  await saveUserPortfolioJournalsDocument(document);
+  return document.journals[userId];
+}
+
 export async function appendPortfolioTradeEventForUser(
   userId: string,
   event: Omit<PortfolioTradeEvent, "id" | "createdAt" | "createdBy" | "company" | "sector"> & {
