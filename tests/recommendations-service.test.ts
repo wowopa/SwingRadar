@@ -707,6 +707,106 @@ describe("listRecommendations", () => {
     expect(result.openingCheckLearning?.primaryLesson).toContain("승률");
   });
 
+  it("surfaces a recent strategy performance hint from closed journal tags", async () => {
+    mocks.getRecommendations.mockResolvedValue({
+      generatedAt: "2026-03-08T00:00:00.000Z",
+      items: [createRecommendation({ ticker: "AAA001", company: "Alpha", sector: "Tech", score: 82 })]
+    });
+    mocks.getDailyCandidates.mockResolvedValue({
+      generatedAt: "2026-03-08T01:00:00.000Z",
+      batchSize: 20,
+      concurrency: 2,
+      topCandidatesLimit: 10,
+      totalTickers: 100,
+      totalBatches: 5,
+      succeededBatches: 5,
+      failedBatches: [],
+      topCandidates: [createCandidate({ ticker: "AAA001", company: "Alpha", sector: "Tech" })],
+      batchSummaries: []
+    });
+    mocks.loadPortfolioProfileForUser.mockResolvedValue({
+      name: "User profile",
+      totalCapital: 10_000_000,
+      availableCash: 3_000_000,
+      maxRiskPerTradePercent: 1,
+      maxConcurrentPositions: 2,
+      sectorLimit: 1,
+      positions: [],
+      updatedAt: "2026-03-08T00:45:00.000Z",
+      updatedBy: "user-1@example.com"
+    });
+    mocks.isPortfolioProfileConfigured.mockReturnValue(true);
+    mocks.loadPortfolioJournalForUser.mockResolvedValue({
+      events: [
+        {
+          id: "aaa-exit",
+          ticker: "AAA001",
+          company: "Alpha",
+          sector: "Tech",
+          type: "exit_full",
+          quantity: 10,
+          price: 42_500,
+          fees: 0,
+          tradedAt: "2026-03-11T00:40:00.000Z",
+          note: "partial profit review",
+          createdAt: "2026-03-11T00:40:00.000Z",
+          createdBy: "user-1@example.com"
+        },
+        {
+          id: "aaa-buy",
+          ticker: "AAA001",
+          company: "Alpha",
+          sector: "Tech",
+          type: "buy",
+          quantity: 10,
+          price: 40_000,
+          fees: 0,
+          tradedAt: "2026-03-08T00:40:00.000Z",
+          note: "partial profit review",
+          createdAt: "2026-03-08T00:40:00.000Z",
+          createdBy: "user-1@example.com"
+        },
+        {
+          id: "bbb-exit",
+          ticker: "BBB001",
+          company: "Beta",
+          sector: "Tech",
+          type: "exit_full",
+          quantity: 8,
+          price: 54_000,
+          fees: 0,
+          tradedAt: "2026-03-19T00:40:00.000Z",
+          note: "partial profit review",
+          createdAt: "2026-03-19T00:40:00.000Z",
+          createdBy: "user-1@example.com"
+        },
+        {
+          id: "bbb-buy",
+          ticker: "BBB001",
+          company: "Beta",
+          sector: "Tech",
+          type: "buy",
+          quantity: 8,
+          price: 50_000,
+          fees: 0,
+          tradedAt: "2026-03-15T00:40:00.000Z",
+          note: "partial profit review",
+          createdAt: "2026-03-15T00:40:00.000Z",
+          createdBy: "user-1@example.com"
+        }
+      ],
+      updatedAt: "2026-03-19T00:40:00.000Z",
+      updatedBy: "user-1@example.com"
+    });
+
+    const result = await listRecommendations({ sort: "score_desc" }, { userId: "user-1" });
+
+    expect(result.strategyPerformanceHint).toBeDefined();
+    expect(result.strategyPerformanceHint?.count).toBe(2);
+    expect(result.strategyPerformanceHint?.realizedPnl).toBeGreaterThan(0);
+    expect(result.strategyPerformanceHint?.detail).toContain("승률");
+  });
+
   it("surfaces personal rule reminders from saved close reviews", async () => {
     mocks.getRecommendations.mockResolvedValue({
       generatedAt: "2026-03-08T00:00:00.000Z",

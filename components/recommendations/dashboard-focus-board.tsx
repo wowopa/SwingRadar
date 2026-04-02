@@ -17,6 +17,7 @@ import type {
   OpeningRecheckReviewDto,
   PersonalRuleAlertDto,
   PersonalRuleReminderDto,
+  StrategyPerformanceHintDto,
   TodayActionBoardDto,
   TodayActionBoardItemDto,
   TodayActionBoardSummaryDto,
@@ -189,6 +190,7 @@ export function DashboardFocusBoard({
   dailyScan,
   openingCheckLearning,
   openingCheckPositivePattern,
+  strategyPerformanceHint,
   personalRuleReminder,
   personalRuleAlert,
   openingReview,
@@ -200,6 +202,7 @@ export function DashboardFocusBoard({
   dailyScan: DailyScanSummaryDto | null;
   openingCheckLearning?: OpeningCheckLearningInsightDto;
   openingCheckPositivePattern?: OpeningCheckPositivePatternDto;
+  strategyPerformanceHint?: StrategyPerformanceHintDto;
   personalRuleReminder?: PersonalRuleReminderDto;
   personalRuleAlert?: PersonalRuleAlertDto;
   openingReview?: OpeningRecheckReviewDto;
@@ -270,6 +273,9 @@ export function DashboardFocusBoard({
           {openingCheckLearning ? <CompactLearningBanner insight={openingCheckLearning} /> : null}
           {openingCheckPositivePattern ? (
             <CompactPositivePatternBanner pattern={openingCheckPositivePattern} />
+          ) : null}
+          {strategyPerformanceHint ? (
+            <CompactStrategyPerformanceBanner hint={strategyPerformanceHint} />
           ) : null}
           {personalRuleAlert ? <PersonalRuleAlertBanner alert={personalRuleAlert} /> : null}
           {personalRuleReminder ? <CompactRuleReminderBanner reminder={personalRuleReminder} /> : null}
@@ -620,6 +626,23 @@ function CompactPositivePatternBanner({ pattern }: { pattern: OpeningCheckPositi
       <p className="mt-1 text-sm text-foreground/88">{pattern.detail}</p>
       <p className="mt-2 text-xs leading-5 text-muted-foreground">
         {pattern.title} · {pattern.count}건 · 승률 {pattern.winRate}%
+      </p>
+    </div>
+  );
+}
+
+function CompactStrategyPerformanceBanner({ hint }: { hint: StrategyPerformanceHintDto }) {
+  return (
+    <div className="rounded-[24px] border border-primary/20 bg-[hsl(var(--primary)/0.08)] px-4 py-3">
+      <div className="flex flex-wrap items-center gap-2">
+        <Badge variant="neutral" className="whitespace-nowrap">
+          최근 잘 맞은 전략
+        </Badge>
+        <p className="text-sm font-medium text-foreground">{hint.headline}</p>
+      </div>
+      <p className="mt-1 text-sm text-foreground/88">{hint.detail}</p>
+      <p className="mt-2 text-xs leading-5 text-muted-foreground">
+        {hint.label} · {hint.count}건 · 승률 {hint.winRate}% · {formatPrice(hint.realizedPnl)}
       </p>
     </div>
   );

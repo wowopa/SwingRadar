@@ -159,6 +159,16 @@ export interface OpeningCheckPositivePattern {
   detail: string;
 }
 
+export interface StrategyPerformanceHint {
+  key: string;
+  label: string;
+  count: number;
+  winRate: number;
+  realizedPnl: number;
+  headline: string;
+  detail: string;
+}
+
 export interface PersonalRuleReminder {
   headline: string;
   primaryRule: string;

@@ -8,11 +8,14 @@ import type {
   PersonalRuleReminderDto,
   RecommendationListItemDto,
   RecommendationsResponseDto,
+  StrategyPerformanceHintDto,
   TickerAnalysisDto
 } from "@/lib/api-contracts/swing-radar";
 import { buildAnalysisTradePlan } from "@/lib/analysis/action-plan";
 import {
   buildPortfolioOpeningCheckAnalytics,
+  buildPortfolioPerformanceDashboard,
+  filterPortfolioGroupsByDays,
   groupPortfolioJournalByTicker
 } from "@/lib/portfolio/journal-insights";
 import { getDataProvider } from "@/lib/providers";
@@ -150,6 +153,44 @@ function buildOpeningCheckPositivePattern(
     winRate: pattern.winRate,
     headline: `최근 잘 맞은 장초 조합`,
     detail: `${pattern.title} 조합은 최근 ${pattern.count}건 중 ${pattern.profitableCount}건이 수익 종료로 이어졌습니다.`
+  };
+}
+
+function buildStrategyPerformanceHint(
+  journal: Awaited<ReturnType<typeof loadPortfolioJournalForUser>> | null
+): StrategyPerformanceHintDto | undefined {
+  if (!journal?.events.length) {
+    return undefined;
+  }
+
+  const grouped = groupPortfolioJournalByTicker(journal.events);
+  const recentGroups = filterPortfolioGroupsByDays(grouped, 30);
+  const performance = buildPortfolioPerformanceDashboard(recentGroups);
+  const bestTag = performance.strategyTags
+    .filter((tag) => tag.count >= 2 && tag.realizedPnl > 0 && tag.winRate >= 50)
+    .sort((left, right) => {
+      if (right.realizedPnl !== left.realizedPnl) {
+        return right.realizedPnl - left.realizedPnl;
+      }
+      if (right.winRate !== left.winRate) {
+        return right.winRate - left.winRate;
+      }
+
+      return right.count - left.count;
+    })[0];
+
+  if (!bestTag) {
+    return undefined;
+  }
+
+  return {
+    key: bestTag.key,
+    label: bestTag.label,
+    count: bestTag.count,
+    winRate: bestTag.winRate,
+    realizedPnl: bestTag.realizedPnl,
+    headline: "최근 잘 맞은 전략 태그",
+    detail: `${bestTag.label} 메모가 붙은 최근 ${bestTag.count}건이 승률 ${bestTag.winRate}%로 마감됐습니다.`
   };
 }
 
@@ -684,6 +725,7 @@ export async function listRecommendations(
   const openingCheckLearning = buildOpeningCheckLearningInsight(openingCheckAnalytics);
   const openingCheckRiskPatterns = buildOpeningCheckRiskPatterns(openingCheckAnalytics);
   const openingCheckPositivePattern = buildOpeningCheckPositivePattern(openingCheckAnalytics);
+  const strategyPerformanceHint = buildStrategyPerformanceHint(portfolioJournal);
   const personalRuleReminder = buildPersonalRuleReminder(closeReviews);
   const personalRuleAlert = buildPersonalRuleAlert(openingCheckAnalytics, personalRuleReminder);
 
@@ -713,6 +755,7 @@ export async function listRecommendations(
     openingCheckLearning,
     openingCheckRiskPatterns,
     openingCheckPositivePattern,
+    strategyPerformanceHint,
     personalRuleReminder,
     personalRuleAlert
   };
