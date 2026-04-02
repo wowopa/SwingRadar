@@ -8,7 +8,10 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { buildTradeNoteTemplates } from "@/lib/portfolio/trade-note-templates";
+import {
+  buildTradeNoteTemplates,
+  buildTradeTagSuggestions
+} from "@/lib/portfolio/trade-note-templates";
 import { cn } from "@/lib/utils";
 import type {
   PortfolioJournal,
@@ -373,6 +376,10 @@ export function PortfolioTradeEventDialog({
     ];
     return merged.filter((item, index) => merged.indexOf(item) === index);
   }, [form.ticker, form.type, preset?.noteTemplates, recentEvents]);
+  const tagSuggestions = useMemo(
+    () => buildTradeTagSuggestions(recentEvents, { ticker: form.ticker, type: form.type }),
+    [form.ticker, form.type, recentEvents]
+  );
   const enteredQuantity = parsePositiveNumber(form.quantity);
   const quantityOverflow = Boolean(
     preset?.syncProfilePosition &&
@@ -674,23 +681,52 @@ export function PortfolioTradeEventDialog({
                 placeholder="예: 장초 확인 통과 후 첫 진입, 1차 목표가 도달해 30% 부분 익절"
                 onChange={(event) => setForm((current) => ({ ...current, note: event.target.value }))}
               />
+              {tagSuggestions.length ? (
+                <div className="space-y-2">
+                  <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
+                    최근 전략 태그
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {tagSuggestions.map((tag) => (
+                      <button
+                        key={tag}
+                        type="button"
+                        className="rounded-full border border-primary/18 bg-primary/8 px-3 py-1.5 text-xs font-medium text-primary transition hover:border-primary/32 hover:bg-primary/12"
+                        onClick={() =>
+                          setForm((current) => ({
+                            ...current,
+                            note: appendNoteTemplate(current.note, tag)
+                          }))
+                        }
+                      >
+                        {tag}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
               {noteTemplates.length ? (
-                <div className="flex flex-wrap gap-2">
-                  {noteTemplates.map((template) => (
-                    <button
-                      key={template}
-                      type="button"
-                      className="rounded-full border border-border/80 bg-[hsl(42_40%_97%)] px-3 py-1.5 text-xs text-muted-foreground transition hover:border-primary/20 hover:bg-white hover:text-foreground"
-                      onClick={() =>
-                        setForm((current) => ({
-                          ...current,
-                          note: appendNoteTemplate(current.note, template)
-                        }))
-                      }
-                    >
-                      {template}
-                    </button>
-                  ))}
+                <div className="space-y-2">
+                  <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
+                    최근 메모 문장
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {noteTemplates.map((template) => (
+                      <button
+                        key={template}
+                        type="button"
+                        className="rounded-full border border-border/80 bg-[hsl(42_40%_97%)] px-3 py-1.5 text-xs text-muted-foreground transition hover:border-primary/20 hover:bg-white hover:text-foreground"
+                        onClick={() =>
+                          setForm((current) => ({
+                            ...current,
+                            note: appendNoteTemplate(current.note, template)
+                          }))
+                        }
+                      >
+                        {template}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               ) : null}
             </div>

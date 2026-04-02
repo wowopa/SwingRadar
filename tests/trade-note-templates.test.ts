@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { buildTradeNoteTemplates } from "@/lib/portfolio/trade-note-templates";
+import {
+  buildTradeNoteTemplates,
+  buildTradeTagSuggestions
+} from "@/lib/portfolio/trade-note-templates";
 import type { PortfolioTradeEvent } from "@/types/recommendation";
 
 const events: PortfolioTradeEvent[] = [
@@ -69,5 +72,28 @@ describe("buildTradeNoteTemplates", () => {
     expect(templates).toContain("1차 목표 도달, 부분 익절");
     expect(templates).toContain("부분 익절");
     expect(templates.length).toBeLessThanOrEqual(4);
+  });
+});
+
+describe("buildTradeTagSuggestions", () => {
+  it("prioritizes short repeated tags from the same ticker and trade type", () => {
+    const suggestions = buildTradeTagSuggestions(events, {
+      ticker: "005930",
+      type: "take_profit_partial"
+    });
+
+    expect(suggestions[0]).toBe("부분 익절");
+    expect(suggestions).toContain("1차 목표 도달");
+  });
+
+  it("falls back to same type and filters out long note sentences", () => {
+    const suggestions = buildTradeTagSuggestions(events, {
+      type: "take_profit_partial",
+      limit: 4
+    });
+
+    expect(suggestions).toContain("부분 익절");
+    expect(suggestions.every((item) => item.length <= 18)).toBe(true);
+    expect(suggestions.length).toBeLessThanOrEqual(4);
   });
 });
