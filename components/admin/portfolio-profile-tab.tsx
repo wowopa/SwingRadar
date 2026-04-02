@@ -1,6 +1,7 @@
 "use client";
 
-import { Plus, Trash2 } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Plus, Search, Trash2 } from "lucide-react";
 
 import type { PortfolioProfilePayload } from "@/components/admin/dashboard-types";
 import { Field, formatDateTime } from "@/components/admin/dashboard-shared";
@@ -8,6 +9,20 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+
+type SymbolSearchItem = {
+  ticker: string;
+  company: string;
+  sector: string;
+  market: "KOSPI" | "KOSDAQ" | "NYSE" | "NASDAQ" | "AMEX";
+  status: "ready" | "pending";
+};
+
+type SymbolSearchResponse = {
+  items: SymbolSearchItem[];
+  mode: "search" | "featured";
+  description: string;
+};
 
 function updateNumber(value: string) {
   const parsed = Number(value);
@@ -20,6 +35,144 @@ function toManwonValue(value: number) {
 
 function fromManwonValue(value: string) {
   return Math.round(updateNumber(value)) * 10000;
+}
+
+function PositionSymbolSearch({
+  value,
+  onSelect
+}: {
+  value: {
+    ticker: string;
+    company: string;
+    sector: string;
+  };
+  onSelect: (next: { ticker: string; company: string; sector: string }) => void;
+}) {
+  const fieldRef = useRef<HTMLDivElement | null>(null);
+  const [query, setQuery] = useState(value.company || value.ticker);
+  const [results, setResults] = useState<SymbolSearchItem[]>([]);
+  const [description, setDescription] = useState(
+    "종목명이나 종목 코드를 입력하면 관련 종목을 바로 찾을 수 있습니다."
+  );
+  const [isOpen, setIsOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    setQuery(value.company || value.ticker || "");
+  }, [value.company, value.ticker]);
+
+  useEffect(() => {
+    function handlePointerDown(event: MouseEvent) {
+      if (!fieldRef.current?.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handlePointerDown);
+    return () => document.removeEventListener("mousedown", handlePointerDown);
+  }, []);
+
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+    let ignore = false;
+    setLoading(true);
+
+    async function loadSymbols() {
+      const response = await fetch(`/api/symbols?q=${encodeURIComponent(query.trim())}&limit=8`, {
+        cache: "no-store"
+      });
+
+      if (!response.ok) {
+        if (!ignore) {
+          setResults([]);
+          setDescription("종목 검색 결과를 불러오지 못했습니다.");
+          setLoading(false);
+        }
+        return;
+      }
+
+      const payload = (await response.json()) as SymbolSearchResponse;
+      if (!ignore) {
+        setResults(payload.items);
+        setDescription(payload.description);
+        setLoading(false);
+      }
+    }
+
+    void loadSymbols();
+
+    return () => {
+      ignore = true;
+    };
+  }, [isOpen, query]);
+
+  return (
+    <div ref={fieldRef} className="relative space-y-3">
+      <div className="relative">
+        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          value={query}
+          placeholder="예: 삼성전자, 005930"
+          className="pl-9"
+          onFocus={() => setIsOpen(true)}
+          onChange={(event) => {
+            setQuery(event.target.value);
+            setIsOpen(true);
+          }}
+        />
+      </div>
+
+      {value.ticker ? (
+        <div className="rounded-[18px] border border-primary/24 bg-[linear-gradient(180deg,rgba(139,107,46,0.08),rgba(255,255,255,0.94))] px-3 py-3 text-sm text-foreground/82">
+          선택된 종목: {value.company || value.ticker} · {value.ticker}
+        </div>
+      ) : null}
+
+      {isOpen ? (
+        <div className="absolute left-0 right-0 top-[calc(100%+0.5rem)] z-30 rounded-[20px] border border-border/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(246,241,232,0.94))] p-2 shadow-[0_24px_48px_rgba(28,28,35,0.14)]">
+          <div className="px-2 pb-2 pt-1 text-xs leading-5 text-muted-foreground">
+            {loading ? "종목을 찾는 중입니다..." : description}
+          </div>
+
+          <div className="max-h-72 space-y-1 overflow-y-auto">
+            {results.length ? (
+              results.map((item) => (
+                <button
+                  key={item.ticker}
+                  type="button"
+                  className="flex w-full items-center justify-between rounded-[16px] px-3 py-3 text-left transition hover:bg-[hsl(42_40%_96%)]"
+                  onClick={() => {
+                    onSelect({
+                      ticker: item.ticker,
+                      company: item.company,
+                      sector: item.sector
+                    });
+                    setQuery(item.company);
+                    setIsOpen(false);
+                  }}
+                >
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold text-foreground">{item.company}</p>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {item.ticker} · {item.market} · {item.sector}
+                    </p>
+                  </div>
+                  <span className="rounded-full border border-border/80 bg-white/90 px-2 py-0.5 text-[11px] text-muted-foreground">
+                    {item.status === "ready" ? "분석 가능" : "준비 중"}
+                  </span>
+                </button>
+              ))
+            ) : (
+              <div className="px-3 py-4 text-sm text-muted-foreground">검색 결과가 없습니다.</div>
+            )}
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
 }
 
 export function PortfolioProfileTab({
@@ -159,19 +312,35 @@ export function PortfolioProfileTab({
             <div className="space-y-4">
               {profile.positions.map((position, index) => (
                 <div
-                  key={`${position.ticker || "new"}-${index}`}
+                  key={`position-${index}`}
                   className="rounded-[24px] border border-border/70 bg-secondary/30 p-4"
                 >
                   <div className="grid gap-4 xl:grid-cols-[0.9fr_1fr_1fr_1fr_auto]">
-                    <Field label="티커">
+                    <Field label="종목 검색">
                       <Input
+                        className="hidden"
                         value={position.ticker}
                         placeholder="005930"
-                        onChange={(event) =>
+                        readOnly
+                      />
+                      <PositionSymbolSearch
+                        value={{
+                          ticker: position.ticker,
+                          company: position.company,
+                          sector: position.sector
+                        }}
+                        onSelect={(next) =>
                           setProfile((current) => ({
                             ...current,
                             positions: current.positions.map((item, itemIndex) =>
-                              itemIndex === index ? { ...item, ticker: event.target.value.trim().toUpperCase() } : item
+                              itemIndex === index
+                                ? {
+                                    ...item,
+                                    ticker: next.ticker,
+                                    company: next.company,
+                                    sector: next.sector
+                                  }
+                                : item
                             )
                           }))
                         }

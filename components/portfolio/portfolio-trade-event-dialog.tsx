@@ -380,9 +380,10 @@ export function PortfolioTradeEventDialog({
     () => buildTradeTagSuggestions(recentEvents, { ticker: form.ticker, type: form.type }),
     [form.ticker, form.type, recentEvents]
   );
+  const shouldSyncProfilePosition = preset?.syncProfilePosition ?? true;
   const enteredQuantity = parsePositiveNumber(form.quantity);
   const quantityOverflow = Boolean(
-    preset?.syncProfilePosition &&
+    shouldSyncProfilePosition &&
       typeof maxQuantity === "number" &&
       maxQuantity > 0 &&
       enteredQuantity > maxQuantity
@@ -419,7 +420,7 @@ export function PortfolioTradeEventDialog({
           fees: parseNonNegativeNumber(form.fees),
           tradedAt: toIsoFromLocalInput(form.tradedAt),
           note: form.note.trim(),
-          syncProfilePosition: Boolean(preset?.syncProfilePosition)
+          syncProfilePosition: shouldSyncProfilePosition
         })
       });
       const payload = (await response.json().catch(() => ({}))) as {
@@ -732,7 +733,7 @@ export function PortfolioTradeEventDialog({
             </div>
           </Field>
 
-          {preset?.syncProfilePosition ? (
+          {shouldSyncProfilePosition ? (
             <div className="rounded-[20px] border border-primary/24 bg-[linear-gradient(180deg,rgba(139,107,46,0.08),rgba(255,255,255,0.94))] px-4 py-3 text-sm leading-6 text-foreground/82">
               저장하면 거래 기록과 함께 현재 보유 수량, 가용 현금도 같이 반영합니다.
             </div>

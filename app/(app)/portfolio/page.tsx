@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { PortfolioWorkspace } from "@/components/portfolio/portfolio-workspace";
 import { PageHeader } from "@/components/shared/page-header";
 import { PublicDataStatusBar } from "@/components/shared/public-data-status-bar";
+import { groupPortfolioJournalByTicker, isClosingPortfolioTradeEventType } from "@/lib/portfolio/journal-insights";
 import { loadPortfolioCloseReviewsForUser } from "@/lib/server/portfolio-close-reviews";
 import { loadPortfolioJournalForUser } from "@/lib/server/portfolio-journal";
 import { loadPortfolioPersonalRulesForUser } from "@/lib/server/portfolio-personal-rules";
@@ -13,6 +14,35 @@ import { getCurrentUserSession } from "@/lib/server/user-auth";
 import { listRecommendations } from "@/lib/services/recommendations-service";
 
 export const dynamic = "force-dynamic";
+
+function mergeProfilePositionsWithJournal(
+  profile: Awaited<ReturnType<typeof loadPortfolioProfileForUser>>,
+  journal: Awaited<ReturnType<typeof loadPortfolioJournalForUser>>
+) {
+  const merged = new Map(profile.positions.map((position) => [position.ticker, position]));
+
+  for (const group of groupPortfolioJournalByTicker(journal.events)) {
+    if (isClosingPortfolioTradeEventType(group.latestEvent.type) || group.metrics.remainingQuantity <= 0) {
+      continue;
+    }
+
+    const current = merged.get(group.ticker);
+    merged.set(group.ticker, {
+      ticker: group.ticker,
+      company: group.company,
+      sector: group.sector,
+      quantity: group.metrics.remainingQuantity,
+      averagePrice: group.metrics.averageCost,
+      enteredAt: group.firstEntryAt.slice(0, 10),
+      note: current?.note ?? group.latestEvent.note ?? undefined
+    });
+  }
+
+  return {
+    ...profile,
+    positions: [...merged.values()].sort((left, right) => left.ticker.localeCompare(right.ticker, "en"))
+  };
+}
 
 export default async function PortfolioPage({
   searchParams
@@ -39,6 +69,7 @@ export default async function PortfolioPage({
     loadPortfolioPersonalRulesForUser(session.user.id)
   ]);
   const statusSummary = buildPublicDataStatusSummary("recommendations", response.generatedAt);
+  const mergedProfile = mergeProfilePositionsWithJournal(profile, journal);
 
   return (
     <main className="space-y-5">
@@ -46,10 +77,12 @@ export default async function PortfolioPage({
       <PublicDataStatusBar summary={statusSummary} />
       <PortfolioWorkspace
         initialProfile={{
-          ...profile,
+          ...mergedProfile,
           name:
-            profile.positions.length > 0 || profile.totalCapital > 0 || profile.availableCash > 0
-              ? profile.name
+            mergedProfile.positions.length > 0 ||
+            mergedProfile.totalCapital > 0 ||
+            mergedProfile.availableCash > 0
+              ? mergedProfile.name
               : `${session.user.displayName} 포트폴리오`
         }}
         initialJournal={journal}

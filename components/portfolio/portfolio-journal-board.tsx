@@ -153,7 +153,9 @@ export function PortfolioJournalBoard({
       : "첫 체결을 기록하면 종목별 생애주기와 종료 결과를 이곳에서 다시 볼 수 있습니다.";
 
   function openManualDialog() {
-    setDialogPreset(null);
+    setDialogPreset({
+      syncProfilePosition: true
+    });
     setIsDialogOpen(true);
   }
 
