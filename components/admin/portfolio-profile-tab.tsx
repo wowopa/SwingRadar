@@ -132,7 +132,7 @@ function PositionSymbolSearch({
       ) : null}
 
       {isOpen ? (
-        <div className="absolute left-0 right-0 top-[calc(100%+0.5rem)] z-30 rounded-[20px] border border-border/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(246,241,232,0.94))] p-2 shadow-[0_24px_48px_rgba(28,28,35,0.14)]">
+        <div className="absolute left-0 top-[calc(100%+0.5rem)] z-30 w-[min(92vw,22rem)] sm:w-[30rem] lg:w-[34rem] rounded-[20px] border border-border/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(246,241,232,0.94))] p-2 shadow-[0_24px_48px_rgba(28,28,35,0.14)]">
           <div className="px-2 pb-2 pt-1 text-xs leading-5 text-muted-foreground">
             {loading ? "종목을 찾는 중입니다..." : description}
           </div>
