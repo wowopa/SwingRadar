@@ -720,7 +720,11 @@ export function DailyCandidatesPanel({
                         <div className="flex flex-wrap items-center justify-between gap-3">
                           <div>
                             <p className="text-sm font-semibold text-foreground">자동 제안 상태</p>
-                            <p className="mt-1 text-xs text-muted-foreground">3개 체크를 고르면 바로 저장할 수 있습니다.</p>
+                            <p className="mt-1 text-xs text-muted-foreground">
+                              {personalRuleReminder
+                                ? "3개 체크 후 개인 규칙까지 같이 보고 저장합니다."
+                                : "3개 체크를 고르면 바로 저장할 수 있습니다."}
+                            </p>
                           </div>
                           <Badge
                             variant={suggestedStatus ? getOpeningRecheckStatusMeta(suggestedStatus).variant : "secondary"}
@@ -728,6 +732,13 @@ export function DailyCandidatesPanel({
                             {suggestedStatus ? getOpeningRecheckStatusMeta(suggestedStatus).label : "체크 필요"}
                           </Badge>
                         </div>
+
+                        {personalRuleReminder ? (
+                          <div className="mt-3 rounded-2xl border border-caution/24 bg-[hsl(var(--caution)/0.08)] px-3 py-3">
+                            <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">내 규칙 우선</p>
+                            <p className="mt-1 text-sm text-foreground/88">{personalRuleReminder.primaryRule}</p>
+                          </div>
+                        ) : null}
 
                         <div className="mt-3 flex flex-col gap-2 lg:mt-4 lg:flex-row lg:items-center">
                           <Button

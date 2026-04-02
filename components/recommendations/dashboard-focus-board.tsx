@@ -202,6 +202,27 @@ export function DashboardFocusBoard({
   const holdingAttentionItems = getHoldingAttentionItems(holdingActionBoard);
   const openingSummary = getOpeningCheckSummary(dailyScan);
   const setupChecklist = buildSetupChecklist(todayActionBoard, holdingActionBoard, openingSummary);
+  const hasPendingOpeningChecks = openingSummary.counts.pending > 0;
+  const openingSummaryLine = personalRuleReminder
+    ? "최근 회고 규칙을 먼저 확인하고 저장합니다."
+    : "3개 체크 후 저장하고 다음 종목으로 넘어갑니다.";
+  const buyReviewCaption = personalRuleReminder
+    ? "장초 확인과 내 규칙 통과 종목"
+    : buyReviewItems.length
+      ? "장초 확인 통과 종목"
+      : "장초 확인 후 채워집니다";
+  const buyReviewSummaryLine =
+    personalRuleReminder && hasPendingOpeningChecks
+      ? "장초 확인과 개인 규칙 점검이 끝난 뒤 검토합니다."
+      : buyReviewItems.length
+        ? "가장 먼저 검토할 종목으로 바로 이동합니다."
+        : "아직 남은 종목이 없습니다.";
+  const buyReviewAccent =
+    personalRuleReminder && hasPendingOpeningChecks
+      ? "muted"
+      : buyReviewItems.length
+        ? "positive"
+        : "muted";
 
   return (
     <section className="space-y-4">
@@ -239,7 +260,7 @@ export function DashboardFocusBoard({
               title="장초 확인"
               count={formatQueueCount(openingSummary.counts.pending)}
               caption="오늘 먼저 볼 종목"
-              summaryLine="3개 체크 후 저장하고 다음 종목으로 넘어갑니다."
+              summaryLine={openingSummaryLine}
               accent="primary"
               icon={<Clock3 className="h-4 w-4" />}
             />
@@ -247,9 +268,9 @@ export function DashboardFocusBoard({
               href={buyReviewItems[0] ? `/analysis/${buyReviewItems[0].ticker}` : "/opening-check"}
               title="오늘 매수 검토"
               count={formatQueueCount(buyReviewItems.length)}
-              caption={buyReviewItems.length ? "장초 확인 통과 종목" : "장초 확인 후 채워집니다"}
-              summaryLine={buyReviewItems.length ? "가장 먼저 검토할 종목으로 바로 이동합니다." : "아직 남은 종목이 없습니다."}
-              accent={buyReviewItems.length ? "positive" : "muted"}
+              caption={buyReviewCaption}
+              summaryLine={buyReviewSummaryLine}
+              accent={buyReviewAccent}
               icon={<Target className="h-4 w-4" />}
             />
             <PrimaryActionCard
