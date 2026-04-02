@@ -754,4 +754,153 @@ describe("listRecommendations", () => {
     });
     expect(result.personalRuleReminder?.secondaryRules).toContain("확인 가격 실패면 당일 보류");
   });
+  it("surfaces a stronger personal rule alert when avoided trades are repeatedly overridden", async () => {
+    mocks.getRecommendations.mockResolvedValue({
+      generatedAt: "2026-03-08T00:00:00.000Z",
+      items: [
+        createRecommendation({ ticker: "AAA001", company: "Alpha", sector: "Tech", score: 90 }),
+        createRecommendation({ ticker: "BBB001", company: "Beta", sector: "Tech", score: 84 })
+      ]
+    });
+    mocks.getDailyCandidates.mockResolvedValue({
+      generatedAt: "2026-03-08T01:00:00.000Z",
+      batchSize: 20,
+      concurrency: 2,
+      topCandidatesLimit: 10,
+      totalTickers: 100,
+      totalBatches: 5,
+      succeededBatches: 5,
+      failedBatches: [],
+      topCandidates: [
+        createCandidate({ ticker: "AAA001", company: "Alpha", sector: "Tech" }),
+        createCandidate({ ticker: "BBB001", company: "Beta", sector: "Tech" })
+      ],
+      batchSummaries: []
+    });
+    mocks.loadPortfolioProfileForUser.mockResolvedValue({
+      name: "User profile",
+      totalCapital: 10_000_000,
+      availableCash: 3_000_000,
+      maxRiskPerTradePercent: 1,
+      maxConcurrentPositions: 2,
+      sectorLimit: 1,
+      positions: [],
+      updatedAt: "2026-03-08T00:45:00.000Z",
+      updatedBy: "user-1@example.com"
+    });
+    mocks.isPortfolioProfileConfigured.mockReturnValue(true);
+    mocks.loadPortfolioJournalForUser.mockResolvedValue({
+      events: [
+        {
+          id: "aaa-exit",
+          ticker: "AAA001",
+          company: "Alpha",
+          sector: "Tech",
+          type: "stop_loss",
+          quantity: 10,
+          price: 38_200,
+          fees: 0,
+          tradedAt: "2026-03-11T00:40:00.000Z",
+          note: "확인 가격 실패 후 강행",
+          createdAt: "2026-03-11T00:40:00.000Z",
+          createdBy: "user-1@example.com"
+        },
+        {
+          id: "aaa-buy",
+          ticker: "AAA001",
+          company: "Alpha",
+          sector: "Tech",
+          type: "buy",
+          quantity: 10,
+          price: 40_000,
+          fees: 0,
+          tradedAt: "2026-03-08T00:40:00.000Z",
+          note: "보류인데도 진입",
+          createdAt: "2026-03-08T00:40:00.000Z",
+          createdBy: "user-1@example.com"
+        },
+        {
+          id: "bbb-exit",
+          ticker: "BBB001",
+          company: "Beta",
+          sector: "Tech",
+          type: "manual_exit",
+          quantity: 8,
+          price: 48_000,
+          fees: 0,
+          tradedAt: "2026-03-10T00:40:00.000Z",
+          note: "장초 확인 보류 후 재진입",
+          createdAt: "2026-03-10T00:40:00.000Z",
+          createdBy: "user-1@example.com"
+        },
+        {
+          id: "bbb-buy",
+          ticker: "BBB001",
+          company: "Beta",
+          sector: "Tech",
+          type: "buy",
+          quantity: 8,
+          price: 50_000,
+          fees: 0,
+          tradedAt: "2026-03-08T01:10:00.000Z",
+          note: "보류 강행",
+          createdAt: "2026-03-08T01:10:00.000Z",
+          createdBy: "user-1@example.com"
+        }
+      ],
+      updatedAt: "2026-03-11T00:40:00.000Z",
+      updatedBy: "user-1@example.com"
+    });
+    mocks.listUserOpeningRecheckScans.mockResolvedValue([
+      {
+        scanKey: "2026-03-08T01:00:00.000Z",
+        updatedAt: "2026-03-08T01:05:00.000Z",
+        items: {
+          AAA001: {
+            ticker: "AAA001",
+            status: "avoid",
+            updatedAt: "2026-03-08T01:05:00.000Z",
+            updatedBy: "user-1@example.com",
+            checklist: {
+              gap: "overheated",
+              confirmation: "failed",
+              action: "hold"
+            }
+          },
+          BBB001: {
+            ticker: "BBB001",
+            status: "excluded",
+            updatedAt: "2026-03-08T01:08:00.000Z",
+            updatedBy: "user-1@example.com",
+            checklist: {
+              gap: "elevated",
+              confirmation: "failed",
+              action: "hold"
+            }
+          }
+        }
+      }
+    ]);
+    mocks.loadPortfolioCloseReviewsForUser.mockResolvedValue({
+      "AAA001:2026-03-11T00:40:00.000Z": {
+        positionKey: "AAA001:2026-03-11T00:40:00.000Z",
+        ticker: "AAA001",
+        closedAt: "2026-03-11T00:40:00.000Z",
+        watchoutsNote: "확인 가격 실패 후 강행 금지",
+        nextRuleNote: "보류 상태에서는 진입 금지",
+        updatedAt: "2026-03-11T08:00:00.000Z",
+        updatedBy: "tester@example.com"
+      }
+    });
+
+    const result = await listRecommendations({ sort: "score_desc" }, { userId: "user-1" });
+
+    expect(result.personalRuleAlert).toMatchObject({
+      headline: "보류·제외 판단 강행 2건",
+      ctaLabel: "장초 확인 먼저",
+      ctaHref: "/opening-check"
+    });
+    expect(result.personalRuleAlert?.detail).toContain("보류 상태에서는 진입 금지");
+    expect(result.personalRuleAlert?.statLine).toContain("손실 종료 2건");
+  });
 });

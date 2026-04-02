@@ -34,6 +34,7 @@ export default async function RecommendationsPage({
         dailyScan={response.dailyScan}
         openingCheckLearning={response.openingCheckLearning}
         personalRuleReminder={response.personalRuleReminder}
+        personalRuleAlert={response.personalRuleAlert}
         openingReview={response.openingReview}
         openingCheckCompleted={openingCheckCompleted}
       />

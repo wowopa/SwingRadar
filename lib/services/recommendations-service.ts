@@ -2,6 +2,7 @@ import type {
   DailyCandidateDto,
   OpeningCheckLearningInsightDto,
   OpeningRecheckDecisionDto,
+  PersonalRuleAlertDto,
   PersonalRuleReminderDto,
   RecommendationListItemDto,
   RecommendationsResponseDto,
@@ -175,6 +176,48 @@ function buildPersonalRuleReminder(
         : repeatedCount > 0
           ? "최근 종료 회고에서 반복된 주의점을 먼저 확인하세요."
           : "최근 종료 회고에서 남긴 개인 규칙입니다."
+  };
+}
+
+function buildPersonalRuleAlert(
+  analytics: ReturnType<typeof buildPortfolioOpeningCheckAnalytics>,
+  reminder?: PersonalRuleReminderDto
+): PersonalRuleAlertDto | undefined {
+  if (!analytics || analytics.overrideCount < 2) {
+    return undefined;
+  }
+
+  const riskyStatuses = analytics.statusInsights.filter((item) => {
+    return item.status === "avoid" || item.status === "excluded";
+  });
+
+  if (!riskyStatuses.length) {
+    return undefined;
+  }
+
+  const dominantRisk = [...riskyStatuses].sort((left, right) => {
+    if (right.count !== left.count) {
+      return right.count - left.count;
+    }
+    if (right.lossCount !== left.lossCount) {
+      return right.lossCount - left.lossCount;
+    }
+
+    return left.winRate - right.winRate;
+  })[0];
+
+  const riskyLossCount = riskyStatuses.reduce((sum, item) => sum + item.lossCount, 0);
+  const riskyProfitCount = riskyStatuses.reduce((sum, item) => sum + item.profitableCount, 0);
+  const repeatedRule = reminder?.primaryRule;
+
+  return {
+    headline: `보류·제외 판단 강행 ${analytics.overrideCount}건`,
+    detail: repeatedRule
+      ? `${repeatedRule} 규칙이 있었지만 최근 ${dominantRisk.count}건에서 ${dominantRisk.label} 판단 이후에도 진입했습니다.`
+      : `${dominantRisk.label} 판단 이후에도 진입한 거래가 반복되고 있습니다. 오늘은 장초 확인 저장 전 규칙을 다시 확인하세요.`,
+    statLine: `손실 종료 ${riskyLossCount}건 · 수익 종료 ${riskyProfitCount}건`,
+    ctaLabel: "장초 확인 먼저",
+    ctaHref: "/opening-check"
   };
 }
 
@@ -575,15 +618,15 @@ export async function listRecommendations(
         })
       : undefined;
   const openingReview = buildOpeningRecheckReview(openingRecheckScans, tracking.history);
-  const openingCheckLearning = buildOpeningCheckLearningInsight(
-    portfolioJournal
-      ? buildPortfolioOpeningCheckAnalytics(
-          groupPortfolioJournalByTicker(portfolioJournal.events),
-          userOpeningRecheckScans
-        )
-      : undefined
-  );
+  const openingCheckAnalytics = portfolioJournal
+    ? buildPortfolioOpeningCheckAnalytics(
+        groupPortfolioJournalByTicker(portfolioJournal.events),
+        userOpeningRecheckScans
+      )
+    : undefined;
+  const openingCheckLearning = buildOpeningCheckLearningInsight(openingCheckAnalytics);
   const personalRuleReminder = buildPersonalRuleReminder(closeReviews);
+  const personalRuleAlert = buildPersonalRuleAlert(openingCheckAnalytics, personalRuleReminder);
 
   return {
     generatedAt: dailyCandidates?.generatedAt ?? source.generatedAt,
@@ -609,6 +652,7 @@ export async function listRecommendations(
     holdingActionBoard,
     openingReview,
     openingCheckLearning,
-    personalRuleReminder
+    personalRuleReminder,
+    personalRuleAlert
   };
 }

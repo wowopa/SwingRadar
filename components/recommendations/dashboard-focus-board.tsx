@@ -13,6 +13,7 @@ import type {
   HoldingActionStatusDto,
   OpeningCheckLearningInsightDto,
   OpeningRecheckReviewDto,
+  PersonalRuleAlertDto,
   PersonalRuleReminderDto,
   TodayActionBoardDto,
   TodayActionBoardItemDto,
@@ -186,6 +187,7 @@ export function DashboardFocusBoard({
   dailyScan,
   openingCheckLearning,
   personalRuleReminder,
+  personalRuleAlert,
   openingReview,
   openingCheckCompleted = false
 }: {
@@ -195,6 +197,7 @@ export function DashboardFocusBoard({
   dailyScan: DailyScanSummaryDto | null;
   openingCheckLearning?: OpeningCheckLearningInsightDto;
   personalRuleReminder?: PersonalRuleReminderDto;
+  personalRuleAlert?: PersonalRuleAlertDto;
   openingReview?: OpeningRecheckReviewDto;
   openingCheckCompleted?: boolean;
 }) {
@@ -203,22 +206,31 @@ export function DashboardFocusBoard({
   const openingSummary = getOpeningCheckSummary(dailyScan);
   const setupChecklist = buildSetupChecklist(todayActionBoard, holdingActionBoard, openingSummary);
   const hasPendingOpeningChecks = openingSummary.counts.pending > 0;
-  const openingSummaryLine = personalRuleReminder
+  const hasRuleAlert = Boolean(personalRuleAlert);
+  const openingSummaryLine = hasRuleAlert
+    ? "반복 위반 경고가 있어 오늘은 저장 전 규칙을 다시 확인합니다."
+    : personalRuleReminder
     ? "최근 회고 규칙을 먼저 확인하고 저장합니다."
     : "3개 체크 후 저장하고 다음 종목으로 넘어갑니다.";
-  const buyReviewCaption = personalRuleReminder
+  const buyReviewCaption = hasRuleAlert
+    ? "장초 확인과 경고 해소 후 검토"
+    : personalRuleReminder
     ? "장초 확인과 내 규칙 통과 종목"
     : buyReviewItems.length
       ? "장초 확인 통과 종목"
       : "장초 확인 후 채워집니다";
   const buyReviewSummaryLine =
-    personalRuleReminder && hasPendingOpeningChecks
+    hasRuleAlert && hasPendingOpeningChecks
+      ? "반복 위반 경고가 있어 장초 확인 저장을 먼저 마친 뒤 검토합니다."
+      : personalRuleReminder && hasPendingOpeningChecks
       ? "장초 확인과 개인 규칙 점검이 끝난 뒤 검토합니다."
       : buyReviewItems.length
         ? "가장 먼저 검토할 종목으로 바로 이동합니다."
         : "아직 남은 종목이 없습니다.";
   const buyReviewAccent =
-    personalRuleReminder && hasPendingOpeningChecks
+    hasRuleAlert && hasPendingOpeningChecks
+      ? "muted"
+      : personalRuleReminder && hasPendingOpeningChecks
       ? "muted"
       : buyReviewItems.length
         ? "positive"
@@ -252,6 +264,7 @@ export function DashboardFocusBoard({
           )}
 
           {openingCheckLearning ? <CompactLearningBanner insight={openingCheckLearning} /> : null}
+          {personalRuleAlert ? <PersonalRuleAlertBanner alert={personalRuleAlert} /> : null}
           {personalRuleReminder ? <CompactRuleReminderBanner reminder={personalRuleReminder} /> : null}
 
           <div className="grid gap-3 xl:grid-cols-3">
@@ -471,6 +484,31 @@ export function DashboardFocusBoard({
         </div>
       </details>
     </section>
+  );
+}
+
+function PersonalRuleAlertBanner({ alert }: { alert: PersonalRuleAlertDto }) {
+  return (
+    <div className="rounded-[24px] border border-caution/28 bg-[linear-gradient(145deg,hsl(var(--caution)/0.14),rgba(255,255,255,0.92))] px-4 py-4 shadow-[0_18px_44px_-34px_rgba(199,74,71,0.34)]">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="space-y-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge variant="caution" className="whitespace-nowrap">
+              반복 위반 경고
+            </Badge>
+            <p className="text-sm font-semibold text-foreground">{alert.headline}</p>
+          </div>
+          <p className="text-sm leading-6 text-foreground/88">{alert.detail}</p>
+          <p className="text-xs leading-5 text-muted-foreground">{alert.statLine}</p>
+        </div>
+        <Link
+          href={alert.ctaHref}
+          className="inline-flex h-9 shrink-0 items-center whitespace-nowrap rounded-full border border-caution/28 bg-white/90 px-3.5 text-xs font-medium text-caution transition hover:bg-[hsl(var(--caution)/0.08)]"
+        >
+          {alert.ctaLabel}
+        </Link>
+      </div>
+    </div>
   );
 }
 

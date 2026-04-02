@@ -146,6 +146,14 @@ export interface PersonalRuleReminder {
   note: string;
 }
 
+export interface PersonalRuleAlert {
+  headline: string;
+  detail: string;
+  statLine: string;
+  ctaLabel: string;
+  ctaHref: string;
+}
+
 export interface OpeningRecheckTickerInsight {
   scanKey: string;
   signalDate: string;

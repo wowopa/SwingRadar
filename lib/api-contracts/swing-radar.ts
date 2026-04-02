@@ -121,6 +121,14 @@ export interface PersonalRuleReminderDto {
   note: string;
 }
 
+export interface PersonalRuleAlertDto {
+  headline: string;
+  detail: string;
+  statLine: string;
+  ctaLabel: string;
+  ctaHref: string;
+}
+
 export interface OpeningRecheckTickerInsightDto {
   scanKey: string;
   signalDate: string;
@@ -415,6 +423,7 @@ export interface RecommendationsResponseDto {
   openingReview?: OpeningRecheckReviewDto;
   openingCheckLearning?: OpeningCheckLearningInsightDto;
   personalRuleReminder?: PersonalRuleReminderDto;
+  personalRuleAlert?: PersonalRuleAlertDto;
 }
 
 export interface AnalysisSummaryMetricDto {
