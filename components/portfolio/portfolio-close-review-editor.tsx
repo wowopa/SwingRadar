@@ -8,6 +8,36 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import type { PortfolioCloseReviewEntry } from "@/types/recommendation";
 
+const strengthTemplates = [
+  "장초 확인 기준을 지켰다",
+  "계획한 진입가 근처에서 들어갔다",
+  "부분 익절 타이밍이 적절했다",
+  "손절 기준을 흔들리지 않고 지켰다"
+];
+
+const watchoutTemplates = [
+  "추격 진입 성향이 보였다",
+  "손절 결정을 늦췄다",
+  "부분 익절 없이 한 번에 정리했다",
+  "장초 보류 신호를 무시했다"
+];
+
+const nextRuleTemplates = [
+  "보류 상태에서는 당일 진입하지 않기",
+  "확인 가격 실패면 바로 관찰 유지",
+  "1차 목표 도달 시 일부 정리하기",
+  "손절 기준은 장중에 미루지 않기"
+];
+
+function appendTemplate(current: string, template: string) {
+  const trimmed = current.trim();
+  if (trimmed.includes(template)) {
+    return trimmed;
+  }
+
+  return trimmed ? `${trimmed}\n- ${template}` : template;
+}
+
 export function PortfolioCloseReviewEditor({
   positionKey,
   ticker,
@@ -86,6 +116,8 @@ export function PortfolioCloseReviewEditor({
           placeholder="예: 장초 확인 통과 후 계획대로 첫 진입"
           value={strengthsNote}
           onChange={setStrengthsNote}
+          templates={strengthTemplates}
+          onApplyTemplate={(template) => setStrengthsNote((current) => appendTemplate(current, template))}
           compact={compact}
         />
         <ReviewTextarea
@@ -93,6 +125,8 @@ export function PortfolioCloseReviewEditor({
           placeholder="예: 부분 익절 없이 한 번에 정리"
           value={watchoutsNote}
           onChange={setWatchoutsNote}
+          templates={watchoutTemplates}
+          onApplyTemplate={(template) => setWatchoutsNote((current) => appendTemplate(current, template))}
           compact={compact}
         />
         <ReviewTextarea
@@ -100,6 +134,8 @@ export function PortfolioCloseReviewEditor({
           placeholder="예: 보류 상태에서는 당일 진입하지 않기"
           value={nextRuleNote}
           onChange={setNextRuleNote}
+          templates={nextRuleTemplates}
+          onApplyTemplate={(template) => setNextRuleNote((current) => appendTemplate(current, template))}
           compact={compact}
         />
       </div>
@@ -119,17 +155,37 @@ function ReviewTextarea({
   placeholder,
   value,
   onChange,
+  templates,
+  onApplyTemplate,
   compact
 }: {
   label: string;
   placeholder: string;
   value: string;
   onChange: (value: string) => void;
+  templates: string[];
+  onApplyTemplate: (template: string) => void;
   compact: boolean;
 }) {
   return (
-    <label className="space-y-2">
-      <p className="text-sm font-medium text-foreground">{label}</p>
+    <div className="space-y-2">
+      <div className="space-y-2">
+        <p className="text-sm font-medium text-foreground">{label}</p>
+        <div className="flex flex-wrap gap-2">
+          {templates.map((template) => (
+            <Button
+              key={template}
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-7 rounded-full px-3 text-xs"
+              onClick={() => onApplyTemplate(template)}
+            >
+              {template}
+            </Button>
+          ))}
+        </div>
+      </div>
       <Textarea
         value={value}
         onChange={(event) => onChange(event.target.value)}
@@ -137,6 +193,6 @@ function ReviewTextarea({
         rows={compact ? 3 : 4}
         className="min-h-0 border-border/80 bg-white/90 text-sm leading-6"
       />
-    </label>
+    </div>
   );
 }
