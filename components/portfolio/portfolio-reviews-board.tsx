@@ -31,15 +31,28 @@ function formatSignedPrice(value: number) {
 export function PortfolioReviewsBoard({
   journal,
   openingCheckScans,
-  closeReviews
+  closeReviews,
+  focusTicker = null
 }: {
   journal: PortfolioJournal;
   openingCheckScans: UserOpeningRecheckScanSnapshot[];
   closeReviews: Record<string, PortfolioCloseReviewEntry>;
+  focusTicker?: string | null;
 }) {
   const closedGroups = groupPortfolioJournalByTicker(journal.events).filter((group) => {
     return ["exit_full", "stop_loss", "manual_exit"].includes(group.latestEvent.type);
   });
+  const orderedClosedGroups = focusTicker
+    ? [...closedGroups].sort((left, right) => {
+        if (left.ticker === focusTicker && right.ticker !== focusTicker) {
+          return -1;
+        }
+        if (right.ticker === focusTicker && left.ticker !== focusTicker) {
+          return 1;
+        }
+        return 0;
+      })
+    : closedGroups;
   const summary = buildPortfolioReviewSummary(closedGroups);
   const calendar = buildPortfolioReviewCalendarDashboard(closedGroups);
   const analytics = buildPortfolioReviewAnalytics(closedGroups);
@@ -104,11 +117,12 @@ export function PortfolioReviewsBoard({
       {openingCheckAnalytics ? <OpeningCheckQualityCard analytics={openingCheckAnalytics} /> : null}
 
       <div className="grid gap-4 xl:grid-cols-2">
-        {closedGroups.map((group) => (
+        {orderedClosedGroups.map((group) => (
           <ClosedReviewCard
             key={group.ticker + group.latestEvent.tradedAt}
             group={group}
             reviewEntry={closeReviews[getPortfolioCloseReviewKeyForGroup(group)]}
+            isFocused={focusTicker === group.ticker}
           />
         ))}
       </div>
@@ -392,16 +406,24 @@ function OpeningCheckQualityCard({
 
 function ClosedReviewCard({
   group,
-  reviewEntry
+  reviewEntry,
+  isFocused = false
 }: {
   group: PortfolioJournalGroup;
   reviewEntry?: PortfolioCloseReviewEntry;
+  isFocused?: boolean;
 }) {
   const review = buildPortfolioCloseReview(group);
   const positionKey = getPortfolioCloseReviewKeyForGroup(group);
 
   return (
-    <Card className="border-border/80 bg-white/90 shadow-[0_18px_44px_-34px_rgba(24,32,42,0.2)]">
+    <Card
+      className={
+        isFocused
+          ? "border-primary/28 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(246,241,232,0.92))] shadow-[0_22px_54px_-34px_rgba(139,107,46,0.28)]"
+          : "border-border/80 bg-white/90 shadow-[0_18px_44px_-34px_rgba(24,32,42,0.2)]"
+      }
+    >
       <CardHeader className="space-y-4">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
@@ -413,6 +435,7 @@ function ClosedReviewCard({
             </p>
           </div>
           <div className="flex items-center gap-2">
+            {isFocused ? <Badge variant="neutral">방금 기록</Badge> : null}
             <Badge variant={group.metrics.realizedPnl > 0 ? "positive" : group.metrics.realizedPnl < 0 ? "caution" : "secondary"}>
               {group.latestEvent.type === "stop_loss"
                 ? "손절 종료"

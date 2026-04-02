@@ -94,11 +94,13 @@ export function PortfolioJournalBoard({
   journal,
   positions,
   view = "journal",
+  focusTicker = null,
   onJournalUpdated
 }: {
   journal: PortfolioJournal;
   positions: PortfolioProfilePosition[];
   view?: "journal" | "reviews";
+  focusTicker?: string | null;
   onJournalUpdated?: (payload: { journal: PortfolioJournal; profile?: PortfolioProfilePayload }) => void;
 }) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -110,6 +112,21 @@ export function PortfolioJournalBoard({
     [groupedEvents]
   );
   const visibleGroups = view === "reviews" ? closedGroups : groupedEvents;
+  const orderedGroups = useMemo(() => {
+    if (!focusTicker) {
+      return visibleGroups;
+    }
+
+    return [...visibleGroups].sort((left, right) => {
+      if (left.ticker === focusTicker && right.ticker !== focusTicker) {
+        return -1;
+      }
+      if (right.ticker === focusTicker && left.ticker !== focusTicker) {
+        return 1;
+      }
+      return 0;
+    });
+  }, [focusTicker, visibleGroups]);
 
   const boardTitle = view === "reviews" ? "종료 리뷰" : "거래 저널";
   const boardDescription =
@@ -169,14 +186,22 @@ export function PortfolioJournalBoard({
         </CardContent>
       </Card>
 
-      {visibleGroups.length ? (
+      {orderedGroups.length ? (
         <div className="grid gap-4 xl:grid-cols-2">
-          {visibleGroups.map((group) => {
+          {orderedGroups.map((group) => {
             const isClosed = isClosingPortfolioTradeEventType(group.latestEvent.type);
             const review = buildPortfolioCloseReview(group);
+            const isFocused = focusTicker === group.ticker;
 
             return (
-              <Card key={group.ticker} className="border-border/80 bg-white/90 shadow-[0_18px_44px_-34px_rgba(24,32,42,0.2)]">
+              <Card
+                key={group.ticker}
+                className={
+                  isFocused
+                    ? "border-primary/28 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(246,241,232,0.92))] shadow-[0_22px_54px_-34px_rgba(139,107,46,0.28)]"
+                    : "border-border/80 bg-white/90 shadow-[0_18px_44px_-34px_rgba(24,32,42,0.2)]"
+                }
+              >
                 <CardHeader className="space-y-4">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
@@ -188,6 +213,7 @@ export function PortfolioJournalBoard({
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
+                      {isFocused ? <Badge variant="neutral">방금 기록</Badge> : null}
                       <Badge variant={isClosed ? "secondary" : "positive"}>{isClosed ? "종료" : "보유 중"}</Badge>
                       <Button asChild variant="ghost" size="sm">
                         <Link href={`/portfolio/${group.ticker}`}>상세 보기</Link>
