@@ -19,7 +19,7 @@ import {
 import { useFavoriteTickers } from "@/lib/use-favorite-tickers";
 import type { Recommendation, ValidationBasis } from "@/types/recommendation";
 
-type SortKey = "score_desc" | "score_asc" | "name";
+type SortKey = "rank" | "score_desc" | "score_asc" | "name";
 type ToneFilter = "all" | Recommendation["signalTone"];
 type SectorFilter = string;
 type FavoriteFilter = "all" | "favorites";
@@ -87,7 +87,7 @@ export function RecommendationExplorer({
   const [sector, setSector] = useState<SectorFilter>("all");
   const [favoriteFilter, setFavoriteFilter] = useState<FavoriteFilter>("all");
   const [trustFilter, setTrustFilter] = useState<TrustFilter>("all");
-  const [sort, setSort] = useState<SortKey>("score_desc");
+  const [sort, setSort] = useState<SortKey>("rank");
   const { favorites, toggleFavorite } = useFavoriteTickers();
   const openingCheckCandidateSet = useMemo(
     () => new Set(openingCheckCandidateTickers.map((ticker) => ticker.toUpperCase())),
@@ -130,6 +130,17 @@ export function RecommendationExplorer({
     });
 
     next.sort((left, right) => {
+      const leftRank = left.featuredRank ?? Number.MAX_SAFE_INTEGER;
+      const rightRank = right.featuredRank ?? Number.MAX_SAFE_INTEGER;
+
+      if (sort === "rank") {
+        if (leftRank !== rightRank) {
+          return leftRank - rightRank;
+        }
+
+        return right.score - left.score;
+      }
+
       if (sort === "score_asc") {
         return left.score - right.score;
       }
@@ -176,8 +187,6 @@ export function RecommendationExplorer({
         return leftPreviewPriority - rightPreviewPriority;
       }
 
-      const leftRank = left.featuredRank ?? Number.MAX_SAFE_INTEGER;
-      const rightRank = right.featuredRank ?? Number.MAX_SAFE_INTEGER;
       if (leftRank !== rightRank) {
         return leftRank - rightRank;
       }
@@ -345,12 +354,13 @@ export function RecommendationExplorer({
               {getValidationBasisDisplayLabel(basis)}
             </option>
           ))}
-        </FilterSelect>
-        <FilterSelect label="정렬" value={sort} onChange={setSort}>
-          <option value="score_desc">행동 우선순위</option>
-          <option value="score_asc">점수 낮은 순</option>
-          <option value="name">종목명순</option>
-        </FilterSelect>
+      </FilterSelect>
+      <FilterSelect label="정렬" value={sort} onChange={setSort}>
+        <option value="rank">순위표 순서</option>
+        <option value="score_desc">행동 우선순위</option>
+        <option value="score_asc">점수 낮은 순</option>
+        <option value="name">종목명순</option>
+      </FilterSelect>
       </section>
 
       <section className="hidden gap-4 xl:grid xl:grid-cols-[minmax(0,1.25fr)_minmax(0,0.95fr)]">
@@ -542,6 +552,7 @@ function MobileFilterPanel({
         ))}
       </FilterSelect>
       <FilterSelect label="정렬" value={sort} onChange={setSort}>
+        <option value="rank">순위표 순서</option>
         <option value="score_desc">행동 우선순위</option>
         <option value="score_asc">점수 낮은 순</option>
         <option value="name">종목명순</option>
