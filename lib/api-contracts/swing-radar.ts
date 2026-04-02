@@ -123,6 +123,17 @@ export interface OpeningCheckRiskPatternDto {
   winRate: number;
 }
 
+export interface OpeningCheckPositivePatternDto {
+  id: string;
+  title: string;
+  count: number;
+  profitableCount: number;
+  lossCount: number;
+  winRate: number;
+  headline: string;
+  detail: string;
+}
+
 export interface PersonalRuleReminderDto {
   headline: string;
   primaryRule: string;
@@ -432,6 +443,7 @@ export interface RecommendationsResponseDto {
   openingReview?: OpeningRecheckReviewDto;
   openingCheckLearning?: OpeningCheckLearningInsightDto;
   openingCheckRiskPatterns?: OpeningCheckRiskPatternDto[];
+  openingCheckPositivePattern?: OpeningCheckPositivePatternDto;
   personalRuleReminder?: PersonalRuleReminderDto;
   personalRuleAlert?: PersonalRuleAlertDto;
 }

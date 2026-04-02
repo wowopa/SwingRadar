@@ -7,11 +7,13 @@ import { SignalToneBadge } from "@/components/shared/signal-tone-badge";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getFeaturedRankLabel } from "@/lib/copy/action-language";
+import { buildGoogleQuoteSearchUrl, buildNaverFinanceUrl } from "@/lib/market-links";
 import type {
   DailyScanSummaryDto,
   HoldingActionBoardDto,
   HoldingActionStatusDto,
   OpeningCheckLearningInsightDto,
+  OpeningCheckPositivePatternDto,
   OpeningRecheckReviewDto,
   PersonalRuleAlertDto,
   PersonalRuleReminderDto,
@@ -186,6 +188,7 @@ export function DashboardFocusBoard({
   holdingActionBoard,
   dailyScan,
   openingCheckLearning,
+  openingCheckPositivePattern,
   personalRuleReminder,
   personalRuleAlert,
   openingReview,
@@ -196,6 +199,7 @@ export function DashboardFocusBoard({
   holdingActionBoard?: HoldingActionBoardDto;
   dailyScan: DailyScanSummaryDto | null;
   openingCheckLearning?: OpeningCheckLearningInsightDto;
+  openingCheckPositivePattern?: OpeningCheckPositivePatternDto;
   personalRuleReminder?: PersonalRuleReminderDto;
   personalRuleAlert?: PersonalRuleAlertDto;
   openingReview?: OpeningRecheckReviewDto;
@@ -264,6 +268,9 @@ export function DashboardFocusBoard({
           )}
 
           {openingCheckLearning ? <CompactLearningBanner insight={openingCheckLearning} /> : null}
+          {openingCheckPositivePattern ? (
+            <CompactPositivePatternBanner pattern={openingCheckPositivePattern} />
+          ) : null}
           {personalRuleAlert ? <PersonalRuleAlertBanner alert={personalRuleAlert} /> : null}
           {personalRuleReminder ? <CompactRuleReminderBanner reminder={personalRuleReminder} /> : null}
 
@@ -335,9 +342,8 @@ export function DashboardFocusBoard({
                 {buyReviewItems.length ? (
                   <div className="space-y-3">
                     {buyReviewItems.map((item) => (
-                      <Link
+                      <div
                         key={item.ticker}
-                        href={`/analysis/${item.ticker}`}
                         className="block rounded-[24px] border border-border/80 bg-[hsl(42_38%_97%)] p-4 transition hover:border-primary/28 hover:bg-white"
                       >
                         <div className="flex items-start justify-between gap-3">
@@ -354,10 +360,34 @@ export function DashboardFocusBoard({
                               <p className="mt-2 text-xs leading-5 text-muted-foreground">{buildBuyReviewSizing(item)}</p>
                             ) : null}
                             <p className="mt-2 text-xs leading-5 text-muted-foreground">{item.boardReason}</p>
+                            <div className="mt-3 flex flex-wrap gap-2">
+                              <Link
+                                href={`/analysis/${item.ticker}`}
+                                className="inline-flex h-8 items-center rounded-full border border-primary/24 bg-primary/10 px-3 text-xs font-medium text-primary transition hover:bg-primary/14"
+                              >
+                                상세 보기
+                              </Link>
+                              <a
+                                href={buildNaverFinanceUrl(item.ticker)}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="inline-flex h-8 items-center rounded-full border border-border/80 bg-white px-3 text-xs font-medium text-foreground/78 transition hover:border-primary/24 hover:text-primary"
+                              >
+                                네이버 금융
+                              </a>
+                              <a
+                                href={buildGoogleQuoteSearchUrl(item.company, item.ticker)}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="inline-flex h-8 items-center rounded-full border border-border/80 bg-white px-3 text-xs font-medium text-foreground/78 transition hover:border-primary/24 hover:text-primary"
+                              >
+                                구글에서 보기
+                              </a>
+                            </div>
                           </div>
                           <ArrowUpRight className="mt-1 h-4 w-4 shrink-0 text-primary" />
                         </div>
-                      </Link>
+                      </div>
                     ))}
                   </div>
                 ) : (
@@ -574,6 +604,23 @@ function CompactLearningBanner({ insight }: { insight: OpeningCheckLearningInsig
       {insight.secondaryLesson ? (
         <p className="mt-1 text-xs leading-5 text-muted-foreground/90">{insight.secondaryLesson}</p>
       ) : null}
+    </div>
+  );
+}
+
+function CompactPositivePatternBanner({ pattern }: { pattern: OpeningCheckPositivePatternDto }) {
+  return (
+    <div className="rounded-[24px] border border-positive/24 bg-[hsl(var(--positive)/0.1)] px-4 py-3">
+      <div className="flex flex-wrap items-center gap-2">
+        <Badge variant="positive" className="whitespace-nowrap">
+          최근 잘 맞은 조합
+        </Badge>
+        <p className="text-sm font-medium text-foreground">{pattern.headline}</p>
+      </div>
+      <p className="mt-1 text-sm text-foreground/88">{pattern.detail}</p>
+      <p className="mt-2 text-xs leading-5 text-muted-foreground">
+        {pattern.title} · {pattern.count}건 · 승률 {pattern.winRate}%
+      </p>
     </div>
   );
 }

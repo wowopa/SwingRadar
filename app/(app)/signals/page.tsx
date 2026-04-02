@@ -108,6 +108,10 @@ export default async function SignalsPage({
           <RecommendationExplorer
             items={recommendations.items}
             openingCheckRiskPatterns={recommendations.openingCheckRiskPatterns}
+            openingCheckPositivePattern={recommendations.openingCheckPositivePattern}
+            openingCheckCandidateTickers={
+              (recommendations.dailyScan?.openingCheckCandidates ?? []).map((item) => item.ticker)
+            }
           />
         </section>
       ) : (

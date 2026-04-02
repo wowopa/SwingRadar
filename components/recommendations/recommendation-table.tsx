@@ -2,8 +2,13 @@
 
 import { FavoriteTickerButton } from "@/components/shared/favorite-ticker-button";
 import { SignalToneBadge } from "@/components/shared/signal-tone-badge";
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import type {
+  OpeningCheckPositivePatternDto,
+  OpeningCheckRiskPatternDto
+} from "@/lib/api-contracts/swing-radar";
 import { getValidationBasisDisplayLabel } from "@/lib/copy/action-language";
 import { cn, formatPercent } from "@/lib/utils";
 import type { Recommendation } from "@/types/recommendation";
@@ -23,12 +28,21 @@ function resolveValidationBasis(item: Recommendation) {
 export function RecommendationTable({
   items,
   favorites,
-  onToggleFavorite
+  onToggleFavorite,
+  openingCheckRiskPatterns = [],
+  openingCheckPositivePattern,
+  openingCheckCandidateTickers = []
 }: {
   items: Recommendation[];
   favorites: string[];
   onToggleFavorite: (ticker: string) => void;
+  openingCheckRiskPatterns?: OpeningCheckRiskPatternDto[];
+  openingCheckPositivePattern?: OpeningCheckPositivePatternDto;
+  openingCheckCandidateTickers?: string[];
 }) {
+  const openingCheckCandidateSet = new Set(openingCheckCandidateTickers.map((ticker) => ticker.toUpperCase()));
+  const hasOpeningRiskPatterns = openingCheckRiskPatterns.length > 0;
+
   return (
     <Card className="border-border/80 bg-white/90 shadow-[0_18px_46px_-32px_rgba(24,32,42,0.2)]">
       <CardHeader>
@@ -57,6 +71,7 @@ export function RecommendationTable({
             <tbody>
               {items.map((item, index) => {
                 const displayRank = item.featuredRank ?? index + 1;
+                const isOpeningCheckCandidate = openingCheckCandidateSet.has(item.ticker.toUpperCase());
                 return (
                   <tr
                     key={item.ticker}
@@ -75,7 +90,25 @@ export function RecommendationTable({
                     </td>
                     <td className="py-4 pr-6">
                       <div className="font-medium text-foreground">{item.company}</div>
-                      <div className="text-xs text-muted-foreground">{item.ticker}</div>
+                      <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                        <span className="text-xs text-muted-foreground">{item.ticker}</span>
+                        {isOpeningCheckCandidate ? (
+                          <>
+                            <Badge variant="secondary" className="h-5 px-2 text-[10px]">
+                              장초 확인
+                            </Badge>
+                            {hasOpeningRiskPatterns ? (
+                              <Badge variant="caution" className="h-5 px-2 text-[10px]">
+                                최근 장초 주의
+                              </Badge>
+                            ) : openingCheckPositivePattern ? (
+                              <Badge variant="positive" className="h-5 px-2 text-[10px]">
+                                최근 잘 맞음
+                              </Badge>
+                            ) : null}
+                          </>
+                        ) : null}
+                      </div>
                     </td>
                     <td className="py-4 pr-6"><SignalToneBadge tone={item.signalTone} /></td>
                     <td className="py-4 pr-6">{item.score}</td>

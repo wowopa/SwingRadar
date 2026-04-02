@@ -6,7 +6,10 @@ import { useMemo, useState } from "react";
 import { RecommendationTable } from "@/components/recommendations/recommendation-table";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import type { OpeningCheckRiskPatternDto } from "@/lib/api-contracts/swing-radar";
+import type {
+  OpeningCheckPositivePatternDto,
+  OpeningCheckRiskPatternDto
+} from "@/lib/api-contracts/swing-radar";
 import { getValidationBasisDisplayLabel } from "@/lib/copy/action-language";
 import {
   resolveRecommendationActionBucket,
@@ -69,10 +72,14 @@ function getToneClasses(tone: "emerald" | "sky" | "amber" | "stone") {
 
 export function RecommendationExplorer({
   items,
-  openingCheckRiskPatterns = []
+  openingCheckRiskPatterns = [],
+  openingCheckPositivePattern,
+  openingCheckCandidateTickers = []
 }: {
   items: Recommendation[];
   openingCheckRiskPatterns?: OpeningCheckRiskPatternDto[];
+  openingCheckPositivePattern?: OpeningCheckPositivePatternDto;
+  openingCheckCandidateTickers?: string[];
 }) {
   const [query, setQuery] = useState("");
   const [tone, setTone] = useState<ToneFilter>("all");
@@ -374,6 +381,20 @@ export function RecommendationExplorer({
         </section>
       ) : null}
 
+      {openingCheckPositivePattern ? (
+        <section className="rounded-3xl border border-positive/24 bg-[linear-gradient(145deg,hsl(var(--positive)/0.08),rgba(255,255,255,0.92))] p-5 shadow-[0_18px_46px_-32px_rgba(31,138,99,0.18)]">
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge variant="positive">최근 잘 맞은 장초 조합</Badge>
+            <p className="text-sm font-medium text-foreground">{openingCheckPositivePattern.headline}</p>
+          </div>
+          <p className="mt-3 text-sm leading-6 text-foreground/84">{openingCheckPositivePattern.detail}</p>
+          <p className="mt-2 text-xs leading-5 text-muted-foreground">
+            {openingCheckPositivePattern.title} · {openingCheckPositivePattern.count}건 · 승률{" "}
+            {openingCheckPositivePattern.winRate}%
+          </p>
+        </section>
+      ) : null}
+
       {filteredItems.length ? (
         <section id="signals-ranking-table" className="space-y-4">
           <div className="flex flex-wrap items-end justify-between gap-3">
@@ -387,7 +408,14 @@ export function RecommendationExplorer({
               {tableSummary}
             </div>
           </div>
-          <RecommendationTable items={filteredItems} favorites={favorites} onToggleFavorite={toggleFavorite} />
+          <RecommendationTable
+            items={filteredItems}
+            favorites={favorites}
+            onToggleFavorite={toggleFavorite}
+            openingCheckRiskPatterns={openingCheckRiskPatterns}
+            openingCheckPositivePattern={openingCheckPositivePattern}
+            openingCheckCandidateTickers={openingCheckCandidateTickers}
+          />
         </section>
       ) : (
         <section className="rounded-3xl border border-border/80 bg-white/90 p-8 text-center shadow-[0_18px_46px_-32px_rgba(24,32,42,0.18)]">

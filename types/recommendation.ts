@@ -148,6 +148,17 @@ export interface OpeningCheckRiskPattern {
   winRate: number;
 }
 
+export interface OpeningCheckPositivePattern {
+  id: string;
+  title: string;
+  count: number;
+  profitableCount: number;
+  lossCount: number;
+  winRate: number;
+  headline: string;
+  detail: string;
+}
+
 export interface PersonalRuleReminder {
   headline: string;
   primaryRule: string;

@@ -1,6 +1,7 @@
 import type {
   DailyCandidateDto,
   OpeningCheckLearningInsightDto,
+  OpeningCheckPositivePatternDto,
   OpeningCheckRiskPatternDto,
   OpeningRecheckDecisionDto,
   PersonalRuleAlertDto,
@@ -114,6 +115,42 @@ function buildOpeningCheckRiskPatterns(
       lossCount: pattern.lossCount,
       winRate: pattern.winRate
     }));
+}
+
+function buildOpeningCheckPositivePattern(
+  analytics: ReturnType<typeof buildPortfolioOpeningCheckAnalytics>
+): OpeningCheckPositivePatternDto | undefined {
+  if (!analytics) {
+    return undefined;
+  }
+
+  const pattern = [...analytics.patterns]
+    .filter((item) => item.count >= 2 && item.profitableCount > item.lossCount && item.winRate >= 60)
+    .sort((left, right) => {
+      if (right.winRate !== left.winRate) {
+        return right.winRate - left.winRate;
+      }
+      if (right.count !== left.count) {
+        return right.count - left.count;
+      }
+
+      return right.profitableCount - left.profitableCount;
+    })[0];
+
+  if (!pattern) {
+    return undefined;
+  }
+
+  return {
+    id: pattern.id,
+    title: pattern.title,
+    count: pattern.count,
+    profitableCount: pattern.profitableCount,
+    lossCount: pattern.lossCount,
+    winRate: pattern.winRate,
+    headline: `최근 잘 맞은 장초 조합`,
+    detail: `${pattern.title} 조합은 최근 ${pattern.count}건 중 ${pattern.profitableCount}건이 수익 종료로 이어졌습니다.`
+  };
 }
 
 function normalizeRuleText(value: string | undefined) {
@@ -646,6 +683,7 @@ export async function listRecommendations(
     : undefined;
   const openingCheckLearning = buildOpeningCheckLearningInsight(openingCheckAnalytics);
   const openingCheckRiskPatterns = buildOpeningCheckRiskPatterns(openingCheckAnalytics);
+  const openingCheckPositivePattern = buildOpeningCheckPositivePattern(openingCheckAnalytics);
   const personalRuleReminder = buildPersonalRuleReminder(closeReviews);
   const personalRuleAlert = buildPersonalRuleAlert(openingCheckAnalytics, personalRuleReminder);
 
@@ -674,6 +712,7 @@ export async function listRecommendations(
     openingReview,
     openingCheckLearning,
     openingCheckRiskPatterns,
+    openingCheckPositivePattern,
     personalRuleReminder,
     personalRuleAlert
   };
