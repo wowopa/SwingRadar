@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import type { PortfolioProfilePayload } from "@/components/admin/dashboard-types";
@@ -9,6 +9,10 @@ import { PortfolioJournalBoard } from "@/components/portfolio/portfolio-journal-
 import { PortfolioOverviewBoard } from "@/components/portfolio/portfolio-overview-board";
 import { PortfolioPerformanceBoard } from "@/components/portfolio/portfolio-performance-board";
 import { PortfolioReviewsBoard } from "@/components/portfolio/portfolio-reviews-board";
+import {
+  PortfolioTradeEventDialog,
+  type PortfolioTradeEventDialogPreset
+} from "@/components/portfolio/portfolio-trade-event-dialog";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { HoldingActionBoardDto } from "@/lib/api-contracts/swing-radar";
@@ -31,11 +35,21 @@ export function PortfolioWorkspace({
   initialSettingsOpen?: boolean;
 }) {
   const [profile, setProfile] = useState(initialProfile);
+  const [journal, setJournal] = useState(initialJournal);
   const [isSettingsOpen, setIsSettingsOpen] = useState(initialSettingsOpen);
+  const [quickTradePreset, setQuickTradePreset] = useState<PortfolioTradeEventDialogPreset | null>(null);
   const [, startTransition] = useTransition();
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
+
+  useEffect(() => {
+    setProfile(initialProfile);
+  }, [initialProfile]);
+
+  useEffect(() => {
+    setJournal(initialJournal);
+  }, [initialJournal]);
 
   function clearSettingsQuery() {
     const params = new URLSearchParams(searchParams.toString());
@@ -50,6 +64,17 @@ export function PortfolioWorkspace({
     if (searchParams.get("asset-settings") === "1") {
       clearSettingsQuery();
     }
+    startTransition(() => {
+      router.refresh();
+    });
+  }
+
+  function handleTradeSaved(payload: { journal: PortfolioJournal; profile?: PortfolioProfilePayload }) {
+    setJournal(payload.journal);
+    if (payload.profile) {
+      setProfile(payload.profile);
+    }
+    setQuickTradePreset(null);
     startTransition(() => {
       router.refresh();
     });
@@ -85,23 +110,29 @@ export function PortfolioWorkspace({
             profile={profile}
             holdingActionBoard={holdingActionBoard}
             onOpenSettings={() => setIsSettingsOpen(true)}
+            onQuickTradeAction={setQuickTradePreset}
           />
         </TabsContent>
 
         <TabsContent value="journal" className="mt-0">
-          <PortfolioJournalBoard initialJournal={initialJournal} positions={profile.positions} view="journal" />
+          <PortfolioJournalBoard
+            journal={journal}
+            positions={profile.positions}
+            view="journal"
+            onJournalUpdated={handleTradeSaved}
+          />
         </TabsContent>
 
         <TabsContent value="reviews" className="mt-0">
           <PortfolioReviewsBoard
-            journal={initialJournal}
+            journal={journal}
             openingCheckScans={openingCheckScans}
             closeReviews={closeReviews}
           />
         </TabsContent>
 
         <TabsContent value="performance" className="mt-0">
-          <PortfolioPerformanceBoard journal={initialJournal} openingCheckScans={openingCheckScans} />
+          <PortfolioPerformanceBoard journal={journal} openingCheckScans={openingCheckScans} />
         </TabsContent>
       </Tabs>
 
@@ -115,6 +146,18 @@ export function PortfolioWorkspace({
           <AccountPortfolioPanel initialProfile={profile} onSaved={handleSaved} saveButtonLabel="자산 저장" />
         </DialogContent>
       </Dialog>
+
+      <PortfolioTradeEventDialog
+        open={Boolean(quickTradePreset)}
+        onOpenChange={(nextOpen) => {
+          if (!nextOpen) {
+            setQuickTradePreset(null);
+          }
+        }}
+        positions={profile.positions}
+        preset={quickTradePreset}
+        onSaved={handleTradeSaved}
+      />
     </>
   );
 }

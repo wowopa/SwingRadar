@@ -1,39 +1,25 @@
 "use client";
 
-import type { ReactNode } from "react";
-import { useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { Plus, ScrollText } from "lucide-react";
-import { useRouter } from "next/navigation";
 
+import type { PortfolioProfilePayload } from "@/components/admin/dashboard-types";
+import {
+  PortfolioTradeEventDialog,
+  type PortfolioTradeEventDialogPreset
+} from "@/components/portfolio/portfolio-trade-event-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import {
   buildPortfolioCloseReview,
   getPortfolioJournalSummary,
   groupPortfolioJournalByTicker,
   isClosingPortfolioTradeEventType
 } from "@/lib/portfolio/journal-insights";
-import { cn, formatPrice } from "@/lib/utils";
+import { formatPrice } from "@/lib/utils";
 import type { PortfolioJournal, PortfolioProfilePosition, PortfolioTradeEventType } from "@/types/recommendation";
-
-type SymbolSearchItem = {
-  ticker: string;
-  company: string;
-  sector: string;
-  market: "KOSPI" | "KOSDAQ" | "NYSE" | "NASDAQ" | "AMEX";
-  status: "ready" | "pending";
-};
-
-type SymbolSearchResponse = {
-  items: SymbolSearchItem[];
-  mode: "search" | "featured";
-  description: string;
-};
 
 const tradeTypeMeta: Record<
   PortfolioTradeEventType,
@@ -51,38 +37,28 @@ const tradeTypeMeta: Record<
   add: {
     label: "추가 매수",
     variant: "default",
-    description: "기존 포지션에 수량을 더한 체결입니다."
+    description: "기존 포지션에 수량을 더하는 체결입니다."
   },
   take_profit_partial: {
     label: "부분 익절",
     variant: "neutral",
-    description: "일부 수량만 먼저 정리한 체결입니다."
+    description: "일부 수량만 먼저 정리하는 체결입니다."
   },
   exit_full: {
     label: "전량 매도",
     variant: "secondary",
-    description: "남은 수량을 모두 정리한 체결입니다."
+    description: "남은 수량을 모두 정리하는 체결입니다."
   },
   stop_loss: {
     label: "손절",
     variant: "caution",
-    description: "손절 기준에 따라 종료한 체결입니다."
+    description: "손절 기준에 따라 종료하는 체결입니다."
   },
   manual_exit: {
     label: "수동 종료",
     variant: "secondary",
-    description: "운용 판단으로 정리한 체결입니다."
+    description: "사용자 판단으로 포지션을 정리하는 체결입니다."
   }
-};
-
-type TradeEventFormState = {
-  ticker: string;
-  type: PortfolioTradeEventType;
-  quantity: string;
-  price: string;
-  fees: string;
-  tradedAt: string;
-  note: string;
 };
 
 function formatDateTime(value: string) {
@@ -106,43 +82,6 @@ function formatQuantity(value: number) {
   return `${new Intl.NumberFormat("ko-KR").format(value)}주`;
 }
 
-function buildLocalDateTimeInputValue() {
-  const now = new Date();
-  const offsetMs = now.getTimezoneOffset() * 60_000;
-  return new Date(now.getTime() - offsetMs).toISOString().slice(0, 16);
-}
-
-function toIsoFromLocalInput(value: string) {
-  if (!value) {
-    return new Date().toISOString();
-  }
-
-  const parsed = new Date(value);
-  return Number.isNaN(parsed.getTime()) ? new Date().toISOString() : parsed.toISOString();
-}
-
-function parsePositiveNumber(value: string) {
-  const parsed = Number(value);
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
-}
-
-function parseNonNegativeNumber(value: string) {
-  const parsed = Number(value);
-  return Number.isFinite(parsed) && parsed >= 0 ? parsed : 0;
-}
-
-function createEmptyFormState(): TradeEventFormState {
-  return {
-    ticker: "",
-    type: "buy",
-    quantity: "",
-    price: "",
-    fees: "0",
-    tradedAt: buildLocalDateTimeInputValue(),
-    note: ""
-  };
-}
-
 function formatSignedPrice(value: number) {
   if (value === 0) {
     return formatPrice(0);
@@ -152,188 +91,45 @@ function formatSignedPrice(value: number) {
 }
 
 export function PortfolioJournalBoard({
-  initialJournal,
+  journal,
   positions,
-  view = "journal"
+  view = "journal",
+  onJournalUpdated
 }: {
-  initialJournal: PortfolioJournal;
+  journal: PortfolioJournal;
   positions: PortfolioProfilePosition[];
   view?: "journal" | "reviews";
+  onJournalUpdated?: (payload: { journal: PortfolioJournal; profile?: PortfolioProfilePayload }) => void;
 }) {
-  const symbolFieldRef = useRef<HTMLDivElement | null>(null);
-  const [journal, setJournal] = useState(initialJournal);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [form, setForm] = useState<TradeEventFormState>(createEmptyFormState());
-  const [symbolQuery, setSymbolQuery] = useState("");
-  const [symbolResults, setSymbolResults] = useState<SymbolSearchItem[]>([]);
-  const [symbolDescription, setSymbolDescription] = useState("검색어를 입력하면 종목을 바로 고를 수 있습니다.");
-  const [symbolSearchLoading, setSymbolSearchLoading] = useState(false);
-  const [isSymbolDropdownOpen, setIsSymbolDropdownOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [, startTransition] = useTransition();
-  const router = useRouter();
-
-  useEffect(() => {
-    setJournal(initialJournal);
-  }, [initialJournal]);
-
-  useEffect(() => {
-    if (!isDialogOpen) {
-      setIsSymbolDropdownOpen(false);
-      return;
-    }
-
-    function handlePointerDown(event: MouseEvent) {
-      if (!symbolFieldRef.current?.contains(event.target as Node)) {
-        setIsSymbolDropdownOpen(false);
-      }
-    }
-
-    function handleEscape(event: KeyboardEvent) {
-      if (event.key === "Escape") {
-        setIsSymbolDropdownOpen(false);
-      }
-    }
-
-    document.addEventListener("mousedown", handlePointerDown);
-    document.addEventListener("keydown", handleEscape);
-
-    return () => {
-      document.removeEventListener("mousedown", handlePointerDown);
-      document.removeEventListener("keydown", handleEscape);
-    };
-  }, [isDialogOpen]);
-
+  const [dialogPreset, setDialogPreset] = useState<PortfolioTradeEventDialogPreset | null>(null);
   const groupedEvents = useMemo(() => groupPortfolioJournalByTicker(journal.events), [journal.events]);
   const summary = useMemo(() => getPortfolioJournalSummary(journal.events), [journal.events]);
-  const quickTickers = useMemo(() => {
-    const keys = new Map<string, PortfolioProfilePosition>();
-    for (const position of positions) {
-      keys.set(position.ticker, position);
-    }
-    return [...keys.values()].slice(0, 6);
-  }, [positions]);
   const closedGroups = useMemo(
     () => groupedEvents.filter((group) => isClosingPortfolioTradeEventType(group.latestEvent.type)),
     [groupedEvents]
   );
   const visibleGroups = view === "reviews" ? closedGroups : groupedEvents;
 
-  const selectedSymbol = useMemo(() => {
-    if (!form.ticker) {
-      return null;
-    }
-
-    return (
-      symbolResults.find((item) => item.ticker === form.ticker) ??
-      quickTickers.find((item) => item.ticker === form.ticker) ??
-      null
-    );
-  }, [form.ticker, quickTickers, symbolResults]);
-
-  useEffect(() => {
-    if (!isDialogOpen) {
-      return;
-    }
-
-    let ignore = false;
-    setSymbolSearchLoading(true);
-
-    async function loadSymbols() {
-      const query = symbolQuery.trim();
-      const response = await fetch(`/api/symbols?q=${encodeURIComponent(query)}&limit=8`, {
-        cache: "no-store"
-      });
-
-      if (!response.ok) {
-        if (!ignore) {
-          setSymbolResults([]);
-          setSymbolDescription("종목 검색 결과를 불러오지 못했습니다.");
-          setSymbolSearchLoading(false);
-        }
-        return;
-      }
-
-      const payload = (await response.json()) as SymbolSearchResponse;
-      if (!ignore) {
-        setSymbolResults(payload.items);
-        setSymbolDescription(payload.description);
-        setSymbolSearchLoading(false);
-      }
-    }
-
-    void loadSymbols();
-
-    return () => {
-      ignore = true;
-    };
-  }, [isDialogOpen, symbolQuery]);
-
-  function applySelectedSymbol(item: Pick<SymbolSearchItem, "ticker" | "company">) {
-    setForm((current) => ({
-      ...current,
-      ticker: item.ticker
-    }));
-    setSymbolQuery(item.company);
-    setIsSymbolDropdownOpen(false);
-  }
-
-  async function submitEvent() {
-    setLoading(true);
-    setError(null);
-    setMessage(null);
-
-    try {
-      const response = await fetch("/api/account/portfolio-journal", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ticker: form.ticker,
-          type: form.type,
-          quantity: parsePositiveNumber(form.quantity),
-          price: parsePositiveNumber(form.price),
-          fees: parseNonNegativeNumber(form.fees),
-          tradedAt: toIsoFromLocalInput(form.tradedAt),
-          note: form.note.trim()
-        })
-      });
-      const payload = (await response.json().catch(() => ({}))) as {
-        message?: string;
-        journal?: PortfolioJournal;
-      };
-
-      if (!response.ok || !payload.journal) {
-        throw new Error(payload.message ?? `체결 기록 저장에 실패했습니다. (${response.status})`);
-      }
-
-      setJournal(payload.journal);
-      setMessage("체결 기록을 저장했습니다.");
-      setIsDialogOpen(false);
-      setForm(createEmptyFormState());
-      setSymbolQuery("");
-      setIsSymbolDropdownOpen(false);
-      startTransition(() => {
-        router.refresh();
-      });
-    } catch (submitError) {
-      setError(submitError instanceof Error ? submitError.message : "체결 기록 저장에 실패했습니다.");
-    } finally {
-      setLoading(false);
-    }
-  }
-
   const boardTitle = view === "reviews" ? "종료 리뷰" : "거래 저널";
   const boardDescription =
     view === "reviews"
-      ? "이미 끝난 포지션만 모아 회고와 결과를 다시 보는 영역입니다."
-      : "첫 매수부터 부분 익절, 손절, 전량 매도까지 실제 체결 흐름을 남기는 영역입니다.";
-  const emptyTitle = view === "reviews" ? "아직 종료된 거래가 없습니다." : "아직 기록한 체결이 없습니다.";
+      ? "이미 끝난 포지션만 모아 놓고 결과를 다시 보는 영역입니다."
+      : "첫 매수부터 부분 익절, 손절, 전량 매도까지 실제 체결 흐름을 기록하는 영역입니다.";
+  const emptyTitle = view === "reviews" ? "아직 종료된 거래가 없습니다." : "아직 기록된 체결이 없습니다.";
   const emptyDescription =
     view === "reviews"
-      ? "전량 매도나 손절로 끝난 거래가 생기면 이 탭에서 회고를 다시 볼 수 있습니다."
-      : "첫 체결을 남기면 종목별 생애주기와 종료 결과를 한 번에 다시 볼 수 있습니다.";
+      ? "전량 매도나 손절로 마감된 거래가 생기면 여기에서 종료 흐름을 다시 볼 수 있습니다."
+      : "첫 체결을 기록하면 종목별 생애주기와 종료 결과를 이곳에서 다시 볼 수 있습니다.";
+
+  function openManualDialog() {
+    setDialogPreset(null);
+    setIsDialogOpen(true);
+  }
+
+  function handleDialogSaved(payload: { journal: PortfolioJournal; profile?: PortfolioProfilePayload }) {
+    onJournalUpdated?.(payload);
+  }
 
   return (
     <section className="space-y-5">
@@ -345,39 +141,28 @@ export function PortfolioJournalBoard({
               <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">{boardDescription}</p>
             </div>
             {view === "journal" ? (
-              <Button type="button" onClick={() => setIsDialogOpen(true)}>
+              <Button type="button" onClick={openManualDialog}>
                 <Plus className="h-4 w-4" />
                 체결 기록 추가
               </Button>
             ) : (
-              <Badge variant="secondary">종료된 포지션만 보기</Badge>
+              <Badge variant="secondary">종료 포지션만 보기</Badge>
             )}
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          {message ? (
-            <div className="rounded-[20px] border border-primary/24 bg-[linear-gradient(180deg,rgba(139,107,46,0.08),rgba(255,255,255,0.94))] px-4 py-3 text-sm text-foreground/82">
-              {message}
-            </div>
-          ) : null}
-          {error ? (
-            <div className="rounded-[20px] border border-caution/22 bg-[hsl(var(--caution)/0.08)] px-4 py-3 text-sm text-caution">
-              {error}
-            </div>
-          ) : null}
-
           {view === "journal" ? (
             <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
               <JournalMetric title="전체 체결" value={`${summary.totalEvents}건`} note="기록된 체결 이벤트" />
               <JournalMetric title="보유 중 포지션" value={`${summary.activeCount}개`} note="아직 종료되지 않은 종목" />
-              <JournalMetric title="종료된 포지션" value={`${summary.closedCount}개`} note="전량 매도나 손절로 끝난 종목" />
+              <JournalMetric title="종료된 포지션" value={`${summary.closedCount}개`} note="전량 매도 또는 손절로 끝난 종목" />
               <JournalMetric title="부분 익절" value={`${summary.partialExitCount}건`} note="일부 수량만 먼저 정리한 기록" />
-              <JournalMetric title="손절" value={`${summary.stopLossCount}건`} note="손절로 종료한 기록" />
+              <JournalMetric title="손절" value={`${summary.stopLossCount}건`} note="손절로 끝난 기록" />
             </div>
           ) : (
             <div className="grid gap-3 sm:grid-cols-3">
-              <JournalMetric title="종료된 포지션" value={`${summary.closedCount}개`} note="회고를 다시 볼 수 있는 종목" />
-              <JournalMetric title="손절 종료" value={`${summary.stopLossCount}건`} note="손절로 끝난 거래" />
+              <JournalMetric title="종료된 포지션" value={`${summary.closedCount}개`} note="복기할 수 있는 종목 수" />
+              <JournalMetric title="손절 종료" value={`${summary.stopLossCount}건`} note="손절로 끝난 거래 수" />
               <JournalMetric title="부분 익절 기록" value={`${summary.partialExitCount}건`} note="익절 후 종료로 이어진 흐름" />
             </div>
           )}
@@ -487,7 +272,7 @@ export function PortfolioJournalBoard({
               <p className="max-w-2xl text-sm leading-6 text-muted-foreground">{emptyDescription}</p>
             </div>
             {view === "journal" ? (
-              <Button type="button" variant="outline" onClick={() => setIsDialogOpen(true)}>
+              <Button type="button" variant="outline" onClick={openManualDialog}>
                 첫 체결 기록 추가
               </Button>
             ) : (
@@ -499,181 +284,13 @@ export function PortfolioJournalBoard({
         </Card>
       )}
 
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-h-[88vh] overflow-y-auto border-border/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.97),rgba(246,241,232,0.92))] shadow-[0_38px_110px_-44px_rgba(24,32,42,0.34)]">
-          <DialogHeader>
-            <DialogTitle>체결 기록 추가</DialogTitle>
-            <DialogDescription>첫 매수, 추가 매수, 부분 익절, 전량 매도, 손절 중 하나를 골라 기록합니다.</DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-5">
-            <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
-              {(
-                Object.entries(tradeTypeMeta) as Array<
-                  [PortfolioTradeEventType, (typeof tradeTypeMeta)[PortfolioTradeEventType]]
-                >
-              ).map(([type, meta]) => (
-                <button
-                  key={type}
-                  type="button"
-                  onClick={() => setForm((current) => ({ ...current, type }))}
-                  className={cn(
-                    "rounded-[20px] border px-4 py-4 text-left transition",
-                    form.type === type
-                      ? "border-primary/30 bg-primary/10"
-                      : "border-border/80 bg-[hsl(42_40%_97%)] hover:border-primary/20 hover:bg-white"
-                  )}
-                >
-                  <Badge variant={meta.variant}>{meta.label}</Badge>
-                  <p className="mt-3 text-sm leading-6 text-muted-foreground">{meta.description}</p>
-                </button>
-              ))}
-            </div>
-
-            {quickTickers.length ? (
-              <div className="space-y-2">
-                <p className="text-sm font-medium text-foreground">현재 보유 종목 빠른 선택</p>
-                <div className="flex flex-wrap gap-2">
-                  {quickTickers.map((position) => (
-                    <button
-                      key={position.ticker}
-                      type="button"
-                      className="rounded-full border border-border/80 bg-[hsl(42_40%_97%)] px-3 py-1.5 text-xs text-muted-foreground transition hover:border-primary/20 hover:bg-white hover:text-foreground"
-                      onClick={() => applySelectedSymbol({ ticker: position.ticker, company: position.company })}
-                    >
-                      {position.company} · {position.ticker}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            ) : null}
-
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Field label="종목 검색">
-                <div ref={symbolFieldRef} className="relative space-y-3">
-                  <Input
-                    value={symbolQuery}
-                    placeholder="종목명이나 종목 코드를 입력하세요"
-                    onChange={(event) => {
-                      setSymbolQuery(event.target.value);
-                      setIsSymbolDropdownOpen(true);
-                    }}
-                    onFocus={() => setIsSymbolDropdownOpen(true)}
-                  />
-
-                  {selectedSymbol ? (
-                    <div className="rounded-[18px] border border-primary/24 bg-[linear-gradient(180deg,rgba(139,107,46,0.08),rgba(255,255,255,0.94))] px-3 py-3 text-sm text-foreground/82">
-                      선택된 종목: {selectedSymbol.company} · {form.ticker}
-                    </div>
-                  ) : form.ticker ? (
-                    <div className="rounded-[18px] border border-border/80 bg-[hsl(42_40%_97%)] px-3 py-3 text-sm text-muted-foreground">
-                      선택된 종목 코드: {form.ticker}
-                    </div>
-                  ) : null}
-
-                  {isSymbolDropdownOpen ? (
-                    <div className="absolute left-0 right-0 top-[calc(100%+0.5rem)] z-30 rounded-[20px] border border-border/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(246,241,232,0.94))] p-2 shadow-[0_24px_48px_rgba(28,28,35,0.14)]">
-                      <div className="px-2 pb-2 pt-1 text-xs leading-5 text-muted-foreground">
-                        {symbolSearchLoading ? "종목을 찾는 중입니다..." : symbolDescription}
-                      </div>
-
-                      <div className="max-h-72 space-y-1 overflow-y-auto">
-                        {symbolResults.length ? (
-                          symbolResults.map((item) => (
-                            <button
-                              key={item.ticker}
-                              type="button"
-                              onClick={() => applySelectedSymbol(item)}
-                              className={cn(
-                                "flex w-full items-center justify-between rounded-[16px] px-3 py-3 text-left transition",
-                                form.ticker === item.ticker ? "bg-primary/10 text-foreground" : "hover:bg-[hsl(42_40%_96%)]"
-                              )}
-                            >
-                              <div className="min-w-0">
-                                <p className="truncate text-sm font-semibold text-foreground">{item.company}</p>
-                                <p className="mt-1 text-xs text-muted-foreground">
-                                  {item.ticker} · {item.market} · {item.sector}
-                                </p>
-                              </div>
-                              <Badge variant={item.status === "ready" ? "positive" : "secondary"}>
-                                {item.status === "ready" ? "분석 가능" : "준비 중"}
-                              </Badge>
-                            </button>
-                          ))
-                        ) : (
-                          <div className="px-3 py-4 text-sm text-muted-foreground">검색 결과가 없습니다.</div>
-                        )}
-                      </div>
-                    </div>
-                  ) : null}
-                </div>
-              </Field>
-
-              <Field label="체결 시각">
-                <Input
-                  type="datetime-local"
-                  value={form.tradedAt}
-                  onChange={(event) => setForm((current) => ({ ...current, tradedAt: event.target.value }))}
-                />
-              </Field>
-
-              <Field label="체결 가격">
-                <Input
-                  type="number"
-                  min={0}
-                  value={form.price}
-                  onChange={(event) => setForm((current) => ({ ...current, price: event.target.value }))}
-                />
-              </Field>
-
-              <Field label="수량">
-                <Input
-                  type="number"
-                  min={0}
-                  step="0.0001"
-                  value={form.quantity}
-                  onChange={(event) => setForm((current) => ({ ...current, quantity: event.target.value }))}
-                />
-              </Field>
-
-              <Field label="수수료">
-                <Input
-                  type="number"
-                  min={0}
-                  value={form.fees}
-                  onChange={(event) => setForm((current) => ({ ...current, fees: event.target.value }))}
-                />
-              </Field>
-            </div>
-
-            <Field label="메모">
-              <Textarea
-                value={form.note}
-                placeholder="예: 장초 확인 통과 후 첫 진입, 1차 목표가 도달로 30% 부분 익절"
-                onChange={(event) => setForm((current) => ({ ...current, note: event.target.value }))}
-              />
-            </Field>
-
-            <div className="flex justify-end gap-2">
-              <Button type="button" variant="ghost" onClick={() => setIsDialogOpen(false)}>
-                닫기
-              </Button>
-              <Button
-                type="button"
-                disabled={
-                  loading ||
-                  !form.ticker.trim() ||
-                  parsePositiveNumber(form.price) <= 0 ||
-                  parsePositiveNumber(form.quantity) <= 0
-                }
-                onClick={() => void submitEvent()}
-              >
-                기록 저장
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <PortfolioTradeEventDialog
+        open={isDialogOpen}
+        onOpenChange={setIsDialogOpen}
+        positions={positions}
+        preset={dialogPreset}
+        onSaved={handleDialogSaved}
+      />
     </section>
   );
 }
@@ -694,14 +311,5 @@ function JournalMiniMetric({ label, value }: { label: string; value: string }) {
       <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">{label}</p>
       <p className="mt-1 text-sm font-semibold text-foreground">{value}</p>
     </div>
-  );
-}
-
-function Field({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <label className="block space-y-2">
-      <span className="text-sm font-medium text-foreground">{label}</span>
-      {children}
-    </label>
   );
 }

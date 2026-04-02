@@ -5,6 +5,7 @@ import {
   appendPortfolioTradeEventForUser,
   loadPortfolioJournalForUser
 } from "@/lib/server/portfolio-journal";
+import { syncPortfolioProfileWithTradeEventForUser } from "@/lib/server/portfolio-profile";
 import { buildResponseMeta, withRouteTelemetry } from "@/lib/server/telemetry";
 import { requireUserSession } from "@/lib/server/user-auth";
 
@@ -15,7 +16,8 @@ const tradeEventSchema = z.object({
   price: z.number().positive(),
   fees: z.number().min(0).optional().default(0),
   tradedAt: z.string().trim().min(1),
-  note: z.string().trim().max(400).optional().or(z.literal("")).or(z.null())
+  note: z.string().trim().max(400).optional().or(z.literal("")).or(z.null()),
+  syncProfilePosition: z.boolean().optional().default(false)
 });
 
 export async function GET(request: Request) {
@@ -42,13 +44,29 @@ export async function POST(request: Request) {
       note: payload.note ?? undefined,
       createdBy: session.user.email
     });
+    const profile = payload.syncProfilePosition
+      ? await syncPortfolioProfileWithTradeEventForUser(
+          session.user.id,
+          {
+            ticker: payload.ticker,
+            type: payload.type,
+            quantity: payload.quantity,
+            price: payload.price,
+            fees: payload.fees,
+            tradedAt: payload.tradedAt,
+            note: payload.note ?? undefined
+          },
+          session.user.email
+        )
+      : undefined;
 
     return jsonOk(
       {
         ok: true,
         requestId: context.requestId,
         event: result.event,
-        journal: result.journal
+        journal: result.journal,
+        profile
       },
       buildResponseMeta(context, 0)
     );

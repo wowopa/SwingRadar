@@ -5,6 +5,7 @@ import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import {
+  applyTradeEventToPortfolioProfile,
   createEmptyPortfolioProfile,
   isPortfolioProfileConfigured,
   loadPortfolioProfileDocument,
@@ -133,5 +134,78 @@ describe("portfolio profile storage", () => {
       enteredAt: "2026-03-20"
     });
     expect(loadedOtherUser).toEqual(createEmptyPortfolioProfile());
+  });
+
+  it("reduces remaining quantity and increases cash on a partial take profit sync", () => {
+    const profile = {
+      ...createEmptyPortfolioProfile(),
+      totalCapital: 20_000_000,
+      availableCash: 2_000_000,
+      positions: [
+        {
+          ticker: "005930",
+          company: "삼성전자",
+          sector: "반도체",
+          quantity: 10,
+          averagePrice: 70_000,
+          enteredAt: "2026-03-20"
+        }
+      ]
+    };
+
+    const next = applyTradeEventToPortfolioProfile(
+      profile,
+      {
+        ticker: "005930",
+        type: "take_profit_partial",
+        quantity: 4,
+        price: 75_000,
+        fees: 1_000,
+        tradedAt: "2026-04-02T00:00:00.000Z"
+      },
+      "tester@example.com"
+    );
+
+    expect(next.positions).toHaveLength(1);
+    expect(next.positions[0]).toMatchObject({
+      ticker: "005930",
+      quantity: 6,
+      averagePrice: 70_000
+    });
+    expect(next.availableCash).toBe(2_299_000);
+  });
+
+  it("removes the position on a full exit sync", () => {
+    const profile = {
+      ...createEmptyPortfolioProfile(),
+      totalCapital: 20_000_000,
+      availableCash: 2_000_000,
+      positions: [
+        {
+          ticker: "005930",
+          company: "삼성전자",
+          sector: "반도체",
+          quantity: 5,
+          averagePrice: 70_000,
+          enteredAt: "2026-03-20"
+        }
+      ]
+    };
+
+    const next = applyTradeEventToPortfolioProfile(
+      profile,
+      {
+        ticker: "005930",
+        type: "exit_full",
+        quantity: 5,
+        price: 74_000,
+        fees: 1_000,
+        tradedAt: "2026-04-02T00:00:00.000Z"
+      },
+      "tester@example.com"
+    );
+
+    expect(next.positions).toHaveLength(0);
+    expect(next.availableCash).toBe(2_369_000);
   });
 });

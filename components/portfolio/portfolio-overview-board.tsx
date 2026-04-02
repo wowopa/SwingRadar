@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowUpRight, Clock3, ShieldAlert, Target, WalletCards } from "lucide-react";
 
+import type { PortfolioTradeEventDialogPreset } from "@/components/portfolio/portfolio-trade-event-dialog";
 import { SignalToneBadge } from "@/components/shared/signal-tone-badge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -86,11 +87,13 @@ function buildActionMap(board?: HoldingActionBoardDto) {
 export function PortfolioOverviewBoard({
   profile,
   holdingActionBoard,
-  onOpenSettings
+  onOpenSettings,
+  onQuickTradeAction
 }: {
   profile: PortfolioProfile;
   holdingActionBoard?: HoldingActionBoardDto;
   onOpenSettings?: () => void;
+  onQuickTradeAction?: (preset: PortfolioTradeEventDialogPreset) => void;
 }) {
   const actionMap = buildActionMap(holdingActionBoard);
   const riskBudget = Math.round((profile.totalCapital * profile.maxRiskPerTradePercent) / 100);
@@ -183,12 +186,13 @@ export function PortfolioOverviewBoard({
               {profile.positions.map((position) => {
                 const actionItem = actionMap.get(position.ticker);
                 const actionMeta = getActionMeta(actionItem);
+                const currentPrice = actionItem?.currentPrice ?? position.averagePrice;
+                const quickPartialQuantity = position.quantity > 1 ? Math.max(1, Math.ceil(position.quantity / 2)) : position.quantity;
 
                 return (
-                  <Link
+                  <div
                     key={position.ticker}
-                    href={`/portfolio/${position.ticker}`}
-                    className="block rounded-[24px] border border-border/80 bg-[hsl(42_38%_97%)] p-4 transition hover:border-primary/28 hover:bg-white"
+                    className="rounded-[24px] border border-border/80 bg-[hsl(42_38%_97%)] p-4 transition hover:border-primary/28 hover:bg-white"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
@@ -203,7 +207,9 @@ export function PortfolioOverviewBoard({
                           {position.sector} · {formatEnteredAt(position.enteredAt)}
                         </p>
                       </div>
-                      <ArrowUpRight className="mt-1 h-4 w-4 shrink-0 text-primary" />
+                      <Button asChild variant="ghost" size="sm" className="shrink-0">
+                        <Link href={`/portfolio/${position.ticker}`}>상세 보기</Link>
+                      </Button>
                     </div>
 
                     <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
@@ -246,10 +252,99 @@ export function PortfolioOverviewBoard({
                       <p className="mt-2 text-xs leading-5 text-muted-foreground">{actionMeta.note}</p>
                     </div>
 
+                    {onQuickTradeAction ? (
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          className="relative z-10"
+                          onClick={(event) => {
+                            event.preventDefault();
+                            event.stopPropagation();
+                            onQuickTradeAction({
+                              title: `${position.company} 부분 익절`,
+                              description: "빠르게 익절 기록을 남기고 보유 수량과 가용 현금을 함께 갱신합니다.",
+                              saveButtonLabel: "부분 익절 저장",
+                              ticker: position.ticker,
+                              company: position.company,
+                              sector: position.sector,
+                              type: "take_profit_partial",
+                              quantity: quickPartialQuantity,
+                              price: currentPrice,
+                              note: "부분 익절 빠른 기록",
+                              syncProfilePosition: true,
+                              maxQuantity: position.quantity,
+                              lockTicker: true,
+                              lockType: true
+                            });
+                          }}
+                        >
+                          부분 익절
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          className="relative z-10"
+                          onClick={(event) => {
+                            event.preventDefault();
+                            event.stopPropagation();
+                            onQuickTradeAction({
+                              title: `${position.company} 손절`,
+                              description: "손절 체결을 빠르게 남기고 남은 보유 수량과 가용 현금을 즉시 맞춥니다.",
+                              saveButtonLabel: "손절 저장",
+                              ticker: position.ticker,
+                              company: position.company,
+                              sector: position.sector,
+                              type: "stop_loss",
+                              quantity: position.quantity,
+                              price: currentPrice,
+                              note: "손절 빠른 기록",
+                              syncProfilePosition: true,
+                              maxQuantity: position.quantity,
+                              lockTicker: true,
+                              lockType: true
+                            });
+                          }}
+                        >
+                          손절
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="secondary"
+                          className="relative z-10"
+                          onClick={(event) => {
+                            event.preventDefault();
+                            event.stopPropagation();
+                            onQuickTradeAction({
+                              title: `${position.company} 전량 매도`,
+                              description: "남은 수량 전체를 정리하는 체결을 빠르게 기록하고 보유 종목에서 바로 반영합니다.",
+                              saveButtonLabel: "전량 매도 저장",
+                              ticker: position.ticker,
+                              company: position.company,
+                              sector: position.sector,
+                              type: "exit_full",
+                              quantity: position.quantity,
+                              price: currentPrice,
+                              note: "전량 매도 빠른 기록",
+                              syncProfilePosition: true,
+                              maxQuantity: position.quantity,
+                              lockTicker: true,
+                              lockType: true
+                            });
+                          }}
+                        >
+                          전량 매도
+                        </Button>
+                      </div>
+                    ) : null}
+
                     {position.note ? (
                       <p className="mt-3 text-xs leading-5 text-muted-foreground">메모: {position.note}</p>
                     ) : null}
-                  </Link>
+                  </div>
                 );
               })}
             </div>

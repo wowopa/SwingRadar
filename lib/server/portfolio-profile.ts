@@ -4,7 +4,11 @@ import path from "node:path";
 import { loadRuntimeDocument, saveRuntimeDocument } from "@/lib/server/runtime-documents";
 import { getRuntimePaths } from "@/lib/server/runtime-paths";
 import { getSymbolByTicker, resolveTicker } from "@/lib/server/runtime-symbol-master";
-import type { PortfolioProfile, PortfolioProfilePosition } from "@/types/recommendation";
+import type {
+  PortfolioProfile,
+  PortfolioProfilePosition,
+  PortfolioTradeEventType
+} from "@/types/recommendation";
 
 const PORTFOLIO_PROFILE_DOCUMENT_NAME = "portfolio-profile";
 const USER_PORTFOLIO_PROFILES_DOCUMENT_NAME = "user-portfolio-profiles";
@@ -64,6 +68,10 @@ function normalizeOptionalDate(value: unknown) {
 
 function normalizeNonNegativeNumber(value: unknown, fallback: number) {
   return typeof value === "number" && Number.isFinite(value) && value >= 0 ? value : fallback;
+}
+
+function normalizePositiveNumber(value: unknown, fallback: number) {
+  return typeof value === "number" && Number.isFinite(value) && value > 0 ? value : fallback;
 }
 
 function normalizePositiveInteger(value: unknown, fallback: number, max: number) {
@@ -244,4 +252,114 @@ export async function savePortfolioProfileForUser(userId: string, profile: unkno
   document.profiles[userId] = normalizePortfolioProfile(profile);
   await saveUserPortfolioProfilesDocument(document);
   return document.profiles[userId];
+}
+
+type SyncablePortfolioTradeEvent = {
+  ticker: string;
+  type: PortfolioTradeEventType;
+  quantity: number;
+  price: number;
+  fees?: number;
+  tradedAt?: string;
+  note?: string;
+};
+
+function clampCurrency(value: number) {
+  return Math.max(0, Math.round(value));
+}
+
+function getTradeEnteredAt(value?: string) {
+  if (!value) {
+    return undefined;
+  }
+
+  const normalized = value.slice(0, 10);
+  return /^\d{4}-\d{2}-\d{2}$/.test(normalized) ? normalized : undefined;
+}
+
+function buildPositionFromTradeEvent(event: SyncablePortfolioTradeEvent) {
+  const ticker = resolveTicker(event.ticker);
+  const symbol = getSymbolByTicker(ticker);
+
+  return {
+    ticker,
+    company: symbol?.company ?? ticker,
+    sector: symbol?.sector ?? "미분류",
+    quantity: event.quantity,
+    averagePrice: event.price,
+    enteredAt: getTradeEnteredAt(event.tradedAt),
+    note: normalizeOptionalString(event.note)
+  } satisfies PortfolioProfilePosition;
+}
+
+export function applyTradeEventToPortfolioProfile(
+  profile: PortfolioProfile,
+  event: SyncablePortfolioTradeEvent,
+  updatedBy: string
+) {
+  const normalized = normalizePortfolioProfile(profile);
+  const ticker = resolveTicker(event.ticker);
+  const fees = normalizeNonNegativeNumber(event.fees, 0);
+  const positions = [...normalized.positions];
+  const positionIndex = positions.findIndex((position) => position.ticker === ticker);
+  const existingPosition = positionIndex >= 0 ? positions[positionIndex] : null;
+  let availableCash = normalized.availableCash;
+
+  if (event.type === "buy" || event.type === "add") {
+    const quantity = normalizePositiveNumber(event.quantity, 0);
+    const price = normalizePositiveNumber(event.price, 0);
+
+    if (quantity > 0 && price > 0) {
+      if (existingPosition) {
+        const totalCost =
+          existingPosition.quantity * existingPosition.averagePrice + quantity * price + fees;
+        const nextQuantity = existingPosition.quantity + quantity;
+        positions[positionIndex] = {
+          ...existingPosition,
+          quantity: nextQuantity,
+          averagePrice: totalCost / nextQuantity,
+          enteredAt: existingPosition.enteredAt ?? getTradeEnteredAt(event.tradedAt),
+          note: normalizeOptionalString(event.note) ?? existingPosition.note
+        };
+      } else {
+        positions.push(buildPositionFromTradeEvent(event));
+      }
+
+      availableCash = clampCurrency(availableCash - quantity * price - fees);
+    }
+  } else if (existingPosition) {
+    const effectiveQuantity = Math.min(existingPosition.quantity, normalizePositiveNumber(event.quantity, 0));
+
+    if (effectiveQuantity > 0) {
+      const remainingQuantity = Math.max(0, existingPosition.quantity - effectiveQuantity);
+      if (remainingQuantity > 0) {
+        positions[positionIndex] = {
+          ...existingPosition,
+          quantity: remainingQuantity
+        };
+      } else {
+        positions.splice(positionIndex, 1);
+      }
+
+      availableCash = clampCurrency(availableCash + effectiveQuantity * event.price - fees);
+    }
+  }
+
+  return normalizePortfolioProfile({
+    ...normalized,
+    availableCash,
+    positions,
+    updatedAt: new Date().toISOString(),
+    updatedBy
+  });
+}
+
+export async function syncPortfolioProfileWithTradeEventForUser(
+  userId: string,
+  event: SyncablePortfolioTradeEvent,
+  updatedBy: string
+) {
+  const current = await loadPortfolioProfileForUser(userId);
+  const nextProfile = applyTradeEventToPortfolioProfile(current, event, updatedBy);
+  return savePortfolioProfileForUser(userId, nextProfile);
 }
