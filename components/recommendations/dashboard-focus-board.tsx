@@ -13,6 +13,7 @@ import type {
   HoldingActionStatusDto,
   OpeningCheckLearningInsightDto,
   OpeningRecheckReviewDto,
+  PersonalRuleReminderDto,
   TodayActionBoardDto,
   TodayActionBoardItemDto,
   TodayActionBoardSummaryDto,
@@ -184,6 +185,7 @@ export function DashboardFocusBoard({
   holdingActionBoard,
   dailyScan,
   openingCheckLearning,
+  personalRuleReminder,
   openingReview,
   openingCheckCompleted = false
 }: {
@@ -192,6 +194,7 @@ export function DashboardFocusBoard({
   holdingActionBoard?: HoldingActionBoardDto;
   dailyScan: DailyScanSummaryDto | null;
   openingCheckLearning?: OpeningCheckLearningInsightDto;
+  personalRuleReminder?: PersonalRuleReminderDto;
   openingReview?: OpeningRecheckReviewDto;
   openingCheckCompleted?: boolean;
 }) {
@@ -228,6 +231,7 @@ export function DashboardFocusBoard({
           )}
 
           {openingCheckLearning ? <CompactLearningBanner insight={openingCheckLearning} /> : null}
+          {personalRuleReminder ? <CompactRuleReminderBanner reminder={personalRuleReminder} /> : null}
 
           <div className="grid gap-3 xl:grid-cols-3">
             <PrimaryActionCard
@@ -511,6 +515,33 @@ function CompactLearningBanner({ insight }: { insight: OpeningCheckLearningInsig
       {insight.secondaryLesson ? (
         <p className="mt-1 text-xs leading-5 text-muted-foreground/90">{insight.secondaryLesson}</p>
       ) : null}
+    </div>
+  );
+}
+
+function CompactRuleReminderBanner({ reminder }: { reminder: PersonalRuleReminderDto }) {
+  return (
+    <div className="rounded-[24px] border border-caution/24 bg-[hsl(var(--caution)/0.1)] px-4 py-3">
+      <div className="flex flex-wrap items-center gap-2">
+        <Badge variant="caution" className="whitespace-nowrap">
+          내 규칙 우선
+        </Badge>
+        <p className="text-sm font-medium text-foreground">{reminder.headline}</p>
+      </div>
+      <p className="mt-1 text-sm text-foreground/88">{reminder.primaryRule}</p>
+      {reminder.secondaryRules.length ? (
+        <div className="mt-2 flex flex-wrap gap-2">
+          {reminder.secondaryRules.map((rule) => (
+            <span
+              key={rule}
+              className="rounded-full border border-caution/24 bg-white/88 px-2.5 py-1 text-[11px] leading-5 text-foreground/78"
+            >
+              {rule}
+            </span>
+          ))}
+        </div>
+      ) : null}
+      <p className="mt-2 text-xs leading-5 text-muted-foreground">{reminder.note}</p>
     </div>
   );
 }

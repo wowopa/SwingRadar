@@ -2,6 +2,7 @@ import type {
   DailyCandidateDto,
   OpeningCheckLearningInsightDto,
   OpeningRecheckDecisionDto,
+  PersonalRuleReminderDto,
   RecommendationListItemDto,
   RecommendationsResponseDto,
   TickerAnalysisDto
@@ -24,6 +25,7 @@ import {
 import { buildHoldingActionBoard } from "@/lib/recommendations/holding-management";
 import { buildOpeningRecheckReview } from "@/lib/recommendations/opening-recheck-review";
 import { listOpeningRecheckDecisions, listOpeningRecheckScans } from "@/lib/server/opening-recheck-board";
+import { loadPortfolioCloseReviewsForUser } from "@/lib/server/portfolio-close-reviews";
 import { loadPortfolioJournalForUser } from "@/lib/server/portfolio-journal";
 import {
   isPortfolioProfileConfigured,
@@ -90,6 +92,89 @@ function buildOpeningCheckLearningInsight(
     headline,
     primaryLesson,
     secondaryLesson
+  };
+}
+
+function normalizeRuleText(value: string | undefined) {
+  if (!value) {
+    return undefined;
+  }
+
+  const normalized = value.replace(/\s+/g, " ").trim();
+  return normalized || undefined;
+}
+
+function buildPersonalRuleReminder(
+  closeReviews: Awaited<ReturnType<typeof loadPortfolioCloseReviewsForUser>>
+): PersonalRuleReminderDto | undefined {
+  const entries = Object.values(closeReviews);
+  if (!entries.length) {
+    return undefined;
+  }
+
+  const noteStats = new Map<
+    string,
+    { count: number; latestAt: number; kind: "next" | "watch" }
+  >();
+
+  for (const entry of entries) {
+    const updatedAt = new Date(entry.updatedAt).getTime() || 0;
+    const nextRule = normalizeRuleText(entry.nextRuleNote);
+    const watchout = normalizeRuleText(entry.watchoutsNote);
+
+    if (nextRule) {
+      const current = noteStats.get(nextRule);
+      noteStats.set(nextRule, {
+        count: (current?.count ?? 0) + 1,
+        latestAt: Math.max(current?.latestAt ?? 0, updatedAt),
+        kind: "next"
+      });
+    }
+
+    if (watchout) {
+      const current = noteStats.get(watchout);
+      noteStats.set(watchout, {
+        count: (current?.count ?? 0) + 1,
+        latestAt: Math.max(current?.latestAt ?? 0, updatedAt),
+        kind: current?.kind ?? "watch"
+      });
+    }
+  }
+
+  const sortedNotes = [...noteStats.entries()]
+    .sort((left, right) => {
+      if (right[1].kind !== left[1].kind) {
+        return left[1].kind === "next" ? -1 : 1;
+      }
+      if (right[1].count !== left[1].count) {
+        return right[1].count - left[1].count;
+      }
+
+      return right[1].latestAt - left[1].latestAt;
+    })
+    .map(([text, meta]) => ({
+      text,
+      ...meta
+    }));
+
+  if (!sortedNotes.length) {
+    return undefined;
+  }
+
+  const primary = sortedNotes[0];
+  const secondaryRules = sortedNotes.slice(1, 3).map((item) => item.text);
+  const repeatedCount = sortedNotes.filter((item) => item.count > 1).length;
+
+  return {
+    headline: primary.kind === "next" ? "내 다음 규칙" : "내가 자주 놓친 점",
+    primaryRule: primary.text,
+    secondaryRules,
+    note:
+      primary.count > 1
+        ? `최근 종료 회고 ${primary.count}건에서 반복된 규칙입니다.`
+        : repeatedCount > 0
+          ? "최근 종료 회고에서 반복된 주의점을 먼저 확인하세요."
+          : "최근 종료 회고에서 남긴 개인 규칙입니다."
   };
 }
 
@@ -247,7 +332,7 @@ export async function listRecommendations(
 ): Promise<RecommendationsResponseDto> {
   const provider = getDataProvider();
   const emptyOpeningRecheckByTicker: Record<string, OpeningRecheckDecisionDto> = {};
-  const [source, analysisSource, dailyCandidates, tracking, portfolioProfile, portfolioJournal, userOpeningRecheckScans] =
+  const [source, analysisSource, dailyCandidates, tracking, portfolioProfile, portfolioJournal, userOpeningRecheckScans, closeReviews] =
     await Promise.all([
     provider.getRecommendations(),
     provider.getAnalysis().catch(() => null),
@@ -255,7 +340,8 @@ export async function listRecommendations(
     provider.getTracking(),
     options?.userId ? loadPortfolioProfileForUser(options.userId) : loadPortfolioProfileDocument(),
     options?.userId ? loadPortfolioJournalForUser(options.userId) : Promise.resolve(null),
-    options?.userId ? listUserOpeningRecheckScans(options.userId) : Promise.resolve([])
+    options?.userId ? listUserOpeningRecheckScans(options.userId) : Promise.resolve([]),
+    options?.userId ? loadPortfolioCloseReviewsForUser(options.userId) : Promise.resolve({})
   ]);
   const [sharedOpeningRecheckByTicker, userOpeningRecheckByTicker, openingRecheckScans] = await Promise.all([
     dailyCandidates
@@ -497,6 +583,7 @@ export async function listRecommendations(
         )
       : undefined
   );
+  const personalRuleReminder = buildPersonalRuleReminder(closeReviews);
 
   return {
     generatedAt: dailyCandidates?.generatedAt ?? source.generatedAt,
@@ -521,6 +608,7 @@ export async function listRecommendations(
     todayActionBoard,
     holdingActionBoard,
     openingReview,
-    openingCheckLearning
+    openingCheckLearning,
+    personalRuleReminder
   };
 }

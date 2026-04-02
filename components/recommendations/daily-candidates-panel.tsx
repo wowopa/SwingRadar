@@ -14,7 +14,8 @@ import { Textarea } from "@/components/ui/textarea";
 import type {
   DailyScanSummaryDto,
   OpeningCheckLearningInsightDto,
-  OpeningRecheckDecisionDto
+  OpeningRecheckDecisionDto,
+  PersonalRuleReminderDto
 } from "@/lib/api-contracts/swing-radar";
 import { resolveRecommendationActionBucket } from "@/lib/recommendations/action-plan";
 import {
@@ -214,10 +215,12 @@ async function parseResponse<T>(response: Response): Promise<T> {
 export function DailyCandidatesPanel({
   dailyScan,
   openingCheckLearning,
+  personalRuleReminder,
   initialFocusTicker
 }: {
   dailyScan: DailyScanSummaryDto | null;
   openingCheckLearning?: OpeningCheckLearningInsightDto;
+  personalRuleReminder?: PersonalRuleReminderDto;
   initialFocusTicker?: string | null;
 }) {
   const router = useRouter();
@@ -500,6 +503,27 @@ export function DailyCandidatesPanel({
               <p className="text-sm font-medium text-foreground">{openingCheckLearning.headline}</p>
             </div>
             <p className="mt-1 text-xs leading-5 text-muted-foreground">{openingCheckLearning.primaryLesson}</p>
+          </div>
+        ) : null}
+
+        {personalRuleReminder ? (
+          <div className="rounded-2xl border border-caution/24 bg-[hsl(var(--caution)/0.1)] px-4 py-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge variant="caution">내 규칙</Badge>
+              <p className="text-sm font-medium text-foreground">{personalRuleReminder.primaryRule}</p>
+            </div>
+            {personalRuleReminder.secondaryRules.length ? (
+              <div className="mt-2 flex flex-wrap gap-2">
+                {personalRuleReminder.secondaryRules.map((rule) => (
+                  <span
+                    key={rule}
+                    className="rounded-full border border-caution/24 bg-white/88 px-2.5 py-1 text-[11px] leading-5 text-foreground/78"
+                  >
+                    {rule}
+                  </span>
+                ))}
+              </div>
+            ) : null}
           </div>
         ) : null}
 

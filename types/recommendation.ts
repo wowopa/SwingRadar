@@ -139,6 +139,13 @@ export interface OpeningCheckLearningInsight {
   secondaryLesson?: string;
 }
 
+export interface PersonalRuleReminder {
+  headline: string;
+  primaryRule: string;
+  secondaryRules: string[];
+  note: string;
+}
+
 export interface OpeningRecheckTickerInsight {
   scanKey: string;
   signalDate: string;

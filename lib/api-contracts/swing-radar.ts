@@ -114,6 +114,13 @@ export interface OpeningCheckLearningInsightDto {
   secondaryLesson?: string;
 }
 
+export interface PersonalRuleReminderDto {
+  headline: string;
+  primaryRule: string;
+  secondaryRules: string[];
+  note: string;
+}
+
 export interface OpeningRecheckTickerInsightDto {
   scanKey: string;
   signalDate: string;
@@ -407,6 +414,7 @@ export interface RecommendationsResponseDto {
   holdingActionBoard?: HoldingActionBoardDto;
   openingReview?: OpeningRecheckReviewDto;
   openingCheckLearning?: OpeningCheckLearningInsightDto;
+  personalRuleReminder?: PersonalRuleReminderDto;
 }
 
 export interface AnalysisSummaryMetricDto {

@@ -13,6 +13,7 @@ const mocks = vi.hoisted(() => ({
   listUserOpeningRecheckDecisions: vi.fn(),
   listUserOpeningRecheckScans: vi.fn(),
   listOpeningRecheckScans: vi.fn(),
+  loadPortfolioCloseReviewsForUser: vi.fn(),
   loadPortfolioJournalForUser: vi.fn(),
   loadPortfolioProfileDocument: vi.fn(),
   loadPortfolioProfileForUser: vi.fn(),
@@ -39,6 +40,10 @@ vi.mock("@/lib/server/opening-recheck-board", () => ({
 vi.mock("@/lib/server/user-opening-recheck-board", () => ({
   listUserOpeningRecheckDecisions: mocks.listUserOpeningRecheckDecisions,
   listUserOpeningRecheckScans: mocks.listUserOpeningRecheckScans
+}));
+
+vi.mock("@/lib/server/portfolio-close-reviews", () => ({
+  loadPortfolioCloseReviewsForUser: mocks.loadPortfolioCloseReviewsForUser
 }));
 
 vi.mock("@/lib/server/portfolio-journal", () => ({
@@ -185,6 +190,7 @@ describe("listRecommendations", () => {
     mocks.listUserOpeningRecheckDecisions.mockResolvedValue({});
     mocks.listUserOpeningRecheckScans.mockResolvedValue([]);
     mocks.listOpeningRecheckScans.mockResolvedValue([]);
+    mocks.loadPortfolioCloseReviewsForUser.mockResolvedValue({});
     mocks.loadPortfolioJournalForUser.mockResolvedValue(createEmptyJournal());
     mocks.loadPortfolioProfileDocument.mockResolvedValue(createEmptyProfile());
     mocks.loadPortfolioProfileForUser.mockResolvedValue(createEmptyProfile());
@@ -699,5 +705,53 @@ describe("listRecommendations", () => {
     expect(result.openingCheckLearning).toBeDefined();
     expect(result.openingCheckLearning?.headline).toContain("통과");
     expect(result.openingCheckLearning?.primaryLesson).toContain("승률");
+  });
+
+  it("surfaces personal rule reminders from saved close reviews", async () => {
+    mocks.getRecommendations.mockResolvedValue({
+      generatedAt: "2026-03-08T00:00:00.000Z",
+      items: [createRecommendation({ ticker: "AAA001", company: "Alpha", sector: "Tech", score: 90 })]
+    });
+    mocks.getDailyCandidates.mockResolvedValue({
+      generatedAt: "2026-03-08T01:00:00.000Z",
+      batchSize: 20,
+      concurrency: 2,
+      topCandidatesLimit: 10,
+      totalTickers: 100,
+      totalBatches: 5,
+      succeededBatches: 5,
+      failedBatches: [],
+      topCandidates: [createCandidate({ ticker: "AAA001", company: "Alpha", sector: "Tech" })],
+      batchSummaries: []
+    });
+    mocks.loadPortfolioCloseReviewsForUser.mockResolvedValue({
+      "AAA001:2026-03-08T06:00:00.000Z": {
+        positionKey: "AAA001:2026-03-08T06:00:00.000Z",
+        ticker: "AAA001",
+        closedAt: "2026-03-08T06:00:00.000Z",
+        strengthsNote: "확인 가격 유지 후 진입",
+        watchoutsNote: "손절을 늦추지 말기",
+        nextRuleNote: "보류 상태에서는 진입 금지",
+        updatedAt: "2026-03-08T08:00:00.000Z",
+        updatedBy: "tester@example.com"
+      },
+      "BBB001:2026-03-07T06:00:00.000Z": {
+        positionKey: "BBB001:2026-03-07T06:00:00.000Z",
+        ticker: "BBB001",
+        closedAt: "2026-03-07T06:00:00.000Z",
+        watchoutsNote: "손절을 늦추지 말기",
+        nextRuleNote: "확인 가격 실패면 당일 보류",
+        updatedAt: "2026-03-07T08:00:00.000Z",
+        updatedBy: "tester@example.com"
+      }
+    });
+
+    const result = await listRecommendations({ sort: "score_desc" }, { userId: "user-1" });
+
+    expect(result.personalRuleReminder).toMatchObject({
+      headline: "내 다음 규칙",
+      primaryRule: "보류 상태에서는 진입 금지"
+    });
+    expect(result.personalRuleReminder?.secondaryRules).toContain("확인 가격 실패면 당일 보류");
   });
 });
