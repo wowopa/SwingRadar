@@ -1034,6 +1034,23 @@ export function buildPortfolioPerformanceDashboard(
   };
 }
 
+export function filterPortfolioGroupsByDays(
+  groups: PortfolioJournalGroup[],
+  days: number | "all",
+  now: Date = new Date()
+) {
+  if (days === "all") {
+    return groups;
+  }
+
+  const cutoff = now.getTime() - days * 86_400_000;
+
+  return groups.filter((group) => {
+    const closedAt = new Date(group.latestEvent.tradedAt).getTime();
+    return Number.isFinite(closedAt) && closedAt >= cutoff;
+  });
+}
+
 export function buildPortfolioOpeningCheckAnalytics(
   groups: PortfolioJournalGroup[],
   scans: PortfolioOpeningCheckScanSnapshot[]

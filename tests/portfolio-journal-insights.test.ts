@@ -8,6 +8,7 @@ import {
   buildPortfolioReviewCalendarDashboard,
   buildPortfolioReviewSummary,
   calculatePortfolioJournalGroupMetrics,
+  filterPortfolioGroupsByDays,
   groupPortfolioJournalByTicker,
   isClosingPortfolioTradeEventType
 } from "@/lib/portfolio/journal-insights";
@@ -202,6 +203,51 @@ describe("portfolio journal insights", () => {
     expect(dashboard.partialTakeUsageRate).toBe(50);
     expect(dashboard.weekly.length).toBeGreaterThan(0);
     expect(dashboard.monthly[0]?.key).toBe("2026-04");
+  });
+
+  it("filters closed groups by recent day windows", () => {
+    const groups = groupPortfolioJournalByTicker([
+      createEvent({
+        ticker: "005930",
+        company: "삼성전자",
+        type: "exit_full",
+        quantity: 5,
+        price: 71000,
+        tradedAt: "2026-03-28T09:00:00+09:00"
+      }),
+      createEvent({
+        ticker: "005930",
+        company: "삼성전자",
+        type: "buy",
+        quantity: 5,
+        price: 70000,
+        tradedAt: "2026-03-20T09:00:00+09:00"
+      }),
+      createEvent({
+        ticker: "000660",
+        company: "SK하이닉스",
+        type: "exit_full",
+        quantity: 5,
+        price: 135000,
+        tradedAt: "2025-12-01T09:00:00+09:00"
+      }),
+      createEvent({
+        ticker: "000660",
+        company: "SK하이닉스",
+        type: "buy",
+        quantity: 5,
+        price: 120000,
+        tradedAt: "2025-11-20T09:00:00+09:00"
+      })
+    ]);
+
+    const filtered30 = filterPortfolioGroupsByDays(groups, 30, new Date("2026-04-02T00:00:00+09:00"));
+    const filtered90 = filterPortfolioGroupsByDays(groups, 90, new Date("2026-04-02T00:00:00+09:00"));
+    const filteredAll = filterPortfolioGroupsByDays(groups, "all", new Date("2026-04-02T00:00:00+09:00"));
+
+    expect(filtered30).toHaveLength(1);
+    expect(filtered90).toHaveLength(1);
+    expect(filteredAll).toHaveLength(2);
   });
 
   it("matches user opening checks to closed trades and summarizes quality", () => {

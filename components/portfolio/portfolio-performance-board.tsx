@@ -1,10 +1,13 @@
 "use client";
 
+import { useMemo, useState } from "react";
+
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   buildPortfolioOpeningCheckAnalytics,
   buildPortfolioPerformanceDashboard,
+  filterPortfolioGroupsByDays,
   groupPortfolioJournalByTicker
 } from "@/lib/portfolio/journal-insights";
 import { formatPrice } from "@/lib/utils";
@@ -19,6 +22,14 @@ function formatSignedPrice(value: number) {
   return `${value > 0 ? "+" : "-"}${formatPrice(Math.abs(value))}`;
 }
 
+type PerformanceRange = "30d" | "90d" | "all";
+
+const RANGE_OPTIONS: Array<{ key: PerformanceRange; label: string; days: number | "all"; note: string }> = [
+  { key: "30d", label: "최근 30일", days: 30, note: "가장 최근 한 달의 종료 거래만 봅니다." },
+  { key: "90d", label: "최근 90일", days: 90, note: "최근 세 달의 종료 거래 흐름을 봅니다." },
+  { key: "all", label: "전체", days: "all", note: "누적 종료 거래 전체를 기준으로 봅니다." }
+];
+
 export function PortfolioPerformanceBoard({
   journal,
   openingCheckScans
@@ -26,11 +37,24 @@ export function PortfolioPerformanceBoard({
   journal: PortfolioJournal;
   openingCheckScans: UserOpeningRecheckScanSnapshot[];
 }) {
-  const closedGroups = groupPortfolioJournalByTicker(journal.events).filter((group) =>
-    ["exit_full", "stop_loss", "manual_exit"].includes(group.latestEvent.type)
+  const [range, setRange] = useState<PerformanceRange>("90d");
+  const allClosedGroups = useMemo(
+    () =>
+      groupPortfolioJournalByTicker(journal.events).filter((group) =>
+        ["exit_full", "stop_loss", "manual_exit"].includes(group.latestEvent.type)
+      ),
+    [journal.events]
   );
-  const performance = buildPortfolioPerformanceDashboard(closedGroups);
-  const openingAnalytics = buildPortfolioOpeningCheckAnalytics(closedGroups, openingCheckScans);
+  const selectedRange = RANGE_OPTIONS.find((option) => option.key === range) ?? RANGE_OPTIONS[1];
+  const closedGroups = useMemo(
+    () => filterPortfolioGroupsByDays(allClosedGroups, selectedRange.days),
+    [allClosedGroups, selectedRange.days]
+  );
+  const performance = useMemo(() => buildPortfolioPerformanceDashboard(closedGroups), [closedGroups]);
+  const openingAnalytics = useMemo(
+    () => buildPortfolioOpeningCheckAnalytics(closedGroups, openingCheckScans),
+    [closedGroups, openingCheckScans]
+  );
 
   return (
     <section className="space-y-5">
@@ -42,6 +66,23 @@ export function PortfolioPerformanceBoard({
               <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">{performance.summary}</p>
             </div>
             <Badge variant="secondary">{performance.closedCount}개 종료 거래</Badge>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            {RANGE_OPTIONS.map((option) => (
+              <button
+                key={option.key}
+                type="button"
+                onClick={() => setRange(option.key)}
+                className={
+                  option.key === range
+                    ? "inline-flex h-9 items-center rounded-full border border-primary/24 bg-primary/10 px-3.5 text-xs font-medium text-primary"
+                    : "inline-flex h-9 items-center rounded-full border border-border/80 bg-[hsl(42_40%_97%)] px-3.5 text-xs font-medium text-foreground/76 transition hover:border-primary/24 hover:bg-white"
+                }
+              >
+                {option.label}
+              </button>
+            ))}
+            <span className="text-xs leading-5 text-muted-foreground">{selectedRange.note}</span>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
