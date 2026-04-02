@@ -146,6 +146,68 @@ function buildChecklist(draft: OpeningDraft): OpeningRecheckChecklist | null {
   };
 }
 
+function collectRuleText(reminder?: PersonalRuleReminderDto) {
+  if (!reminder) {
+    return "";
+  }
+
+  return [reminder.primaryRule, ...reminder.secondaryRules, reminder.note].join(" ");
+}
+
+function buildPersonalRuleHint(
+  reminder: PersonalRuleReminderDto | undefined,
+  draft: OpeningDraft | null,
+  suggestedStatus: OpeningDecisionStatus | undefined
+) {
+  if (!reminder || !draft) {
+    return null;
+  }
+
+  const ruleText = collectRuleText(reminder);
+
+  if (
+    draft.gap === "overheated" &&
+    (ruleText.includes("추격") || ruleText.includes("과열") || ruleText.includes("보류"))
+  ) {
+    return {
+      title: "과열 갭 주의",
+      body: "과열 갭이 뜨면 추격보다 보류 또는 제외를 먼저 고르세요."
+    };
+  }
+
+  if (
+    (draft.confirmation === "failed" || draft.confirmation === "mixed") &&
+    ruleText.includes("확인 가격")
+  ) {
+    return {
+      title: "확인 가격 재확인",
+      body: "확인 가격 반응이 약하면 오늘은 관찰 또는 보류 쪽이 더 맞습니다."
+    };
+  }
+
+  if (
+    (draft.action === "hold" || suggestedStatus === "avoid" || suggestedStatus === "excluded") &&
+    (ruleText.includes("보류") || ruleText.includes("금지"))
+  ) {
+    return {
+      title: "보류 우선",
+      body: "지금 조합에서는 무리한 진입보다 개인 규칙대로 보류를 먼저 따르세요."
+    };
+  }
+
+  if (draft.action === "review" && suggestedStatus === "passed" && ruleText.includes("손절")) {
+    return {
+      title: "손절 여유 확인",
+      body: "진입 전 손절 기준과 가격 여유를 한 번 더 확인하세요."
+    };
+  }
+
+  return {
+    title: reminder.headline,
+    body: reminder.primaryRule
+  };
+}
+
 function getDefaultFocusTicker(
   items: DailyScanSummaryDto["topCandidates"],
   decisions: Record<string, OpeningRecheckDecisionDto>
@@ -264,6 +326,7 @@ export function DailyCandidatesPanel({
     : null;
   const focusedChecklist = focusedDraft ? buildChecklist(focusedDraft) : null;
   const suggestedStatus = focusedChecklist ? suggestOpeningRecheckStatus(focusedChecklist) : undefined;
+  const personalRuleHint = buildPersonalRuleHint(personalRuleReminder, focusedDraft, suggestedStatus);
   const resolvedStatus = focusedDraft
     ? focusedDraft.finalStatus ?? suggestedStatus ?? focusedDecision?.suggestedStatus ?? undefined
     : undefined;
@@ -733,10 +796,12 @@ export function DailyCandidatesPanel({
                           </Badge>
                         </div>
 
-                        {personalRuleReminder ? (
+                        {personalRuleHint ? (
                           <div className="mt-3 rounded-2xl border border-caution/24 bg-[hsl(var(--caution)/0.08)] px-3 py-3">
-                            <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">내 규칙 우선</p>
-                            <p className="mt-1 text-sm text-foreground/88">{personalRuleReminder.primaryRule}</p>
+                            <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+                              {personalRuleHint.title}
+                            </p>
+                            <p className="mt-1 text-sm text-foreground/88">{personalRuleHint.body}</p>
                           </div>
                         ) : null}
 
