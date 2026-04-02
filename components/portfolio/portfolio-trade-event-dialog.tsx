@@ -25,44 +25,10 @@ type SymbolSearchResponse = {
   description: string;
 };
 
-const tradeTypeMeta: Record<
-  PortfolioTradeEventType,
-  {
-    label: string;
-    variant: "default" | "positive" | "neutral" | "caution" | "secondary";
-    description: string;
-  }
-> = {
-  buy: {
-    label: "첫 매수",
-    variant: "positive",
-    description: "포지션을 처음 여는 체결입니다."
-  },
-  add: {
-    label: "추가 매수",
-    variant: "default",
-    description: "기존 포지션에 수량을 더하는 체결입니다."
-  },
-  take_profit_partial: {
-    label: "부분 익절",
-    variant: "neutral",
-    description: "일부 수량만 먼저 정리하는 체결입니다."
-  },
-  exit_full: {
-    label: "전량 매도",
-    variant: "secondary",
-    description: "남은 수량을 모두 정리하는 체결입니다."
-  },
-  stop_loss: {
-    label: "손절",
-    variant: "caution",
-    description: "손절 기준에 따라 종료하는 체결입니다."
-  },
-  manual_exit: {
-    label: "수동 종료",
-    variant: "secondary",
-    description: "사용자 판단으로 포지션을 정리하는 체결입니다."
-  }
+type TradeTypeMeta = {
+  label: string;
+  variant: "default" | "positive" | "neutral" | "caution" | "secondary";
+  description: string;
 };
 
 type TradeEventFormState = {
@@ -88,10 +54,45 @@ export type PortfolioTradeEventDialogPreset = {
   fees?: number;
   tradedAt?: string;
   note?: string;
+  priceOptions?: Array<{ label: string; value: number }>;
+  noteTemplates?: string[];
   syncProfilePosition?: boolean;
   maxQuantity?: number;
   lockTicker?: boolean;
   lockType?: boolean;
+};
+
+const tradeTypeMeta: Record<PortfolioTradeEventType, TradeTypeMeta> = {
+  buy: {
+    label: "첫 매수",
+    variant: "positive",
+    description: "포지션을 처음 여는 체결입니다."
+  },
+  add: {
+    label: "추가 매수",
+    variant: "default",
+    description: "기존 보유에 수량을 더하는 체결입니다."
+  },
+  take_profit_partial: {
+    label: "부분 익절",
+    variant: "neutral",
+    description: "일부 수량만 먼저 정리하는 체결입니다."
+  },
+  exit_full: {
+    label: "전량 매도",
+    variant: "secondary",
+    description: "남은 수량 전체를 정리하는 체결입니다."
+  },
+  stop_loss: {
+    label: "손절",
+    variant: "caution",
+    description: "손절 기준에 따른 종료 체결입니다."
+  },
+  manual_exit: {
+    label: "수동 종료",
+    variant: "secondary",
+    description: "사용자 판단으로 종료하는 체결입니다."
+  }
 };
 
 function buildLocalDateTimeInputValue() {
@@ -158,6 +159,36 @@ function buildSellQuantityOptions(type: PortfolioTradeEventType, maxQuantity?: n
   }
 
   return [{ label: "전량", value: maxQuantity }];
+}
+
+function appendNoteTemplate(currentNote: string, template: string) {
+  const trimmedCurrent = currentNote.trim();
+  if (!trimmedCurrent) {
+    return template;
+  }
+
+  if (trimmedCurrent.includes(template)) {
+    return currentNote;
+  }
+
+  return `${trimmedCurrent}, ${template}`;
+}
+
+function buildDefaultNoteTemplates(type: PortfolioTradeEventType) {
+  switch (type) {
+    case "add":
+      return ["눌림 확인 후 추가 매수", "장초 확인 통과 후 추가", "평단 보강 목적 추가"];
+    case "take_profit_partial":
+      return ["1차 목표 도달 후 부분 익절", "이익 일부 확보", "반응 둔화로 일부 정리"];
+    case "stop_loss":
+      return ["손절 기준 이탈", "확인 가격 실패 후 손절", "보호 가격 이탈"];
+    case "exit_full":
+      return ["목표 구간 도달 후 전량 정리", "보유 계획 종료", "수동 전량 정리"];
+    case "manual_exit":
+      return ["장중 수동 정리", "계획 재검토 후 종료", "보유 우선순위 재배치"];
+    default:
+      return ["장초 확인 통과 후 첫 진입", "계획 진입 구간 진입", "시그널 확인 후 매수"];
+  }
 }
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
@@ -306,10 +337,20 @@ export function PortfolioTradeEventDialog({
   }, [form.ticker, preset?.company, preset?.sector, preset?.ticker, quickTickers, selectedPosition?.sector, symbolResults]);
 
   const maxQuantity = preset?.maxQuantity ?? selectedPosition?.quantity;
-  const quantityOptions = useMemo(
-    () => buildSellQuantityOptions(form.type, maxQuantity),
-    [form.type, maxQuantity]
-  );
+  const quantityOptions = useMemo(() => buildSellQuantityOptions(form.type, maxQuantity), [form.type, maxQuantity]);
+  const priceOptions = useMemo(() => {
+    const items = preset?.priceOptions ?? [];
+    return items.filter(
+      (item, index, array) =>
+        Number.isFinite(item.value) &&
+        item.value > 0 &&
+        array.findIndex((entry) => Math.abs(entry.value - item.value) < 0.0001) === index
+    );
+  }, [preset?.priceOptions]);
+  const noteTemplates = useMemo(() => {
+    const merged = [...(preset?.noteTemplates ?? []), ...buildDefaultNoteTemplates(form.type)];
+    return merged.filter((item, index) => merged.indexOf(item) === index);
+  }, [form.type, preset?.noteTemplates]);
   const enteredQuantity = parsePositiveNumber(form.quantity);
   const quantityOverflow = Boolean(
     preset?.syncProfilePosition &&
@@ -329,7 +370,7 @@ export function PortfolioTradeEventDialog({
 
   async function submitEvent() {
     if (quantityOverflow) {
-      setError(`보유 수량 ${formatQuantity(maxQuantity ?? 0)} 안에서만 빠른 기록을 남길 수 있습니다.`);
+      setError(`보유 수량 ${formatQuantity(maxQuantity ?? 0)} 안에서만 기록할 수 있습니다.`);
       return;
     }
 
@@ -375,7 +416,7 @@ export function PortfolioTradeEventDialog({
   const dialogTitle = preset?.title ?? "체결 기록 추가";
   const dialogDescription =
     preset?.description ??
-    "첫 매수, 추가 매수, 부분 익절, 전량 매도, 손절 중 하나를 고르고 기록합니다.";
+    "첫 매수, 추가 매수, 부분 익절, 전량 매도, 손절 중 하나를 골라 체결을 기록합니다.";
   const saveButtonLabel = preset?.saveButtonLabel ?? "기록 저장";
   const tickerLocked = Boolean(preset?.lockTicker);
   const typeLocked = Boolean(preset?.lockType);
@@ -407,11 +448,7 @@ export function PortfolioTradeEventDialog({
             </div>
           ) : (
             <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
-              {(
-                Object.entries(tradeTypeMeta) as Array<
-                  [PortfolioTradeEventType, (typeof tradeTypeMeta)[PortfolioTradeEventType]]
-                >
-              ).map(([type, meta]) => (
+              {(Object.entries(tradeTypeMeta) as Array<[PortfolioTradeEventType, TradeTypeMeta]>).map(([type, meta]) => (
                 <button
                   key={type}
                   type="button"
@@ -468,11 +505,11 @@ export function PortfolioTradeEventDialog({
 
                   {selectedSymbol ? (
                     <div className="rounded-[18px] border border-primary/24 bg-[linear-gradient(180deg,rgba(139,107,46,0.08),rgba(255,255,255,0.94))] px-3 py-3 text-sm text-foreground/82">
-                      선택한 종목: {selectedSymbol.company} · {form.ticker}
+                      선택된 종목: {selectedSymbol.company} · {form.ticker}
                     </div>
                   ) : form.ticker ? (
                     <div className="rounded-[18px] border border-border/80 bg-[hsl(42_40%_97%)] px-3 py-3 text-sm text-muted-foreground">
-                      선택한 종목 코드: {form.ticker}
+                      선택된 종목 코드: {form.ticker}
                     </div>
                   ) : null}
 
@@ -524,12 +561,33 @@ export function PortfolioTradeEventDialog({
             </Field>
 
             <Field label="체결 가격">
-              <Input
-                type="number"
-                min={0}
-                value={form.price}
-                onChange={(event) => setForm((current) => ({ ...current, price: event.target.value }))}
-              />
+              <div className="space-y-3">
+                <Input
+                  type="number"
+                  min={0}
+                  value={form.price}
+                  onChange={(event) => setForm((current) => ({ ...current, price: event.target.value }))}
+                />
+                {priceOptions.length ? (
+                  <div className="flex flex-wrap gap-2">
+                    {priceOptions.map((option) => (
+                      <button
+                        key={`${option.label}-${option.value}`}
+                        type="button"
+                        className="rounded-full border border-border/80 bg-[hsl(42_40%_97%)] px-3 py-1.5 text-xs text-muted-foreground transition hover:border-primary/20 hover:bg-white hover:text-foreground"
+                        onClick={() =>
+                          setForm((current) => ({
+                            ...current,
+                            price: String(option.value)
+                          }))
+                        }
+                      >
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
             </Field>
 
             <Field label="수량">
@@ -564,7 +622,7 @@ export function PortfolioTradeEventDialog({
                 ) : null}
                 {quantityOverflow ? (
                   <p className="text-xs leading-5 text-caution">
-                    보유 수량 {formatQuantity(maxQuantity ?? 0)} 안에서만 빠른 기록을 남길 수 있습니다.
+                    보유 수량 {formatQuantity(maxQuantity ?? 0)} 안에서만 기록할 수 있습니다.
                   </p>
                 ) : null}
               </div>
@@ -581,16 +639,37 @@ export function PortfolioTradeEventDialog({
           </div>
 
           <Field label="메모">
-            <Textarea
-              value={form.note}
-              placeholder="예: 장초 확인 통과 후 첫 진입, 1차 목표가 도달로 30% 부분 익절"
-              onChange={(event) => setForm((current) => ({ ...current, note: event.target.value }))}
-            />
+            <div className="space-y-3">
+              <Textarea
+                value={form.note}
+                placeholder="예: 장초 확인 통과 후 첫 진입, 1차 목표가 도달해 30% 부분 익절"
+                onChange={(event) => setForm((current) => ({ ...current, note: event.target.value }))}
+              />
+              {noteTemplates.length ? (
+                <div className="flex flex-wrap gap-2">
+                  {noteTemplates.map((template) => (
+                    <button
+                      key={template}
+                      type="button"
+                      className="rounded-full border border-border/80 bg-[hsl(42_40%_97%)] px-3 py-1.5 text-xs text-muted-foreground transition hover:border-primary/20 hover:bg-white hover:text-foreground"
+                      onClick={() =>
+                        setForm((current) => ({
+                          ...current,
+                          note: appendNoteTemplate(current.note, template)
+                        }))
+                      }
+                    >
+                      {template}
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+            </div>
           </Field>
 
           {preset?.syncProfilePosition ? (
             <div className="rounded-[20px] border border-primary/24 bg-[linear-gradient(180deg,rgba(139,107,46,0.08),rgba(255,255,255,0.94))] px-4 py-3 text-sm leading-6 text-foreground/82">
-              저장하면 거래 저널과 함께 현재 보유 수량, 가용 현금도 같이 반영됩니다.
+              저장하면 거래 기록과 함께 현재 보유 수량, 가용 현금도 같이 반영합니다.
             </div>
           ) : null}
 

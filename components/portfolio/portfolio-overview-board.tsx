@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowUpRight, Clock3, ShieldAlert, Target, WalletCards } from "lucide-react";
 
 import type { PortfolioTradeEventDialogPreset } from "@/components/portfolio/portfolio-trade-event-dialog";
+import { buildPortfolioTradeDialogPreset } from "@/components/portfolio/trade-event-dialog-presets";
 import { SignalToneBadge } from "@/components/shared/signal-tone-badge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -37,7 +38,7 @@ function getActionMeta(item?: HoldingActionItemDto | null) {
     return {
       label: "계획 유지",
       variant: "secondary" as const,
-      note: "현재 등록된 보유 기준으로 추가 점검 신호는 많지 않습니다."
+      note: "현재 보유 기준으로 추가 점검 신호가 많지 않습니다."
     };
   }
 
@@ -107,8 +108,7 @@ export function PortfolioOverviewBoard({
             <div>
               <CardTitle className="text-xl text-foreground">내 포트폴리오 스냅샷</CardTitle>
               <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
-                이 화면은 공용 관찰이 아니라, 내 계정에 입력한 보유 종목과 현금 기준으로 현재 포트폴리오를 관리하는
-                용도입니다.
+                현재 보유, 자산 한도, 오늘 관리 우선순위를 한 번에 봅니다.
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
@@ -122,7 +122,7 @@ export function PortfolioOverviewBoard({
                 </Button>
               )}
               <Button asChild variant="ghost">
-                <Link href="/tracking">공용 관찰 보기</Link>
+                <Link href="/tracking">공용 복기 보기</Link>
               </Button>
             </div>
           </div>
@@ -130,8 +130,8 @@ export function PortfolioOverviewBoard({
         <CardContent className="space-y-4">
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
             <SummaryMetric title="총 자산" value={formatPrice(profile.totalCapital)} note="입력한 자산 기준" icon={WalletCards} />
-            <SummaryMetric title="가용 현금" value={formatPrice(profile.availableCash)} note="신규 진입에 쓸 수 있는 현금" icon={ArrowUpRight} />
-            <SummaryMetric title="보유 종목" value={`${profile.positions.length}개`} note="현재 계정에 등록된 보유 수" icon={ShieldAlert} />
+            <SummaryMetric title="가용 현금" value={formatPrice(profile.availableCash)} note="오늘 새로 쓸 수 있는 현금" icon={ArrowUpRight} />
+            <SummaryMetric title="보유 종목" value={`${profile.positions.length}개`} note="현재 계정에 등록한 보유" icon={ShieldAlert} />
             <SummaryMetric title="1회 손실 한도" value={formatPrice(riskBudget)} note={`${profile.maxRiskPerTradePercent.toFixed(1)}% 기준`} icon={ShieldAlert} />
             <SummaryMetric title="동시 보유 한도" value={`${profile.maxConcurrentPositions}개`} note="같이 관리할 최대 종목 수" icon={Target} />
             <SummaryMetric title="섹터 한도" value={`${profile.sectorLimit}개`} note="같은 섹터 신규 진입 상한" icon={Clock3} />
@@ -148,19 +148,19 @@ export function PortfolioOverviewBoard({
               <ActionCountCard
                 title="부분 익절"
                 count={holdingActionBoard.summary.takeProfitCount}
-                note="이익을 일부 챙길 구간"
+                note="이익 일부를 챙길 구간"
                 variant="positive"
               />
               <ActionCountCard
                 title="보호 가격 상향"
                 count={holdingActionBoard.summary.tightenStopCount}
-                note="손절 기준을 더 올릴 구간"
+                note="손절 기준을 끌어올릴 구간"
                 variant="neutral"
               />
               <ActionCountCard
                 title="시간 점검"
                 count={holdingActionBoard.summary.timeStopReviewCount}
-                note="보유 기간 기준 재검토"
+                note="보유 기간 기준 재점검"
                 variant="secondary"
               />
             </div>
@@ -174,7 +174,7 @@ export function PortfolioOverviewBoard({
             <div>
               <CardTitle className="text-lg text-foreground">현재 보유 종목</CardTitle>
               <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                각 보유 종목의 평균단가와 다음 행동을 함께 봅니다.
+                각 종목의 평단, 다음 행동, 빠른 체결 기록을 바로 처리합니다.
               </p>
             </div>
             <Badge variant={hasPositions ? "positive" : "secondary"}>{profile.positions.length}개</Badge>
@@ -187,7 +187,47 @@ export function PortfolioOverviewBoard({
                 const actionItem = actionMap.get(position.ticker);
                 const actionMeta = getActionMeta(actionItem);
                 const currentPrice = actionItem?.currentPrice ?? position.averagePrice;
-                const quickPartialQuantity = position.quantity > 1 ? Math.max(1, Math.ceil(position.quantity / 2)) : position.quantity;
+                const tradePlan = actionItem?.tradePlan ?? null;
+                const addPreset = buildPortfolioTradeDialogPreset({
+                  ticker: position.ticker,
+                  company: position.company,
+                  sector: position.sector,
+                  type: "add",
+                  quantity: position.quantity,
+                  currentPrice,
+                  averagePrice: position.averagePrice,
+                  tradePlan
+                });
+                const partialPreset = buildPortfolioTradeDialogPreset({
+                  ticker: position.ticker,
+                  company: position.company,
+                  sector: position.sector,
+                  type: "take_profit_partial",
+                  quantity: position.quantity,
+                  currentPrice,
+                  averagePrice: position.averagePrice,
+                  tradePlan
+                });
+                const stopPreset = buildPortfolioTradeDialogPreset({
+                  ticker: position.ticker,
+                  company: position.company,
+                  sector: position.sector,
+                  type: "stop_loss",
+                  quantity: position.quantity,
+                  currentPrice,
+                  averagePrice: position.averagePrice,
+                  tradePlan
+                });
+                const exitPreset = buildPortfolioTradeDialogPreset({
+                  ticker: position.ticker,
+                  company: position.company,
+                  sector: position.sector,
+                  type: "exit_full",
+                  quantity: position.quantity,
+                  currentPrice,
+                  averagePrice: position.averagePrice,
+                  tradePlan
+                });
 
                 return (
                   <div
@@ -213,18 +253,14 @@ export function PortfolioOverviewBoard({
                     </div>
 
                     <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                      <MiniMetric label="평균단가" value={formatPrice(position.averagePrice)} />
+                      <MiniMetric label="평단" value={formatPrice(position.averagePrice)} />
                       <MiniMetric
                         label="현재가"
-                        value={
-                          typeof actionItem?.currentPrice === "number"
-                            ? formatPrice(actionItem.currentPrice)
-                            : "확인 필요"
-                        }
+                        value={typeof actionItem?.currentPrice === "number" ? formatPrice(actionItem.currentPrice) : "확인 필요"}
                       />
                       <MiniMetric label="보유 수량" value={formatQuantity(position.quantity)} />
                       <MiniMetric
-                        label="평가손익"
+                        label="평가 손익"
                         value={
                           typeof actionItem?.unrealizedPnlPercent === "number"
                             ? formatPercent(actionItem.unrealizedPnlPercent)
@@ -247,7 +283,7 @@ export function PortfolioOverviewBoard({
                     >
                       <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">다음 행동</p>
                       <p className="mt-2 text-sm leading-6 text-foreground/82">
-                        {actionItem?.nextAction ?? "현재는 보유 계획을 유지하며 추가 점검만 이어갑니다."}
+                        {actionItem?.nextAction ?? "현재는 보유 계획을 유지하며 추가 점검 신호만 이어갑니다."}
                       </p>
                       <p className="mt-2 text-xs leading-5 text-muted-foreground">{actionMeta.note}</p>
                     </div>
@@ -262,22 +298,20 @@ export function PortfolioOverviewBoard({
                           onClick={(event) => {
                             event.preventDefault();
                             event.stopPropagation();
-                            onQuickTradeAction({
-                              title: `${position.company} 부분 익절`,
-                              description: "빠르게 익절 기록을 남기고 보유 수량과 가용 현금을 함께 갱신합니다.",
-                              saveButtonLabel: "부분 익절 저장",
-                              ticker: position.ticker,
-                              company: position.company,
-                              sector: position.sector,
-                              type: "take_profit_partial",
-                              quantity: quickPartialQuantity,
-                              price: currentPrice,
-                              note: "부분 익절 빠른 기록",
-                              syncProfilePosition: true,
-                              maxQuantity: position.quantity,
-                              lockTicker: true,
-                              lockType: true
-                            });
+                            onQuickTradeAction(addPreset);
+                          }}
+                        >
+                          추가 매수
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          className="relative z-10"
+                          onClick={(event) => {
+                            event.preventDefault();
+                            event.stopPropagation();
+                            onQuickTradeAction(partialPreset);
                           }}
                         >
                           부분 익절
@@ -290,22 +324,7 @@ export function PortfolioOverviewBoard({
                           onClick={(event) => {
                             event.preventDefault();
                             event.stopPropagation();
-                            onQuickTradeAction({
-                              title: `${position.company} 손절`,
-                              description: "손절 체결을 빠르게 남기고 남은 보유 수량과 가용 현금을 즉시 맞춥니다.",
-                              saveButtonLabel: "손절 저장",
-                              ticker: position.ticker,
-                              company: position.company,
-                              sector: position.sector,
-                              type: "stop_loss",
-                              quantity: position.quantity,
-                              price: currentPrice,
-                              note: "손절 빠른 기록",
-                              syncProfilePosition: true,
-                              maxQuantity: position.quantity,
-                              lockTicker: true,
-                              lockType: true
-                            });
+                            onQuickTradeAction(stopPreset);
                           }}
                         >
                           손절
@@ -318,22 +337,7 @@ export function PortfolioOverviewBoard({
                           onClick={(event) => {
                             event.preventDefault();
                             event.stopPropagation();
-                            onQuickTradeAction({
-                              title: `${position.company} 전량 매도`,
-                              description: "남은 수량 전체를 정리하는 체결을 빠르게 기록하고 보유 종목에서 바로 반영합니다.",
-                              saveButtonLabel: "전량 매도 저장",
-                              ticker: position.ticker,
-                              company: position.company,
-                              sector: position.sector,
-                              type: "exit_full",
-                              quantity: position.quantity,
-                              price: currentPrice,
-                              note: "전량 매도 빠른 기록",
-                              syncProfilePosition: true,
-                              maxQuantity: position.quantity,
-                              lockTicker: true,
-                              lockType: true
-                            });
+                            onQuickTradeAction(exitPreset);
                           }}
                         >
                           전량 매도
