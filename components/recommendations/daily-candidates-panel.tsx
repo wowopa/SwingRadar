@@ -32,6 +32,7 @@ import {
   OPENING_RECHECK_STATUSES,
   suggestOpeningRecheckStatus
 } from "@/lib/recommendations/opening-recheck";
+import { buildGoogleQuoteSearchUrl, buildNaverFinanceUrl } from "@/lib/market-links";
 import { cn, formatDateTimeShort } from "@/lib/utils";
 import type {
   OpeningActionIntent,
@@ -367,6 +368,10 @@ export function DailyCandidatesPanel({
 
   const focusedDecision = focusedCandidate ? decisions[focusedCandidate.ticker] : undefined;
   const focusedSharedDecision = focusedCandidate ? sharedDecisions[focusedCandidate.ticker] : undefined;
+  const naverFinanceUrl = focusedCandidate ? buildNaverFinanceUrl(focusedCandidate.ticker) : null;
+  const googleQuoteUrl = focusedCandidate
+    ? buildGoogleQuoteSearchUrl(focusedCandidate.company, focusedCandidate.ticker)
+    : null;
   const focusedDraft = focusedCandidate
     ? (drafts[focusedCandidate.ticker] ?? createDraft(focusedDecision))
     : null;
@@ -683,6 +688,22 @@ export function DailyCandidatesPanel({
                           </span>
                         </div>
                         <p className="mt-2 text-sm text-muted-foreground">{focusedCandidate.sector}</p>
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          {naverFinanceUrl ? (
+                            <Button asChild type="button" variant="secondary" size="sm" className="h-9">
+                              <Link href={naverFinanceUrl} target="_blank" rel="noreferrer">
+                                네이버 금융 보기
+                              </Link>
+                            </Button>
+                          ) : null}
+                          {googleQuoteUrl ? (
+                            <Button asChild type="button" variant="ghost" size="sm" className="h-9">
+                              <Link href={googleQuoteUrl} target="_blank" rel="noreferrer">
+                                구글에서 보기
+                              </Link>
+                            </Button>
+                          ) : null}
+                        </div>
                       </div>
                       <div className="flex flex-wrap items-center gap-2">
                         <Badge
