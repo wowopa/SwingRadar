@@ -66,6 +66,9 @@ export default async function SignalsPage({
     buildPublicDataStatusSummary("tracking", tracking.generatedAt)
   ];
   const trackingConfig = getTrackingConfig();
+  const personalActionByTicker = Object.fromEntries(
+    (recommendations.todayActionBoard?.items ?? []).map((item) => [item.ticker, item])
+  );
 
   return (
     <main className="space-y-5">
@@ -112,6 +115,7 @@ export default async function SignalsPage({
             openingCheckCandidateTickers={
               (recommendations.dailyScan?.openingCheckCandidates ?? []).map((item) => item.ticker)
             }
+            personalActionByTicker={personalActionByTicker}
           />
         </section>
       ) : (

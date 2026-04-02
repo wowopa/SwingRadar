@@ -186,6 +186,7 @@ export default async function AnalysisPage({ params }: { params: Promise<{ ticke
           featuredRank={featuredRank >= 0 ? featuredRank + 1 : undefined}
           openingCheckRiskPatterns={recommendationsResponse.openingCheckRiskPatterns}
           openingCheckPositivePattern={recommendationsResponse.openingCheckPositivePattern}
+          personalActionItem={recommendationsResponse.todayActionBoard?.items.find((item) => item.ticker === resolvedTicker)}
         />
 
         <div className="space-y-6">

@@ -8,7 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import type {
   OpeningCheckPositivePatternDto,
-  OpeningCheckRiskPatternDto
+  OpeningCheckRiskPatternDto,
+  TodayActionBoardItemDto
 } from "@/lib/api-contracts/swing-radar";
 import { getValidationBasisDisplayLabel } from "@/lib/copy/action-language";
 import { buildOpeningCheckPatternPreview } from "@/lib/recommendations/opening-check-pattern-preview";
@@ -75,12 +76,14 @@ export function RecommendationExplorer({
   items,
   openingCheckRiskPatterns = [],
   openingCheckPositivePattern,
-  openingCheckCandidateTickers = []
+  openingCheckCandidateTickers = [],
+  personalActionByTicker = {}
 }: {
   items: Recommendation[];
   openingCheckRiskPatterns?: OpeningCheckRiskPatternDto[];
   openingCheckPositivePattern?: OpeningCheckPositivePatternDto;
   openingCheckCandidateTickers?: string[];
+  personalActionByTicker?: Record<string, TodayActionBoardItemDto>;
 }) {
   const [query, setQuery] = useState("");
   const [tone, setTone] = useState<ToneFilter>("all");
@@ -462,6 +465,7 @@ export function RecommendationExplorer({
             openingCheckRiskPatterns={openingCheckRiskPatterns}
             openingCheckPositivePattern={openingCheckPositivePattern}
             openingCheckCandidateTickers={openingCheckCandidateTickers}
+            personalActionByTicker={personalActionByTicker}
           />
         </section>
       ) : (

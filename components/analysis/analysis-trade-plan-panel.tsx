@@ -1,13 +1,15 @@
 import { ArrowUpRight, Flag, ShieldAlert, Target } from "lucide-react";
 
 import { ActionBucketBadge } from "@/components/recommendations/action-bucket-badge";
+import { PersonalActionStatusBadge } from "@/components/recommendations/personal-action-status-badge";
 import { SignalToneBadge } from "@/components/shared/signal-tone-badge";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { buildAnalysisTradePlan } from "@/lib/analysis/action-plan";
 import type {
   OpeningCheckPositivePatternDto,
-  OpeningCheckRiskPatternDto
+  OpeningCheckRiskPatternDto,
+  TodayActionBoardItemDto
 } from "@/lib/api-contracts/swing-radar";
 import { getFeaturedRankLabel } from "@/lib/copy/action-language";
 import { buildOpeningCheckPatternPreview } from "@/lib/recommendations/opening-check-pattern-preview";
@@ -19,13 +21,15 @@ export function AnalysisTradePlanPanel({
   featuredCandidate,
   featuredRank,
   openingCheckRiskPatterns = [],
-  openingCheckPositivePattern
+  openingCheckPositivePattern,
+  personalActionItem
 }: {
   analysis: TickerAnalysis;
   featuredCandidate?: DailyCandidate | null;
   featuredRank?: number;
   openingCheckRiskPatterns?: OpeningCheckRiskPatternDto[];
   openingCheckPositivePattern?: OpeningCheckPositivePatternDto;
+  personalActionItem?: Pick<TodayActionBoardItemDto, "boardStatus" | "boardReason" | "portfolioNote"> | null;
 }) {
   const plan =
     analysis.tradePlan ??
@@ -63,6 +67,7 @@ export function AnalysisTradePlanPanel({
                 {getFeaturedRankLabel(featuredRank)}
               </span>
             ) : null}
+            <PersonalActionStatusBadge item={personalActionItem} />
           </div>
           <span className="rounded-full border border-border/80 bg-[hsl(42_40%_97%)] px-3 py-1 text-xs font-medium text-muted-foreground">
             {plan.bucketDescription}
@@ -77,6 +82,17 @@ export function AnalysisTradePlanPanel({
         <div className="rounded-[28px] border border-border/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(246,241,232,0.9))] p-5">
           <p className="text-sm leading-7 text-foreground/84">{plan.headline}</p>
         </div>
+
+        {personalActionItem ? (
+          <div className="rounded-[24px] border border-primary/16 bg-primary/8 p-4">
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge variant="secondary">내 계좌 기준 해석</Badge>
+              <PersonalActionStatusBadge item={personalActionItem} />
+              {personalActionItem.portfolioNote ? <Badge variant="neutral">{personalActionItem.portfolioNote}</Badge> : null}
+            </div>
+            <p className="mt-3 text-sm leading-6 text-foreground/82">{personalActionItem.boardReason}</p>
+          </div>
+        ) : null}
 
         {patternPreview ? (
           <div

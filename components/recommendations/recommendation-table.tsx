@@ -1,13 +1,15 @@
 ﻿import Link from "next/link";
 
 import { FavoriteTickerButton } from "@/components/shared/favorite-ticker-button";
+import { PersonalActionStatusBadge } from "@/components/recommendations/personal-action-status-badge";
 import { SignalToneBadge } from "@/components/shared/signal-tone-badge";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import type {
   OpeningCheckPositivePatternDto,
-  OpeningCheckRiskPatternDto
+  OpeningCheckRiskPatternDto,
+  TodayActionBoardItemDto
 } from "@/lib/api-contracts/swing-radar";
 import { getValidationBasisDisplayLabel } from "@/lib/copy/action-language";
 import { buildOpeningCheckPatternPreview } from "@/lib/recommendations/opening-check-pattern-preview";
@@ -33,7 +35,8 @@ export function RecommendationTable({
   onToggleFavorite,
   openingCheckRiskPatterns = [],
   openingCheckPositivePattern,
-  openingCheckCandidateTickers = []
+  openingCheckCandidateTickers = [],
+  personalActionByTicker = {}
 }: {
   items: Recommendation[];
   favorites: string[];
@@ -41,6 +44,7 @@ export function RecommendationTable({
   openingCheckRiskPatterns?: OpeningCheckRiskPatternDto[];
   openingCheckPositivePattern?: OpeningCheckPositivePatternDto;
   openingCheckCandidateTickers?: string[];
+  personalActionByTicker?: Record<string, TodayActionBoardItemDto>;
 }) {
   const openingCheckCandidateSet = new Set(openingCheckCandidateTickers.map((ticker) => ticker.toUpperCase()));
   const hasOpeningRiskPatterns = openingCheckRiskPatterns.length > 0;
@@ -74,6 +78,7 @@ export function RecommendationTable({
               {items.map((item, index) => {
                 const displayRank = item.featuredRank ?? index + 1;
                 const isOpeningCheckCandidate = openingCheckCandidateSet.has(item.ticker.toUpperCase());
+                const personalActionItem = personalActionByTicker[item.ticker];
                 const patternPreview = isOpeningCheckCandidate
                   ? buildOpeningCheckPatternPreview(
                       {
@@ -119,6 +124,7 @@ export function RecommendationTable({
                             <Badge variant="secondary" className="h-5 px-2 text-[10px]">
                               장초 확인
                             </Badge>
+                            <PersonalActionStatusBadge item={personalActionItem} className="h-5 px-2 text-[10px]" />
                             {patternPreview ? (
                               <Badge
                                 variant={patternPreview.kind === "risk" ? "caution" : "positive"}
@@ -133,6 +139,8 @@ export function RecommendationTable({
                               </Badge>
                             ) : null}
                           </>
+                        ) : personalActionItem ? (
+                          <PersonalActionStatusBadge item={personalActionItem} className="h-5 px-2 text-[10px]" />
                         ) : null}
                       </div>
                     </td>
