@@ -252,7 +252,11 @@ export function PortfolioWorkspace({
         </TabsContent>
 
         <TabsContent value="performance" className="mt-0">
-          <PortfolioPerformanceBoard journal={journal} openingCheckScans={openingCheckScans} />
+          <PortfolioPerformanceBoard
+            journal={journal}
+            openingCheckScans={openingCheckScans}
+            closeReviews={closeReviews}
+          />
         </TabsContent>
       </Tabs>
 

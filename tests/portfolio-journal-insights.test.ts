@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   buildPortfolioCloseReview,
+  buildPortfolioCloseReviewRuleDashboard,
   buildPortfolioOpeningCheckAnalytics,
   buildPortfolioPerformanceDashboard,
   buildPortfolioReviewAnalytics,
@@ -12,7 +13,7 @@ import {
   groupPortfolioJournalByTicker,
   isClosingPortfolioTradeEventType
 } from "@/lib/portfolio/journal-insights";
-import type { PortfolioTradeEvent } from "@/types/recommendation";
+import type { PortfolioCloseReviewEntry, PortfolioTradeEvent } from "@/types/recommendation";
 
 function createEvent(overrides: Partial<PortfolioTradeEvent>): PortfolioTradeEvent {
   return {
@@ -207,6 +208,45 @@ describe("portfolio journal insights", () => {
     expect(dashboard.strategyTags.find((tag) => tag.key === "scale_out")?.count).toBe(1);
     expect(dashboard.exitReasons.find((reason) => reason.key === "stop_loss")?.count).toBe(1);
     expect(dashboard.exitReasons.find((reason) => reason.key === "exit_full")?.realizedPnl).toBeGreaterThan(0);
+  });
+
+  it("groups repeated close review notes into rule candidates", () => {
+    const closeReviews: Record<string, PortfolioCloseReviewEntry> = {
+      "005930:1": {
+        positionKey: "005930:1",
+        ticker: "005930",
+        closedAt: "2026-04-01T06:00:00.000Z",
+        strengthsNote: "계획대로 첫 진입\n- 부분 익절을 지켰다",
+        watchoutsNote: "추격 진입을 하지 않았다",
+        nextRuleNote: "보류 상태에서는 당일 진입하지 않기",
+        updatedAt: "2026-04-01T07:00:00.000Z",
+        updatedBy: "tester@example.com"
+      },
+      "000660:1": {
+        positionKey: "000660:1",
+        ticker: "000660",
+        closedAt: "2026-04-03T06:00:00.000Z",
+        strengthsNote: "계획대로 첫 진입",
+        watchoutsNote: "확인 가격 실패를 무시했다",
+        nextRuleNote: "보류 상태에서는 당일 진입하지 않기",
+        updatedAt: "2026-04-03T07:00:00.000Z",
+        updatedBy: "tester@example.com"
+      }
+    };
+
+    const dashboard = buildPortfolioCloseReviewRuleDashboard(closeReviews);
+
+    expect(dashboard.reviewedCount).toBe(2);
+    expect(dashboard.candidateCount).toBeGreaterThanOrEqual(4);
+    expect(dashboard.candidates[0]).toMatchObject({
+      category: "next_rule",
+      text: "보류 상태에서는 당일 진입하지 않기",
+      count: 2
+    });
+    expect(dashboard.candidates.find((candidate) => candidate.text === "계획대로 첫 진입")).toMatchObject({
+      category: "strengths",
+      count: 2
+    });
   });
 
   it("filters closed groups by recent day windows", () => {

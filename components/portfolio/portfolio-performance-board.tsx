@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
+  buildPortfolioCloseReviewRuleDashboard,
   buildPortfolioOpeningCheckAnalytics,
   buildPortfolioPerformanceDashboard,
   filterPortfolioGroupsByDays,
@@ -12,7 +13,7 @@ import {
 } from "@/lib/portfolio/journal-insights";
 import { formatPrice } from "@/lib/utils";
 import type { UserOpeningRecheckScanSnapshot } from "@/lib/server/user-opening-recheck-board";
-import type { PortfolioJournal } from "@/types/recommendation";
+import type { PortfolioCloseReviewEntry, PortfolioJournal } from "@/types/recommendation";
 
 function formatSignedPrice(value: number) {
   if (value === 0) {
@@ -32,10 +33,12 @@ const RANGE_OPTIONS: Array<{ key: PerformanceRange; label: string; days: number 
 
 export function PortfolioPerformanceBoard({
   journal,
-  openingCheckScans
+  openingCheckScans,
+  closeReviews
 }: {
   journal: PortfolioJournal;
   openingCheckScans: UserOpeningRecheckScanSnapshot[];
+  closeReviews: Record<string, PortfolioCloseReviewEntry>;
 }) {
   const [range, setRange] = useState<PerformanceRange>("90d");
   const allClosedGroups = useMemo(
@@ -54,6 +57,10 @@ export function PortfolioPerformanceBoard({
   const openingAnalytics = useMemo(
     () => buildPortfolioOpeningCheckAnalytics(closedGroups, openingCheckScans),
     [closedGroups, openingCheckScans]
+  );
+  const closeReviewRules = useMemo(
+    () => buildPortfolioCloseReviewRuleDashboard(closeReviews),
+    [closeReviews]
   );
 
   return (
@@ -188,6 +195,34 @@ export function PortfolioPerformanceBoard({
           </CardContent>
         </Card>
       </div>
+
+      <Card className="border-border/80 bg-white/90 shadow-[0_18px_44px_-34px_rgba(24,32,42,0.2)]">
+        <CardHeader className="space-y-3">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <CardTitle className="text-lg text-foreground">반복 회고 규칙</CardTitle>
+              <p className="text-sm leading-6 text-muted-foreground">{closeReviewRules.summary}</p>
+            </div>
+            <Badge variant="secondary">{closeReviewRules.reviewedCount}개 회고</Badge>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {closeReviewRules.candidates.length ? (
+            closeReviewRules.candidates.slice(0, 4).map((candidate) => (
+              <InsightRow
+                key={candidate.id}
+                title={candidate.text}
+                value={`${candidate.count}회`}
+                badge={candidate.categoryLabel}
+                note={candidate.note}
+                tone={candidate.tone}
+              />
+            ))
+          ) : (
+            <EmptyInsight label="반복해서 남긴 종료 회고 문장이 아직 적어 규칙 후보가 뚜렷하지 않습니다." />
+          )}
+        </CardContent>
+      </Card>
 
       <Card className="border-border/80 bg-white/90 shadow-[0_18px_44px_-34px_rgba(24,32,42,0.2)]">
         <CardHeader className="space-y-3">

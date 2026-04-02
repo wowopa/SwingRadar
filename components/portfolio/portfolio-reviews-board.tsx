@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   buildPortfolioCloseReview,
+  buildPortfolioCloseReviewRuleDashboard,
   buildPortfolioOpeningCheckAnalytics,
   buildPortfolioReviewAnalytics,
   buildPortfolioReviewCalendarDashboard,
@@ -56,6 +57,7 @@ export function PortfolioReviewsBoard({
   const summary = buildPortfolioReviewSummary(closedGroups);
   const calendar = buildPortfolioReviewCalendarDashboard(closedGroups);
   const analytics = buildPortfolioReviewAnalytics(closedGroups);
+  const closeReviewRules = buildPortfolioCloseReviewRuleDashboard(closeReviews);
   const openingCheckAnalytics = buildPortfolioOpeningCheckAnalytics(closedGroups, openingCheckScans);
 
   if (!closedGroups.length) {
@@ -114,6 +116,8 @@ export function PortfolioReviewsBoard({
 
       <ReviewStrategyCard analytics={analytics} />
 
+      <ReviewRuleCandidateCard rules={closeReviewRules} />
+
       {openingCheckAnalytics ? <OpeningCheckQualityCard analytics={openingCheckAnalytics} /> : null}
 
       <div className="grid gap-4 xl:grid-cols-2">
@@ -127,6 +131,70 @@ export function PortfolioReviewsBoard({
         ))}
       </div>
     </section>
+  );
+}
+
+function ReviewRuleCandidateCard({
+  rules
+}: {
+  rules: ReturnType<typeof buildPortfolioCloseReviewRuleDashboard>;
+}) {
+  return (
+    <Card className="border-border/80 bg-white/90 shadow-[0_18px_44px_-34px_rgba(24,32,42,0.2)]">
+      <CardHeader className="space-y-3">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <CardTitle className="text-lg text-foreground">반복 회고 규칙 후보</CardTitle>
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">{rules.summary}</p>
+          </div>
+          <Badge variant="secondary">{rules.candidateCount}개 후보</Badge>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {rules.candidates.length ? (
+          <div className="grid gap-3 xl:grid-cols-2">
+            {rules.candidates.map((candidate) => (
+              <div
+                key={candidate.id}
+                className={
+                  candidate.tone === "positive"
+                    ? "rounded-[20px] border border-positive/22 bg-[hsl(var(--positive)/0.08)] px-4 py-4"
+                    : candidate.tone === "caution"
+                      ? "rounded-[20px] border border-caution/22 bg-[hsl(var(--caution)/0.08)] px-4 py-4"
+                      : "rounded-[20px] border border-border/80 bg-[hsl(42_40%_97%)] px-4 py-4"
+                }
+              >
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div className="space-y-2">
+                    <p className="text-sm font-semibold text-foreground">{candidate.text}</p>
+                    <p className="text-xs leading-5 text-muted-foreground">{candidate.note}</p>
+                  </div>
+                  <Badge
+                    variant={
+                      candidate.tone === "positive"
+                        ? "positive"
+                        : candidate.tone === "caution"
+                          ? "caution"
+                          : "secondary"
+                    }
+                  >
+                    {candidate.categoryLabel}
+                  </Badge>
+                </div>
+                <div className="mt-3 flex items-center justify-between gap-3">
+                  <p className="text-xs text-muted-foreground">종료 회고에서 반복된 문장</p>
+                  <p className="text-sm font-semibold text-foreground">{candidate.count}회</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="rounded-[20px] border border-border/80 bg-[hsl(42_40%_97%)] px-4 py-5 text-sm leading-6 text-muted-foreground">
+            반복해서 남긴 회고 문장이 아직 적어 규칙 후보가 뚜렷하지 않습니다.
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }
 

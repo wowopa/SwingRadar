@@ -7,6 +7,7 @@ import {
 import type {
   OpeningRecheckDecision,
   OpeningRecheckStatus,
+  PortfolioCloseReviewEntry,
   PortfolioTradeEvent,
   PortfolioTradeEventType
 } from "@/types/recommendation";
@@ -136,6 +137,23 @@ export interface PortfolioReviewAnalytics {
   holdDistribution: PortfolioReviewDistributionItem[];
   pnlDistribution: PortfolioReviewDistributionItem[];
   tagInsights: PortfolioReviewTagInsight[];
+}
+
+export interface PortfolioCloseReviewRuleCandidate {
+  id: string;
+  text: string;
+  count: number;
+  category: "strengths" | "watchouts" | "next_rule";
+  categoryLabel: string;
+  tone: "positive" | "neutral" | "caution";
+  note: string;
+}
+
+export interface PortfolioCloseReviewRuleDashboard {
+  reviewedCount: number;
+  candidateCount: number;
+  summary: string;
+  candidates: PortfolioCloseReviewRuleCandidate[];
 }
 
 export interface PortfolioPerformancePeriod {
@@ -338,6 +356,21 @@ function outcomeFromGroup(group: PortfolioJournalGroup) {
   }
 
   return "flat" as const;
+}
+
+function normalizeReviewRuleLine(value: string) {
+  return value.replace(/^[-*•\s]+/, "").replace(/\s+/g, " ").trim();
+}
+
+function splitReviewRuleLines(value?: string) {
+  if (!value) {
+    return [];
+  }
+
+  return value
+    .split(/\r?\n+/)
+    .map((line) => normalizeReviewRuleLine(line))
+    .filter(Boolean);
 }
 
 const portfolioTagDefinitions = [
@@ -1003,6 +1036,104 @@ export function buildPortfolioReviewAnalytics(groups: PortfolioJournalGroup[]): 
     holdDistribution,
     pnlDistribution,
     tagInsights
+  };
+}
+
+export function buildPortfolioCloseReviewRuleDashboard(
+  closeReviews: Record<string, PortfolioCloseReviewEntry>
+): PortfolioCloseReviewRuleDashboard {
+  const reviewEntries = Object.values(closeReviews);
+  if (!reviewEntries.length) {
+    return {
+      reviewedCount: 0,
+      candidateCount: 0,
+      summary: "아직 직접 저장한 종료 회고가 없어 반복되는 규칙 후보를 만들지 못했습니다.",
+      candidates: []
+    };
+  }
+
+  const categoryMeta: Record<
+    PortfolioCloseReviewRuleCandidate["category"],
+    { label: string; tone: PortfolioCloseReviewRuleCandidate["tone"]; order: number; note: string }
+  > = {
+    next_rule: {
+      label: "다음 규칙",
+      tone: "positive",
+      order: 0,
+      note: "다음에도 반복하거나 지켜야 할 규칙으로 가장 자주 남긴 문장"
+    },
+    watchouts: {
+      label: "아쉬운 점",
+      tone: "caution",
+      order: 1,
+      note: "반복해서 아쉽다고 적은 행동이나 패턴"
+    },
+    strengths: {
+      label: "잘한 점",
+      tone: "neutral",
+      order: 2,
+      note: "잘 지켰다고 자주 남긴 행동 기준"
+    }
+  };
+
+  const candidateMap = new Map<
+    string,
+    { text: string; category: PortfolioCloseReviewRuleCandidate["category"]; count: number }
+  >();
+
+  for (const review of reviewEntries) {
+    const entries: Array<[PortfolioCloseReviewRuleCandidate["category"], string[]]> = [
+      ["strengths", splitReviewRuleLines(review.strengthsNote)],
+      ["watchouts", splitReviewRuleLines(review.watchoutsNote)],
+      ["next_rule", splitReviewRuleLines(review.nextRuleNote)]
+    ];
+
+    for (const [category, lines] of entries) {
+      for (const line of lines) {
+        const normalized = line.toLowerCase();
+        const key = `${category}:${normalized}`;
+        const current = candidateMap.get(key) ?? { text: line, category, count: 0 };
+        current.count += 1;
+        candidateMap.set(key, current);
+      }
+    }
+  }
+
+  const candidates = Array.from(candidateMap.entries())
+    .map(([id, candidate]) => {
+      const meta = categoryMeta[candidate.category];
+      return {
+        id,
+        text: candidate.text,
+        count: candidate.count,
+        category: candidate.category,
+        categoryLabel: meta.label,
+        tone: meta.tone,
+        note: meta.note
+      } satisfies PortfolioCloseReviewRuleCandidate;
+    })
+    .sort((left, right) => {
+      if (right.count !== left.count) {
+        return right.count - left.count;
+      }
+
+      const categoryDiff = categoryMeta[left.category].order - categoryMeta[right.category].order;
+      if (categoryDiff !== 0) {
+        return categoryDiff;
+      }
+
+      return left.text.localeCompare(right.text, "ko");
+    })
+    .slice(0, 6);
+
+  return {
+    reviewedCount: reviewEntries.length,
+    candidateCount: candidateMap.size,
+    summary:
+      candidates.length > 0
+        ? `${reviewEntries.length}개의 종료 회고에서 반복된 문장을 규칙 후보로 묶었습니다. 가장 자주 남긴 문장부터 바로 확인할 수 있습니다.`
+        : "종료 회고는 있지만 반복된 문장이 아직 적어 규칙 후보가 뚜렷하지 않습니다.",
+    candidates
   };
 }
 
