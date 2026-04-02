@@ -12,18 +12,20 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { HoldingActionBoardDto } from "@/lib/api-contracts/swing-radar";
 import type { UserOpeningRecheckScanSnapshot } from "@/lib/server/user-opening-recheck-board";
-import type { PortfolioJournal } from "@/types/recommendation";
+import type { PortfolioCloseReviewEntry, PortfolioJournal } from "@/types/recommendation";
 
 export function PortfolioWorkspace({
   initialProfile,
   initialJournal,
   openingCheckScans,
+  closeReviews,
   holdingActionBoard,
   initialSettingsOpen = false
 }: {
   initialProfile: PortfolioProfilePayload;
   initialJournal: PortfolioJournal;
   openingCheckScans: UserOpeningRecheckScanSnapshot[];
+  closeReviews: Record<string, PortfolioCloseReviewEntry>;
   holdingActionBoard?: HoldingActionBoardDto;
   initialSettingsOpen?: boolean;
 }) {
@@ -87,7 +89,11 @@ export function PortfolioWorkspace({
         </TabsContent>
 
         <TabsContent value="reviews" className="mt-0">
-          <PortfolioReviewsBoard journal={initialJournal} openingCheckScans={openingCheckScans} />
+          <PortfolioReviewsBoard
+            journal={initialJournal}
+            openingCheckScans={openingCheckScans}
+            closeReviews={closeReviews}
+          />
         </TabsContent>
       </Tabs>
 

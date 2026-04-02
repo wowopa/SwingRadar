@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { PortfolioWorkspace } from "@/components/portfolio/portfolio-workspace";
 import { PageHeader } from "@/components/shared/page-header";
 import { PublicDataStatusBar } from "@/components/shared/public-data-status-bar";
+import { loadPortfolioCloseReviewsForUser } from "@/lib/server/portfolio-close-reviews";
 import { loadPortfolioJournalForUser } from "@/lib/server/portfolio-journal";
 import { loadPortfolioProfileForUser } from "@/lib/server/portfolio-profile";
 import { buildPublicDataStatusSummary } from "@/lib/server/public-data-status";
@@ -28,11 +29,12 @@ export default async function PortfolioPage({
     redirect("/?auth=login&next=%2Fportfolio");
   }
 
-  const [profile, journal, response, openingCheckScans] = await Promise.all([
+  const [profile, journal, response, openingCheckScans, closeReviews] = await Promise.all([
     loadPortfolioProfileForUser(session.user.id),
     loadPortfolioJournalForUser(session.user.id),
     listRecommendations({ sort: "score_desc" }, { userId: session.user.id }),
-    listUserOpeningRecheckScans(session.user.id)
+    listUserOpeningRecheckScans(session.user.id),
+    loadPortfolioCloseReviewsForUser(session.user.id)
   ]);
   const statusSummary = buildPublicDataStatusSummary("recommendations", response.generatedAt);
 
@@ -50,6 +52,7 @@ export default async function PortfolioPage({
         }}
         initialJournal={journal}
         openingCheckScans={openingCheckScans}
+        closeReviews={closeReviews}
         holdingActionBoard={response.holdingActionBoard}
         initialSettingsOpen={initialSettingsOpen}
       />

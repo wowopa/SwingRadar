@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 
+import { PortfolioCloseReviewEditor } from "@/components/portfolio/portfolio-close-review-editor";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,9 +15,10 @@ import {
   groupPortfolioJournalByTicker,
   type PortfolioJournalGroup
 } from "@/lib/portfolio/journal-insights";
+import { getPortfolioCloseReviewKeyForGroup } from "@/lib/portfolio/review-keys";
 import { formatPrice } from "@/lib/utils";
 import type { UserOpeningRecheckScanSnapshot } from "@/lib/server/user-opening-recheck-board";
-import type { PortfolioJournal } from "@/types/recommendation";
+import type { PortfolioCloseReviewEntry, PortfolioJournal } from "@/types/recommendation";
 
 function formatSignedPrice(value: number) {
   if (value === 0) {
@@ -28,10 +30,12 @@ function formatSignedPrice(value: number) {
 
 export function PortfolioReviewsBoard({
   journal,
-  openingCheckScans
+  openingCheckScans,
+  closeReviews
 }: {
   journal: PortfolioJournal;
   openingCheckScans: UserOpeningRecheckScanSnapshot[];
+  closeReviews: Record<string, PortfolioCloseReviewEntry>;
 }) {
   const closedGroups = groupPortfolioJournalByTicker(journal.events).filter((group) => {
     return ["exit_full", "stop_loss", "manual_exit"].includes(group.latestEvent.type);
@@ -101,7 +105,11 @@ export function PortfolioReviewsBoard({
 
       <div className="grid gap-4 xl:grid-cols-2">
         {closedGroups.map((group) => (
-          <ClosedReviewCard key={group.ticker + group.latestEvent.tradedAt} group={group} />
+          <ClosedReviewCard
+            key={group.ticker + group.latestEvent.tradedAt}
+            group={group}
+            reviewEntry={closeReviews[getPortfolioCloseReviewKeyForGroup(group)]}
+          />
         ))}
       </div>
     </section>
@@ -382,8 +390,15 @@ function OpeningCheckQualityCard({
   );
 }
 
-function ClosedReviewCard({ group }: { group: PortfolioJournalGroup }) {
+function ClosedReviewCard({
+  group,
+  reviewEntry
+}: {
+  group: PortfolioJournalGroup;
+  reviewEntry?: PortfolioCloseReviewEntry;
+}) {
   const review = buildPortfolioCloseReview(group);
+  const positionKey = getPortfolioCloseReviewKeyForGroup(group);
 
   return (
     <Card className="border-border/80 bg-white/90 shadow-[0_18px_44px_-34px_rgba(24,32,42,0.2)]">
@@ -426,6 +441,16 @@ function ClosedReviewCard({ group }: { group: PortfolioJournalGroup }) {
         <div className="grid gap-3 sm:grid-cols-2">
           <ReviewBlock title="잘한 점" items={review.strengths} tone="positive" emptyLabel="기록된 강점이 아직 없습니다." />
           <ReviewBlock title="다음에 다시 볼 점" items={review.watchouts} tone="caution" emptyLabel="큰 경고 포인트는 아직 없습니다." />
+        </div>
+
+        <div className="rounded-[20px] border border-border/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.94),rgba(246,241,232,0.88))] px-4 py-4">
+          <PortfolioCloseReviewEditor
+            positionKey={positionKey}
+            ticker={group.ticker}
+            closedAt={group.latestEvent.tradedAt}
+            review={reviewEntry}
+            compact
+          />
         </div>
       </CardContent>
     </Card>

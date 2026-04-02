@@ -1,9 +1,11 @@
 import { notFound, redirect } from "next/navigation";
 
 import { PositionDetailView } from "@/components/portfolio/position-detail-view";
+import { getPortfolioCloseReviewKeyForGroup } from "@/lib/portfolio/review-keys";
 import { PageHeader } from "@/components/shared/page-header";
 import { buildOpeningRecheckTickerInsight } from "@/lib/recommendations/opening-recheck-insight";
 import { listOpeningRecheckScans } from "@/lib/server/opening-recheck-board";
+import { loadPortfolioCloseReviewsForUser } from "@/lib/server/portfolio-close-reviews";
 import { loadPortfolioJournalForUser } from "@/lib/server/portfolio-journal";
 import { loadPortfolioProfileForUser } from "@/lib/server/portfolio-profile";
 import { buildPublicDataStatusSummary } from "@/lib/server/public-data-status";
@@ -31,18 +33,20 @@ export default async function PortfolioPositionPage({
   const { ticker: rawTicker } = await params;
   const ticker = resolveTicker(rawTicker);
 
-  const [profile, journal, response, tracking, openingRecheckScans, analysis] = await Promise.all([
+  const [profile, journal, response, tracking, openingRecheckScans, analysis, closeReviews] = await Promise.all([
     loadPortfolioProfileForUser(session.user.id),
     loadPortfolioJournalForUser(session.user.id),
     listRecommendations({ sort: "score_desc" }, { userId: session.user.id }),
     getTrackingSnapshot({ ticker, limit: 10 }),
     listOpeningRecheckScans(),
-    resolveTickerAnalysisForQuery(ticker, { includeNews: "false", includeQuality: "false" }).catch(() => null)
+    resolveTickerAnalysisForQuery(ticker, { includeNews: "false", includeQuality: "false" }).catch(() => null),
+    loadPortfolioCloseReviewsForUser(session.user.id)
   ]);
 
   const journalGroup = findPortfolioJournalGroup(journal.events, ticker);
   const position = profile.positions.find((item) => item.ticker === ticker) ?? null;
   const actionItem = response.holdingActionBoard?.items.find((item) => item.ticker === ticker) ?? null;
+  const closeReviewEntry = journalGroup ? closeReviews[getPortfolioCloseReviewKeyForGroup(journalGroup)] ?? null : null;
 
   if (!journalGroup && !position && !actionItem) {
     notFound();
@@ -77,6 +81,7 @@ export default async function PortfolioPositionPage({
         actionItem={actionItem}
         openingCheckInsight={openingCheckInsight}
         analysis={analysis?.item ?? null}
+        closeReviewEntry={closeReviewEntry}
       />
     </main>
   );

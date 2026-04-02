@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowLeft, ArrowUpRight } from "lucide-react";
 
+import { PortfolioCloseReviewEditor } from "@/components/portfolio/portfolio-close-review-editor";
 import { PortfolioPositionChartCard } from "@/components/portfolio/portfolio-position-chart-card";
 import { OpeningCheckInsightCard } from "@/components/shared/opening-check-insight-card";
 import { SignalToneBadge } from "@/components/shared/signal-tone-badge";
@@ -17,8 +18,13 @@ import {
   buildPositionPlanComparison,
   getPortfolioEventLabel
 } from "@/lib/portfolio/position-detail";
+import { getPortfolioCloseReviewKeyForGroup } from "@/lib/portfolio/review-keys";
 import { formatPercent, formatPrice } from "@/lib/utils";
-import type { OpeningRecheckTickerInsight, PortfolioProfilePosition } from "@/types/recommendation";
+import type {
+  OpeningRecheckTickerInsight,
+  PortfolioCloseReviewEntry,
+  PortfolioProfilePosition
+} from "@/types/recommendation";
 
 function formatDate(value?: string | null) {
   if (!value) {
@@ -85,7 +91,8 @@ export function PositionDetailView({
   journalGroup,
   actionItem,
   openingCheckInsight,
-  analysis
+  analysis,
+  closeReviewEntry
 }: {
   ticker: string;
   company: string;
@@ -95,6 +102,7 @@ export function PositionDetailView({
   actionItem?: HoldingActionItemDto | null;
   openingCheckInsight?: OpeningRecheckTickerInsight | null;
   analysis?: TickerAnalysisDto | null;
+  closeReviewEntry?: PortfolioCloseReviewEntry | null;
 }) {
   const isClosed = journalGroup ? isClosingPortfolioTradeEventType(journalGroup.latestEvent.type) : false;
   const review = journalGroup ? buildPortfolioCloseReview(journalGroup) : null;
@@ -359,6 +367,17 @@ export function PositionDetailView({
                   남기면 이 영역에 자동 회고가 채워집니다.
                 </div>
               )}
+
+              {journalGroup && isClosed ? (
+                <div className="rounded-[20px] border border-border/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.94),rgba(246,241,232,0.88))] px-4 py-4">
+                  <PortfolioCloseReviewEditor
+                    positionKey={getPortfolioCloseReviewKeyForGroup(journalGroup)}
+                    ticker={journalGroup.ticker}
+                    closedAt={journalGroup.latestEvent.tradedAt}
+                    review={closeReviewEntry}
+                  />
+                </div>
+              ) : null}
 
               {position?.note ? (
                 <div className="rounded-[20px] border border-border/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.94),rgba(246,241,232,0.88))] px-4 py-4">

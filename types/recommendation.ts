@@ -215,6 +215,17 @@ export interface PortfolioJournal {
   updatedBy: string;
 }
 
+export interface PortfolioCloseReviewEntry {
+  positionKey: string;
+  ticker: string;
+  closedAt: string;
+  strengthsNote?: string;
+  watchoutsNote?: string;
+  nextRuleNote?: string;
+  updatedAt: string;
+  updatedBy: string;
+}
+
 export type PositionSizingLimitSource = "risk_budget" | "slot_budget" | "cash_budget";
 
 export interface PositionSizingPlan {
