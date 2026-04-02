@@ -8,12 +8,18 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getFeaturedRankLabel } from "@/lib/copy/action-language";
 import { buildGoogleQuoteSearchUrl, buildNaverFinanceUrl } from "@/lib/market-links";
+import { resolveRecommendationActionBucket } from "@/lib/recommendations/action-plan";
+import {
+  buildOpeningCheckPatternPreview,
+  type OpeningCheckPatternPreviewResult
+} from "@/lib/recommendations/opening-check-pattern-preview";
 import type {
   DailyScanSummaryDto,
   HoldingActionBoardDto,
   HoldingActionStatusDto,
   OpeningCheckLearningInsightDto,
   OpeningCheckPositivePatternDto,
+  OpeningCheckRiskPatternDto,
   OpeningRecheckReviewDto,
   PersonalRuleAlertDto,
   PersonalRuleReminderDto,
@@ -143,8 +149,65 @@ function getHoldingAttentionCount(board?: HoldingActionBoardDto) {
   );
 }
 
-function getBuyReviewItems(board?: TodayActionBoardDto) {
-  return board?.sections.find((section) => section.status === "buy_review")?.items.slice(0, 2) ?? [];
+interface BuyReviewPatternItem {
+  item: TodayActionBoardItemDto;
+  patternPreview: OpeningCheckPatternPreviewResult | null;
+}
+
+function buildBuyReviewPatternItem(
+  item: TodayActionBoardItemDto,
+  openingCheckRiskPatterns: OpeningCheckRiskPatternDto[] = [],
+  openingCheckPositivePattern?: OpeningCheckPositivePatternDto
+): BuyReviewPatternItem {
+  return {
+    item,
+    patternPreview: buildOpeningCheckPatternPreview(
+      {
+        actionBucket:
+          item.actionBucket ??
+          resolveRecommendationActionBucket({
+            signalTone: item.signalTone,
+            activationScore: item.activationScore,
+            featuredRank: item.featuredRank
+          }),
+        tradePlan: item.tradePlan
+      },
+      {
+        riskPatterns: openingCheckRiskPatterns,
+        positivePattern: openingCheckPositivePattern
+      }
+    )
+  };
+}
+
+function getBuyReviewItems(
+  board?: TodayActionBoardDto,
+  openingCheckRiskPatterns: OpeningCheckRiskPatternDto[] = [],
+  openingCheckPositivePattern?: OpeningCheckPositivePatternDto
+) {
+  const items = board?.sections.find((section) => section.status === "buy_review")?.items ?? [];
+
+  return items
+    .map((item) => buildBuyReviewPatternItem(item, openingCheckRiskPatterns, openingCheckPositivePattern))
+    .sort((left, right) => {
+      const leftPriority =
+        left.patternPreview?.kind === "positive" ? 0 : left.patternPreview?.kind === "risk" ? 2 : 1;
+      const rightPriority =
+        right.patternPreview?.kind === "positive" ? 0 : right.patternPreview?.kind === "risk" ? 2 : 1;
+
+      if (leftPriority !== rightPriority) {
+        return leftPriority - rightPriority;
+      }
+
+      const leftRank = left.item.featuredRank ?? Number.MAX_SAFE_INTEGER;
+      const rightRank = right.item.featuredRank ?? Number.MAX_SAFE_INTEGER;
+      if (leftRank !== rightRank) {
+        return leftRank - rightRank;
+      }
+
+      return left.item.company.localeCompare(right.item.company, "ko");
+    })
+    .slice(0, 2);
 }
 
 function buildBuyReviewNote(item: TodayActionBoardItemDto) {
@@ -189,6 +252,7 @@ export function DashboardFocusBoard({
   holdingActionBoard,
   dailyScan,
   openingCheckLearning,
+  openingCheckRiskPatterns = [],
   openingCheckPositivePattern,
   strategyPerformanceHint,
   personalRuleReminder,
@@ -201,6 +265,7 @@ export function DashboardFocusBoard({
   holdingActionBoard?: HoldingActionBoardDto;
   dailyScan: DailyScanSummaryDto | null;
   openingCheckLearning?: OpeningCheckLearningInsightDto;
+  openingCheckRiskPatterns?: OpeningCheckRiskPatternDto[];
   openingCheckPositivePattern?: OpeningCheckPositivePatternDto;
   strategyPerformanceHint?: StrategyPerformanceHintDto;
   personalRuleReminder?: PersonalRuleReminderDto;
@@ -208,12 +273,13 @@ export function DashboardFocusBoard({
   openingReview?: OpeningRecheckReviewDto;
   openingCheckCompleted?: boolean;
 }) {
-  const buyReviewItems = getBuyReviewItems(todayActionBoard);
+  const buyReviewItems = getBuyReviewItems(todayActionBoard, openingCheckRiskPatterns, openingCheckPositivePattern);
   const holdingAttentionItems = getHoldingAttentionItems(holdingActionBoard);
   const openingSummary = getOpeningCheckSummary(dailyScan);
   const setupChecklist = buildSetupChecklist(todayActionBoard, holdingActionBoard, openingSummary);
   const hasPendingOpeningChecks = openingSummary.counts.pending > 0;
   const hasRuleAlert = Boolean(personalRuleAlert);
+  const topBuyReviewPattern = buyReviewItems[0]?.patternPreview ?? null;
   const openingSummaryLine = hasRuleAlert
     ? "반복 위반 경고가 있어 오늘은 저장 전 규칙을 다시 확인합니다."
     : personalRuleReminder
@@ -231,6 +297,10 @@ export function DashboardFocusBoard({
       ? "반복 위반 경고가 있어 장초 확인 저장을 먼저 마친 뒤 검토합니다."
       : personalRuleReminder && hasPendingOpeningChecks
       ? "장초 확인과 개인 규칙 점검이 끝난 뒤 검토합니다."
+      : topBuyReviewPattern?.kind === "risk"
+      ? "최근 장초 손실 우세 조합이 먼저 보여 오늘은 더 보수적으로 다시 확인합니다."
+      : topBuyReviewPattern?.kind === "positive"
+      ? "최근 잘 맞은 장초 조합이 먼저 올라와 바로 검토할 수 있습니다."
       : buyReviewItems.length
         ? "가장 먼저 검토할 종목으로 바로 이동합니다."
         : "아직 남은 종목이 없습니다.";
@@ -239,6 +309,10 @@ export function DashboardFocusBoard({
       ? "muted"
       : personalRuleReminder && hasPendingOpeningChecks
       ? "muted"
+      : topBuyReviewPattern?.kind === "risk"
+      ? "caution"
+      : topBuyReviewPattern?.kind === "positive"
+      ? "positive"
       : buyReviewItems.length
         ? "positive"
         : "muted";
@@ -291,7 +365,7 @@ export function DashboardFocusBoard({
               icon={<Clock3 className="h-4 w-4" />}
             />
             <PrimaryActionCard
-              href={buyReviewItems[0] ? `/analysis/${buyReviewItems[0].ticker}` : "/opening-check"}
+              href={buyReviewItems[0] ? `/analysis/${buyReviewItems[0].item.ticker}` : "/opening-check"}
               title="오늘 매수 검토"
               count={formatQueueCount(buyReviewItems.length)}
               caption={buyReviewCaption}
@@ -347,7 +421,7 @@ export function DashboardFocusBoard({
               <CardContent>
                 {buyReviewItems.length ? (
                   <div className="space-y-3">
-                    {buyReviewItems.map((item) => (
+                    {buyReviewItems.map(({ item, patternPreview }) => (
                       <div
                         key={item.ticker}
                         className="block rounded-[24px] border border-border/80 bg-[hsl(42_38%_97%)] p-4 transition hover:border-primary/28 hover:bg-white"
@@ -360,10 +434,18 @@ export function DashboardFocusBoard({
                               </p>
                               <SignalToneBadge tone={item.signalTone} />
                               {item.featuredRank ? <Badge variant="secondary">{getFeaturedRankLabel(item.featuredRank)}</Badge> : null}
+                              {patternPreview ? (
+                                <Badge variant={patternPreview.kind === "risk" ? "caution" : "positive"}>
+                                  {patternPreview.label}
+                                </Badge>
+                              ) : null}
                             </div>
                             <p className="mt-3 text-sm leading-6 text-foreground/82">{buildBuyReviewNote(item)}</p>
                             {buildBuyReviewSizing(item) ? (
                               <p className="mt-2 text-xs leading-5 text-muted-foreground">{buildBuyReviewSizing(item)}</p>
+                            ) : null}
+                            {patternPreview ? (
+                              <p className="mt-2 text-xs leading-5 text-muted-foreground">{patternPreview.detail}</p>
                             ) : null}
                             <p className="mt-2 text-xs leading-5 text-muted-foreground">{item.boardReason}</p>
                             <div className="mt-3 flex flex-wrap gap-2">

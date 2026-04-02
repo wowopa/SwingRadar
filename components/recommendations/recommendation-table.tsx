@@ -10,6 +10,8 @@ import type {
   OpeningCheckRiskPatternDto
 } from "@/lib/api-contracts/swing-radar";
 import { getValidationBasisDisplayLabel } from "@/lib/copy/action-language";
+import { buildOpeningCheckPatternPreview } from "@/lib/recommendations/opening-check-pattern-preview";
+import { resolveRecommendationActionBucket } from "@/lib/recommendations/action-plan";
 import { cn, formatPercent } from "@/lib/utils";
 import type { Recommendation } from "@/types/recommendation";
 
@@ -72,6 +74,26 @@ export function RecommendationTable({
               {items.map((item, index) => {
                 const displayRank = item.featuredRank ?? index + 1;
                 const isOpeningCheckCandidate = openingCheckCandidateSet.has(item.ticker.toUpperCase());
+                const patternPreview = isOpeningCheckCandidate
+                  ? buildOpeningCheckPatternPreview(
+                      {
+                        actionBucket:
+                          item.actionBucket ??
+                          resolveRecommendationActionBucket({
+                            signalTone: item.signalTone,
+                            score: item.score,
+                            activationScore: item.activationScore,
+                            featuredRank: item.featuredRank,
+                            trackingDiagnostic: item.trackingDiagnostic
+                          }),
+                        tradePlan: item.tradePlan
+                      },
+                      {
+                        riskPatterns: openingCheckRiskPatterns,
+                        positivePattern: openingCheckPositivePattern
+                      }
+                    )
+                  : null;
                 return (
                   <tr
                     key={item.ticker}
@@ -97,13 +119,17 @@ export function RecommendationTable({
                             <Badge variant="secondary" className="h-5 px-2 text-[10px]">
                               장초 확인
                             </Badge>
-                            {hasOpeningRiskPatterns ? (
-                              <Badge variant="caution" className="h-5 px-2 text-[10px]">
-                                최근 장초 주의
+                            {patternPreview ? (
+                              <Badge
+                                variant={patternPreview.kind === "risk" ? "caution" : "positive"}
+                                className="h-5 px-2 text-[10px]"
+                                title={patternPreview.detail}
+                              >
+                                {patternPreview.label}
                               </Badge>
-                            ) : openingCheckPositivePattern ? (
-                              <Badge variant="positive" className="h-5 px-2 text-[10px]">
-                                최근 잘 맞음
+                            ) : hasOpeningRiskPatterns ? (
+                              <Badge variant="neutral" className="h-5 px-2 text-[10px]">
+                                장초 기준 확인
                               </Badge>
                             ) : null}
                           </>
