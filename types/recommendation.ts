@@ -271,6 +271,16 @@ export interface PortfolioCloseReviewEntry {
   updatedBy: string;
 }
 
+export interface PortfolioPersonalRuleEntry {
+  id: string;
+  text: string;
+  sourceCategory: "strengths" | "watchouts" | "next_rule";
+  sourceLabel: string;
+  createdAt: string;
+  updatedAt: string;
+  updatedBy: string;
+}
+
 export type PositionSizingLimitSource = "risk_budget" | "slot_budget" | "cash_budget";
 
 export interface PositionSizingPlan {

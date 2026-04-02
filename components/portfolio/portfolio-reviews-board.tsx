@@ -3,6 +3,7 @@
 import Link from "next/link";
 
 import { PortfolioCloseReviewEditor } from "@/components/portfolio/portfolio-close-review-editor";
+import { PortfolioPersonalRuleButton } from "@/components/portfolio/portfolio-personal-rule-button";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,7 +20,11 @@ import {
 import { getPortfolioCloseReviewKeyForGroup } from "@/lib/portfolio/review-keys";
 import { formatPrice } from "@/lib/utils";
 import type { UserOpeningRecheckScanSnapshot } from "@/lib/server/user-opening-recheck-board";
-import type { PortfolioCloseReviewEntry, PortfolioJournal } from "@/types/recommendation";
+import type {
+  PortfolioCloseReviewEntry,
+  PortfolioJournal,
+  PortfolioPersonalRuleEntry
+} from "@/types/recommendation";
 
 function formatSignedPrice(value: number) {
   if (value === 0) {
@@ -33,11 +38,13 @@ export function PortfolioReviewsBoard({
   journal,
   openingCheckScans,
   closeReviews,
+  personalRules,
   focusTicker = null
 }: {
   journal: PortfolioJournal;
   openingCheckScans: UserOpeningRecheckScanSnapshot[];
   closeReviews: Record<string, PortfolioCloseReviewEntry>;
+  personalRules: PortfolioPersonalRuleEntry[];
   focusTicker?: string | null;
 }) {
   const closedGroups = groupPortfolioJournalByTicker(journal.events).filter((group) => {
@@ -116,7 +123,7 @@ export function PortfolioReviewsBoard({
 
       <ReviewStrategyCard analytics={analytics} />
 
-      <ReviewRuleCandidateCard rules={closeReviewRules} />
+      <ReviewRuleCandidateCard rules={closeReviewRules} personalRules={personalRules} />
 
       {openingCheckAnalytics ? <OpeningCheckQualityCard analytics={openingCheckAnalytics} /> : null}
 
@@ -135,9 +142,11 @@ export function PortfolioReviewsBoard({
 }
 
 function ReviewRuleCandidateCard({
-  rules
+  rules,
+  personalRules
 }: {
   rules: ReturnType<typeof buildPortfolioCloseReviewRuleDashboard>;
+  personalRules: PortfolioPersonalRuleEntry[];
 }) {
   return (
     <Card className="border-border/80 bg-white/90 shadow-[0_18px_44px_-34px_rgba(24,32,42,0.2)]">
@@ -183,7 +192,14 @@ function ReviewRuleCandidateCard({
                 </div>
                 <div className="mt-3 flex items-center justify-between gap-3">
                   <p className="text-xs text-muted-foreground">종료 회고에서 반복된 문장</p>
-                  <p className="text-sm font-semibold text-foreground">{candidate.count}회</p>
+                  <div className="flex items-center gap-3">
+                    <p className="text-sm font-semibold text-foreground">{candidate.count}회</p>
+                    <PortfolioPersonalRuleButton
+                      text={candidate.text}
+                      sourceCategory={candidate.category}
+                      existingRules={personalRules}
+                    />
+                  </div>
                 </div>
               </div>
             ))}

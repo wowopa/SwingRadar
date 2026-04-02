@@ -23,6 +23,7 @@ import type { UserOpeningRecheckScanSnapshot } from "@/lib/server/user-opening-r
 import type {
   PortfolioCloseReviewEntry,
   PortfolioJournal,
+  PortfolioPersonalRuleEntry,
   PortfolioTradeEventType
 } from "@/types/recommendation";
 
@@ -94,6 +95,7 @@ export function PortfolioWorkspace({
   initialJournal,
   openingCheckScans,
   closeReviews,
+  personalRules,
   holdingActionBoard,
   initialSettingsOpen = false
 }: {
@@ -101,6 +103,7 @@ export function PortfolioWorkspace({
   initialJournal: PortfolioJournal;
   openingCheckScans: UserOpeningRecheckScanSnapshot[];
   closeReviews: Record<string, PortfolioCloseReviewEntry>;
+  personalRules: PortfolioPersonalRuleEntry[];
   holdingActionBoard?: HoldingActionBoardDto;
   initialSettingsOpen?: boolean;
 }) {
@@ -247,6 +250,7 @@ export function PortfolioWorkspace({
             journal={journal}
             openingCheckScans={openingCheckScans}
             closeReviews={closeReviews}
+            personalRules={personalRules}
             focusTicker={tradeFollowUp?.highlightTab === "reviews" ? tradeFollowUp.ticker : null}
           />
         </TabsContent>
@@ -256,6 +260,7 @@ export function PortfolioWorkspace({
             journal={journal}
             openingCheckScans={openingCheckScans}
             closeReviews={closeReviews}
+            personalRules={personalRules}
           />
         </TabsContent>
       </Tabs>

@@ -33,6 +33,7 @@ import { buildOpeningRecheckReview } from "@/lib/recommendations/opening-recheck
 import { listOpeningRecheckDecisions, listOpeningRecheckScans } from "@/lib/server/opening-recheck-board";
 import { loadPortfolioCloseReviewsForUser } from "@/lib/server/portfolio-close-reviews";
 import { loadPortfolioJournalForUser } from "@/lib/server/portfolio-journal";
+import { loadPortfolioPersonalRulesForUser } from "@/lib/server/portfolio-personal-rules";
 import {
   isPortfolioProfileConfigured,
   loadPortfolioProfileDocument,
@@ -204,10 +205,11 @@ function normalizeRuleText(value: string | undefined) {
 }
 
 function buildPersonalRuleReminder(
-  closeReviews: Awaited<ReturnType<typeof loadPortfolioCloseReviewsForUser>>
+  closeReviews: Awaited<ReturnType<typeof loadPortfolioCloseReviewsForUser>>,
+  personalRules: Awaited<ReturnType<typeof loadPortfolioPersonalRulesForUser>>
 ): PersonalRuleReminderDto | undefined {
   const entries = Object.values(closeReviews);
-  if (!entries.length) {
+  if (!entries.length && !personalRules.length) {
     return undefined;
   }
 
@@ -238,6 +240,16 @@ function buildPersonalRuleReminder(
         kind: current?.kind ?? "watch"
       });
     }
+  }
+
+  for (const rule of personalRules) {
+    const current = noteStats.get(rule.text);
+    const updatedAt = new Date(rule.updatedAt).getTime() || 0;
+    noteStats.set(rule.text, {
+      count: Math.max((current?.count ?? 0) + 2, 2),
+      latestAt: Math.max(current?.latestAt ?? 0, updatedAt),
+      kind: "next"
+    });
   }
 
   const sortedNotes = [...noteStats.entries()]
@@ -473,7 +485,7 @@ export async function listRecommendations(
 ): Promise<RecommendationsResponseDto> {
   const provider = getDataProvider();
   const emptyOpeningRecheckByTicker: Record<string, OpeningRecheckDecisionDto> = {};
-  const [source, analysisSource, dailyCandidates, tracking, portfolioProfile, portfolioJournal, userOpeningRecheckScans, closeReviews] =
+  const [source, analysisSource, dailyCandidates, tracking, portfolioProfile, portfolioJournal, userOpeningRecheckScans, closeReviews, personalRules] =
     await Promise.all([
     provider.getRecommendations(),
     provider.getAnalysis().catch(() => null),
@@ -482,7 +494,8 @@ export async function listRecommendations(
     options?.userId ? loadPortfolioProfileForUser(options.userId) : loadPortfolioProfileDocument(),
     options?.userId ? loadPortfolioJournalForUser(options.userId) : Promise.resolve(null),
     options?.userId ? listUserOpeningRecheckScans(options.userId) : Promise.resolve([]),
-    options?.userId ? loadPortfolioCloseReviewsForUser(options.userId) : Promise.resolve({})
+    options?.userId ? loadPortfolioCloseReviewsForUser(options.userId) : Promise.resolve({}),
+    options?.userId ? loadPortfolioPersonalRulesForUser(options.userId) : Promise.resolve([])
   ]);
   const [sharedOpeningRecheckByTicker, userOpeningRecheckByTicker, openingRecheckScans] = await Promise.all([
     dailyCandidates
@@ -726,7 +739,7 @@ export async function listRecommendations(
   const openingCheckRiskPatterns = buildOpeningCheckRiskPatterns(openingCheckAnalytics);
   const openingCheckPositivePattern = buildOpeningCheckPositivePattern(openingCheckAnalytics);
   const strategyPerformanceHint = buildStrategyPerformanceHint(portfolioJournal);
-  const personalRuleReminder = buildPersonalRuleReminder(closeReviews);
+  const personalRuleReminder = buildPersonalRuleReminder(closeReviews, personalRules);
   const personalRuleAlert = buildPersonalRuleAlert(openingCheckAnalytics, personalRuleReminder);
 
   return {

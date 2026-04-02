@@ -1,7 +1,9 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { useMemo, useState } from "react";
 
+import { PortfolioPersonalRuleButton } from "@/components/portfolio/portfolio-personal-rule-button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -13,7 +15,11 @@ import {
 } from "@/lib/portfolio/journal-insights";
 import { formatPrice } from "@/lib/utils";
 import type { UserOpeningRecheckScanSnapshot } from "@/lib/server/user-opening-recheck-board";
-import type { PortfolioCloseReviewEntry, PortfolioJournal } from "@/types/recommendation";
+import type {
+  PortfolioCloseReviewEntry,
+  PortfolioJournal,
+  PortfolioPersonalRuleEntry
+} from "@/types/recommendation";
 
 function formatSignedPrice(value: number) {
   if (value === 0) {
@@ -34,11 +40,13 @@ const RANGE_OPTIONS: Array<{ key: PerformanceRange; label: string; days: number 
 export function PortfolioPerformanceBoard({
   journal,
   openingCheckScans,
-  closeReviews
+  closeReviews,
+  personalRules
 }: {
   journal: PortfolioJournal;
   openingCheckScans: UserOpeningRecheckScanSnapshot[];
   closeReviews: Record<string, PortfolioCloseReviewEntry>;
+  personalRules: PortfolioPersonalRuleEntry[];
 }) {
   const [range, setRange] = useState<PerformanceRange>("90d");
   const allClosedGroups = useMemo(
@@ -216,6 +224,13 @@ export function PortfolioPerformanceBoard({
                 badge={candidate.categoryLabel}
                 note={candidate.note}
                 tone={candidate.tone}
+                action={
+                  <PortfolioPersonalRuleButton
+                    text={candidate.text}
+                    sourceCategory={candidate.category}
+                    existingRules={personalRules}
+                  />
+                }
               />
             ))
           ) : (
@@ -379,13 +394,15 @@ function InsightRow({
   value,
   badge,
   note,
-  tone
+  tone,
+  action
 }: {
   title: string;
   value: string;
   badge: string;
   note: string;
   tone: "positive" | "neutral" | "caution";
+  action?: ReactNode;
 }) {
   const toneClass =
     tone === "positive"
@@ -406,6 +423,7 @@ function InsightRow({
         </Badge>
       </div>
       <p className="mt-3 text-sm leading-6 text-muted-foreground">{note}</p>
+      {action ? <div className="mt-3">{action}</div> : null}
     </div>
   );
 }

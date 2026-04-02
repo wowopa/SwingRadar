@@ -15,6 +15,7 @@ const mocks = vi.hoisted(() => ({
   listOpeningRecheckScans: vi.fn(),
   loadPortfolioCloseReviewsForUser: vi.fn(),
   loadPortfolioJournalForUser: vi.fn(),
+  loadPortfolioPersonalRulesForUser: vi.fn(),
   loadPortfolioProfileDocument: vi.fn(),
   loadPortfolioProfileForUser: vi.fn(),
   isPortfolioProfileConfigured: vi.fn()
@@ -48,6 +49,10 @@ vi.mock("@/lib/server/portfolio-close-reviews", () => ({
 
 vi.mock("@/lib/server/portfolio-journal", () => ({
   loadPortfolioJournalForUser: mocks.loadPortfolioJournalForUser
+}));
+
+vi.mock("@/lib/server/portfolio-personal-rules", () => ({
+  loadPortfolioPersonalRulesForUser: mocks.loadPortfolioPersonalRulesForUser
 }));
 
 vi.mock("@/lib/server/portfolio-profile", () => ({
@@ -192,6 +197,7 @@ describe("listRecommendations", () => {
     mocks.listOpeningRecheckScans.mockResolvedValue([]);
     mocks.loadPortfolioCloseReviewsForUser.mockResolvedValue({});
     mocks.loadPortfolioJournalForUser.mockResolvedValue(createEmptyJournal());
+    mocks.loadPortfolioPersonalRulesForUser.mockResolvedValue([]);
     mocks.loadPortfolioProfileDocument.mockResolvedValue(createEmptyProfile());
     mocks.loadPortfolioProfileForUser.mockResolvedValue(createEmptyProfile());
     mocks.isPortfolioProfileConfigured.mockReturnValue(false);
@@ -854,6 +860,43 @@ describe("listRecommendations", () => {
     });
     expect(result.personalRuleReminder?.secondaryRules).toContain("확인 가격 실패면 당일 보류");
   });
+  it("prioritizes promoted personal rules in reminder copy", async () => {
+    mocks.getRecommendations.mockResolvedValue({
+      generatedAt: "2026-03-08T00:00:00.000Z",
+      items: [createRecommendation({ ticker: "AAA001", company: "Alpha", sector: "Tech", score: 90 })]
+    });
+    mocks.getDailyCandidates.mockResolvedValue({
+      generatedAt: "2026-03-08T01:00:00.000Z",
+      batchSize: 20,
+      concurrency: 2,
+      topCandidatesLimit: 10,
+      totalTickers: 100,
+      totalBatches: 5,
+      succeededBatches: 5,
+      failedBatches: [],
+      topCandidates: [createCandidate({ ticker: "AAA001", company: "Alpha", sector: "Tech" })],
+      batchSummaries: []
+    });
+    mocks.loadPortfolioCloseReviewsForUser.mockResolvedValue({});
+    mocks.loadPortfolioPersonalRulesForUser.mockResolvedValue([
+      {
+        id: "next_rule:보류 상태에서는 당일 진입하지 않기",
+        text: "보류 상태에서는 당일 진입하지 않기",
+        sourceCategory: "next_rule",
+        sourceLabel: "다음 규칙",
+        createdAt: "2026-03-08T08:00:00.000Z",
+        updatedAt: "2026-03-08T08:00:00.000Z",
+        updatedBy: "tester@example.com"
+      }
+    ]);
+
+    const result = await listRecommendations({ sort: "score_desc" }, { userId: "user-1" });
+
+    expect(result.personalRuleReminder).toMatchObject({
+      primaryRule: "보류 상태에서는 당일 진입하지 않기"
+    });
+  });
+
   it("surfaces a stronger personal rule alert when avoided trades are repeatedly overridden", async () => {
     mocks.getRecommendations.mockResolvedValue({
       generatedAt: "2026-03-08T00:00:00.000Z",
