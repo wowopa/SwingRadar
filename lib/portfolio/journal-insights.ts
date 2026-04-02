@@ -175,6 +175,15 @@ export interface PortfolioPerformanceTagInsight {
   note: string;
 }
 
+export interface PortfolioPerformanceEquityPoint {
+  key: string;
+  label: string;
+  realizedPnl: number;
+  cumulativePnl: number;
+  closedCount: number;
+  tone: "positive" | "neutral" | "caution";
+}
+
 export interface PortfolioPerformanceExitReasonInsight {
   key: "exit_full" | "stop_loss" | "manual_exit";
   label: string;
@@ -199,10 +208,22 @@ export interface PortfolioPerformanceDashboard {
   partialTakeUsageRate: number;
   weekly: PortfolioPerformancePeriod[];
   monthly: PortfolioPerformancePeriod[];
+  equityCurve: PortfolioPerformanceEquityPoint[];
   strategyTags: PortfolioPerformanceTagInsight[];
   exitReasons: PortfolioPerformanceExitReasonInsight[];
   bestWeeklyPeriod?: PortfolioPerformancePeriod;
   worstWeeklyPeriod?: PortfolioPerformancePeriod;
+}
+
+export interface PortfolioOpeningCheckBehaviorImpact {
+  key: "passed" | "watch" | "override";
+  label: string;
+  count: number;
+  realizedPnl: number;
+  averagePnl: number;
+  winRate: number;
+  note: string;
+  tone: "positive" | "neutral" | "caution";
 }
 
 export interface PortfolioOpeningCheckScanSnapshot {
@@ -243,6 +264,7 @@ export interface PortfolioOpeningCheckAnalytics {
   lossCount: number;
   statusInsights: PortfolioOpeningCheckStatusInsight[];
   patterns: PortfolioOpeningCheckPatternInsight[];
+  behaviorImpacts: PortfolioOpeningCheckBehaviorImpact[];
 }
 
 export function isClosingPortfolioTradeEventType(type: PortfolioTradeEventType) {
@@ -1158,6 +1180,7 @@ export function buildPortfolioPerformanceDashboard(
       partialTakeUsageRate: 0,
       weekly: [],
       monthly: [],
+      equityCurve: [],
       strategyTags: [],
       exitReasons: []
     };
@@ -1215,6 +1238,27 @@ export function buildPortfolioPerformanceDashboard(
       lossCount: month.lossCount,
       winRate: roundRatio(month.profitableCount, month.closedCount)
     }));
+
+  let cumulativePnl = 0;
+  const equityCurve = [...closedGroups]
+    .sort((left, right) => {
+      return new Date(left.latestEvent.tradedAt).getTime() - new Date(right.latestEvent.tradedAt).getTime();
+    })
+    .map((group) => {
+      cumulativePnl += group.metrics.realizedPnl;
+      const tone =
+        group.metrics.realizedPnl > 0 ? "positive" : group.metrics.realizedPnl < 0 ? "caution" : "neutral";
+
+      return {
+        key: `${group.ticker}:${group.latestEvent.id}`,
+        label: formatDateKey(group.latestEvent.tradedAt).slice(5),
+        realizedPnl: group.metrics.realizedPnl,
+        cumulativePnl,
+        closedCount: 1,
+        tone
+      } satisfies PortfolioPerformanceEquityPoint;
+    })
+    .slice(-10);
 
   const strategyTags = portfolioTagDefinitions
     .flatMap((tag): PortfolioPerformanceTagInsight[] => {
@@ -1277,6 +1321,7 @@ export function buildPortfolioPerformanceDashboard(
     partialTakeUsageRate: calendar.behavior.partialTakeUsageRate,
     weekly,
     monthly,
+    equityCurve,
     strategyTags,
     exitReasons,
     bestWeeklyPeriod,
@@ -1428,6 +1473,75 @@ export function buildPortfolioOpeningCheckAnalytics(
     })
     .slice(0, 4);
 
+  const behaviorImpactDefinitions = [
+    {
+      key: "passed" as const,
+      label: "통과 후 진입",
+      matcher: (status: OpeningRecheckStatus) => status === "passed",
+      note: "장초 통과 뒤 실제 진입으로 이어진 종료 거래"
+    },
+    {
+      key: "watch" as const,
+      label: "관찰 후 진입",
+      matcher: (status: OpeningRecheckStatus) => status === "watch",
+      note: "관찰 유지 뒤 실제로 진입한 종료 거래"
+    },
+    {
+      key: "override" as const,
+      label: "보류 강행 진입",
+      matcher: (status: OpeningRecheckStatus) => status === "avoid" || status === "excluded",
+      note: "보류 또는 제외 판단을 넘기고 진입한 종료 거래"
+    }
+  ];
+
+  const behaviorImpacts = behaviorImpactDefinitions
+    .map((definition) => {
+      const items = matched.filter((item) => definition.matcher(item.decision.status));
+      if (!items.length) {
+        return {
+          key: definition.key,
+          label: definition.label,
+          count: 0,
+          realizedPnl: 0,
+          averagePnl: 0,
+          winRate: 0,
+          note: definition.note,
+          tone: definition.key === "override" ? "caution" : "neutral"
+        } satisfies PortfolioOpeningCheckBehaviorImpact;
+      }
+
+      const profitable = items.filter((item) => item.outcome === "success").length;
+      const realizedPnl = items.reduce((sum, item) => sum + item.group.metrics.realizedPnl, 0);
+      const averagePnl = Math.round(realizedPnl / items.length);
+
+      return {
+        key: definition.key,
+        label: definition.label,
+        count: items.length,
+        realizedPnl,
+        averagePnl,
+        winRate: roundRatio(profitable, items.length),
+        note: definition.note,
+        tone:
+          definition.key === "override"
+            ? realizedPnl < 0
+              ? "caution"
+              : "neutral"
+            : realizedPnl > 0
+              ? "positive"
+              : realizedPnl < 0
+                ? "caution"
+                : "neutral"
+      } satisfies PortfolioOpeningCheckBehaviorImpact;
+    })
+    .sort((left, right) => {
+      if (right.count !== left.count) {
+        return right.count - left.count;
+      }
+
+      return right.realizedPnl - left.realizedPnl;
+    });
+
   return {
     headline: "장초 판단과 실제 종료 결과를 함께 복기합니다.",
     summary:
@@ -1440,6 +1554,7 @@ export function buildPortfolioOpeningCheckAnalytics(
     profitableCount,
     lossCount,
     statusInsights,
-    patterns
+    patterns,
+    behaviorImpacts
   };
 }

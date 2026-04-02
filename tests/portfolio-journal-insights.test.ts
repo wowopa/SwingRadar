@@ -204,6 +204,8 @@ describe("portfolio journal insights", () => {
     expect(dashboard.partialTakeUsageRate).toBe(50);
     expect(dashboard.weekly.length).toBeGreaterThan(0);
     expect(dashboard.monthly[0]?.key).toBe("2026-04");
+    expect(dashboard.equityCurve.length).toBe(2);
+    expect(dashboard.equityCurve.at(-1)?.cumulativePnl).toBe(dashboard.realizedPnlTotal);
     expect(dashboard.strategyTags.find((tag) => tag.key === "risk_control")?.count).toBe(1);
     expect(dashboard.strategyTags.find((tag) => tag.key === "scale_out")?.count).toBe(1);
     expect(dashboard.exitReasons.find((reason) => reason.key === "stop_loss")?.count).toBe(1);
@@ -358,5 +360,8 @@ describe("portfolio journal insights", () => {
     expect(analytics?.statusInsights.find((item) => item.status === "passed")?.winRate).toBe(100);
     expect(analytics?.statusInsights.find((item) => item.status === "avoid")?.lossCount).toBe(1);
     expect(analytics?.patterns[0]?.count).toBeGreaterThan(0);
+    expect(analytics?.behaviorImpacts.find((item) => item.key === "override")?.count).toBe(1);
+    expect(analytics?.behaviorImpacts.find((item) => item.key === "override")?.realizedPnl).toBeLessThan(0);
+    expect(analytics?.behaviorImpacts.find((item) => item.key === "passed")?.winRate).toBe(100);
   });
 });

@@ -156,6 +156,35 @@ export function PortfolioPerformanceBoard({
         />
       </div>
 
+      <div className="grid gap-5 xl:grid-cols-[1.15fr,0.85fr]">
+        <EquityCurveCard points={performance.equityCurve} />
+
+        <Card className="border-border/80 bg-white/90 shadow-[0_18px_44px_-34px_rgba(24,32,42,0.2)]">
+          <CardHeader className="space-y-3">
+            <CardTitle className="text-lg text-foreground">장초 판단 영향</CardTitle>
+            <p className="text-sm leading-6 text-muted-foreground">
+              장초 통과 뒤 진입한 거래와 보류를 강행한 거래가 실제로 어떤 손익으로 끝났는지 바로 비교합니다.
+            </p>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {openingAnalytics?.behaviorImpacts.length ? (
+              openingAnalytics.behaviorImpacts.map((impact) => (
+                <InsightRow
+                  key={impact.key}
+                  title={impact.label}
+                  value={formatSignedPrice(impact.realizedPnl)}
+                  badge={`${impact.count}건 · 평균 ${formatSignedPrice(impact.averagePnl)}`}
+                  note={`${impact.note} · 승률 ${impact.winRate}%`}
+                  tone={impact.tone}
+                />
+              ))
+            ) : (
+              <EmptyInsight label="아직 장초 판단 영향까지 비교할 종료 거래가 충분하지 않습니다." />
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
       <div className="grid gap-5 xl:grid-cols-2">
         <Card className="border-border/80 bg-white/90 shadow-[0_18px_44px_-34px_rgba(24,32,42,0.2)]">
           <CardHeader className="space-y-3">
@@ -330,6 +359,66 @@ function HighlightCard({
       <p className="mt-3 text-lg font-semibold text-foreground">{value}</p>
       <p className="mt-2 text-sm leading-6 text-muted-foreground">{note}</p>
     </div>
+  );
+}
+
+function EquityCurveCard({
+  points
+}: {
+  points: ReturnType<typeof buildPortfolioPerformanceDashboard>["equityCurve"];
+}) {
+  const maxMagnitude = Math.max(...points.map((point) => Math.abs(point.realizedPnl)), 1);
+
+  return (
+    <Card className="border-border/80 bg-white/90 shadow-[0_18px_44px_-34px_rgba(24,32,42,0.2)]">
+      <CardHeader className="space-y-3">
+        <CardTitle className="text-lg text-foreground">누적 실현손익 흐름</CardTitle>
+        <p className="text-sm leading-6 text-muted-foreground">
+          종료 거래가 쌓인 순서대로 누적 손익이 어떻게 움직였는지 한 줄로 다시 봅니다.
+        </p>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {points.length ? (
+          points.map((point) => {
+            const toneClass =
+              point.tone === "positive"
+                ? "bg-[hsl(var(--positive))]"
+                : point.tone === "caution"
+                  ? "bg-[hsl(var(--caution))]"
+                  : "bg-[hsl(var(--muted-foreground)/0.45)]";
+            const width = `${Math.max(18, Math.round((Math.abs(point.realizedPnl) / maxMagnitude) * 100))}%`;
+
+            return (
+              <div
+                key={point.key}
+                className="rounded-[20px] border border-border/80 bg-[hsl(42_40%_97%)] px-4 py-4"
+              >
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">{point.label}</p>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      누적 {formatSignedPrice(point.cumulativePnl)}
+                    </p>
+                  </div>
+                  <Badge
+                    variant={
+                      point.tone === "positive" ? "positive" : point.tone === "caution" ? "caution" : "secondary"
+                    }
+                  >
+                    {formatSignedPrice(point.realizedPnl)}
+                  </Badge>
+                </div>
+                <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-[hsl(42_32%_92%)]">
+                  <div className={`h-full rounded-full ${toneClass}`} style={{ width }} />
+                </div>
+              </div>
+            );
+          })
+        ) : (
+          <EmptyInsight label="아직 누적 실현손익 흐름을 그릴 종료 거래가 충분하지 않습니다." />
+        )}
+      </CardContent>
+    </Card>
   );
 }
 
