@@ -185,6 +185,7 @@ export default async function AnalysisPage({ params }: { params: Promise<{ ticke
           featuredCandidate={featuredCandidate}
           featuredRank={featuredRank >= 0 ? featuredRank + 1 : undefined}
           openingCheckRiskPatterns={recommendationsResponse.openingCheckRiskPatterns}
+          openingCheckPositivePattern={recommendationsResponse.openingCheckPositivePattern}
         />
 
         <div className="space-y-6">

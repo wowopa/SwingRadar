@@ -5,8 +5,12 @@ import { SignalToneBadge } from "@/components/shared/signal-tone-badge";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { buildAnalysisTradePlan } from "@/lib/analysis/action-plan";
-import type { OpeningCheckRiskPatternDto } from "@/lib/api-contracts/swing-radar";
+import type {
+  OpeningCheckPositivePatternDto,
+  OpeningCheckRiskPatternDto
+} from "@/lib/api-contracts/swing-radar";
 import { getFeaturedRankLabel } from "@/lib/copy/action-language";
+import { buildOpeningCheckPatternPreview } from "@/lib/recommendations/opening-check-pattern-preview";
 import type { DailyCandidate } from "@/lib/repositories/daily-candidates";
 import type { TickerAnalysis } from "@/types/analysis";
 
@@ -14,12 +18,14 @@ export function AnalysisTradePlanPanel({
   analysis,
   featuredCandidate,
   featuredRank,
-  openingCheckRiskPatterns = []
+  openingCheckRiskPatterns = [],
+  openingCheckPositivePattern
 }: {
   analysis: TickerAnalysis;
   featuredCandidate?: DailyCandidate | null;
   featuredRank?: number;
   openingCheckRiskPatterns?: OpeningCheckRiskPatternDto[];
+  openingCheckPositivePattern?: OpeningCheckPositivePatternDto;
 }) {
   const plan =
     analysis.tradePlan ??
@@ -28,6 +34,22 @@ export function AnalysisTradePlanPanel({
       dailyCandidate: featuredCandidate,
       featuredRank
     });
+
+  const patternPreview = buildOpeningCheckPatternPreview(
+    {
+      actionBucket: plan.bucket,
+      tradePlan: {
+        currentPrice: plan.currentPrice ?? featuredCandidate?.currentPrice ?? null,
+        confirmationPrice: plan.confirmationPrice ?? featuredCandidate?.confirmationPrice ?? null,
+        entryPriceLow: plan.entryPriceLow ?? null,
+        entryPriceHigh: plan.entryPriceHigh ?? null
+      }
+    },
+    {
+      riskPatterns: openingCheckRiskPatterns,
+      positivePattern: openingCheckPositivePattern
+    }
+  );
 
   return (
     <Card className="border-border/80 bg-white/92 shadow-[0_22px_56px_-36px_rgba(24,32,42,0.24)]">
@@ -56,10 +78,26 @@ export function AnalysisTradePlanPanel({
           <p className="text-sm leading-7 text-foreground/84">{plan.headline}</p>
         </div>
 
-        {openingCheckRiskPatterns.length ? (
+        {patternPreview ? (
+          <div
+            className={`rounded-[24px] p-4 ${
+              patternPreview.kind === "risk"
+                ? "border border-caution/24 bg-[hsl(var(--caution)/0.08)]"
+                : "border border-positive/24 bg-[hsl(var(--positive)/0.08)]"
+            }`}
+          >
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge variant={patternPreview.kind === "risk" ? "caution" : "positive"}>
+                {patternPreview.label}
+              </Badge>
+              <p className="text-sm font-medium text-foreground">{patternPreview.title}</p>
+            </div>
+            <p className="mt-3 text-sm leading-6 text-foreground/82">{patternPreview.detail}</p>
+          </div>
+        ) : openingCheckRiskPatterns.length ? (
           <div className="rounded-[24px] border border-caution/24 bg-[hsl(var(--caution)/0.08)] p-4">
             <div className="flex flex-wrap items-center gap-2">
-              <Badge variant="caution">내 장초 주의 패턴</Badge>
+              <Badge variant="caution">최근 장초 주의 패턴</Badge>
               <p className="text-sm font-medium text-foreground">최근 반복 손실이 많았던 장초 조합입니다.</p>
             </div>
             <div className="mt-3 flex flex-wrap gap-2">
@@ -76,8 +114,8 @@ export function AnalysisTradePlanPanel({
         ) : null}
 
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-          <MetricCard label="현재가 기준" value={plan.currentPriceLabel} note="최신 데이터 기준 위치" icon={Flag} />
-          <MetricCard label="매수 구간" value={plan.entryLabel} note="지금 계획을 세워볼 가격대" icon={ArrowUpRight} />
+          <MetricCard label="현재가 기준" value={plan.currentPriceLabel} note="최신 데이터 기준 가격 위치" icon={Flag} />
+          <MetricCard label="매수 구간" value={plan.entryLabel} note="지금 계획으로 확인할 가격 범위" icon={ArrowUpRight} />
           <MetricCard label="손절 기준" value={plan.stopLabel} note="틀리면 다시 볼 가격" icon={ShieldAlert} />
           <MetricCard label="1차 목표" value={plan.targetLabel} note="먼저 반응을 확인할 구간" icon={Target} />
           <MetricCard label="예상 보유" value={plan.holdWindowLabel} note="이번 스윙에서 보는 시간축" icon={Flag} />
@@ -94,7 +132,10 @@ export function AnalysisTradePlanPanel({
         <div className="grid gap-4 md:grid-cols-3">
           <DetailCard title="진입 전에 볼 것" body={plan.entryGuide} />
           <DetailCard title="손절은 이렇게" body={plan.stopGuide} />
-          <DetailCard title="목표 구간 읽기" body={`${plan.targetGuide} 확장 목표는 ${plan.stretchTargetLabel}까지 열어 둘 수 있습니다.`} />
+          <DetailCard
+            title="목표 구간 읽기"
+            body={`${plan.targetGuide} 확장 목표는 ${plan.stretchTargetLabel}까지 이어서 봅니다.`}
+          />
         </div>
 
         <div className="grid gap-4 md:grid-cols-2">

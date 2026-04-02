@@ -11,6 +11,7 @@ import type {
   OpeningCheckRiskPatternDto
 } from "@/lib/api-contracts/swing-radar";
 import { getValidationBasisDisplayLabel } from "@/lib/copy/action-language";
+import { buildOpeningCheckPatternPreview } from "@/lib/recommendations/opening-check-pattern-preview";
 import {
   resolveRecommendationActionBucket,
   type RecommendationActionBucket
@@ -88,6 +89,10 @@ export function RecommendationExplorer({
   const [trustFilter, setTrustFilter] = useState<TrustFilter>("all");
   const [sort, setSort] = useState<SortKey>("score_desc");
   const { favorites, toggleFavorite } = useFavoriteTickers();
+  const openingCheckCandidateSet = useMemo(
+    () => new Set(openingCheckCandidateTickers.map((ticker) => ticker.toUpperCase())),
+    [openingCheckCandidateTickers]
+  );
 
   const sectors = useMemo(() => {
     return Array.from(new Set(items.map((item) => item.sector))).sort((left, right) => left.localeCompare(right, "ko"));
@@ -137,6 +142,38 @@ export function RecommendationExplorer({
       const rightBucket = ACTION_BUCKET_ORDER.indexOf(getActionBucket(right));
       if (leftBucket !== rightBucket) {
         return leftBucket - rightBucket;
+      }
+
+      const leftPreview = openingCheckCandidateSet.has(left.ticker.toUpperCase())
+        ? buildOpeningCheckPatternPreview(
+            {
+              actionBucket: getActionBucket(left),
+              tradePlan: left.tradePlan
+            },
+            {
+              riskPatterns: openingCheckRiskPatterns,
+              positivePattern: openingCheckPositivePattern
+            }
+          )
+        : null;
+      const rightPreview = openingCheckCandidateSet.has(right.ticker.toUpperCase())
+        ? buildOpeningCheckPatternPreview(
+            {
+              actionBucket: getActionBucket(right),
+              tradePlan: right.tradePlan
+            },
+            {
+              riskPatterns: openingCheckRiskPatterns,
+              positivePattern: openingCheckPositivePattern
+            }
+          )
+        : null;
+      const leftPreviewPriority =
+        leftPreview?.kind === "positive" ? 0 : leftPreview?.kind === "risk" ? 2 : 1;
+      const rightPreviewPriority =
+        rightPreview?.kind === "positive" ? 0 : rightPreview?.kind === "risk" ? 2 : 1;
+      if (leftPreviewPriority !== rightPreviewPriority) {
+        return leftPreviewPriority - rightPreviewPriority;
       }
 
       const leftRank = left.featuredRank ?? Number.MAX_SAFE_INTEGER;
