@@ -873,7 +873,7 @@ describe("listRecommendations", () => {
             updatedAt: "2026-03-08T01:08:00.000Z",
             updatedBy: "user-1@example.com",
             checklist: {
-              gap: "elevated",
+              gap: "overheated",
               confirmation: "failed",
               action: "hold"
             }
@@ -899,6 +899,10 @@ describe("listRecommendations", () => {
       headline: "보류·제외 판단 강행 2건",
       ctaLabel: "장초 확인 먼저",
       ctaHref: "/opening-check"
+    });
+    expect(result.openingCheckRiskPatterns?.[0]).toMatchObject({
+      id: "overheated:failed:hold",
+      lossCount: 2
     });
     expect(result.personalRuleAlert?.detail).toContain("보류 상태에서는 진입 금지");
     expect(result.personalRuleAlert?.statLine).toContain("손실 종료 2건");

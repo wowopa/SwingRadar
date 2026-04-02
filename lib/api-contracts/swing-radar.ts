@@ -114,6 +114,15 @@ export interface OpeningCheckLearningInsightDto {
   secondaryLesson?: string;
 }
 
+export interface OpeningCheckRiskPatternDto {
+  id: string;
+  title: string;
+  count: number;
+  profitableCount: number;
+  lossCount: number;
+  winRate: number;
+}
+
 export interface PersonalRuleReminderDto {
   headline: string;
   primaryRule: string;
@@ -422,6 +431,7 @@ export interface RecommendationsResponseDto {
   holdingActionBoard?: HoldingActionBoardDto;
   openingReview?: OpeningRecheckReviewDto;
   openingCheckLearning?: OpeningCheckLearningInsightDto;
+  openingCheckRiskPatterns?: OpeningCheckRiskPatternDto[];
   personalRuleReminder?: PersonalRuleReminderDto;
   personalRuleAlert?: PersonalRuleAlertDto;
 }

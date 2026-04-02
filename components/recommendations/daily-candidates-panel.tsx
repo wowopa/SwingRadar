@@ -14,6 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import type {
   DailyScanSummaryDto,
   OpeningCheckLearningInsightDto,
+  OpeningCheckRiskPatternDto,
   OpeningRecheckDecisionDto,
   PersonalRuleReminderDto
 } from "@/lib/api-contracts/swing-radar";
@@ -208,6 +209,49 @@ function buildPersonalRuleHint(
   };
 }
 
+function buildChecklistPatternId(checklist: OpeningRecheckChecklist | null) {
+  if (!checklist) {
+    return null;
+  }
+
+  return `${checklist.gap}:${checklist.confirmation}:${checklist.action}`;
+}
+
+function buildPatternRiskHint(
+  patterns: OpeningCheckRiskPatternDto[] | undefined,
+  checklist: OpeningRecheckChecklist | null,
+  suggestedStatus: OpeningDecisionStatus | undefined
+) {
+  if (!patterns?.length || !checklist) {
+    return null;
+  }
+
+  const patternId = buildChecklistPatternId(checklist);
+  if (!patternId) {
+    return null;
+  }
+
+  const matchedPattern = patterns.find((pattern) => pattern.id === patternId);
+  if (!matchedPattern) {
+    return null;
+  }
+
+  const lossDominant = matchedPattern.lossCount > matchedPattern.profitableCount;
+  const weakWinRate = matchedPattern.winRate <= 40;
+
+  if (!lossDominant && !weakWinRate) {
+    return null;
+  }
+
+  return {
+    title: "최근 이 조합 손실 우세",
+    body:
+      suggestedStatus === "passed"
+        ? `${matchedPattern.title} 조합은 최근 ${matchedPattern.count}건 중 ${matchedPattern.lossCount}건이 손실 종료였습니다. 통과 전이라도 한 번 더 보수적으로 확인하세요.`
+        : `${matchedPattern.title} 조합은 최근 ${matchedPattern.count}건 중 ${matchedPattern.lossCount}건이 손실 종료였습니다. 오늘은 보류 또는 관찰 쪽을 우선 두는 편이 낫습니다.`
+  };
+}
+
 function getDefaultFocusTicker(
   items: DailyScanSummaryDto["topCandidates"],
   decisions: Record<string, OpeningRecheckDecisionDto>
@@ -277,11 +321,13 @@ async function parseResponse<T>(response: Response): Promise<T> {
 export function DailyCandidatesPanel({
   dailyScan,
   openingCheckLearning,
+  openingCheckRiskPatterns,
   personalRuleReminder,
   initialFocusTicker
 }: {
   dailyScan: DailyScanSummaryDto | null;
   openingCheckLearning?: OpeningCheckLearningInsightDto;
+  openingCheckRiskPatterns?: OpeningCheckRiskPatternDto[];
   personalRuleReminder?: PersonalRuleReminderDto;
   initialFocusTicker?: string | null;
 }) {
@@ -326,6 +372,7 @@ export function DailyCandidatesPanel({
     : null;
   const focusedChecklist = focusedDraft ? buildChecklist(focusedDraft) : null;
   const suggestedStatus = focusedChecklist ? suggestOpeningRecheckStatus(focusedChecklist) : undefined;
+  const patternRiskHint = buildPatternRiskHint(openingCheckRiskPatterns, focusedChecklist, suggestedStatus);
   const personalRuleHint = buildPersonalRuleHint(personalRuleReminder, focusedDraft, suggestedStatus);
   const resolvedStatus = focusedDraft
     ? focusedDraft.finalStatus ?? suggestedStatus ?? focusedDecision?.suggestedStatus ?? undefined
@@ -796,7 +843,16 @@ export function DailyCandidatesPanel({
                           </Badge>
                         </div>
 
-                        {personalRuleHint ? (
+                        {patternRiskHint ? (
+                          <div className="mt-3 rounded-2xl border border-caution/28 bg-[hsl(var(--caution)/0.1)] px-3 py-3">
+                            <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+                              {patternRiskHint.title}
+                            </p>
+                            <p className="mt-1 text-sm text-foreground/88">{patternRiskHint.body}</p>
+                          </div>
+                        ) : null}
+
+                        {!patternRiskHint && personalRuleHint ? (
                           <div className="mt-3 rounded-2xl border border-caution/24 bg-[hsl(var(--caution)/0.08)] px-3 py-3">
                             <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
                               {personalRuleHint.title}

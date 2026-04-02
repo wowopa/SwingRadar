@@ -139,6 +139,15 @@ export interface OpeningCheckLearningInsight {
   secondaryLesson?: string;
 }
 
+export interface OpeningCheckRiskPattern {
+  id: string;
+  title: string;
+  count: number;
+  profitableCount: number;
+  lossCount: number;
+  winRate: number;
+}
+
 export interface PersonalRuleReminder {
   headline: string;
   primaryRule: string;

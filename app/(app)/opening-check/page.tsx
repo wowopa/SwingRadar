@@ -22,6 +22,7 @@ export default async function OpeningCheckPage({
       <DailyCandidatesPanel
         dailyScan={response.dailyScan}
         openingCheckLearning={response.openingCheckLearning}
+        openingCheckRiskPatterns={response.openingCheckRiskPatterns}
         personalRuleReminder={response.personalRuleReminder}
         initialFocusTicker={initialFocusTicker}
       />

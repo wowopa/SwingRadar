@@ -1,6 +1,7 @@
 import type {
   DailyCandidateDto,
   OpeningCheckLearningInsightDto,
+  OpeningCheckRiskPatternDto,
   OpeningRecheckDecisionDto,
   PersonalRuleAlertDto,
   PersonalRuleReminderDto,
@@ -94,6 +95,25 @@ function buildOpeningCheckLearningInsight(
     primaryLesson,
     secondaryLesson
   };
+}
+
+function buildOpeningCheckRiskPatterns(
+  analytics: ReturnType<typeof buildPortfolioOpeningCheckAnalytics>
+): OpeningCheckRiskPatternDto[] {
+  if (!analytics) {
+    return [];
+  }
+
+  return analytics.patterns
+    .filter((pattern) => pattern.count >= 2)
+    .map((pattern) => ({
+      id: pattern.id,
+      title: pattern.title,
+      count: pattern.count,
+      profitableCount: pattern.profitableCount,
+      lossCount: pattern.lossCount,
+      winRate: pattern.winRate
+    }));
 }
 
 function normalizeRuleText(value: string | undefined) {
@@ -625,6 +645,7 @@ export async function listRecommendations(
       )
     : undefined;
   const openingCheckLearning = buildOpeningCheckLearningInsight(openingCheckAnalytics);
+  const openingCheckRiskPatterns = buildOpeningCheckRiskPatterns(openingCheckAnalytics);
   const personalRuleReminder = buildPersonalRuleReminder(closeReviews);
   const personalRuleAlert = buildPersonalRuleAlert(openingCheckAnalytics, personalRuleReminder);
 
@@ -652,6 +673,7 @@ export async function listRecommendations(
     holdingActionBoard,
     openingReview,
     openingCheckLearning,
+    openingCheckRiskPatterns,
     personalRuleReminder,
     personalRuleAlert
   };
