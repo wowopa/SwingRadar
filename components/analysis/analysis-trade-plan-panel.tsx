@@ -2,8 +2,10 @@ import { ArrowUpRight, Flag, ShieldAlert, Target } from "lucide-react";
 
 import { ActionBucketBadge } from "@/components/recommendations/action-bucket-badge";
 import { SignalToneBadge } from "@/components/shared/signal-tone-badge";
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { buildAnalysisTradePlan } from "@/lib/analysis/action-plan";
+import type { OpeningCheckRiskPatternDto } from "@/lib/api-contracts/swing-radar";
 import { getFeaturedRankLabel } from "@/lib/copy/action-language";
 import type { DailyCandidate } from "@/lib/repositories/daily-candidates";
 import type { TickerAnalysis } from "@/types/analysis";
@@ -11,11 +13,13 @@ import type { TickerAnalysis } from "@/types/analysis";
 export function AnalysisTradePlanPanel({
   analysis,
   featuredCandidate,
-  featuredRank
+  featuredRank,
+  openingCheckRiskPatterns = []
 }: {
   analysis: TickerAnalysis;
   featuredCandidate?: DailyCandidate | null;
   featuredRank?: number;
+  openingCheckRiskPatterns?: OpeningCheckRiskPatternDto[];
 }) {
   const plan =
     analysis.tradePlan ??
@@ -51,6 +55,25 @@ export function AnalysisTradePlanPanel({
         <div className="rounded-[28px] border border-border/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(246,241,232,0.9))] p-5">
           <p className="text-sm leading-7 text-foreground/84">{plan.headline}</p>
         </div>
+
+        {openingCheckRiskPatterns.length ? (
+          <div className="rounded-[24px] border border-caution/24 bg-[hsl(var(--caution)/0.08)] p-4">
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge variant="caution">내 장초 주의 패턴</Badge>
+              <p className="text-sm font-medium text-foreground">최근 반복 손실이 많았던 장초 조합입니다.</p>
+            </div>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {openingCheckRiskPatterns.slice(0, 2).map((pattern) => (
+                <span
+                  key={pattern.id}
+                  className="rounded-full border border-caution/22 bg-white/88 px-3 py-1.5 text-xs leading-5 text-foreground/82"
+                >
+                  {pattern.title} · 손실 {pattern.lossCount}건
+                </span>
+              ))}
+            </div>
+          </div>
+        ) : null}
 
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
           <MetricCard label="현재가 기준" value={plan.currentPriceLabel} note="최신 데이터 기준 위치" icon={Flag} />

@@ -6,6 +6,7 @@ import { useMemo, useState } from "react";
 import { RecommendationTable } from "@/components/recommendations/recommendation-table";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import type { OpeningCheckRiskPatternDto } from "@/lib/api-contracts/swing-radar";
 import { getValidationBasisDisplayLabel } from "@/lib/copy/action-language";
 import {
   resolveRecommendationActionBucket,
@@ -66,7 +67,13 @@ function getToneClasses(tone: "emerald" | "sky" | "amber" | "stone") {
   return tones[tone];
 }
 
-export function RecommendationExplorer({ items }: { items: Recommendation[] }) {
+export function RecommendationExplorer({
+  items,
+  openingCheckRiskPatterns = []
+}: {
+  items: Recommendation[];
+  openingCheckRiskPatterns?: OpeningCheckRiskPatternDto[];
+}) {
   const [query, setQuery] = useState("");
   const [tone, setTone] = useState<ToneFilter>("all");
   const [sector, setSector] = useState<SectorFilter>("all");
@@ -172,10 +179,29 @@ export function RecommendationExplorer({ items }: { items: Recommendation[] }) {
   const verifiedCount = filteredItems.filter((item) => resolveValidationBasis(item) !== "보수 계산").length;
   const countsMatchAll = filteredItems.length === items.length;
   const tableSummary = `매수 검토 ${bucketedItems.buy_now.length}개 · 관찰 ${bucketedItems.watch_only.length}개 · 보류 ${bucketedItems.avoid.length}개`;
+  const highlightedRiskPatterns = openingCheckRiskPatterns.slice(0, 2);
 
   return (
     <div className="space-y-6 lg:space-y-8">
       <div className="space-y-3 lg:hidden">
+        {highlightedRiskPatterns.length ? (
+          <details className="rounded-3xl border border-caution/24 bg-[hsl(var(--caution)/0.08)] shadow-[0_18px_46px_-32px_rgba(199,74,71,0.2)]">
+            <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-sm font-semibold text-foreground [&::-webkit-details-marker]:hidden">
+              내 장초 주의 패턴
+              <Badge variant="caution">{highlightedRiskPatterns.length}개</Badge>
+            </summary>
+            <div className="space-y-3 border-t border-caution/16 px-4 py-4">
+              {highlightedRiskPatterns.map((pattern) => (
+                <RiskPatternRow
+                  key={pattern.id}
+                  title={pattern.title}
+                  stat={`${pattern.count}건 · 손실 ${pattern.lossCount}건 · 승률 ${pattern.winRate}%`}
+                />
+              ))}
+            </div>
+          </details>
+        ) : null}
+
         <details className="rounded-3xl border border-border/80 bg-white/90 shadow-[0_18px_46px_-32px_rgba(24,32,42,0.22)]">
           <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-sm font-semibold text-foreground [&::-webkit-details-marker]:hidden">
             필터 / 검색
@@ -330,6 +356,24 @@ export function RecommendationExplorer({ items }: { items: Recommendation[] }) {
         </div>
       </section>
 
+      {highlightedRiskPatterns.length ? (
+        <section className="rounded-3xl border border-caution/24 bg-[linear-gradient(145deg,hsl(var(--caution)/0.08),rgba(255,255,255,0.92))] p-5 shadow-[0_18px_46px_-32px_rgba(199,74,71,0.18)]">
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge variant="caution">내 장초 주의 패턴</Badge>
+            <p className="text-sm font-medium text-foreground">최근 반복 손실이 많았던 장초 조합입니다.</p>
+          </div>
+          <div className="mt-4 grid gap-3 lg:grid-cols-2">
+            {highlightedRiskPatterns.map((pattern) => (
+              <RiskPatternRow
+                key={pattern.id}
+                title={pattern.title}
+                stat={`${pattern.count}건 · 손실 ${pattern.lossCount}건 · 승률 ${pattern.winRate}%`}
+              />
+            ))}
+          </div>
+        </section>
+      ) : null}
+
       {filteredItems.length ? (
         <section id="signals-ranking-table" className="space-y-4">
           <div className="flex flex-wrap items-end justify-between gap-3">
@@ -354,6 +398,15 @@ export function RecommendationExplorer({ items }: { items: Recommendation[] }) {
         </section>
       )}
 
+    </div>
+  );
+}
+
+function RiskPatternRow({ title, stat }: { title: string; stat: string }) {
+  return (
+    <div className="rounded-2xl border border-caution/22 bg-white/88 px-4 py-3">
+      <p className="text-sm font-semibold text-foreground">{title}</p>
+      <p className="mt-2 text-xs leading-5 text-muted-foreground">{stat}</p>
     </div>
   );
 }

@@ -6,10 +6,10 @@ import { PublicDataStatusBarGroup } from "@/components/shared/public-data-status
 import { TrackingDetailPanel } from "@/components/tracking/tracking-detail-panel";
 import { TrackingSelectionGuide } from "@/components/tracking/tracking-selection-guide";
 import { Badge } from "@/components/ui/badge";
-import { getDailyCandidates } from "@/lib/repositories/daily-candidates";
-import { getRecommendations } from "@/lib/repositories/recommendations";
 import { getTrackingPayload } from "@/lib/repositories/tracking";
 import { buildPublicDataStatusSummary } from "@/lib/server/public-data-status";
+import { getCurrentUserSession } from "@/lib/server/user-auth";
+import { listRecommendations } from "@/lib/services/recommendations-service";
 import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -50,18 +50,18 @@ export default async function SignalsPage({
   const resolvedSearchParams = (await searchParams) ?? {};
   const activeTab = resolveTab(resolvedSearchParams.tab);
 
-  const [recommendations, dailyCandidates, tracking] = await Promise.all([
-    getRecommendations(),
-    getDailyCandidates(),
+  const session = await getCurrentUserSession();
+  const [recommendations, tracking] = await Promise.all([
+    listRecommendations({ sort: "score_desc" }, { userId: session?.user.id }),
     getTrackingPayload()
   ]);
 
-  const candidateCount = dailyCandidates?.topCandidates.length ?? recommendations.items.length;
+  const candidateCount = recommendations.dailyScan?.topCandidates.length ?? recommendations.items.length;
   const openingCheckCount = Math.min(candidateCount, getOpeningCheckLimit());
   const statusSummaries = [
     buildPublicDataStatusSummary(
-      dailyCandidates ? "daily-candidates" : "recommendations",
-      dailyCandidates?.generatedAt ?? recommendations.generatedAt
+      recommendations.dailyScan ? "daily-candidates" : "recommendations",
+      recommendations.dailyScan?.generatedAt ?? recommendations.generatedAt
     ),
     buildPublicDataStatusSummary("tracking", tracking.generatedAt)
   ];
@@ -105,7 +105,10 @@ export default async function SignalsPage({
 
       {activeTab === "candidates" ? (
         <section>
-          <RecommendationExplorer items={recommendations.items} />
+          <RecommendationExplorer
+            items={recommendations.items}
+            openingCheckRiskPatterns={recommendations.openingCheckRiskPatterns}
+          />
         </section>
       ) : (
         <section className="space-y-6">

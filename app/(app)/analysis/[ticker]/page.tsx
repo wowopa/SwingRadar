@@ -22,6 +22,8 @@ import { getDailyCandidates } from "@/lib/repositories/daily-candidates";
 import { getTrackingPayload } from "@/lib/repositories/tracking";
 import { getCompanyOverviewLines } from "@/lib/server/company-overview";
 import { buildPublicDataStatusSummary } from "@/lib/server/public-data-status";
+import { getCurrentUserSession } from "@/lib/server/user-auth";
+import { listRecommendations } from "@/lib/services/recommendations-service";
 import {
   buildTradingViewSymbol,
   getReadySymbols,
@@ -104,9 +106,13 @@ export default async function AnalysisPage({ params }: { params: Promise<{ ticke
     redirect(`/analysis/${resolvedTicker}`);
   }
 
+  const session = await getCurrentUserSession();
   const analysisPayload = await getAnalysisByTicker(resolvedTicker);
-  const dailyCandidates = await getDailyCandidates().catch(() => null);
-  const trackingPayload = await getTrackingPayload().catch(() => null);
+  const [dailyCandidates, trackingPayload, recommendationsResponse] = await Promise.all([
+    getDailyCandidates().catch(() => null),
+    getTrackingPayload().catch(() => null),
+    listRecommendations({ sort: "score_desc" }, { userId: session?.user.id })
+  ]);
 
   if (!analysisPayload) {
     notFound();
@@ -178,6 +184,7 @@ export default async function AnalysisPage({ params }: { params: Promise<{ ticke
           analysis={analysis}
           featuredCandidate={featuredCandidate}
           featuredRank={featuredRank >= 0 ? featuredRank + 1 : undefined}
+          openingCheckRiskPatterns={recommendationsResponse.openingCheckRiskPatterns}
         />
 
         <div className="space-y-6">
