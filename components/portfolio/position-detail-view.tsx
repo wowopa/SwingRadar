@@ -480,6 +480,7 @@ export function PositionDetailView({
           }
         }}
         positions={position ? [position] : []}
+        recentEvents={journalGroup?.events ?? []}
         preset={quickTradePreset}
         onSaved={() => {
           setQuickTradePreset(null);

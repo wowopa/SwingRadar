@@ -314,6 +314,7 @@ export function PortfolioJournalBoard({
         open={isDialogOpen}
         onOpenChange={setIsDialogOpen}
         positions={positions}
+        recentEvents={journal.events}
         preset={dialogPreset}
         onSaved={handleDialogSaved}
       />

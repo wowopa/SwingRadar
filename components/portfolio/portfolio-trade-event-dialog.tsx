@@ -8,8 +8,14 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { buildTradeNoteTemplates } from "@/lib/portfolio/trade-note-templates";
 import { cn } from "@/lib/utils";
-import type { PortfolioJournal, PortfolioProfilePosition, PortfolioTradeEventType } from "@/types/recommendation";
+import type {
+  PortfolioJournal,
+  PortfolioProfilePosition,
+  PortfolioTradeEvent,
+  PortfolioTradeEventType
+} from "@/types/recommendation";
 
 type SymbolSearchItem = {
   ticker: string;
@@ -204,12 +210,14 @@ export function PortfolioTradeEventDialog({
   open,
   onOpenChange,
   positions,
+  recentEvents = [],
   preset,
   onSaved
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   positions: PortfolioProfilePosition[];
+  recentEvents?: PortfolioTradeEvent[];
   preset?: PortfolioTradeEventDialogPreset | null;
   onSaved?: (payload: { journal: PortfolioJournal; profile?: PortfolioProfilePayload }) => void;
 }) {
@@ -348,9 +356,13 @@ export function PortfolioTradeEventDialog({
     );
   }, [preset?.priceOptions]);
   const noteTemplates = useMemo(() => {
-    const merged = [...(preset?.noteTemplates ?? []), ...buildDefaultNoteTemplates(form.type)];
+    const merged = [
+      ...(preset?.noteTemplates ?? []),
+      ...buildTradeNoteTemplates(recentEvents, { ticker: form.ticker, type: form.type }),
+      ...buildDefaultNoteTemplates(form.type)
+    ];
     return merged.filter((item, index) => merged.indexOf(item) === index);
-  }, [form.type, preset?.noteTemplates]);
+  }, [form.ticker, form.type, preset?.noteTemplates, recentEvents]);
   const enteredQuantity = parsePositiveNumber(form.quantity);
   const quantityOverflow = Boolean(
     preset?.syncProfilePosition &&

@@ -284,6 +284,7 @@ export function PortfolioWorkspace({
           }
         }}
         positions={profile.positions}
+        recentEvents={journal.events}
         preset={quickTradePreset}
         onSaved={handleTradeSaved}
       />
