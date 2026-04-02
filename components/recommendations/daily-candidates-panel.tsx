@@ -21,6 +21,7 @@ import type {
 import { resolveRecommendationActionBucket } from "@/lib/recommendations/action-plan";
 import {
   buildOpeningRecheckCounts,
+  type OpeningDecisionStatus,
   getOpeningActionIntentMeta,
   getOpeningConfirmationMeta,
   getOpeningGapMeta,
@@ -30,7 +31,7 @@ import {
   OPENING_GAP_CHECKS,
   OPENING_RECHECK_DECISION_STATUSES,
   OPENING_RECHECK_STATUSES,
-  suggestOpeningRecheckStatus
+  suggestOpeningRecheckStatusWithContext
 } from "@/lib/recommendations/opening-recheck";
 import { buildGoogleQuoteSearchUrl, buildNaverFinanceUrl } from "@/lib/market-links";
 import { cn, formatDateTimeShort } from "@/lib/utils";
@@ -41,8 +42,6 @@ import type {
   OpeningRecheckChecklist,
   OpeningRecheckStatus
 } from "@/types/recommendation";
-
-type OpeningDecisionStatus = Exclude<OpeningRecheckStatus, "pending">;
 
 interface OpeningDraft {
   gap?: OpeningGapCheck;
@@ -253,6 +252,37 @@ function buildPatternRiskHint(
   };
 }
 
+function buildSuggestionAdjustmentNote({
+  baseStatus,
+  suggestedStatus,
+  personalRuleReason,
+  matchedRiskPattern
+}: {
+  baseStatus: OpeningDecisionStatus | undefined;
+  suggestedStatus: OpeningDecisionStatus | undefined;
+  personalRuleReason?: string;
+  matchedRiskPattern?: OpeningCheckRiskPatternDto;
+}) {
+  if (!baseStatus || !suggestedStatus || baseStatus === suggestedStatus) {
+    return null;
+  }
+
+  const baseLabel = getOpeningRecheckStatusMeta(baseStatus).label;
+  const suggestedLabel = getOpeningRecheckStatusMeta(suggestedStatus).label;
+  const reasons = [personalRuleReason];
+
+  if (matchedRiskPattern) {
+    reasons.push(`${matchedRiskPattern.title} 조합이 최근 손실 우세였습니다.`);
+  }
+
+  return {
+    title: "자동 제안 조정",
+    body: `기본 제안 ${baseLabel}에서 ${suggestedLabel}로 더 보수적으로 낮췄습니다. ${reasons
+      .filter(Boolean)
+      .join(" ")}`
+  };
+}
+
 function getDefaultFocusTicker(
   items: DailyScanSummaryDto["topCandidates"],
   decisions: Record<string, OpeningRecheckDecisionDto>
@@ -376,9 +406,22 @@ export function DailyCandidatesPanel({
     ? (drafts[focusedCandidate.ticker] ?? createDraft(focusedDecision))
     : null;
   const focusedChecklist = focusedDraft ? buildChecklist(focusedDraft) : null;
-  const suggestedStatus = focusedChecklist ? suggestOpeningRecheckStatus(focusedChecklist) : undefined;
+  const suggestion = focusedChecklist
+    ? suggestOpeningRecheckStatusWithContext(focusedChecklist, {
+        personalRuleText: collectRuleText(personalRuleReminder),
+        riskPatterns: openingCheckRiskPatterns
+      })
+    : undefined;
+  const baseSuggestedStatus = suggestion?.baseStatus;
+  const suggestedStatus = suggestion?.status;
   const patternRiskHint = buildPatternRiskHint(openingCheckRiskPatterns, focusedChecklist, suggestedStatus);
   const personalRuleHint = buildPersonalRuleHint(personalRuleReminder, focusedDraft, suggestedStatus);
+  const suggestionAdjustmentNote = buildSuggestionAdjustmentNote({
+    baseStatus: baseSuggestedStatus,
+    suggestedStatus,
+    personalRuleReason: suggestion?.personalRuleReason,
+    matchedRiskPattern: suggestion?.riskPattern
+  });
   const resolvedStatus = focusedDraft
     ? focusedDraft.finalStatus ?? suggestedStatus ?? focusedDecision?.suggestedStatus ?? undefined
     : undefined;
@@ -508,7 +551,7 @@ export function DailyCandidatesPanel({
     }
 
     const checklist = buildChecklist(focusedDraft);
-    const status = focusedDraft.finalStatus ?? (checklist ? suggestOpeningRecheckStatus(checklist) : undefined);
+    const status = focusedDraft.finalStatus ?? suggestion?.status;
 
     if (!checklist || !status) {
       setBoardError("갭 상태, 확인 가격 반응, 오늘 행동을 모두 고른 뒤 저장해 주세요.");
@@ -519,7 +562,7 @@ export function DailyCandidatesPanel({
       ticker: focusedCandidate.ticker,
       status,
       checklist,
-      suggestedStatus: suggestOpeningRecheckStatus(checklist),
+      suggestedStatus: suggestion?.status,
       note: focusedDraft.note,
       advance
     });
@@ -863,6 +906,15 @@ export function DailyCandidatesPanel({
                             {suggestedStatus ? getOpeningRecheckStatusMeta(suggestedStatus).label : "체크 필요"}
                           </Badge>
                         </div>
+
+                        {suggestionAdjustmentNote ? (
+                          <div className="mt-3 rounded-2xl border border-caution/28 bg-[hsl(var(--caution)/0.1)] px-3 py-3">
+                            <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+                              {suggestionAdjustmentNote.title}
+                            </p>
+                            <p className="mt-1 text-sm text-foreground/88">{suggestionAdjustmentNote.body}</p>
+                          </div>
+                        ) : null}
 
                         {patternRiskHint ? (
                           <div className="mt-3 rounded-2xl border border-caution/28 bg-[hsl(var(--caution)/0.1)] px-3 py-3">

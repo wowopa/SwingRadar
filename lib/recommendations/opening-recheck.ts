@@ -33,6 +33,29 @@ export interface OpeningRecheckCounts {
   excluded: number;
 }
 
+export type OpeningDecisionStatus = Exclude<OpeningRecheckStatus, "pending">;
+
+export interface OpeningCheckRiskPatternLike {
+  id: string;
+  title: string;
+  count: number;
+  profitableCount: number;
+  lossCount: number;
+  winRate: number;
+}
+
+export interface OpeningRecheckSuggestionContext {
+  personalRuleText?: string;
+  riskPatterns?: OpeningCheckRiskPatternLike[];
+}
+
+export interface OpeningRecheckSuggestionResult {
+  baseStatus: OpeningDecisionStatus;
+  status: OpeningDecisionStatus;
+  personalRuleReason?: string;
+  riskPattern?: OpeningCheckRiskPatternLike;
+}
+
 const OPENING_RECHECK_STATUS_META: Record<OpeningRecheckStatus, OpeningRecheckStatusMeta> = {
   pending: {
     label: "대기",
@@ -157,6 +180,127 @@ export function suggestOpeningRecheckStatus(checklist: OpeningRecheckChecklist):
   }
 
   return "passed";
+}
+
+export function demoteOpeningRecheckStatus(status: OpeningDecisionStatus): OpeningDecisionStatus {
+  if (status === "passed") {
+    return "watch";
+  }
+
+  if (status === "watch") {
+    return "avoid";
+  }
+
+  if (status === "avoid") {
+    return "excluded";
+  }
+
+  return "excluded";
+}
+
+function demoteOpeningRecheckStatusBySteps(status: OpeningDecisionStatus, steps: number) {
+  let nextStatus = status;
+
+  for (let index = 0; index < steps; index += 1) {
+    nextStatus = demoteOpeningRecheckStatus(nextStatus);
+    if (nextStatus === "excluded") {
+      break;
+    }
+  }
+
+  return nextStatus;
+}
+
+function buildOpeningRecheckPatternId(checklist: OpeningRecheckChecklist) {
+  return `${checklist.gap}:${checklist.confirmation}:${checklist.action}`;
+}
+
+function normalizeRuleText(text?: string) {
+  return text?.replace(/\s+/g, " ").trim() ?? "";
+}
+
+function detectPersonalRuleSignals(checklist: OpeningRecheckChecklist, status: OpeningDecisionStatus, ruleText: string) {
+  const matchedReasons: string[] = [];
+
+  if (
+    (ruleText.includes("추격") || ruleText.includes("과열")) &&
+    (checklist.gap === "elevated" || checklist.gap === "overheated")
+  ) {
+    matchedReasons.push("추격/과열 경계 규칙과 겹칩니다.");
+  }
+
+  if (ruleText.includes("확인 가격") && checklist.confirmation !== "confirmed") {
+    matchedReasons.push("확인 가격 규칙상 오늘은 한 단계 더 보수적으로 봅니다.");
+  }
+
+  if ((ruleText.includes("보류") || ruleText.includes("금지")) && checklist.action !== "review") {
+    matchedReasons.push("보류/금지 규칙과 겹칩니다.");
+  }
+
+  if (
+    ruleText.includes("손절") &&
+    status === "passed" &&
+    (checklist.gap !== "normal" || checklist.confirmation !== "confirmed")
+  ) {
+    matchedReasons.push("손절 여유 규칙상 추가 확인이 필요합니다.");
+  }
+
+  return matchedReasons;
+}
+
+function findLossDominantRiskPattern(
+  checklist: OpeningRecheckChecklist,
+  riskPatterns?: OpeningCheckRiskPatternLike[]
+) {
+  if (!riskPatterns?.length) {
+    return null;
+  }
+
+  const patternId = buildOpeningRecheckPatternId(checklist);
+  const matchedPattern = riskPatterns.find((pattern) => pattern.id === patternId);
+
+  if (!matchedPattern || matchedPattern.count < 2) {
+    return null;
+  }
+
+  const lossDominant = matchedPattern.lossCount > matchedPattern.profitableCount;
+  const weakWinRate = matchedPattern.winRate <= 40;
+
+  if (!lossDominant && !weakWinRate) {
+    return null;
+  }
+
+  return matchedPattern;
+}
+
+export function suggestOpeningRecheckStatusWithContext(
+  checklist: OpeningRecheckChecklist,
+  context: OpeningRecheckSuggestionContext = {}
+): OpeningRecheckSuggestionResult {
+  const baseStatus = suggestOpeningRecheckStatus(checklist);
+  let status = baseStatus;
+
+  const personalRuleText = normalizeRuleText(context.personalRuleText);
+  const personalRuleSignals = personalRuleText
+    ? detectPersonalRuleSignals(checklist, status, personalRuleText)
+    : [];
+
+  if (personalRuleSignals.length > 0 && status !== "excluded") {
+    const demotionSteps = personalRuleSignals.length >= 2 ? 2 : 1;
+    status = demoteOpeningRecheckStatusBySteps(status, demotionSteps);
+  }
+
+  const riskPattern = findLossDominantRiskPattern(checklist, context.riskPatterns);
+  if (riskPattern && status !== "excluded") {
+    status = demoteOpeningRecheckStatus(status);
+  }
+
+  return {
+    baseStatus,
+    status,
+    personalRuleReason: personalRuleSignals[0],
+    riskPattern: riskPattern ?? undefined
+  };
 }
 
 export function buildOpeningRecheckCounts(
