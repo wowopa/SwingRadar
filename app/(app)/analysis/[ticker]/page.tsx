@@ -181,6 +181,7 @@ export default async function AnalysisPage({ params }: { params: Promise<{ ticke
 
       <section className="grid gap-6 xl:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)]">
         <AnalysisTradePlanPanel
+          ticker={resolvedTicker}
           analysis={analysis}
           featuredCandidate={featuredCandidate}
           featuredRank={featuredRank >= 0 ? featuredRank + 1 : undefined}
