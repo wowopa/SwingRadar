@@ -86,6 +86,58 @@ function normalizeMeasuredItem(item) {
   };
 }
 
+const VALIDATION_BASIS_PRIORITY = new Map([
+  ["실측 기반", 4],
+  ["공용 추적 참고", 3],
+  ["유사 흐름 참고", 2],
+  ["유사 업종 참고", 1],
+  ["보수 계산", 0]
+]);
+
+function getValidationBasisPriority(basis) {
+  return VALIDATION_BASIS_PRIORITY.get(basis ?? "") ?? 0;
+}
+
+function pickPreferredValidationItem(currentItem, nextItem) {
+  if (!currentItem) {
+    return nextItem;
+  }
+
+  const currentPriority = getValidationBasisPriority(currentItem.basis);
+  const nextPriority = getValidationBasisPriority(nextItem.basis);
+
+  if (nextPriority !== currentPriority) {
+    return nextPriority > currentPriority ? nextItem : currentItem;
+  }
+
+  if ((nextItem.sampleSize ?? 0) !== (currentItem.sampleSize ?? 0)) {
+    return (nextItem.sampleSize ?? 0) > (currentItem.sampleSize ?? 0) ? nextItem : currentItem;
+  }
+
+  const currentComposite =
+    Number(currentItem.hitRate ?? 0) +
+    Number(currentItem.avgReturn ?? 0) -
+    Math.abs(Number(currentItem.maxDrawdown ?? 0));
+  const nextComposite =
+    Number(nextItem.hitRate ?? 0) +
+    Number(nextItem.avgReturn ?? 0) -
+    Math.abs(Number(nextItem.maxDrawdown ?? 0));
+
+  return nextComposite > currentComposite ? nextItem : currentItem;
+}
+
+function mergeValidationItems(targetMap, items) {
+  for (const item of items ?? []) {
+    if (!item?.ticker) {
+      continue;
+    }
+
+    const normalizedItem = normalizeMeasuredItem(item);
+    const existingItem = targetMap.get(normalizedItem.ticker);
+    targetMap.set(normalizedItem.ticker, pickPreferredValidationItem(existingItem, normalizedItem));
+  }
+}
+
 function buildHistoryMetrics(runs, ticker) {
   const appearances = [];
 
@@ -266,20 +318,17 @@ async function main() {
   const lookbackRuns = clamp(Number.parseInt(String(options.lookbackRuns), 10) || 30, 5, 90);
   const minAppearances = clamp(Number.parseInt(String(options.minAppearances), 10) || 2, 1, 10);
 
-  const [existing, history, trackingState] = await Promise.all([
+  const [seedValidation, existing, history, trackingState] = await Promise.all([
+    readJson(path.join(projectRoot, "data", "raw", "validation-snapshot.json"), { items: [] }),
     readJson(path.join(defaults.rawDir, "validation-snapshot.json"), { items: [] }),
-      readJson(path.join(getRuntimePaths(projectRoot).universeDir, "daily-candidates-history.json"), { runs: [] }),
-      readJson(path.join(getRuntimePaths(projectRoot).trackingDir, "service-tracking-state.json"), { entries: [] })
+    readJson(path.join(getRuntimePaths(projectRoot).universeDir, "daily-candidates-history.json"), { runs: [] }),
+    readJson(path.join(getRuntimePaths(projectRoot).trackingDir, "service-tracking-state.json"), { entries: [] })
   ]);
 
   const itemsByTicker = new Map();
 
-  for (const item of existing.items ?? []) {
-    if (!item?.ticker) {
-      continue;
-    }
-    itemsByTicker.set(item.ticker, normalizeMeasuredItem(item));
-  }
+  mergeValidationItems(itemsByTicker, seedValidation.items);
+  mergeValidationItems(itemsByTicker, existing.items);
 
   const runs = Array.isArray(history.runs) ? history.runs.slice(0, lookbackRuns) : [];
   const tickers = new Set();

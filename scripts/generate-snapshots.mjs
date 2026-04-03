@@ -763,12 +763,23 @@ function buildValidationProfiles(validationItems, trackingItems, marketByTicker)
   };
 }
 
+function getValidationFallbackMinimums() {
+  const sectorSources = Number.parseInt(process.env.SWING_RADAR_VALIDATION_SECTOR_MIN_SOURCES ?? "3", 10);
+  const patternSources = Number.parseInt(process.env.SWING_RADAR_VALIDATION_PATTERN_MIN_SOURCES ?? "2", 10);
+
+  return {
+    sectorSources: Number.isFinite(sectorSources) && sectorSources > 0 ? sectorSources : 3,
+    patternSources: Number.isFinite(patternSources) && patternSources > 0 ? patternSources : 2
+  };
+}
+
 function buildEstimatedValidationItem(item, profiles) {
+  const minimums = getValidationFallbackMinimums();
   const sectorProfile = profiles.sector.get(item.sector);
   const bandProfile = profiles.band.get(getScoreBand(getMarketScore(item)));
   const scoreBase = item.trendScore + item.flowScore + item.volatilityScore + item.qualityScore;
 
-  if (sectorProfile && sectorProfile.sourceCount >= 1) {
+  if (sectorProfile && sectorProfile.sourceCount >= minimums.sectorSources) {
     const hitRate = clamp(Math.round(sectorProfile.hitRate), 38, 66);
     const avgReturn = roundNumber(sectorProfile.avgReturn, 1);
     const sampleSize = clamp(Math.round(sectorProfile.sampleSize), 16, 38);
@@ -786,7 +797,7 @@ function buildEstimatedValidationItem(item, profiles) {
     };
   }
 
-  if (bandProfile && bandProfile.sourceCount >= 2) {
+  if (bandProfile && bandProfile.sourceCount >= minimums.patternSources) {
     const hitRate = clamp(Math.round(bandProfile.hitRate), 40, 63);
     const avgReturn = roundNumber(bandProfile.avgReturn, 1);
     const sampleSize = clamp(Math.round(bandProfile.sampleSize), 14, 30);
