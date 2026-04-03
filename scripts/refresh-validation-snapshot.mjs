@@ -267,6 +267,51 @@ function buildTrackingValidation(entry) {
   };
 }
 
+function buildMeasuredTrackingValidation(entries) {
+  const ticker = entries[0]?.ticker;
+  const returns = [];
+  const drawdowns = [];
+  let winCount = 0;
+
+  for (const entry of entries) {
+    const entryPrice = Number(entry.entryPrice ?? 0);
+    const currentPrice = Number(entry.currentPrice ?? entryPrice);
+    const lowestPrice = Number(entry.lowestPrice ?? currentPrice);
+    if (!entryPrice || !currentPrice) {
+      continue;
+    }
+
+    const currentReturn = ((currentPrice - entryPrice) / entryPrice) * 100;
+    const mae = ((lowestPrice - entryPrice) / entryPrice) * 100;
+    returns.push(currentReturn);
+    drawdowns.push(mae);
+
+    if (currentReturn > 0 || entry.status === "closed_win") {
+      winCount += 1;
+    }
+  }
+
+  if (!ticker || !returns.length) {
+    return null;
+  }
+
+  const sampleSize = entries.length;
+  const hitRate = clamp(Math.round((winCount / sampleSize) * 100), 20, 90);
+  const avgReturn = roundNumber(returns.reduce((sum, value) => sum + value, 0) / sampleSize, 1) ?? 0;
+  const maxDrawdown = roundNumber(Math.min(...drawdowns), 1) ?? -1;
+
+  return {
+    ticker,
+    hitRate,
+    avgReturn,
+    sampleSize,
+    maxDrawdown,
+    basis: "실측 기반",
+    observationWindow: resolveObservationWindow(sampleSize, hitRate),
+    validationSummary: `직접 종료된 추적 이력 ${sampleSize}건 기준 성공률 ${hitRate}%, 평균 움직임 ${formatPercent(avgReturn)}, 가장 크게 밀린 폭 ${formatPercent(maxDrawdown)}입니다.`
+  };
+}
+
 async function persistValidationSnapshot(document) {
   if (!process.env.SWING_RADAR_DATABASE_URL) {
     return;
@@ -317,6 +362,11 @@ async function main() {
   const outFile = path.resolve(options.outFile);
   const lookbackRuns = clamp(Number.parseInt(String(options.lookbackRuns), 10) || 30, 5, 90);
   const minAppearances = clamp(Number.parseInt(String(options.minAppearances), 10) || 2, 1, 10);
+  const measuredTrackingMinEntries = clamp(
+    Number.parseInt(String(process.env.SWING_RADAR_VALIDATION_MEASURED_TRACKING_MIN_ENTRIES ?? "2"), 10) || 2,
+    2,
+    10
+  );
 
   const [seedValidation, existing, history, trackingState] = await Promise.all([
     readJson(path.join(projectRoot, "data", "raw", "validation-snapshot.json"), { items: [] }),
@@ -353,11 +403,32 @@ async function main() {
     itemsByTicker.set(ticker, buildDerivedHistoryValidation(ticker, metrics));
   }
 
-  for (const entry of trackingState.entries ?? []) {
-    if (!entry?.ticker) {
+  const closedTrackingEntries = (trackingState.entries ?? []).filter(
+    (entry) => entry?.ticker && entry.status !== "watch" && entry.status !== "active"
+  );
+  const closedTrackingByTicker = new Map();
+  for (const entry of closedTrackingEntries) {
+    const items = closedTrackingByTicker.get(entry.ticker) ?? [];
+    items.push(entry);
+    closedTrackingByTicker.set(entry.ticker, items);
+  }
+
+  for (const [ticker, entries] of closedTrackingByTicker.entries()) {
+    if (entries.length < measuredTrackingMinEntries) {
       continue;
     }
-    if (entry.status === "watch" || entry.status === "active") {
+
+    const measuredItem = buildMeasuredTrackingValidation(entries);
+    if (!measuredItem) {
+      continue;
+    }
+
+    const existingItem = itemsByTicker.get(ticker);
+    itemsByTicker.set(ticker, pickPreferredValidationItem(existingItem, measuredItem));
+  }
+
+  for (const entry of closedTrackingEntries) {
+    if ((closedTrackingByTicker.get(entry.ticker)?.length ?? 0) >= measuredTrackingMinEntries) {
       continue;
     }
 
