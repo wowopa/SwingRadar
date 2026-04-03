@@ -25,7 +25,9 @@ type ToneFilter = "all" | Recommendation["signalTone"];
 type SectorFilter = string;
 type FavoriteFilter = "all" | "favorites";
 type TrustFilter = "all" | ValidationBasis;
-type PersonalActionFilter = "all" | "buy_review" | "watch" | "avoid" | "excluded" | "pending";
+type ScopeFilter = "all" | "opening_check";
+type PersonalActionFilter = "all" | "my_actionable" | "buy_review" | "watch" | "avoid" | "excluded" | "pending";
+type PersonalActionStatusSummaryKey = Exclude<PersonalActionFilter, "all" | "my_actionable">;
 
 const VALIDATION_BASIS_OPTIONS: ValidationBasis[] = [
   "실측 기반",
@@ -91,6 +93,7 @@ export function RecommendationExplorer({
   const [sector, setSector] = useState<SectorFilter>("all");
   const [favoriteFilter, setFavoriteFilter] = useState<FavoriteFilter>("all");
   const [trustFilter, setTrustFilter] = useState<TrustFilter>("all");
+  const [scopeFilter, setScopeFilter] = useState<ScopeFilter>("all");
   const [personalActionFilter, setPersonalActionFilter] = useState<PersonalActionFilter>("all");
   const [sort, setSort] = useState<SortKey>("rank");
   const { favorites, toggleFavorite } = useFavoriteTickers();
@@ -131,10 +134,24 @@ export function RecommendationExplorer({
       const matchesSector = sector === "all" || item.sector === sector;
       const matchesFavorite = favoriteFilter === "all" || favorites.includes(item.ticker);
       const matchesTrust = trustFilter === "all" || resolveValidationBasis(item) === trustFilter;
+      const matchesScope =
+        scopeFilter === "all" || openingCheckCandidateSet.has(item.ticker.toUpperCase());
       const personalActionItem = personalActionByTicker[item.ticker];
       const matchesPersonalAction =
-        personalActionFilter === "all" || personalActionItem?.boardStatus === personalActionFilter;
-      return matchesQuery && matchesTone && matchesSector && matchesFavorite && matchesTrust && matchesPersonalAction;
+        personalActionFilter === "all"
+          ? true
+          : personalActionFilter === "my_actionable"
+            ? personalActionItem?.boardStatus === "buy_review" || personalActionItem?.boardStatus === "watch"
+            : personalActionItem?.boardStatus === personalActionFilter;
+      return (
+        matchesQuery &&
+        matchesTone &&
+        matchesSector &&
+        matchesFavorite &&
+        matchesTrust &&
+        matchesScope &&
+        matchesPersonalAction
+      );
     });
 
     next.sort((left, right) => {
@@ -203,7 +220,20 @@ export function RecommendationExplorer({
     });
 
     return next;
-  }, [favoriteFilter, favorites, items, personalActionByTicker, personalActionFilter, query, sector, sort, tone, trustFilter]);
+  }, [
+    favoriteFilter,
+    favorites,
+    items,
+    openingCheckCandidateSet,
+    personalActionByTicker,
+    personalActionFilter,
+    query,
+    scopeFilter,
+    sector,
+    sort,
+    tone,
+    trustFilter
+  ]);
 
   const filteredTrustSummary = useMemo(() => {
     return filteredItems.reduce<Record<ValidationBasis, number>>(
@@ -238,9 +268,30 @@ export function RecommendationExplorer({
         avoid: 0,
         excluded: 0,
         pending: 0
-      } satisfies Record<Exclude<PersonalActionFilter, "all">, number>
+      } satisfies Record<PersonalActionStatusSummaryKey, number>
     );
   }, [filteredItems, personalActionByTicker]);
+
+  const overallPersonalActionSummary = useMemo(() => {
+    return items.reduce(
+      (acc, item) => {
+        const status = personalActionByTicker[item.ticker]?.boardStatus;
+        if (!status) {
+          return acc;
+        }
+
+        acc[status] += 1;
+        return acc;
+      },
+      {
+        buy_review: 0,
+        watch: 0,
+        avoid: 0,
+        excluded: 0,
+        pending: 0
+      } satisfies Record<PersonalActionStatusSummaryKey, number>
+    );
+  }, [items, personalActionByTicker]);
 
   const hasPersonalActionSummary = useMemo(() => {
     return Object.values(personalActionSummary).some((count) => count > 0);
@@ -266,9 +317,50 @@ export function RecommendationExplorer({
   const countsMatchAll = filteredItems.length === items.length;
   const tableSummary = `매수 검토 ${bucketedItems.buy_now.length}개 · 관찰 ${bucketedItems.watch_only.length}개 · 보류 ${bucketedItems.avoid.length}개`;
   const highlightedRiskPatterns = openingCheckRiskPatterns.slice(0, 2);
+  const quickViewOptions = [
+    { key: "all", label: "전체", count: items.length },
+    { key: "my_actionable", label: "내 기준만", count: overallPersonalActionSummary.buy_review + overallPersonalActionSummary.watch },
+    { key: "buy_review", label: "매수 검토만", count: overallPersonalActionSummary.buy_review },
+    { key: "opening_check", label: "장초 확인 후보", count: openingCheckCandidateTickers.length }
+  ] as const;
 
   return (
     <div className="space-y-6 lg:space-y-8">
+      <section className="flex flex-wrap gap-2">
+        {quickViewOptions.map((option) => {
+          const active =
+            (option.key === "all" && scopeFilter === "all" && personalActionFilter === "all") ||
+            (option.key === "my_actionable" && personalActionFilter === "my_actionable" && scopeFilter === "all") ||
+            (option.key === "buy_review" && personalActionFilter === "buy_review" && scopeFilter === "all") ||
+            (option.key === "opening_check" && scopeFilter === "opening_check" && personalActionFilter === "all");
+
+          return (
+            <button
+              key={option.key}
+              type="button"
+              onClick={() => {
+                if (option.key === "opening_check") {
+                  setScopeFilter("opening_check");
+                  setPersonalActionFilter("all");
+                  return;
+                }
+
+                setScopeFilter("all");
+                setPersonalActionFilter(option.key);
+              }}
+              className={`inline-flex items-center gap-2 rounded-full border px-3 py-2 text-sm transition ${
+                active
+                  ? "border-primary/24 bg-primary/12 text-primary shadow-[0_10px_28px_-18px_rgba(139,107,46,0.35)]"
+                  : "border-border/80 bg-white/88 text-foreground hover:border-primary/22 hover:bg-primary/6"
+              }`}
+            >
+              <span className="font-medium">{option.label}</span>
+              <span className="rounded-full border border-current/18 px-2 py-0.5 text-xs">{option.count}개</span>
+            </button>
+          );
+        })}
+      </section>
+
       <div className="space-y-3 lg:hidden">
         {highlightedRiskPatterns.length ? (
           <details className="rounded-3xl border border-caution/24 bg-[hsl(var(--caution)/0.08)] shadow-[0_18px_46px_-32px_rgba(199,74,71,0.2)]">
@@ -306,6 +398,8 @@ export function RecommendationExplorer({
               setFavoriteFilter={setFavoriteFilter}
               trustFilter={trustFilter}
               setTrustFilter={setTrustFilter}
+              scopeFilter={scopeFilter}
+              setScopeFilter={setScopeFilter}
               personalActionFilter={personalActionFilter}
               setPersonalActionFilter={setPersonalActionFilter}
               sort={sort}
@@ -382,8 +476,13 @@ export function RecommendationExplorer({
           <option value="all">전체</option>
           <option value="favorites">즐겨찾기만</option>
         </FilterSelect>
+        <FilterSelect label="범위" value={scopeFilter} onChange={setScopeFilter}>
+          <option value="all">전체</option>
+          <option value="opening_check">장초 확인 후보</option>
+        </FilterSelect>
         <FilterSelect label="내 기준" value={personalActionFilter} onChange={setPersonalActionFilter}>
           <option value="all">전체</option>
+          <option value="my_actionable">내 기준만</option>
           <option value="buy_review">매수 검토</option>
           <option value="watch">관찰</option>
           <option value="avoid">보류</option>
@@ -562,6 +661,8 @@ function MobileFilterPanel({
   setFavoriteFilter,
   trustFilter,
   setTrustFilter,
+  scopeFilter,
+  setScopeFilter,
   personalActionFilter,
   setPersonalActionFilter,
   sort,
@@ -578,6 +679,8 @@ function MobileFilterPanel({
   setFavoriteFilter: (value: FavoriteFilter) => void;
   trustFilter: TrustFilter;
   setTrustFilter: (value: TrustFilter) => void;
+  scopeFilter: ScopeFilter;
+  setScopeFilter: (value: ScopeFilter) => void;
   personalActionFilter: PersonalActionFilter;
   setPersonalActionFilter: (value: PersonalActionFilter) => void;
   sort: SortKey;
@@ -611,8 +714,13 @@ function MobileFilterPanel({
         <option value="all">전체</option>
         <option value="favorites">즐겨찾기만</option>
       </FilterSelect>
+      <FilterSelect label="범위" value={scopeFilter} onChange={setScopeFilter}>
+        <option value="all">전체</option>
+        <option value="opening_check">장초 확인 후보</option>
+      </FilterSelect>
       <FilterSelect label="내 기준" value={personalActionFilter} onChange={setPersonalActionFilter}>
         <option value="all">전체</option>
+        <option value="my_actionable">내 기준만</option>
         <option value="buy_review">매수 검토</option>
         <option value="watch">관찰</option>
         <option value="avoid">보류</option>
