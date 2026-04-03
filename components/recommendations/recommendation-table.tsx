@@ -36,7 +36,8 @@ export function RecommendationTable({
   openingCheckRiskPatterns = [],
   openingCheckPositivePattern,
   openingCheckCandidateTickers = [],
-  personalActionByTicker = {}
+  personalActionByTicker = {},
+  rowAccentMode
 }: {
   items: Recommendation[];
   favorites: string[];
@@ -45,6 +46,7 @@ export function RecommendationTable({
   openingCheckPositivePattern?: OpeningCheckPositivePatternDto;
   openingCheckCandidateTickers?: string[];
   personalActionByTicker?: Record<string, TodayActionBoardItemDto>;
+  rowAccentMode?: "all" | "my_actionable" | "buy_review" | "opening_check";
 }) {
   const openingCheckCandidateSet = new Set(openingCheckCandidateTickers.map((ticker) => ticker.toUpperCase()));
   const hasOpeningRiskPatterns = openingCheckRiskPatterns.length > 0;
@@ -99,12 +101,25 @@ export function RecommendationTable({
                       }
                     )
                   : null;
+                const accentRow =
+                  rowAccentMode === "opening_check"
+                    ? isOpeningCheckCandidate
+                    : rowAccentMode === "buy_review"
+                      ? personalActionItem?.boardStatus === "buy_review"
+                      : rowAccentMode === "my_actionable"
+                        ? personalActionItem?.boardStatus === "buy_review" || personalActionItem?.boardStatus === "watch"
+                        : false;
                 return (
                   <tr
                     key={item.ticker}
                     className={cn(
                       "border-b border-border/60 text-foreground/82 transition hover:bg-[hsl(42_38%_97%)] last:border-0",
-                      item.featuredRank && item.featuredRank <= 5 ? "bg-primary/[0.035]" : ""
+                      item.featuredRank && item.featuredRank <= 5 ? "bg-primary/[0.035]" : "",
+                      accentRow
+                        ? rowAccentMode === "opening_check"
+                          ? "bg-primary/[0.08]"
+                          : "bg-[hsl(var(--positive)/0.09)]"
+                        : ""
                     )}
                   >
                     <td className="py-4 pr-6">

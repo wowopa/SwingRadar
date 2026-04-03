@@ -28,6 +28,7 @@ type TrustFilter = "all" | ValidationBasis;
 type ScopeFilter = "all" | "opening_check";
 type PersonalActionFilter = "all" | "my_actionable" | "buy_review" | "watch" | "avoid" | "excluded" | "pending";
 type PersonalActionStatusSummaryKey = Exclude<PersonalActionFilter, "all" | "my_actionable">;
+type QuickViewMode = "all" | "my_actionable" | "buy_review" | "opening_check" | "custom";
 
 const VALIDATION_BASIS_OPTIONS: ValidationBasis[] = [
   "실측 기반",
@@ -323,6 +324,33 @@ export function RecommendationExplorer({
     { key: "buy_review", label: "매수 검토만", count: overallPersonalActionSummary.buy_review },
     { key: "opening_check", label: "장초 확인 후보", count: openingCheckCandidateTickers.length }
   ] as const;
+  const currentQuickView = useMemo<QuickViewMode>(() => {
+    if (scopeFilter === "all" && personalActionFilter === "all") {
+      return "all";
+    }
+
+    if (scopeFilter === "all" && personalActionFilter === "my_actionable") {
+      return "my_actionable";
+    }
+
+    if (scopeFilter === "all" && personalActionFilter === "buy_review") {
+      return "buy_review";
+    }
+
+    if (scopeFilter === "opening_check" && personalActionFilter === "all") {
+      return "opening_check";
+    }
+
+    return "custom";
+  }, [personalActionFilter, scopeFilter]);
+  const quickViewSummary = getQuickViewSummary({
+    mode: currentQuickView,
+    totalCount: filteredItems.length,
+    actionableCount,
+    buyReviewCount: personalActionSummary.buy_review,
+    watchCount: personalActionSummary.watch,
+    openingCheckCount: filteredItems.filter((item) => openingCheckCandidateSet.has(item.ticker.toUpperCase())).length
+  });
 
   return (
     <div className="space-y-6 lg:space-y-8">
@@ -360,6 +388,16 @@ export function RecommendationExplorer({
           );
         })}
       </section>
+
+      {quickViewSummary ? (
+        <section className="rounded-3xl border border-primary/16 bg-[linear-gradient(145deg,rgba(139,107,46,0.06),rgba(255,255,255,0.94))] px-4 py-3 shadow-[0_16px_40px_-30px_rgba(139,107,46,0.2)]">
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge variant="neutral">{quickViewSummary.label}</Badge>
+            <p className="text-sm font-medium text-foreground">{quickViewSummary.headline}</p>
+          </div>
+          <p className="mt-2 text-sm leading-6 text-muted-foreground">{quickViewSummary.detail}</p>
+        </section>
+      ) : null}
 
       <div className="space-y-3 lg:hidden">
         {highlightedRiskPatterns.length ? (
@@ -625,6 +663,7 @@ export function RecommendationExplorer({
             openingCheckPositivePattern={openingCheckPositivePattern}
             openingCheckCandidateTickers={openingCheckCandidateTickers}
             personalActionByTicker={personalActionByTicker}
+            rowAccentMode={currentQuickView === "custom" ? undefined : currentQuickView}
           />
         </section>
       ) : (
@@ -638,6 +677,51 @@ export function RecommendationExplorer({
 
     </div>
   );
+}
+
+function getQuickViewSummary({
+  mode,
+  totalCount,
+  actionableCount,
+  buyReviewCount,
+  watchCount,
+  openingCheckCount
+}: {
+  mode: QuickViewMode;
+  totalCount: number;
+  actionableCount: number;
+  buyReviewCount: number;
+  watchCount: number;
+  openingCheckCount: number;
+}) {
+  switch (mode) {
+    case "all":
+      return null;
+    case "my_actionable":
+      return {
+        label: "내 기준만",
+        headline: `${actionableCount}개 종목만 남겨서 봅니다.`,
+        detail: `내 계좌 기준으로 오늘 실제 행동 후보 ${buyReviewCount}개와 관찰 후보 ${watchCount}개만 빠르게 비교하는 모드입니다.`
+      };
+    case "buy_review":
+      return {
+        label: "매수 검토만",
+        headline: `${buyReviewCount}개 종목만 바로 검토합니다.`,
+        detail: "Today에서 실제 행동 후보로 올라온 종목만 남긴 상태라, 지금 상세 비교를 가장 빠르게 할 수 있습니다."
+      };
+    case "opening_check":
+      return {
+        label: "장초 확인 후보",
+        headline: `${openingCheckCount}개 장초 확인 후보만 봅니다.`,
+        detail: "오늘 아침 다시 확인해야 하는 후보만 남긴 상태입니다. 공통 후보와 내 해석을 함께 보면서 우선순위를 좁힐 수 있습니다."
+      };
+    case "custom":
+      return {
+        label: "맞춤 필터",
+        headline: `${totalCount}개 결과를 현재 조건으로 보고 있습니다.`,
+        detail: "범위, 내 기준, 검증, 섹터를 직접 조합한 상태입니다. 필요한 종목만 남겼는지 먼저 확인하고 표를 읽는 흐름에 맞습니다."
+      };
+  }
 }
 
 function RiskPatternRow({ title, stat }: { title: string; stat: string }) {
