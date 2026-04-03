@@ -1,183 +1,174 @@
 # SwingRadar Sprint Roadmap
 
 ## Purpose
-This document reconstructs the working sprint history from the current codebase so we can continue development from a shared baseline.
+This roadmap reflects the current codebase as of 2026-04-04.
 
-## Current summary
-- The app already supports `mock`, `file`, and `postgres` data providers.
-- The ETL layer can fetch market, news, and disclosure data from external sources and regenerate live snapshots.
-- Admin APIs and an admin dashboard exist for operational workflows.
-- Universe scan automation scripts exist and can score watchlist candidates in batches.
-- The project is beyond prototype stage and is now balancing two priorities:
-  - operational hardening
-  - product repositioning from analysis-heavy UI toward an action-first swing operating system
+It replaces the older reconstruction that still treated the action-first rebuild as not started.
+
+## Current product position
+SwingRadar is now in the late action-first rebuild stage.
+
+The product already supports:
+- authenticated tool-like navigation
+- shared signals and personal interpretation
+- personal opening-check flow
+- holdings and trade journal management
+- close reviews and promoted personal rules
+- performance dashboards and account-level review
+
+The project is no longer blocked by missing product structure.
+
+The main risks now are:
+- data quality
+- runtime consistency
+- operational reliability
+- trust in the learning loop
 
 ## Sprint status
 
 ### Sprint 1: App shell and file snapshot experience
 Status: Completed
 
-Scope:
-- Recommendations, analysis, and tracking pages are implemented.
-- API routes serve snapshot-backed responses for core app features.
-- File-based provider is available for local and fallback operation.
-
-Code anchors:
-- `app/recommendations/page.tsx`
-- `app/analysis/[ticker]/page.tsx`
-- `app/tracking/page.tsx`
-- `app/api/recommendations/route.ts`
-- `app/api/analysis/[ticker]/route.ts`
-- `app/api/tracking/route.ts`
-- `lib/data-sources/file-provider.ts`
+Delivered:
+- recommendations, analysis, and tracking foundations
+- file-backed snapshot provider
+- initial route and API structure
 
 ### Sprint 2: Provider abstraction and safe fallback
 Status: Completed
 
-Scope:
-- Provider selection is centralized.
-- Fallback behavior exists when the primary provider fails.
-- News curation overlays are applied after provider reads.
-
-Code anchors:
-- `lib/providers/index.ts`
+Delivered:
+- centralized provider selection
+- fallback provider behavior
+- curated overlays after provider reads
 
 ### Sprint 3: External data ingestion pipeline
 Status: Completed
 
-Scope:
-- Separate fetchers exist for market, news, and disclosures.
-- External raw payloads are synced into the snapshot generation flow.
-- Full refresh script is available for local or scheduled execution.
-
-Code anchors:
-- `scripts/fetch-market-source.mjs`
-- `scripts/fetch-news-source.mjs`
-- `scripts/fetch-disclosures-source.mjs`
-- `scripts/sync-external-raw.mjs`
-- `scripts/generate-snapshots.mjs`
-- `scripts/refresh-external-pipeline.mjs`
-- `docs/external-data-sources.md`
+Delivered:
+- market fetch
+- news fetch
+- disclosure fetch
+- external raw sync
+- snapshot generation
 
 ### Sprint 4: PostgreSQL snapshot provider
 Status: Completed
 
-Scope:
-- PostgreSQL pool and provider are implemented.
-- Snapshot ingest script writes generated app payloads into database tables.
-- Runtime can switch to Postgres with env configuration.
+Delivered:
+- PostgreSQL provider
+- ingest pipeline
+- runtime switching between storage modes
 
-Code anchors:
-- `lib/server/postgres.ts`
-- `lib/data-sources/postgres-provider.ts`
-- `scripts/ingest-postgres.mjs`
-- `db/postgres-schema.sql`
-- `docs/postgres-provider.md`
+### Sprint 5: Universe expansion and daily candidate scan
+Status: Completed
 
-### Sprint 5: Admin operations and editorial workflow
+Delivered:
+- symbol import
+- universe watchlist build
+- batch scan
+- daily cycle orchestration
+- focused watchlist reporting
+
+Remaining concerns:
+- validation and confidence quality still need work
+
+### Sprint 6: Authenticated product repositioning
+Status: Completed
+
+Delivered:
+- public vs authenticated split
+- app shell simplification
+- `Today / Portfolio / Signals / Account`
+- `Opening Check` as a dedicated workflow
+- mobile shell compaction
+
+This sprint closed the biggest product-structure gap.
+
+### Sprint 7: Portfolio operating system
+Status: Completed
+
+Delivered:
+- holdings / journal / reviews / performance tabs
+- trade event recording
+- quick holding actions
+- undo / reopen flow
+- position detail with chart markers
+- plan vs actual
+- close review notes
+
+### Sprint 8: Review loop and personal rule engine
 Status: In progress
 
-What is already present:
-- Admin page and admin APIs are implemented.
-- Health, ingest, publish, rollback, audit, editorial draft, and watchlist routes exist.
-- Watchlist update flow can rerun pipeline-related work.
+Delivered:
+- close review templates
+- repeated review rule detection
+- promote review rules into personal rules
+- personal rules in Today and Opening Check
+- risk-pattern hints across Today, Signals, and analysis detail
+- opening-check quality review analytics
 
-Code anchors:
-- `app/admin/page.tsx`
-- `app/api/admin/status/route.ts`
-- `app/api/admin/watchlist/route.ts`
-- `app/api/admin/ingest/route.ts`
-- `app/api/admin/publish/route.ts`
-- `app/api/admin/rollback/route.ts`
-- `app/api/admin/audit/route.ts`
-- `app/api/admin/editorial-draft/route.ts`
+Still open:
+- dedicated personal rule management surface
+- rule lifecycle visibility
+- richer explanation of why a rule changed a suggestion
 
-Why this sprint is still open:
-- Some UI copy appears to have broken text encoding.
-- Operational paths exist, but we have not yet confirmed all admin flows end-to-end with regression coverage.
-- Test coverage is still focused on service-level behavior, not the full admin workflow surface.
-
-### Sprint 6: Universe expansion and daily candidate scan
+### Sprint 9: Performance intelligence
 Status: In progress
 
-What is already present:
-- Symbol import and watchlist build scripts exist.
-- Batch scan logic exists and can score candidates across generated snapshots.
-- Daily cycle orchestration script exists.
+Delivered:
+- calendar and weekly/monthly review
+- equity curve
+- realized PnL summaries
+- exit breakdowns
+- tag-based performance
+- opening-check impact review
+- recent strategy wins in Today
 
-Code anchors:
-- `scripts/import-symbol-master.mjs`
-- `scripts/build-universe-watchlist.mjs`
-- `scripts/scan-universe-batches.mjs`
-- `scripts/run-daily-universe-cycle.mjs`
-- `docs/universe-scan.md`
+Still open:
+- deeper rule-violation analytics
+- stronger comparative performance views
+- clearer strategy cohort comparisons
 
-Why this sprint is still open:
-- The scan pipeline appears script-driven rather than fully surfaced in the app.
-- Candidate review, approval, and promotion workflow is not yet clearly connected to admin UX.
-- We should validate performance, failure recovery, and database ingest behavior at larger universe sizes.
+### Sprint 10: Reliability and operational hardening
+Status: In progress
 
-### Sprint 7: Data model normalization
-Status: Not started
+Delivered:
+- symbol master runtime split
+- validation seed/runtime merge improvements
+- measured validation promotion from repeated closed tracking outcomes
 
-Target outcome:
-- Move from snapshot-only persistence toward raw event tables, derived features, and stable materialized outputs.
+Still open:
+- lower validation fallback rate
+- admin flow verification
+- stronger batch failure visibility
+- clearer runtime state consistency checks
+- explicit external-news policy tightening
 
-Planned direction:
-1. Split raw market, news, and disclosure events into dedicated tables.
-2. Build derived feature tables for scoring inputs.
-3. Generate materialized recommendation and analysis views from normalized data.
-4. Keep app APIs reading stable snapshots or views while internals evolve.
+## Current recommended sprint
+Recommended focus: Sprint 10 reliability and operational hardening
 
-Reference:
-- `docs/postgres-provider.md`
-
-### Sprint 8: Reliability and release hardening
-Status: Not started
-
-Target outcome:
-- Treat the project as an operated product rather than a developer-run pipeline.
-
-Suggested scope:
-- Expand automated tests around provider fallback, ETL scripts, and admin APIs.
-- Add stronger health checks and failure reporting for scheduled jobs.
-- Validate deployment and recovery procedures against the current Postgres mode.
-- Remove text encoding issues from user-facing Korean copy.
-
-### Sprint 9: Action-first product repositioning
-Status: Not started
-
-Target outcome:
-- Reframe the app around daily decisions, portfolio rules, and plain-language guidance.
-
-Suggested scope:
-- Redesign the recommendations surface into a daily operating home.
-- Define action buckets such as `Buy now`, `Watch only`, `Manage open position`, and `Avoid for now`.
-- Add trade-plan fields such as entry zone, stop, first target, and expected hold window.
-- Add market-regime and portfolio-cap metadata so the app can limit daily actions intentionally.
-- Rewrite onboarding and guide copy around user decisions rather than internal scoring vocabulary.
-
-Reference:
-- `docs/service-operating-model.md`
-- `docs/action-first-ux-roadmap.md`
-- `docs/authenticated-app-ui-rules.md`
-- `docs/product-rebuild-workstreams.md`
-
-## Recommended next sprint
-Recommended focus: Sprint 9 action-first product repositioning
-
-Why this is the best next step:
-- The strongest user feedback is about clarity, actionability, and decision confidence rather than missing infrastructure.
-- Product trust will improve more by reducing ambiguity than by adding more analysis detail.
-- A clear operating model is now needed before further UI or scoring iteration.
-- This sprint still complements later hardening work because it will define the new source of truth for labels, screen hierarchy, and portfolio behavior.
+Why this is now the best next step:
+- the product loop exists and is usable
+- the next trust bottleneck is no longer UI hierarchy
+- runtime and data confidence must improve before further surface expansion
 
 ## Suggested immediate tasks
-1. Rewrite user-facing language around action buckets, entry, stop, and target.
-2. Redesign `/recommendations` into a daily operating summary with visible action limits.
-3. Extend data contracts to support regime, trade-plan, and portfolio-cap fields.
-4. Rework `/guide` into a short onboarding flow that explains how many names to act on and why.
+1. continue validation pipeline hardening to reduce fallback reliance
+2. verify holdings / journal / asset-setting consistency with regression coverage
+3. add personal rule management surface
+4. document and possibly reduce the role of external news in the decision loop
+5. improve admin and batch health diagnostics
+
+## Suggested secondary tasks
+1. performance intelligence phase 2
+2. rule-violation outcome comparisons
+3. stronger cohort summaries for strategy tags
 
 ## Notes
-- `docs/postgres-provider.md` and some app copy currently show corrupted Korean text and should be normalized before they become the source of truth.
-- This roadmap is reconstructed from the repository state on 2026-03-08 and should be updated whenever a sprint is closed.
+- `docs/authenticated-app-ui-rules.md` remains the source of truth for logged-in screen behavior.
+- `docs/product-rebuild-workstreams.md` is now the better operational companion to this roadmap.
+- This roadmap should be updated whenever:
+  - a workstream changes status
+  - a reliability milestone materially improves trust
+  - a new rule-management or review-management surface ships

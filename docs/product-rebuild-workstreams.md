@@ -1,171 +1,245 @@
 # SwingRadar Product Rebuild Workstreams
 
 ## Purpose
-This document captures the next product rebuild stages for the authenticated app.
+This document tracks the authenticated product rebuild from the current codebase state.
 
-It exists to keep development focused on:
-- faster daily use
-- denser decision support
-- richer review workflows
-- less explanatory clutter
+It should answer:
+- what is already rebuilt
+- what is only partially complete
+- what should be prioritized next
 
-## Current diagnosis
-The product direction is right, but the logged-in experience still behaves more like:
-- a guided website
-- a report reader
-- a feature explanation surface
+## Current product state
+SwingRadar is no longer just a ranked-idea dashboard.
 
-than:
-- a working dashboard
-- a trading journal
-- a portfolio operating system
+The logged-in product now has a usable operating loop:
+1. shared signals
+2. personal opening check
+3. today action decisions
+4. holdings and trade recording
+5. close reviews
+6. performance and rule feedback
 
-## Target benchmark direction
-SwingRadar should not try to become a generic social trading platform first.
+That means the rebuild has moved past:
+- shell cleanup only
+- copy cleanup only
+- one-page dashboard iteration
 
-The more realistic product target is:
-- shared swing signals
-- personal execution planning
-- personal trading journal
-- portfolio review loop
+The next bottleneck is now:
+- reliability
+- data quality
+- state consistency
+- learning-loop trust
 
-This means we should prioritize:
-1. decision speed
-2. trade recording
-3. position review
-4. account-level operating feedback
+## Status by workstream
 
-before:
-- social features
-- public profile systems
-- large community layers
+### Workstream 1: App shell simplification
+Status: Completed
 
-## Workstream 1: App shell simplification
-Goal:
-- make the logged-in app feel like a tool, not a landing page
-
-Scope:
-- shrink the authenticated header into an app bar
-- remove hero-style copy from logged-in shell
-- simplify navigation to icon + label
-- remove verbose helper chips and repeated explanation blocks
+Delivered:
+- authenticated shell reduced into an app bar
+- mobile shell compacted
+- navigation simplified to tool-like labels
+- landing-style copy removed from logged-in surfaces
 
 Success signal:
-- first action is visible immediately after login
+- first useful action is visible immediately after login
 
-## Workstream 2: Today workflow compression
-Goal:
-- make `Today` readable in seconds
+### Workstream 2: Today workflow compression
+Status: Completed
 
-Scope:
-- keep only:
+Delivered:
+- `Today` focuses on:
   - opening check
   - buy review
   - holding management
-- move review insights and secondary explanation below the fold or behind collapse
-- reduce text-first cards into count-first and state-first modules
+- secondary guidance moved below the fold or behind details
+- personal rules and repeated violation warnings surfaced without turning the page back into prose
 
 Success signal:
-- user can explain what to do today in under 10 seconds
+- the user can explain what to do today in seconds
 
-## Workstream 3: Signals workspace densification
-Goal:
-- make `Signals` a scan surface, not an intro page
+### Workstream 3: Signals workspace densification
+Status: Completed
 
-Scope:
-- keep tabs lightweight
-- show tables and filters first
-- reduce explanatory cards
-- make common-signal and review states easier to scan at a glance
+Delivered:
+- `Signals` works as a scan surface
+- quick views exist:
+  - all
+  - personal only
+  - buy review only
+  - opening-check candidates
+- shared signal vs personal interpretation is visible in the table and detail view
 
 Success signal:
-- user can move from opening the page to scanning candidates with no reading step
+- users can move directly into scanning without reading a long intro
 
-## Workstream 4: Portfolio tab system
-Goal:
-- separate current management from history and review
+### Workstream 4: Portfolio tab system
+Status: Completed
 
-Scope:
+Delivered:
 - `Holdings`
 - `Journal`
 - `Reviews`
+- `Performance`
 
-Rules:
-- current holdings should be the default view
-- journal should focus on event recording and event history
-- reviews should focus on closed positions and lessons
+Delivered behavior:
+- current holdings remain the default management surface
+- trade recording no longer forces the user through a long vertical page
+- reviews and performance are separated from current holdings
 
-Success signal:
-- user does not need to scroll through all portfolio functions to reach current holdings
+### Workstream 5: Position detail maturity
+Status: Completed
 
-## Workstream 5: Position detail maturity
-Goal:
-- make every position feel like a complete operating record
-
-Scope:
+Delivered:
 - price chart with event markers
-- plan vs actual
-- opening check record
+- plan vs actual section
+- opening-check insight connection
 - trade timeline
-- close review
+- close review editor
 
 Success signal:
-- user can understand one position’s full lifecycle from one screen
+- one position can be understood as a full lifecycle from one screen
 
-## Workstream 6: Calendar and performance review
-Goal:
-- let users understand account rhythm, not just single names
+### Workstream 6: Calendar and performance review
+Status: Completed
 
-Scope:
-- day calendar
-- realized PnL by day/week
-- stop-loss frequency
-- partial take-profit frequency
-- review completion rate
-- rule-following indicators
-
-Success signal:
-- user can see how their behavior changed over time
-
-## Workstream 7: Strategy and rule analytics
-Goal:
-- move from logging trades to learning from trades
-
-Scope:
-- tag-based review
-- setup-type performance
-- opening-check decision quality
-- risk-reward distribution
-- hold-time distribution
+Delivered:
+- review calendar
+- weekly and monthly PnL summaries
+- realized PnL flow
+- equity curve
+- exit breakdown
+- tag-based and reason-based summaries
 
 Success signal:
-- user can answer “what type of trade actually works for me?”
+- account rhythm is visible, not just single names
 
-## Not in current scope
-The following are valuable, but should not dilute the current rebuild:
-- social feed
-- public user graph
-- copy-trading style loops
-- mentor network
-- broker sync as a requirement for the first serious version
+### Workstream 7: Strategy and rule analytics
+Status: In progress
 
-## Immediate build order
-1. app shell simplification
-2. Today simplification
-3. Signals simplification
-4. Portfolio tabs
-5. position detail chart and event markers
-6. calendar and review dashboard
+Already delivered:
+- opening-check decision quality review
+- repeated review rule candidates
+- personal rule promotion
+- personal rule reminders in `Today`
+- rule-aware opening-check suggestion downgrades
+- risk-pattern hints in `Today`, `Opening Check`, `Signals`, and analysis detail
+
+Still missing:
+- explicit personal rule management screen
+- rule enable/disable states
+- rule priority / confidence controls
+- rule history and "why this rule was applied" tracing
+
+### Workstream 8: Recording speed and state consistency
+Status: In progress
+
+Already delivered:
+- quick actions from holdings
+- trade dialog presets
+- recent note and strategy-tag reuse
+- undo / reopen flow for last trade
+- follow-up routing after save
+
+Still missing:
+- broader consistency hardening between:
+  - journal
+  - holdings
+  - asset settings
+  - cash balance
+- richer edit history for recently recorded events
+- stronger regression tests around trade write paths
+
+### Workstream 9: Operational reliability and data quality
+Status: In progress
+
+Already delivered:
+- symbol master runtime split
+- validation snapshot merge improvements
+- measured validation promotion from repeated tracking outcomes
+
+Still missing:
+- lower validation fallback rate
+- stronger admin flow verification
+- clearer batch failure visibility
+- explicit news policy simplification
+- better confidence around runtime state sync
+
+## What is no longer the main problem
+These are no longer the primary bottlenecks:
+- landing-page style copy inside the authenticated app
+- lack of portfolio tabs
+- lack of trade journal support
+- lack of close review workflows
+- lack of personal learning feedback
+
+## Current priority stack
+The rebuild should now prioritize the following in order.
+
+### 1. Operational reliability and data quality
+Why:
+- trust can fail even when the UX looks good
+- validation fallback is still too high
+- runtime data pipelines need more confidence than they currently have
+
+Focus:
+- validation pipeline phase 3
+- clearer news role reduction
+- admin and batch flow verification
+- runtime report and failure visibility
+
+### 2. Recording speed and state consistency
+Why:
+- the service is now only as strong as the accuracy of the user's recorded trade history
+
+Focus:
+- holdings/journal/profile state sync
+- faster post-trade edits
+- better regression coverage for overwrite, undo, and reopen flows
+
+### 3. Personal rule engine maturity
+Why:
+- rules now influence the workflow, but the user still cannot manage them as a first-class system
+
+Focus:
+- rule list
+- enable/disable
+- rule source visibility
+- rule application explanation
+
+### 4. Performance intelligence phase 2
+Why:
+- the performance surface is now useful enough to benefit from deeper comparative insight
+
+Focus:
+- rule violation outcomes
+- opening-check combination comparisons
+- stronger period comparisons
+- better tag and exit pattern interpretation
+
+## Not in near-term scope
+The following are still intentionally out of scope for the current rebuild:
+- social trading
+- public profile graph
+- mentor marketplace
+- broker sync as a hard dependency
+- embedded live market data as a required feature
+
+## Immediate next build order
+1. operational reliability and data quality hardening
+2. journal / holdings / asset-setting consistency hardening
+3. personal rule management surface
+4. performance intelligence phase 2
 
 ## Standard
 When choosing between:
-- more explanation
-- or a faster workflow
+- another insight surface
+- or a more reliable operating loop
 
-default to the faster workflow.
+default to the more reliable operating loop.
 
 When choosing between:
-- more feature surface
-- or a clearer operating loop
+- richer explanation
+- or more trustworthy state and faster recording
 
-default to the clearer operating loop.
+default to trustworthy state and faster recording.

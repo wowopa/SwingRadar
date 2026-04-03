@@ -8,6 +8,21 @@ Turn the current app into a product that answers:
 Authenticated app composition and copy rules are codified in:
 - `docs/authenticated-app-ui-rules.md`
 
+## Current status
+Most of the original action-first rebuild is now shipped.
+
+Already implemented:
+- authenticated app-bar shell
+- `Today / Portfolio / Signals / Account`
+- dedicated `Opening Check`
+- personal action interpretation layered on shared signals
+- portfolio tabs with journal, reviews, and performance
+- close reviews feeding personal rules back into daily flow
+
+This roadmap should now be read as:
+- a reference for the original action-first design intent
+- plus a reminder that the next UX gains come from reliability and density, not more explanation
+
 ## Product diagnosis
 The current experience still feels closer to a research console than a guided decision product.
 
@@ -52,8 +67,9 @@ Recommended order:
 7. `Why the stance is cautious or aggressive`
 
 ### Supporting pages
-- `/tracking`: management workspace
-- `/ranking`: advanced idea explorer
+- `/opening-check`: fast processing surface for the morning loop
+- `/portfolio`: holdings, journal, reviews, performance
+- `/signals`: shared-signal scan surface
 - `/analysis/[ticker]`: one-name decision memo
 - `/guide`: onboarding for first-time users
 
@@ -87,27 +103,6 @@ Strict content rule:
 - default visible buy-now ideas: `0 to 3`
 - default visible watch-only ideas: `3 to 5`
 - everything else belongs behind a secondary action
-
-### `/tracking`
-Current role:
-- public tracking history and detail inspection
-
-New role:
-- manage what is active, watched, closed, or avoided
-
-Recommended tabs:
-- `Manage open`
-- `Watch only`
-- `Closed`
-- `Avoided or extended`
-
-For each card, show:
-- current status
-- days in trade or watch
-- distance to stop
-- distance to first target
-- next required action
-- reason if the name is blocked
 
 ### `/ranking`
 Current role:
@@ -208,64 +203,61 @@ Needed fields:
 
 ## Suggested rollout phases
 ### Phase 1: language and hierarchy
-Scope:
-- rename user-facing labels
-- surface action bucket on key cards
-- add today's operating summary
-- limit visible idea count
+Status: Completed
 
-Success test:
-- a new tester can explain what to do today in under one minute
+Delivered:
+- shorter labels
+- action-first top sections
+- smaller logged-in shell
+- lower explanatory clutter
 
 ### Phase 2: trade-plan UI
-Scope:
-- add entry, stop, target, and hold-window modules
-- reorder analysis pages around action
-- add clear block reasons on non-actionable names
+Status: Completed
 
-Success test:
-- a tester can say where they would buy and where they would exit
+Delivered:
+- entry / stop / target emphasis
+- analysis pages reordered around action
+- non-actionable names explained through interpretation layers
 
 ### Phase 3: portfolio engine
+Status: Completed
+
+Delivered:
+- account-aware action planning
+- position and sector constraints
+- journal, reviews, performance
+- personal rules flowing back into daily decisions
+
+### Phase 4: reliability and learning-loop trust
+Status: In progress
+
 Scope:
-- regime-aware caps
-- position limit logic
-- sector concentration guardrails
-- replacement prompts
+- validation quality
+- holdings/journal/profile consistency
+- personal rule management
+- stronger reason visibility when suggestions are downgraded
 
 Success test:
-- a tester can explain why they are buying only one or two names instead of many
-
-### Phase 4: premium-ready personalization
-Scope:
-- account-size templates
-- user risk settings
-- personalized position sizing
-- premium model portfolio views
-
-Success test:
-- the same engine can support different capital bands without changing the core UX
+- users trust that what they recorded, reviewed, and learned is accurately reflected the next day
 
 ## Suggested engineering backlog
-### UI
-- redesign `/recommendations` as daily operating home
-- redesign `/guide` as onboarding
-- simplify labels in shared components
-- add action bucket badges everywhere
+### Reliability
+- continue validation pipeline hardening
+- reduce fallback-heavy recommendation support
+- make external news explicitly optional and lower-impact
 
-### Contracts
-- extend recommendation and tracking DTOs with trade-plan fields
-- add regime and portfolio-cap metadata
+### Data consistency
+- harden journal / holdings / asset-setting sync paths
+- add stronger regression coverage around undo, reopen, and overwrite flows
 
-### Snapshot generation
-- compute action bucket after regime and chase filters
-- compute entry/stop/target outputs
-- compute block reasons and replacement priority
+### Rule engine
+- add dedicated personal rule management surface
+- show rule source, status, and application reason
 
-### Testing
-- add snapshot tests for action bucket rendering
-- add service tests for regime-driven caps
-- add usability acceptance checklist for language clarity
+### Performance intelligence
+- add deeper rule-violation outcome analysis
+- add stronger tag-cohort comparisons
+- improve comparative period review
 
 ## Research and validation loop
 Each usability round should test these prompts:
