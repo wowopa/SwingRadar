@@ -25,6 +25,7 @@ type ToneFilter = "all" | Recommendation["signalTone"];
 type SectorFilter = string;
 type FavoriteFilter = "all" | "favorites";
 type TrustFilter = "all" | ValidationBasis;
+type PersonalActionFilter = "all" | "buy_review" | "watch" | "avoid" | "excluded" | "pending";
 
 const VALIDATION_BASIS_OPTIONS: ValidationBasis[] = [
   "실측 기반",
@@ -90,6 +91,7 @@ export function RecommendationExplorer({
   const [sector, setSector] = useState<SectorFilter>("all");
   const [favoriteFilter, setFavoriteFilter] = useState<FavoriteFilter>("all");
   const [trustFilter, setTrustFilter] = useState<TrustFilter>("all");
+  const [personalActionFilter, setPersonalActionFilter] = useState<PersonalActionFilter>("all");
   const [sort, setSort] = useState<SortKey>("rank");
   const { favorites, toggleFavorite } = useFavoriteTickers();
   const openingCheckCandidateSet = useMemo(
@@ -129,7 +131,10 @@ export function RecommendationExplorer({
       const matchesSector = sector === "all" || item.sector === sector;
       const matchesFavorite = favoriteFilter === "all" || favorites.includes(item.ticker);
       const matchesTrust = trustFilter === "all" || resolveValidationBasis(item) === trustFilter;
-      return matchesQuery && matchesTone && matchesSector && matchesFavorite && matchesTrust;
+      const personalActionItem = personalActionByTicker[item.ticker];
+      const matchesPersonalAction =
+        personalActionFilter === "all" || personalActionItem?.boardStatus === personalActionFilter;
+      return matchesQuery && matchesTone && matchesSector && matchesFavorite && matchesTrust && matchesPersonalAction;
     });
 
     next.sort((left, right) => {
@@ -198,7 +203,7 @@ export function RecommendationExplorer({
     });
 
     return next;
-  }, [favoriteFilter, favorites, items, query, sector, sort, tone, trustFilter]);
+  }, [favoriteFilter, favorites, items, personalActionByTicker, personalActionFilter, query, sector, sort, tone, trustFilter]);
 
   const filteredTrustSummary = useMemo(() => {
     return filteredItems.reduce<Record<ValidationBasis, number>>(
@@ -276,6 +281,8 @@ export function RecommendationExplorer({
               setFavoriteFilter={setFavoriteFilter}
               trustFilter={trustFilter}
               setTrustFilter={setTrustFilter}
+              personalActionFilter={personalActionFilter}
+              setPersonalActionFilter={setPersonalActionFilter}
               sort={sort}
               setSort={setSort}
             />
@@ -349,6 +356,14 @@ export function RecommendationExplorer({
         <FilterSelect label="즐겨찾기" value={favoriteFilter} onChange={setFavoriteFilter}>
           <option value="all">전체</option>
           <option value="favorites">즐겨찾기만</option>
+        </FilterSelect>
+        <FilterSelect label="내 기준" value={personalActionFilter} onChange={setPersonalActionFilter}>
+          <option value="all">전체</option>
+          <option value="buy_review">매수 검토</option>
+          <option value="watch">관찰</option>
+          <option value="avoid">보류</option>
+          <option value="excluded">제외</option>
+          <option value="pending">장초 확인 전</option>
         </FilterSelect>
         <FilterSelect label="검증 기준" value={trustFilter} onChange={setTrustFilter}>
           <option value="all">전체</option>
@@ -502,6 +517,8 @@ function MobileFilterPanel({
   setFavoriteFilter,
   trustFilter,
   setTrustFilter,
+  personalActionFilter,
+  setPersonalActionFilter,
   sort,
   setSort
 }: {
@@ -516,6 +533,8 @@ function MobileFilterPanel({
   setFavoriteFilter: (value: FavoriteFilter) => void;
   trustFilter: TrustFilter;
   setTrustFilter: (value: TrustFilter) => void;
+  personalActionFilter: PersonalActionFilter;
+  setPersonalActionFilter: (value: PersonalActionFilter) => void;
   sort: SortKey;
   setSort: (value: SortKey) => void;
 }) {
@@ -546,6 +565,14 @@ function MobileFilterPanel({
       <FilterSelect label="즐겨찾기" value={favoriteFilter} onChange={setFavoriteFilter}>
         <option value="all">전체</option>
         <option value="favorites">즐겨찾기만</option>
+      </FilterSelect>
+      <FilterSelect label="내 기준" value={personalActionFilter} onChange={setPersonalActionFilter}>
+        <option value="all">전체</option>
+        <option value="buy_review">매수 검토</option>
+        <option value="watch">관찰</option>
+        <option value="avoid">보류</option>
+        <option value="excluded">제외</option>
+        <option value="pending">장초 확인 전</option>
       </FilterSelect>
       <FilterSelect label="검증 기준" value={trustFilter} onChange={setTrustFilter}>
         <option value="all">전체</option>
