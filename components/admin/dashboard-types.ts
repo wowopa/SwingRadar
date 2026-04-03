@@ -248,6 +248,15 @@ export type PopupNoticeDocument = {
   updatedBy: string;
 };
 
+export type AdminDataQualitySummaryPayload = {
+  validationFallbackCount: number | null;
+  validationFallbackPercent: number | null;
+  measuredValidationPercent: number | null;
+  newsLiveFetchPercent: number | null;
+  newsCacheFallbackPercent: number | null;
+  newsFileFallbackPercent: number | null;
+};
+
 export type AdminStatusPayload = {
   ok: boolean;
   requestId: string;
@@ -262,6 +271,7 @@ export type AdminStatusPayload = {
   snapshotGenerationReport: SnapshotGenerationReportPayload | null;
   postLaunchHistory: PostLaunchHistoryEntryPayload[];
   thresholdAdviceReport: ThresholdAdviceReportPayload | null;
+  dataQualitySummary: AdminDataQualitySummaryPayload | null;
   accessStatsReport: AccessStatsReportPayload | null;
   runtimeStorageReport: RuntimeStorageReportPayload | null;
   databaseStorageReport: DatabaseStorageReportPayload | null;

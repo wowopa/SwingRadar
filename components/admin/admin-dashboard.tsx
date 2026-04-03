@@ -4,9 +4,12 @@ import { useEffect, useMemo, useState } from "react";
 import { RefreshCw } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 
+import { CandidateOpsTab } from "@/components/admin/candidate-ops-tab";
+import { DataQualityTab } from "@/components/admin/data-quality-tab";
 import { Banner, buildWatchlistChanges } from "@/components/admin/dashboard-shared";
 import type {
   AccessStatsReportPayload,
+  AdminDataQualitySummaryPayload,
   AdminStatusPayload,
   AuditItem,
   AutoHealReportPayload,
@@ -29,27 +32,47 @@ import type {
   WatchlistEntry,
   WatchlistSyncStatus
 } from "@/components/admin/dashboard-types";
+import { OverviewTab } from "@/components/admin/overview-tab";
 import { PortfolioProfileTab } from "@/components/admin/portfolio-profile-tab";
 import { PopupNoticeTab } from "@/components/admin/popup-notice-tab";
-import { StatusTab } from "@/components/admin/status-tab";
-import { WatchlistTab } from "@/components/admin/watchlist-tab";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAdminToken } from "@/lib/use-admin-token";
 
-const ENABLED_TABS = new Set(["status", "popup", "watchlist", "portfolio"]);
+const ENABLED_TABS = new Set(["overview", "data-quality", "candidate-ops", "notices", "portfolio"]);
+
+function normalizeTab(value: string | null) {
+  if (!value) {
+    return "overview";
+  }
+
+  if (value === "status") {
+    return "overview";
+  }
+
+  if (value === "popup") {
+    return "notices";
+  }
+
+  if (value === "watchlist") {
+    return "candidate-ops";
+  }
+
+  return ENABLED_TABS.has(value) ? value : "overview";
+}
 
 export function AdminDashboard() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { token, setToken, authHeaders } = useAdminToken();
-  const [tab, setTab] = useState("status");
+  const [tab, setTab] = useState("overview");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [hasAdminAccess, setHasAdminAccess] = useState(false);
+  const [overallStatus, setOverallStatus] = useState<"ok" | "warning" | "critical">("ok");
   const [sectionWarnings, setSectionWarnings] = useState<Array<{ label: string; message: string }>>([]);
   const [health, setHealth] = useState<HealthPayload | null>(null);
   const [incidents, setIncidents] = useState<OperationalIncident[]>([]);
@@ -60,6 +83,7 @@ export function AdminDashboard() {
   const [snapshotGenerationReport, setSnapshotGenerationReport] = useState<SnapshotGenerationReportPayload | null>(null);
   const [postLaunchHistory, setPostLaunchHistory] = useState<PostLaunchHistoryEntryPayload[]>([]);
   const [thresholdAdviceReport, setThresholdAdviceReport] = useState<ThresholdAdviceReportPayload | null>(null);
+  const [dataQualitySummary, setDataQualitySummary] = useState<AdminDataQualitySummaryPayload | null>(null);
   const [accessStatsReport, setAccessStatsReport] = useState<AccessStatsReportPayload | null>(null);
   const [runtimeStorageReport, setRuntimeStorageReport] = useState<RuntimeStorageReportPayload | null>(null);
   const [databaseStorageReport, setDatabaseStorageReport] = useState<DatabaseStorageReportPayload | null>(null);
@@ -93,17 +117,15 @@ export function AdminDashboard() {
   const watchlistTickers = useMemo(() => watchlist.map((item) => item.ticker), [watchlist]);
 
   function getLoadErrorMessage(loadError: unknown) {
-    return loadError instanceof Error ? loadError.message : "Unexpected section load failure";
+    return loadError instanceof Error ? loadError.message : "예상하지 못한 섹션 로드 실패";
   }
 
   useEffect(() => {
-    const nextTab = searchParams.get("tab");
+    const nextTab = normalizeTab(searchParams.get("tab"));
     const query = searchParams.get("q");
     const nextReturnTo = searchParams.get("returnTo");
 
-    if (nextTab && ENABLED_TABS.has(nextTab)) {
-      setTab(nextTab);
-    }
+    setTab(nextTab);
     if (query) {
       setSymbolQuery(query);
     }
@@ -140,6 +162,7 @@ export function AdminDashboard() {
       if (!authHeaders) {
         setHasAdminAccess(false);
         setHealth(await fetchJson<HealthPayload>("/api/health"));
+        setOverallStatus("ok");
         setIncidents([]);
         setOpsHealthReport(null);
         setDailyCycleReport(null);
@@ -148,6 +171,7 @@ export function AdminDashboard() {
         setSnapshotGenerationReport(null);
         setPostLaunchHistory([]);
         setThresholdAdviceReport(null);
+        setDataQualitySummary(null);
         setAccessStatsReport(null);
         setRuntimeStorageReport(null);
         setDatabaseStorageReport(null);
@@ -160,12 +184,13 @@ export function AdminDashboard() {
         setWatchlistBaseline([]);
         setWatchlistSyncStatuses({});
         setActiveWatchlistTicker("");
-        setMessage("관리자 비밀번호를 입력하면 운영 기능을 사용할 수 있습니다.");
+        setMessage("관리자 토큰을 입력하면 운영 콘솔을 사용할 수 있습니다.");
         return;
       }
 
       const statusJson = await fetchJson<AdminStatusPayload>("/api/admin/status", { headers: authHeaders });
       setHasAdminAccess(true);
+      setOverallStatus(statusJson.overallStatus ?? "ok");
       setHealth(statusJson.health);
       setIncidents(statusJson.incidents ?? []);
       setOpsHealthReport(statusJson.opsHealthReport ?? null);
@@ -175,6 +200,7 @@ export function AdminDashboard() {
       setSnapshotGenerationReport(statusJson.snapshotGenerationReport ?? null);
       setPostLaunchHistory(statusJson.postLaunchHistory ?? []);
       setThresholdAdviceReport(statusJson.thresholdAdviceReport ?? null);
+      setDataQualitySummary(statusJson.dataQualitySummary ?? null);
       setAccessStatsReport(statusJson.accessStatsReport ?? null);
       setRuntimeStorageReport(statusJson.runtimeStorageReport ?? null);
       setDatabaseStorageReport(statusJson.databaseStorageReport ?? null);
@@ -258,7 +284,7 @@ export function AdminDashboard() {
         body: JSON.stringify(popupNotice)
       });
       setPopupNotice(json.document);
-      setMessage("팝업 공지 설정을 저장했습니다.");
+      setMessage("팝업 공지를 저장했습니다.");
       await loadDashboard();
     } catch (saveError) {
       setError(saveError instanceof Error ? saveError.message : "팝업 공지 저장에 실패했습니다.");
@@ -285,7 +311,7 @@ export function AdminDashboard() {
 
       setMessage(
         json.result?.added
-          ? `예외 편입을 완료했습니다. ${json.result?.estimate ?? ""}`.trim()
+          ? `예외 편입을 추가했습니다. ${json.result?.estimate ?? ""}`.trim()
           : "이미 예외 편입 목록에 포함된 종목입니다."
       );
 
@@ -398,12 +424,12 @@ export function AdminDashboard() {
             }
           : current
       );
-      setTab("watchlist");
+      setTab("candidate-ops");
       setActiveWatchlistTicker(ticker);
       setMessage(
         json.watchlist.added
           ? `${ticker} 후보를 예외 편입 목록에 추가하고 후속 파이프라인까지 반영했습니다.`
-          : `${ticker} 후보는 이미 예외 편입 목록에 있어 편입 상태만 정리했습니다.`
+          : `${ticker} 후보는 이미 예외 편입 목록에 있어 검토 상태만 정리했습니다.`
       );
       await loadDashboard();
     } catch (promoteError) {
@@ -446,9 +472,9 @@ export function AdminDashboard() {
         <CardContent className="grid gap-4 lg:grid-cols-[1fr_auto] lg:items-end">
           <div>
             <p className="mb-2 text-sm text-muted-foreground">
-              관리자 비밀번호를 입력하면 시스템 운영 상태와 공지, 예외 편입 설정을 확인할 수 있습니다.
+              관리자 토큰을 입력하면 서비스 상태, 데이터 품질, 공통 후보 운영, 운영 공지 설정을 확인할 수 있습니다.
             </p>
-            <Input type="password" placeholder="관리자 비밀번호" value={token} onChange={(event) => setToken(event.target.value)} />
+            <Input type="password" placeholder="관리자 토큰" value={token} onChange={(event) => setToken(event.target.value)} />
           </div>
           <Button
             onClick={() => {
@@ -469,7 +495,7 @@ export function AdminDashboard() {
       {hasAdminAccess && sectionWarnings.length ? (
         <Card className="border-destructive/30 bg-destructive/5">
           <CardHeader>
-            <CardTitle>Admin section warnings</CardTitle>
+            <CardTitle>섹션 경고</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             {sectionWarnings.map((warning) => (
@@ -485,53 +511,53 @@ export function AdminDashboard() {
       {hasAdminAccess ? (
         <Tabs value={tab} onValueChange={setTab}>
           <TabsList>
-            <TabsTrigger value="status">상태</TabsTrigger>
-            <TabsTrigger value="popup">팝업 공지</TabsTrigger>
-            <TabsTrigger value="watchlist">예외 편입</TabsTrigger>
-            <TabsTrigger value="portfolio">포트폴리오</TabsTrigger>
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="data-quality">Data Quality</TabsTrigger>
+            <TabsTrigger value="candidate-ops">Candidate Ops</TabsTrigger>
+            <TabsTrigger value="notices">Notices</TabsTrigger>
+            <TabsTrigger value="portfolio">Internal Portfolio</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="status">
-            <StatusTab
+          <TabsContent value="overview">
+            <OverviewTab
+              overallStatus={overallStatus}
               health={health}
               incidents={incidents}
-              audits={audits}
-              opsHealthReport={opsHealthReport}
               dailyCycleReport={dailyCycleReport}
+              snapshotGenerationReport={snapshotGenerationReport}
+              dataQualitySummary={dataQualitySummary}
+              audits={audits}
+            />
+          </TabsContent>
+
+          <TabsContent value="data-quality">
+            <DataQualityTab
+              dataQualitySummary={dataQualitySummary}
+              dailyCycleReport={dailyCycleReport}
+              opsHealthReport={opsHealthReport}
               autoHealReport={autoHealReport}
               newsFetchReport={newsFetchReport}
               snapshotGenerationReport={snapshotGenerationReport}
-              postLaunchHistory={postLaunchHistory}
               thresholdAdviceReport={thresholdAdviceReport}
               accessStatsReport={accessStatsReport}
               runtimeStorageReport={runtimeStorageReport}
               databaseStorageReport={databaseStorageReport}
+              postLaunchHistory={postLaunchHistory}
+            />
+          </TabsContent>
+
+          <TabsContent value="candidate-ops">
+            <CandidateOpsTab
               dailyCandidates={dailyCandidates}
               watchlistTickers={watchlistTickers}
-              authToken={token}
+              loading={loading}
               onPromoteCandidate={(ticker) => void promoteUniverseCandidate(ticker)}
               onSaveReview={(ticker, status, note) => void saveUniverseReview(ticker, status, note)}
-              loading={loading}
-            />
-          </TabsContent>
-
-          <TabsContent value="popup">
-            <PopupNoticeTab
-              document={popupNotice}
-              setDocument={(updater) => setPopupNotice((current) => (current ? updater(current) : current))}
-              onSave={() => void savePopupNotice()}
-              disabled={loading || !popupNotice}
-            />
-          </TabsContent>
-
-          <TabsContent value="watchlist">
-            <WatchlistTab
               symbolQuery={symbolQuery}
               setSymbolQuery={setSymbolQuery}
               onSearch={() => void loadDashboard()}
               symbolResults={symbolResults}
               addWatchlistSymbol={(ticker) => void addWatchlistSymbol(ticker)}
-              loading={loading}
               watchlist={watchlist}
               activeWatchlistTicker={activeWatchlistTicker}
               setActiveWatchlistTicker={setActiveWatchlistTicker}
@@ -540,6 +566,15 @@ export function AdminDashboard() {
               watchlistSyncStatuses={watchlistSyncStatuses}
               watchlistChanges={watchlistChanges}
               onSaveMetadata={() => void saveWatchlistMetadata()}
+            />
+          </TabsContent>
+
+          <TabsContent value="notices">
+            <PopupNoticeTab
+              document={popupNotice}
+              setDocument={(updater) => setPopupNotice((current) => (current ? updater(current) : current))}
+              onSave={() => void savePopupNotice()}
+              disabled={loading || !popupNotice}
             />
           </TabsContent>
 
