@@ -145,8 +145,8 @@ export type ThresholdAdviceReportPayload = {
   currentPolicy: {
     newsLiveFetchWarningPercent: number;
     newsLiveFetchCriticalPercent: number;
-    validationFallbackWarningCount: number;
-    validationFallbackCriticalCount: number;
+    validationFallbackWarningPercent: number;
+    validationFallbackCriticalPercent: number;
   };
   observations: {
     averageWarningIncidents: number;
@@ -154,6 +154,7 @@ export type ThresholdAdviceReportPayload = {
     averageAuditFailures: number;
     latestLiveFetchPercent: number | null;
     latestValidationFallbackCount: number | null;
+    latestValidationFallbackPercent: number | null;
   };
   recommendations: Array<{
     key: string;

@@ -20,6 +20,14 @@ import { getHealthReport } from "@/lib/services/health-service";
 import type { HealthReport } from "@/lib/services/health-service";
 import { buildResponseMeta, withRouteTelemetry } from "@/lib/server/telemetry";
 
+function calculatePercent(part: number | null | undefined, total: number | null | undefined) {
+  if (part == null || total == null || !Number.isFinite(part) || !Number.isFinite(total) || total <= 0) {
+    return null;
+  }
+
+  return Math.round(((part / total) * 100) * 10) / 10;
+}
+
 export async function GET(request: Request) {
   return withRouteTelemetry(request, { route: "/api/admin/status" }, async (context) => {
     assertAdminRequest(request);
@@ -193,6 +201,22 @@ export async function GET(request: Request) {
       );
     }
 
+    const validationFallbackPercent = snapshotGenerationReport
+      ? calculatePercent(snapshotGenerationReport.validationFallbackCount, snapshotGenerationReport.totalTickers)
+      : null;
+    const measuredValidationPercent = snapshotGenerationReport?.validationBasisCounts
+      ? calculatePercent(snapshotGenerationReport.validationBasisCounts.measured, snapshotGenerationReport.totalTickers)
+      : null;
+    const newsLiveFetchPercent = newsFetchReport
+      ? calculatePercent(newsFetchReport.liveFetchTickers, newsFetchReport.totalTickers)
+      : null;
+    const newsCacheFallbackPercent = newsFetchReport
+      ? calculatePercent(newsFetchReport.cacheFallbackTickers, newsFetchReport.totalTickers)
+      : null;
+    const newsFileFallbackPercent = newsFetchReport
+      ? calculatePercent(newsFetchReport.fileFallbackTickers, newsFetchReport.totalTickers)
+      : null;
+
     return jsonOk(
       {
         ok: true,
@@ -205,6 +229,14 @@ export async function GET(request: Request) {
         snapshotGenerationReport,
         postLaunchHistory: refreshedPostLaunchHistory.slice(-3).reverse(),
         thresholdAdviceReport,
+        dataQualitySummary: {
+          validationFallbackCount: snapshotGenerationReport?.validationFallbackCount ?? null,
+          validationFallbackPercent,
+          measuredValidationPercent,
+          newsLiveFetchPercent,
+          newsCacheFallbackPercent,
+          newsFileFallbackPercent
+        },
         accessStatsReport,
         runtimeStorageReport,
         databaseStorageReport,

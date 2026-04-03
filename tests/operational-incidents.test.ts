@@ -66,8 +66,8 @@ describe("buildOperationalIncidents", () => {
         recommendationCount: 10,
         analysisCount: 10,
         trackingHistoryCount: 4,
-        validationFallbackCount: 3,
-        validationFallbackTickers: ["000660", "068270", "207940"]
+        validationFallbackCount: 9,
+        validationFallbackTickers: ["000660", "068270", "207940", "005930", "035420", "051910", "005380", "000270", "105560"]
       },
       audits: [
         {
@@ -128,5 +128,47 @@ describe("buildOperationalIncidents", () => {
         })
       ])
     );
+  });
+
+  it("treats moderate validation fallback percentage as warning", () => {
+    const result = buildOperationalIncidents({
+      health: {
+        status: "ok",
+        service: "swing-radar",
+        timestamp: "2026-03-09T09:00:00.000Z",
+        dataProvider: {
+          configured: { provider: "postgresDataProvider", mode: "external" },
+          lastUsed: { provider: "postgresDataProvider", mode: "external" },
+          fallbackTriggered: false
+        },
+        freshness: [],
+        warnings: [],
+        recentAuditCount: 0
+      },
+      opsHealthReport: null,
+      dailyCycleReport: null,
+      newsFetchReport: null,
+      snapshotGenerationReport: {
+        startedAt: "2026-03-09T17:36:00.000Z",
+        completedAt: "2026-03-09T17:37:00.000Z",
+        generatedAt: "2026-03-09T17:37:00.000Z",
+        totalTickers: 10,
+        recommendationCount: 10,
+        analysisCount: 10,
+        trackingHistoryCount: 4,
+        validationFallbackCount: 5,
+        validationFallbackTickers: ["000660", "068270", "207940", "005930", "035420"]
+      },
+      audits: []
+    });
+
+    expect(
+      result.incidents.some(
+        (incident) =>
+          incident.id === "validation-fallback-warning" &&
+          incident.severity === "warning" &&
+          incident.detail.includes("percent=50%")
+      )
+    ).toBe(true);
   });
 });

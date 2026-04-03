@@ -10,8 +10,8 @@ describe("operations policy", () => {
   const originalAdminAuditLimit = process.env.SWING_RADAR_ADMIN_AUDIT_LIMIT;
   const originalNewsLiveWarning = process.env.SWING_RADAR_NEWS_LIVE_FETCH_WARNING_PERCENT;
   const originalNewsLiveCritical = process.env.SWING_RADAR_NEWS_LIVE_FETCH_CRITICAL_PERCENT;
-  const originalValidationWarning = process.env.SWING_RADAR_VALIDATION_FALLBACK_WARNING_COUNT;
-  const originalValidationCritical = process.env.SWING_RADAR_VALIDATION_FALLBACK_CRITICAL_COUNT;
+  const originalValidationWarning = process.env.SWING_RADAR_VALIDATION_FALLBACK_WARNING_PERCENT;
+  const originalValidationCritical = process.env.SWING_RADAR_VALIDATION_FALLBACK_CRITICAL_PERCENT;
 
   afterEach(() => {
     if (originalWarning === undefined) {
@@ -51,15 +51,15 @@ describe("operations policy", () => {
     }
 
     if (originalValidationWarning === undefined) {
-      delete process.env.SWING_RADAR_VALIDATION_FALLBACK_WARNING_COUNT;
+      delete process.env.SWING_RADAR_VALIDATION_FALLBACK_WARNING_PERCENT;
     } else {
-      process.env.SWING_RADAR_VALIDATION_FALLBACK_WARNING_COUNT = originalValidationWarning;
+      process.env.SWING_RADAR_VALIDATION_FALLBACK_WARNING_PERCENT = originalValidationWarning;
     }
 
     if (originalValidationCritical === undefined) {
-      delete process.env.SWING_RADAR_VALIDATION_FALLBACK_CRITICAL_COUNT;
+      delete process.env.SWING_RADAR_VALIDATION_FALLBACK_CRITICAL_PERCENT;
     } else {
-      process.env.SWING_RADAR_VALIDATION_FALLBACK_CRITICAL_COUNT = originalValidationCritical;
+      process.env.SWING_RADAR_VALIDATION_FALLBACK_CRITICAL_PERCENT = originalValidationCritical;
     }
   });
 
@@ -82,8 +82,8 @@ describe("operations policy", () => {
         providerFallbackAuditCount: 3,
         newsLiveFetchWarningPercent: 70,
         newsLiveFetchCriticalPercent: 40,
-        validationFallbackWarningCount: 1,
-        validationFallbackCriticalCount: 3
+        validationFallbackWarningPercent: 50,
+        validationFallbackCriticalPercent: 80
       }
     });
   });
@@ -95,8 +95,8 @@ describe("operations policy", () => {
     process.env.SWING_RADAR_ADMIN_AUDIT_LIMIT = "-5";
     process.env.SWING_RADAR_NEWS_LIVE_FETCH_WARNING_PERCENT = "65";
     process.env.SWING_RADAR_NEWS_LIVE_FETCH_CRITICAL_PERCENT = "30";
-    process.env.SWING_RADAR_VALIDATION_FALLBACK_WARNING_COUNT = "2";
-    process.env.SWING_RADAR_VALIDATION_FALLBACK_CRITICAL_COUNT = "5";
+    process.env.SWING_RADAR_VALIDATION_FALLBACK_WARNING_PERCENT = "45";
+    process.env.SWING_RADAR_VALIDATION_FALLBACK_CRITICAL_PERCENT = "75";
 
     expect(getOperationalPolicy()).toEqual({
       stale: {
@@ -111,8 +111,8 @@ describe("operations policy", () => {
         providerFallbackAuditCount: 3,
         newsLiveFetchWarningPercent: 65,
         newsLiveFetchCriticalPercent: 30,
-        validationFallbackWarningCount: 2,
-        validationFallbackCriticalCount: 5
+        validationFallbackWarningPercent: 45,
+        validationFallbackCriticalPercent: 75
       }
     });
   });

@@ -336,6 +336,7 @@ describe("admin routes", () => {
         autoHealReport: { status: string; actions: Array<{ name: string }> } | null;
         newsFetchReport: { retryCount: number } | null;
         snapshotGenerationReport: { validationFallbackCount: number } | null;
+        dataQualitySummary: { validationFallbackPercent: number | null; newsLiveFetchPercent: number | null } | null;
         postLaunchHistory: Array<{ overallStatus: string }>;
         thresholdAdviceReport: { sampleSize: number } | null;
         incidents: Array<{ id: string; severity: string }>;
@@ -365,6 +366,10 @@ describe("admin routes", () => {
         autoHealReport: null,
         newsFetchReport: null,
         snapshotGenerationReport: null,
+        dataQualitySummary: {
+          validationFallbackPercent: null,
+          newsLiveFetchPercent: null
+        },
         postLaunchHistory: [],
         thresholdAdviceReport: null,
         incidents: [
@@ -474,15 +479,16 @@ describe("admin routes", () => {
         currentPolicy: {
           newsLiveFetchWarningPercent: 70,
           newsLiveFetchCriticalPercent: 40,
-          validationFallbackWarningCount: 1,
-          validationFallbackCriticalCount: 3
+          validationFallbackWarningPercent: 50,
+          validationFallbackCriticalPercent: 80
         },
         observations: {
           averageWarningIncidents: 1.3,
           averageCriticalIncidents: 0,
           averageAuditFailures: 0,
           latestLiveFetchPercent: 90,
-          latestValidationFallbackCount: 1
+          latestValidationFallbackCount: 1,
+          latestValidationFallbackPercent: 5
         },
         recommendations: [
           {
@@ -514,6 +520,7 @@ describe("admin routes", () => {
         autoHealReport: { status: string; actions: Array<{ name: string }> } | null;
         newsFetchReport: { retryCount: number; liveFetchTickers: number } | null;
         snapshotGenerationReport: { validationFallbackCount: number } | null;
+        dataQualitySummary: { validationFallbackPercent: number | null; newsLiveFetchPercent: number | null } | null;
         postLaunchHistory: Array<{ overallStatus: string; incidents: { criticalCount: number } }>;
         thresholdAdviceReport: { recommendations: Array<{ key: string }> } | null;
         incidents: Array<{ id: string; severity: string }>;
@@ -539,6 +546,10 @@ describe("admin routes", () => {
         },
         snapshotGenerationReport: {
           validationFallbackCount: 1
+        },
+        dataQualitySummary: {
+          validationFallbackPercent: 5,
+          newsLiveFetchPercent: 90
         },
         postLaunchHistory: [
           {

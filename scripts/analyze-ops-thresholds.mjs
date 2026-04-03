@@ -25,8 +25,8 @@ function getPolicy() {
   return {
     newsLiveFetchWarningPercent: parsePositiveInt(process.env.SWING_RADAR_NEWS_LIVE_FETCH_WARNING_PERCENT, 70),
     newsLiveFetchCriticalPercent: parsePositiveInt(process.env.SWING_RADAR_NEWS_LIVE_FETCH_CRITICAL_PERCENT, 40),
-    validationFallbackWarningCount: parsePositiveInt(process.env.SWING_RADAR_VALIDATION_FALLBACK_WARNING_COUNT, 1),
-    validationFallbackCriticalCount: parsePositiveInt(process.env.SWING_RADAR_VALIDATION_FALLBACK_CRITICAL_COUNT, 3)
+    validationFallbackWarningPercent: parsePositiveInt(process.env.SWING_RADAR_VALIDATION_FALLBACK_WARNING_PERCENT, 50),
+    validationFallbackCriticalPercent: parsePositiveInt(process.env.SWING_RADAR_VALIDATION_FALLBACK_CRITICAL_PERCENT, 80)
   };
 }
 
@@ -82,6 +82,10 @@ function buildRecommendations({ history, newsFetchReport, snapshotGenerationRepo
       : null;
 
   const latestValidationFallbackCount = snapshotGenerationReport?.validationFallbackCount ?? null;
+  const latestValidationFallbackPercent =
+    snapshotGenerationReport && snapshotGenerationReport.totalTickers > 0
+      ? Math.round((snapshotGenerationReport.validationFallbackCount / snapshotGenerationReport.totalTickers) * 100)
+      : null;
 
   if (latestLiveFetchPercent !== null && averageCriticalIncidents === 0 && latestLiveFetchPercent >= policy.newsLiveFetchWarningPercent + 15) {
     recommendations.push({
@@ -99,23 +103,23 @@ function buildRecommendations({ history, newsFetchReport, snapshotGenerationRepo
     });
   }
 
-  if (latestValidationFallbackCount !== null && latestValidationFallbackCount === 0 && averageWarningIncidents <= 1) {
+  if (latestValidationFallbackPercent !== null && latestValidationFallbackPercent <= 10 && averageWarningIncidents <= 1) {
     recommendations.push({
-      key: "validationFallbackWarningCount",
-      currentValue: policy.validationFallbackWarningCount,
-      suggestedValue: Math.max(1, policy.validationFallbackWarningCount + 1),
-      reason: "Validation fallback stayed near zero, so the current warning count may be noisier than needed."
+      key: "validationFallbackWarningPercent",
+      currentValue: policy.validationFallbackWarningPercent,
+      suggestedValue: Math.min(95, policy.validationFallbackWarningPercent + 5),
+      reason: "Validation fallback stayed low, so the warning line may be tighter than necessary."
     });
   } else if (
-    latestValidationFallbackCount !== null &&
-    latestValidationFallbackCount >= policy.validationFallbackWarningCount &&
+    latestValidationFallbackPercent !== null &&
+    latestValidationFallbackPercent >= policy.validationFallbackWarningPercent &&
     averageAuditFailures > 0
   ) {
     recommendations.push({
-      key: "validationFallbackCriticalCount",
-      currentValue: policy.validationFallbackCriticalCount,
-      suggestedValue: Math.max(policy.validationFallbackWarningCount + 1, policy.validationFallbackCriticalCount - 1),
-      reason: "Validation fallback is appearing together with audit failures, so critical escalation may need to happen sooner."
+      key: "validationFallbackCriticalPercent",
+      currentValue: policy.validationFallbackCriticalPercent,
+      suggestedValue: Math.max(policy.validationFallbackWarningPercent + 5, policy.validationFallbackCriticalPercent - 5),
+      reason: "Validation fallback stays high together with audit failures, so critical escalation may need to happen sooner."
     });
   }
 
@@ -125,7 +129,8 @@ function buildRecommendations({ history, newsFetchReport, snapshotGenerationRepo
       averageCriticalIncidents: round1(averageCriticalIncidents),
       averageAuditFailures: round1(averageAuditFailures),
       latestLiveFetchPercent,
-      latestValidationFallbackCount
+      latestValidationFallbackCount,
+      latestValidationFallbackPercent
     },
     recommendations
   };

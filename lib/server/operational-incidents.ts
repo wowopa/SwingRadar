@@ -129,10 +129,13 @@ export function buildOperationalIncidents({
   }
 
   if (snapshotGenerationReport && snapshotGenerationReport.validationFallbackCount > 0) {
+    const fallbackPercent = Math.round(
+      (snapshotGenerationReport.validationFallbackCount / Math.max(snapshotGenerationReport.totalTickers, 1)) * 100
+    );
     const severity: OperationalIncident["severity"] =
-      snapshotGenerationReport.validationFallbackCount >= policy.escalation.validationFallbackCriticalCount
+      fallbackPercent >= policy.escalation.validationFallbackCriticalPercent
         ? "critical"
-        : snapshotGenerationReport.validationFallbackCount >= policy.escalation.validationFallbackWarningCount
+        : fallbackPercent >= policy.escalation.validationFallbackWarningPercent
           ? "warning"
           : "warning";
 
@@ -144,7 +147,7 @@ export function buildOperationalIncidents({
         severity === "critical"
           ? "검증 fallback 종목이 많아 데이터 신뢰도가 낮아졌습니다"
           : "일부 종목이 보수적 검증값으로 생성되었습니다",
-      detail: `count=${snapshotGenerationReport.validationFallbackCount}, tickers=${snapshotGenerationReport.validationFallbackTickers.join(", ")}`,
+      detail: `count=${snapshotGenerationReport.validationFallbackCount}/${snapshotGenerationReport.totalTickers}, percent=${fallbackPercent}%, tickers=${snapshotGenerationReport.validationFallbackTickers.join(", ")}`,
       detectedAt: snapshotGenerationReport.completedAt
     });
   }
