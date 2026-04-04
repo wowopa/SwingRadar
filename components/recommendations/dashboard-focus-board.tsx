@@ -415,7 +415,7 @@ export function DashboardFocusBoard({
             />
           </div>
 
-          {todayCommunityStats ? <TodayCommunityPulseCard stats={todayCommunityStats} /> : null}
+          <TodayCommunityPulseCard stats={todayCommunityStats} isMarketClosed={isMarketClosed} />
         </CardContent>
       </Card>
 
@@ -648,7 +648,33 @@ export function DashboardFocusBoard({
   );
 }
 
-function TodayCommunityPulseCard({ stats }: { stats: TodayCommunityStatsDto }) {
+function TodayCommunityPulseCard({
+  stats,
+  isMarketClosed = false
+}: {
+  stats?: TodayCommunityStatsDto;
+  isMarketClosed?: boolean;
+}) {
+  if (!stats) {
+    return (
+      <div className="rounded-[24px] border border-border/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.95),rgba(246,241,232,0.88))] p-4 shadow-[0_16px_40px_-32px_rgba(24,32,42,0.18)]">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="space-y-1">
+            <p className="text-sm font-semibold text-foreground">오늘의 통계</p>
+            <p className="text-xs leading-5 text-muted-foreground">
+              {isMarketClosed
+                ? "주말과 공휴일에도 익명 집계를 보여드리지만, 아직 통계를 낼 만큼 기록이 충분하지 않습니다."
+                : "아직 통계를 낼 만큼 기록이 충분하지 않습니다. 체결 기록과 장초 확인이 쌓이면 여기서 오늘의 흐름을 보여드립니다."}
+            </p>
+          </div>
+          <Badge variant="secondary" className="shrink-0 whitespace-nowrap">
+            익명 집계
+          </Badge>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="rounded-[24px] border border-border/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.95),rgba(246,241,232,0.88))] p-4 shadow-[0_16px_40px_-32px_rgba(24,32,42,0.18)]">
       <div className="flex flex-wrap items-start justify-between gap-3">

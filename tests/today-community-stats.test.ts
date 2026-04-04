@@ -59,6 +59,7 @@ describe("today community stats", () => {
       ticker: "005930",
       count: 2
     });
+    expect(stats?.headline).toBe("오늘의 통계");
   });
 
   it("returns undefined when there is no aggregate signal", () => {

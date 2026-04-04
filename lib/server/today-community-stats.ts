@@ -292,7 +292,7 @@ export function buildTodayCommunityStatsFromDocuments(
   }
 
   return {
-    headline: "오늘 다른 사용자 흐름",
+    headline: "오늘의 통계",
     note: "개인 정보 없이 익명 집계한 보조 통계입니다.",
     stats
   };
