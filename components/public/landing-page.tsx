@@ -11,7 +11,6 @@ import { LandingWorkflowDemo } from "@/components/public/landing-workflow-demo";
 import { ScrollReveal } from "@/components/public/scroll-reveal";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 
 const landingStatusToneClasses = {
   positive: "border-emerald-300/45 bg-emerald-300/28 text-emerald-50",
@@ -188,19 +187,12 @@ export function LandingPage() {
                 </Button>
               </div>
 
-              <div className="grid max-w-[980px] gap-3 md:grid-cols-[0.94fr_0.94fr_1.18fr]">
+              <div className="grid max-w-[1120px] gap-3 md:grid-cols-3">
                 {heroOutcomeStrip.map((item, index) => (
                   <ScrollReveal key={item.label} delay={120 + index * 70}>
                     <div className="rounded-[28px] border border-white/10 bg-white/6 px-4 py-4 backdrop-blur-sm">
                       <p className="public-hero-label text-[11px] font-semibold uppercase tracking-[0.24em]">{item.label}</p>
-                      <p
-                        className={cn(
-                          "public-hero-title mt-3 font-semibold leading-none tracking-[-0.08em]",
-                          index === 2
-                            ? "text-[clamp(1.66rem,2.55vw,2.28rem)] md:whitespace-nowrap"
-                            : "text-[clamp(1.82rem,3vw,2.6rem)]"
-                        )}
-                      >
+                      <p className="public-hero-title mt-3 text-[clamp(1.72rem,2.55vw,2.36rem)] font-semibold leading-none tracking-[-0.08em] md:whitespace-nowrap">
                         {item.value}
                       </p>
                       <p className="public-hero-note mt-2 text-sm leading-6">{item.note}</p>
