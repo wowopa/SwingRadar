@@ -73,12 +73,14 @@ export function PopupNoticeTab({
   document,
   setDocument,
   onSave,
-  disabled
+  disabled,
+  onSelectTab
 }: {
   document: PopupNoticeDocument | null;
   setDocument: (updater: (current: PopupNoticeDocument) => PopupNoticeDocument) => void;
   onSave: () => void;
   disabled: boolean;
+  onSelectTab: (tab: "candidate-ops") => void;
 }) {
   if (!document) {
     return null;
@@ -106,6 +108,11 @@ export function PopupNoticeTab({
                     : "즉시 ~ 수동 종료"
                 }
               />
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Button variant="outline" size="sm" onClick={() => onSelectTab("candidate-ops")}>
+                후보 운영 열기
+              </Button>
             </div>
           </div>
           <Button onClick={onSave} disabled={disabled}>

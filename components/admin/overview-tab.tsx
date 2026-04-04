@@ -84,6 +84,31 @@ function getIncidentAction(item: OperationalIncident): { label: string; tab: Ove
   return null;
 }
 
+function buildOverviewSummary(args: {
+  overallStatus: "ok" | "warning" | "critical";
+  incidentCount: number;
+  validationFallbackPercent: number;
+  batchStatus: DailyCycleReportPayload["status"] | null | undefined;
+}) {
+  if (args.overallStatus === "critical") {
+    return "지금은 운영 경고부터 먼저 확인해야 합니다.";
+  }
+
+  if (args.batchStatus === "failed") {
+    return "오늘 배치 실패가 있어 데이터 품질을 먼저 확인해야 합니다.";
+  }
+
+  if (args.validationFallbackPercent >= 50) {
+    return "validation fallback 비율이 높아 데이터 품질 점검이 우선입니다.";
+  }
+
+  if (args.incidentCount > 0) {
+    return "즉시 처리할 경고는 적지만, 운영 경고를 먼저 확인하는 편이 좋습니다.";
+  }
+
+  return "지금은 전체 상태가 안정적이며, 후보 운영과 공지 확인을 순서대로 보면 됩니다.";
+}
+
 export function OverviewTab({
   overallStatus,
   health,
@@ -112,6 +137,12 @@ export function OverviewTab({
       : overallStatus === "warning"
         ? "border-caution/30 bg-caution/10"
         : "border-positive/25 bg-positive/8";
+  const overviewSummary = buildOverviewSummary({
+    overallStatus,
+    incidentCount: incidents.length,
+    validationFallbackPercent: dataQualitySummary?.validationFallbackPercent ?? 0,
+    batchStatus: dailyCycleReport?.status
+  });
 
   return (
     <div className="grid gap-6">
@@ -144,7 +175,10 @@ export function OverviewTab({
               }
             />
           </div>
-          <p className="text-sm leading-6 text-muted-foreground">{latestWarning}</p>
+          <div className="space-y-2">
+            <p className="text-sm font-medium text-foreground">{overviewSummary}</p>
+            <p className="text-sm leading-6 text-muted-foreground">{latestWarning}</p>
+          </div>
           <div className="flex flex-wrap gap-2">
             <Button variant="secondary" size="sm" onClick={() => onSelectTab("data-quality")}>
               데이터 품질 보기

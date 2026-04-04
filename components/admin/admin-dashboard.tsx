@@ -566,6 +566,7 @@ export function AdminDashboard() {
               watchlistSyncStatuses={watchlistSyncStatuses}
               watchlistChanges={watchlistChanges}
               onSaveMetadata={() => void saveWatchlistMetadata()}
+              onSelectTab={(nextTab) => setTab(nextTab)}
             />
           </TabsContent>
 
@@ -575,6 +576,7 @@ export function AdminDashboard() {
               setDocument={(updater) => setPopupNotice((current) => (current ? updater(current) : current))}
               onSave={() => void savePopupNotice()}
               disabled={loading || !popupNotice}
+              onSelectTab={(nextTab) => setTab(nextTab)}
             />
           </TabsContent>
 

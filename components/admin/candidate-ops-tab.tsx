@@ -67,7 +67,8 @@ export function CandidateOpsTab({
   setWatchlist,
   watchlistSyncStatuses,
   watchlistChanges,
-  onSaveMetadata
+  onSaveMetadata,
+  onSelectTab
 }: {
   dailyCandidates: UniverseDailyCandidates | null;
   watchlistTickers: string[];
@@ -87,6 +88,7 @@ export function CandidateOpsTab({
   watchlistSyncStatuses: Record<string, WatchlistSyncStatus>;
   watchlistChanges: WatchlistChange[];
   onSaveMetadata: () => void;
+  onSelectTab: (tab: "data-quality" | "notices") => void;
 }) {
   const [reviewDrafts, setReviewDrafts] = useState<ReviewDraftState>({});
 
@@ -126,12 +128,24 @@ export function CandidateOpsTab({
           <div className="flex flex-wrap gap-2">
             <QuickPill label="오늘 후보" value={String(topCandidates.length)} />
             <QuickPill label="미검토" value={String(unreviewedCount)} tone={unreviewedCount > 0 ? "caution" : "positive"} />
-            <QuickPill label="예외 편입됨" value={String(promotedCount)} tone={promotedCount > 0 ? "positive" : "neutral"} />
-            <QuickPill label="실패 배치" value={String(dailyCandidates?.failedBatches.length ?? 0)} tone={(dailyCandidates?.failedBatches.length ?? 0) > 0 ? "caution" : "neutral"} />
+            <QuickPill label="예외 편입" value={String(promotedCount)} tone={promotedCount > 0 ? "positive" : "neutral"} />
+            <QuickPill
+              label="실패 배치"
+              value={String(dailyCandidates?.failedBatches.length ?? 0)}
+              tone={(dailyCandidates?.failedBatches.length ?? 0) > 0 ? "caution" : "neutral"}
+            />
           </div>
           <p className="text-sm leading-6 text-muted-foreground">
-            먼저 상위 후보를 검토하고, 실제 편입이 필요한 종목만 아래 예외 편입 보정 영역에서 다듬는 구조입니다.
+            먼저 상위 후보를 검토하고, 실제 편입이 필요한 종목만 아래 예외 편입 보정 영역에서 다룹니다.
           </p>
+          <div className="flex flex-wrap gap-2">
+            <Button variant="outline" size="sm" onClick={() => onSelectTab("data-quality")}>
+              데이터 품질 보기
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => onSelectTab("notices")}>
+              공지 열기
+            </Button>
+          </div>
         </CardContent>
       </Card>
 
@@ -143,22 +157,18 @@ export function CandidateOpsTab({
         />
         <MetricCard
           label="후보 생성 시각"
-          value={dailyCandidates?.generatedAt ? formatDateTime(dailyCandidates.generatedAt) : "대기"}
+          value={dailyCandidates?.generatedAt ? formatDateTime(dailyCandidates.generatedAt) : "대기 중"}
           note={`총 ${dailyCandidates?.totalTickers ?? 0}개 종목 기준`}
         />
         <MetricCard
           label="배치 성공"
-          value={
-            dailyCandidates
-              ? `${dailyCandidates.succeededBatches}/${dailyCandidates.totalBatches}`
-              : "0/0"
-          }
+          value={dailyCandidates ? `${dailyCandidates.succeededBatches}/${dailyCandidates.totalBatches}` : "0/0"}
           note={`실패 ${dailyCandidates?.failedBatches.length ?? 0}개`}
         />
         <MetricCard
           label="예외 편입 watchlist"
           value={String(watchlistTickers.length)}
-          note="운영자가 직접 올린 종목 수"
+          note="운영자가 직접 보는 종목 수"
         />
       </div>
 
@@ -171,6 +181,7 @@ export function CandidateOpsTab({
             priorityCandidates.map((item) => {
               const draft = reviewDrafts[item.ticker] ?? { status: "new" as UniverseReviewStatus, note: "" };
               const isPromoted = watchlistTickers.includes(item.ticker);
+
               return (
                 <div key={item.ticker} className="rounded-[24px] border border-border/70 bg-secondary/45 p-4">
                   <div className="grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
@@ -235,7 +246,7 @@ export function CandidateOpsTab({
                         <p className="text-xs font-medium text-muted-foreground">운영 메모</p>
                         <Textarea
                           value={draft.note}
-                          placeholder="검토 메모를 짧게 남겨두세요."
+                          placeholder="검토 메모를 짧게 남겨주세요."
                           onChange={(event) =>
                             setReviewDrafts((current) => ({
                               ...current,
@@ -278,16 +289,17 @@ export function CandidateOpsTab({
           <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-6 py-5">
             <div>
               <p className="text-sm font-semibold text-foreground">후속 검토 후보 {extraCandidates.length}개</p>
-              <p className="mt-1 text-sm text-muted-foreground">상단 우선 검토 이후에 볼 후보만 접어서 둡니다.</p>
+              <p className="mt-1 text-sm text-muted-foreground">상단 우선 검토 이후 볼 후보만 따로 모았습니다.</p>
             </div>
             <span className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-white/80 px-3 py-1 text-xs text-muted-foreground">
               <Eye className="h-3.5 w-3.5" />
-              펼쳐 보기
+              전체 보기
             </span>
           </summary>
           <div className="space-y-3 border-t border-border/60 px-6 py-5">
             {extraCandidates.map((item) => {
               const isPromoted = watchlistTickers.includes(item.ticker);
+
               return (
                 <div key={item.ticker} className="rounded-[22px] border border-border/70 bg-secondary/35 p-4">
                   <div className="flex flex-wrap items-center justify-between gap-3">
@@ -323,7 +335,7 @@ export function CandidateOpsTab({
         <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-6 py-5">
           <div>
             <p className="text-sm font-semibold text-foreground">예외 편입 보정</p>
-            <p className="mt-1 text-sm text-muted-foreground">watchlist 추가와 메타데이터 보정은 필요할 때만 펼쳐서 봅니다.</p>
+            <p className="mt-1 text-sm text-muted-foreground">watchlist 추가와 메타데이터 보정이 필요할 때만 펼칩니다.</p>
           </div>
           <span className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-white/80 px-3 py-1 text-xs text-muted-foreground">
             <Eye className="h-3.5 w-3.5" />
