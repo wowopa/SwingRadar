@@ -31,19 +31,19 @@ export const APP_TUTORIAL_DEFINITIONS: Record<AppTutorialScope, AppTutorialDefin
     steps: [
       {
         title: "Today는 오늘 해야 할 일만 보는 화면입니다.",
-        body: "설명보다 행동이 먼저 보이도록, 오늘 바로 확인해야 할 카드만 위쪽에 모아 둔 화면입니다.",
+        body: "개장일에는 장초 확인·매수 검토·보유 관리만, 휴장일에는 지난 기록 복기·새 계획 만들기·보유 관리만 먼저 보여줍니다.",
         target: '[data-tutorial="today-actions"]',
         spotlightLabel: "오늘 먼저 볼 카드"
       },
       {
         title: "장초 확인부터 시작합니다.",
-        body: "개장 직후에는 장초 확인 카드부터 열어 오늘 먼저 볼 종목을 빠르게 걸러냅니다.",
+        body: "개장 직후에는 장초 확인 카드부터 열어 오늘 먼저 볼 종목을 빠르게 걸러내고, 휴장일에는 같은 자리에 지난 기록 복기 카드가 나타납니다.",
         target: '[data-tutorial="today-opening-card"]',
         spotlightLabel: "장초 확인"
       },
       {
         title: "통과한 종목만 매수 검토로 이어집니다.",
-        body: "장초 확인을 통과한 종목만 오늘 매수 검토 카드에 남아서 실제 분석과 행동으로 이어집니다.",
+        body: "장초 확인을 통과한 종목만 오늘 매수 검토 카드에 남고, 휴장일에는 같은 위치에서 다음 개장을 위한 새 계획 만들기 카드로 바뀝니다.",
         target: '[data-tutorial="today-buy-card"]',
         spotlightLabel: "오늘 매수 검토"
       },
