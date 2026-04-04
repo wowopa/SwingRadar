@@ -108,6 +108,21 @@ const experienceOutcomes = [
   }
 ] as const;
 
+const finalDecisionOutcomes = [
+  {
+    title: "더 적게 봅니다.",
+    body: "많이 읽는 아침 대신, 오늘 다시 볼 후보부터 먼저 남깁니다."
+  },
+  {
+    title: "더 빨리 정합니다.",
+    body: "장초 확인을 짧게 마치고 통과와 보류를 더 분명하게 나눕니다."
+  },
+  {
+    title: "더 오래 남깁니다.",
+    body: "하루의 실행과 복기가 다음 규칙으로 이어져 판단이 점점 선명해집니다."
+  }
+] as const;
+
 const faqs = [
   {
     question: "어떤 사람에게 잘 맞나요?",
@@ -374,6 +389,50 @@ export function LandingPage() {
                 </ScrollReveal>
               );
             })}
+          </div>
+        </section>
+
+        <section className="rounded-[42px] border border-white/10 bg-[linear-gradient(135deg,hsl(221_24%_15%),hsl(222_22%_18%)_55%,hsl(37_34%_20%)_100%)] px-6 py-8 text-white shadow-[0_36px_120px_hsl(220_32%_8%_/_0.16)] sm:px-8 sm:py-10">
+          <div className="grid gap-10 xl:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] xl:items-center">
+            <ScrollReveal className="space-y-5">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-amber-100/80">Why it feels different</p>
+              <h2 className="headline-balance text-[clamp(2.7rem,5.4vw,4.9rem)] font-semibold leading-[0.94] tracking-[-0.095em] text-white">
+                더 많이 보는 서비스가 아니라, 더 빨리 결정하게 만드는 서비스.
+              </h2>
+              <p className="max-w-2xl text-[1rem] leading-8 text-white/78">
+                아침에 무엇을 먼저 볼지, 장초에 무엇을 걸러낼지, 하루가 끝난 뒤 무엇을 남길지까지 한 흐름으로 이어집니다.
+              </p>
+              <div className="flex flex-wrap gap-3">
+                <Button asChild size="lg" className="bg-white text-slate-950 hover:bg-white/92">
+                  <Link href="/?auth=signup">
+                    지금 내 흐름 시작하기
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </Button>
+                <Button
+                  asChild
+                  size="lg"
+                  variant="ghost"
+                  className="border border-white/14 bg-white/6 text-white hover:bg-white/10 hover:text-white"
+                >
+                  <Link href="/?auth=login">이미 계정이 있다면 로그인</Link>
+                </Button>
+              </div>
+            </ScrollReveal>
+
+            <div className="grid gap-4 md:grid-cols-3 xl:grid-cols-1">
+              {finalDecisionOutcomes.map((item, index) => (
+                <ScrollReveal key={item.title} delay={80 + index * 70}>
+                  <div className="rounded-[28px] border border-white/12 bg-white/[0.055] px-5 py-5 backdrop-blur-sm">
+                    <p className="text-sm font-semibold uppercase tracking-[0.18em] text-amber-100/76">0{index + 1}</p>
+                    <h3 className="mt-3 text-[clamp(1.32rem,2vw,1.72rem)] font-semibold tracking-[-0.05em] text-white">
+                      {item.title}
+                    </h3>
+                    <p className="mt-3 text-sm leading-7 text-white/72">{item.body}</p>
+                  </div>
+                </ScrollReveal>
+              ))}
+            </div>
           </div>
         </section>
 
