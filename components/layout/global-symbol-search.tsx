@@ -165,60 +165,55 @@ export function GlobalSymbolSearch({ compact = false }: { compact?: boolean }) {
     <div ref={containerRef} className="relative z-[220] w-full">
       <div
         className={cn(
-          "border border-border/70 bg-white/88 shadow-panel backdrop-blur-xl",
-          compact ? "rounded-[22px] p-1.5" : "rounded-[28px] p-2"
+          "flex items-center gap-3 border border-border/60 bg-background/85 backdrop-blur-xl",
+          compact
+            ? "rounded-[18px] px-3 py-2 shadow-[0_16px_36px_-28px_rgba(24,32,42,0.3)]"
+            : "rounded-[22px] px-4 py-3 shadow-panel"
         )}
       >
         <div
           className={cn(
-            "flex items-center gap-3 border border-border/60 bg-background/85",
-            compact ? "rounded-[18px] px-3 py-2" : "rounded-[22px] px-4 py-3"
+            "flex items-center justify-center rounded-full bg-accent/70 text-foreground",
+            compact ? "h-8 w-8" : "h-10 w-10"
           )}
         >
-          <div
-            className={cn(
-              "flex items-center justify-center rounded-full bg-accent/70 text-foreground",
-              compact ? "h-8 w-8" : "h-10 w-10"
-            )}
-          >
-            <Search className={compact ? "h-3.5 w-3.5" : "h-4 w-4"} />
-          </div>
-          <div className="min-w-0 flex-1">
-            {!compact ? <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">종목 검색</p> : null}
-            <Input
-              value={inputValue}
-              onChange={(event) => {
-                const nextValue = event.target.value;
-                setInputValue(nextValue);
-                if (!isComposing) {
-                  setQuery(nextValue);
-                }
-                setFocused(true);
-              }}
-              onCompositionStart={() => setIsComposing(true)}
-              onCompositionEnd={(event) => {
-                setIsComposing(false);
-                const nextValue = event.currentTarget.value;
-                setInputValue(nextValue);
+          <Search className={compact ? "h-3.5 w-3.5" : "h-4 w-4"} />
+        </div>
+        <div className="min-w-0 flex-1">
+          {!compact ? <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">종목 검색</p> : null}
+          <Input
+            value={inputValue}
+            onChange={(event) => {
+              const nextValue = event.target.value;
+              setInputValue(nextValue);
+              if (!isComposing) {
                 setQuery(nextValue);
-                setFocused(true);
-              }}
-              onFocus={() => setFocused(true)}
-              placeholder={compact ? "티커, 종목명 검색" : "티커, 종목명, 섹터로 검색"}
-              className={cn(
-                "h-auto border-0 bg-transparent px-0 shadow-none focus-visible:ring-0",
-                compact ? "pb-0 pt-0 text-sm" : "pb-0 pt-1 text-base"
-              )}
-            />
-          </div>
-          <div
+              }
+              setFocused(true);
+            }}
+            onCompositionStart={() => setIsComposing(true)}
+            onCompositionEnd={(event) => {
+              setIsComposing(false);
+              const nextValue = event.currentTarget.value;
+              setInputValue(nextValue);
+              setQuery(nextValue);
+              setFocused(true);
+            }}
+            onFocus={() => setFocused(true)}
+            placeholder={compact ? "티커, 종목명 검색" : "티커, 종목명, 섹터로 검색"}
             className={cn(
-              "hidden rounded-full border border-border/70 bg-white text-xs text-muted-foreground sm:block",
-              compact ? "px-2.5 py-1" : "px-3 py-1.5"
+              "h-auto border-0 bg-transparent px-0 shadow-none focus-visible:ring-0",
+              compact ? "pb-0 pt-0 text-sm" : "pb-0 pt-1 text-base"
             )}
-          >
-            KRX 우선
-          </div>
+          />
+        </div>
+        <div
+          className={cn(
+            "hidden rounded-full border border-border/70 bg-white text-xs text-muted-foreground sm:block",
+            compact ? "px-2.5 py-1" : "px-3 py-1.5"
+          )}
+        >
+          KRX 우선
         </div>
       </div>
 

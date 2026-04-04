@@ -33,16 +33,7 @@ export function AuthCta({
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
-      <div
-        className={
-          isLight
-            ? "rounded-full border border-white/14 bg-white/10 px-3 py-2 text-xs text-white/92 sm:text-sm"
-            : "rounded-full border border-border/80 bg-white px-3 py-2 text-xs text-foreground/78 sm:text-sm"
-        }
-      >
-        {compact ? session.user.displayName : `${session.user.displayName} · ${session.user.email}`}
-      </div>
+    <div className={compact ? "flex flex-wrap items-center gap-1.5" : "flex flex-wrap items-center gap-2"}>
       <Button
         asChild
         variant="secondary"
