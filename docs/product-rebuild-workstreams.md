@@ -171,24 +171,26 @@ Still missing:
 Status: Planned
 
 Goal:
-- rewrite the landing page so it matches the improved authenticated UX
-- remove admin-oriented or overly internal explanations
-- lead with marketing promises instead of feature inventory
+- rewrite the landing page for first-time visitors, not existing users
+- remove admin-oriented, internal, or implementation-focused explanations
+- express the product through the user experience and resulting advantages
 
 Scope:
-- explain the product as:
-  - a swing decision companion
-  - a way to narrow the morning workload
-  - a way to connect planning, execution, and review
-- exclude internal admin features from the public story
-- emphasize:
+- describe the experience a user gets:
+  - fewer names to watch in the morning
+  - less hesitation about what to do first
+  - a tighter rhythm between planning, execution, and review
+- describe the resulting benefit:
   - faster morning decisions
-  - fewer names to watch
-  - account-aware action guidance
-  - review-driven improvement
+  - reduced noise and over-scanning
+  - clearer personal action guidance
+  - more repeatable improvement over time
+- exclude internal admin features from the public story
+- avoid talking about product restructuring or what the team has improved
+- avoid long explanation blocks; prefer short marketing language and visual proof
 
 Success signal:
-- a new visitor can understand the user benefit without reading internal workflow language
+- a new visitor can quickly imagine how their decision-making experience gets better by using the product
 
 ### Workstream 11: Today social proof and aggregate behavior
 Status: Planned
@@ -268,13 +270,13 @@ Focus:
 
 ### 5. Public landing marketing rewrite
 Why:
-- the logged-in product has evolved, but the landing page still needs to sell the right promise
+- the landing page must sell the user experience, not explain internal product evolution
 
 Focus:
-- marketing-first benefit copy
-- improved first-hero framing
+- marketing-first messaging around the user experience and the resulting benefit
+- stronger hero framing for first-time visitors
 - removal of admin/internal product language
-- public explanation of planning -> execution -> review loop
+- compact, high-signal sections instead of explanatory blocks
 
 ### 6. Today aggregate user activity signals
 Why:

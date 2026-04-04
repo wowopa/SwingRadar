@@ -77,15 +77,16 @@ Recommended order:
 
 ### Public landing direction
 The landing page should now:
-- reflect the improved authenticated UX
+- speak to first-time visitors in user-benefit language
 - avoid admin and internal operating language
-- market the product through user outcomes, not feature inventory
+- market the product through the experience it creates and the advantages that experience gives the user
+- avoid telling visitors what the team improved internally
 
 Recommended public message:
 1. reduce the number of names to watch
 2. make the morning routine shorter
 3. connect planning, execution, and review
-4. help users improve through repetition and feedback
+4. help users feel more certain, more focused, and more repeatable in their decisions
 
 ## Screen-by-screen direction
 ### `/recommendations`

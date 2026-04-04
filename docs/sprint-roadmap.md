@@ -174,16 +174,18 @@ Why this is now the best next step:
 ## Upcoming product-facing tasks
 ### Landing page marketing rewrite
 Purpose:
-- align the public landing page with the current authenticated UX
-- remove admin and internal workflow language from the public story
-- lead with user benefits such as:
+- speak to first-time visitors in marketing language
+- show what kind of experience the user will have and what benefit that creates
+- lead with user-facing outcomes such as:
   - fewer names to watch
   - faster morning decisions
-  - clearer account-aware action guidance
-  - review and improvement over time
+  - less noise and less second-guessing
+  - clearer personal action guidance
+  - repeatable improvement over time
 
 Constraint:
 - admin features must stay out of the landing narrative
+- the landing page should not explain what the team improved internally
 
 ### Today aggregate user activity signals
 Purpose:
