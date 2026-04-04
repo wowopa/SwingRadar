@@ -156,7 +156,7 @@ export function LandingPage() {
           <ScrollReveal>
             <div className="max-w-[980px] space-y-8">
               <div className="space-y-5">
-                <Badge className="public-hero-badge hover:bg-white/8" variant="secondary">
+                <Badge className="public-hero-badge text-white hover:bg-white/8" variant="secondary">
                   Action-first swing operating system
                 </Badge>
                 <div className="space-y-6">
