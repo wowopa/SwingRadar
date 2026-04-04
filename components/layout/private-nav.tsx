@@ -55,8 +55,8 @@ export function PrivateNav({ iconOnly = false }: { iconOnly?: boolean }) {
                   ? "border-white/18 bg-white/14 text-white shadow-[0_18px_40px_-30px_rgba(24,32,42,0.62)]"
                   : "border-white/18 bg-white/12 text-white shadow-[0_18px_40px_-30px_rgba(24,32,42,0.48)]"
                 : iconOnly
-                  ? "border-white/14 bg-white/8 text-white/94 hover:bg-white/14 hover:text-white"
-                  : "border-transparent bg-transparent text-white/96 hover:border-white/14 hover:bg-white/10 hover:text-white"
+                  ? "border-white/12 bg-white/8 text-white/92 hover:border-white/16 hover:bg-white/14 hover:text-white"
+                  : "border-white/10 bg-white/6 text-white/92 hover:border-white/16 hover:bg-white/12 hover:text-white"
             )}
             aria-label={item.label}
             title={item.label}
