@@ -332,53 +332,31 @@ export function AppTutorialController() {
     setStepIndex((current) => Math.max(0, current - 1));
   }
 
-  function OverlaySlice({
-    style
-  }: {
-    style: CSSProperties;
-  }) {
-    return (
-      <button
-        type="button"
-        aria-label="튜토리얼 닫기"
-        className="fixed z-[90] m-0 appearance-none rounded-none border-0 bg-[rgba(15,20,31,0.2)] p-0 shadow-none outline-none transition-colors"
-        onClick={markSeenAndClose}
-        style={style}
-      />
-    );
-  }
+  const spotlightBackdropStyle = spotlight
+    ? ({
+        top: spotlight.top,
+        left: spotlight.left,
+        width: spotlight.width,
+        height: spotlight.height,
+        boxShadow:
+          "0 0 0 9999px rgba(15,20,31,0.2), 0 0 0 1px rgba(255,255,255,0.08), 0 0 0 10px rgba(139,107,46,0.14), 0 28px 64px -36px rgba(15,20,31,0.72)"
+      } satisfies CSSProperties)
+    : null;
 
   return (
     <div className="fixed inset-0 z-[90]">
       {spotlight ? (
         <>
-          <OverlaySlice style={{ top: 0, left: 0, right: 0, height: spotlight.top }} />
-          <OverlaySlice style={{ top: spotlight.top, left: 0, width: spotlight.left, height: spotlight.height }} />
-          <OverlaySlice
-            style={{
-              top: spotlight.top,
-              left: spotlight.left + spotlight.width,
-              right: 0,
-              height: spotlight.height
-            }}
-          />
-          <OverlaySlice
-            style={{
-              top: spotlight.top + spotlight.height,
-              left: 0,
-              right: 0,
-              bottom: 0
-            }}
+          <button
+            type="button"
+            aria-label="튜토리얼 닫기"
+            className="absolute inset-0 bg-transparent"
+            onClick={markSeenAndClose}
           />
 
           <div
             className="pointer-events-none fixed z-[91] rounded-[30px] border-2 border-[hsl(42_76%_66%)] bg-white/[0.04] shadow-[0_0_0_1px_rgba(255,255,255,0.08),0_0_0_10px_rgba(139,107,46,0.14),0_28px_64px_-36px_rgba(15,20,31,0.72)]"
-            style={{
-              top: spotlight.top,
-              left: spotlight.left,
-              width: spotlight.width,
-              height: spotlight.height
-            }}
+            style={spotlightBackdropStyle ?? undefined}
           />
 
           {spotlight.label ? (
