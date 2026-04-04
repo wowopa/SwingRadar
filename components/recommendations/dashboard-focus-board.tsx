@@ -17,6 +17,7 @@ import type {
   DailyScanSummaryDto,
   HoldingActionBoardDto,
   HoldingActionStatusDto,
+  MarketSessionStatusDto,
   OpeningCheckLearningInsightDto,
   OpeningCheckPositivePatternDto,
   OpeningCheckRiskPatternDto,
@@ -90,11 +91,13 @@ function hasPortfolioSettings(summary?: TodayActionBoardSummaryDto) {
 function buildSetupChecklist(
   todayActionBoard: TodayActionBoardDto | undefined,
   holdingActionBoard: HoldingActionBoardDto | undefined,
-  openingSummary: ReturnType<typeof getOpeningCheckSummary>
+  openingSummary: ReturnType<typeof getOpeningCheckSummary>,
+  marketSession?: MarketSessionStatusDto
 ) {
   const portfolioReady = hasPortfolioSettings(todayActionBoard?.summary);
   const holdingCount = holdingActionBoard?.summary.holdingCount ?? 0;
   const openingChecked = openingSummary.completedCount > 0;
+  const isMarketClosed = Boolean(marketSession && !marketSession.isOpenDay);
 
   const steps: SetupStep[] = [
     {
@@ -115,8 +118,8 @@ function buildSetupChecklist(
       key: "opening-check",
       title: "장초 확인 시작",
       href: "/opening-check",
-      cta: "장초 확인으로 이동",
-      state: openingChecked ? "done" : "action"
+      cta: isMarketClosed ? "휴장일 복기 보기" : "장초 확인으로 이동",
+      state: isMarketClosed ? "optional" : openingChecked ? "done" : "action"
     }
   ];
 
@@ -252,6 +255,7 @@ export function DashboardFocusBoard({
   todayActionBoard,
   holdingActionBoard,
   dailyScan,
+  marketSession,
   openingCheckLearning,
   openingCheckRiskPatterns = [],
   openingCheckPositivePattern,
@@ -266,6 +270,7 @@ export function DashboardFocusBoard({
   todayActionBoard?: TodayActionBoardDto;
   holdingActionBoard?: HoldingActionBoardDto;
   dailyScan: DailyScanSummaryDto | null;
+  marketSession?: MarketSessionStatusDto;
   openingCheckLearning?: OpeningCheckLearningInsightDto;
   openingCheckRiskPatterns?: OpeningCheckRiskPatternDto[];
   openingCheckPositivePattern?: OpeningCheckPositivePatternDto;
@@ -279,7 +284,8 @@ export function DashboardFocusBoard({
   const buyReviewItems = getBuyReviewItems(todayActionBoard, openingCheckRiskPatterns, openingCheckPositivePattern);
   const holdingAttentionItems = getHoldingAttentionItems(holdingActionBoard);
   const openingSummary = getOpeningCheckSummary(dailyScan);
-  const setupChecklist = buildSetupChecklist(todayActionBoard, holdingActionBoard, openingSummary);
+  const setupChecklist = buildSetupChecklist(todayActionBoard, holdingActionBoard, openingSummary, marketSession);
+  const isMarketClosed = Boolean(marketSession && !marketSession.isOpenDay);
   const hasPendingOpeningChecks = openingSummary.counts.pending > 0;
   const hasRuleAlert = Boolean(personalRuleAlert);
   const topBuyReviewPattern = buyReviewItems[0]?.patternPreview ?? null;
@@ -319,6 +325,16 @@ export function DashboardFocusBoard({
       : buyReviewItems.length
         ? "positive"
         : "muted";
+  const closedDayReviewCount = openingReview?.summary.resolvedCount ?? 0;
+  const closedDayPlanCount = dailyScan?.topCandidates.length ?? 0;
+  const summaryBadgeVariant = isMarketClosed
+    ? "secondary"
+    : todayActionBoard?.summary.buyReviewCount
+      ? "positive"
+      : "secondary";
+  const summaryBadgeLabel = isMarketClosed
+    ? marketSession?.closureLabel ?? "휴장일"
+    : todayActionBoard?.summary.headline ?? "오늘 행동 기준";
 
   return (
     <section className="space-y-4">
@@ -331,12 +347,14 @@ export function DashboardFocusBoard({
                 {summary?.marketStanceLabel ?? "내 오늘 행동"}
               </h3>
             </div>
-            <Badge variant={todayActionBoard?.summary.buyReviewCount ? "positive" : "secondary"}>
-              {todayActionBoard?.summary.headline ?? "오늘 행동 기준"}
+            <Badge variant={summaryBadgeVariant}>
+              {summaryBadgeLabel}
             </Badge>
           </div>
 
-          {setupChecklist.needsSetupChecklist ? (
+          {isMarketClosed && marketSession ? (
+            <ClosedMarketBanner marketSession={marketSession} />
+          ) : setupChecklist.needsSetupChecklist ? (
             <CompactSetupBanner steps={setupChecklist.steps} />
           ) : openingCheckCompleted ? (
             <CompactCompletionBanner hasBuyReview={buyReviewItems.length > 0} />
@@ -359,21 +377,31 @@ export function DashboardFocusBoard({
 
           <div className="grid gap-3 xl:grid-cols-3">
             <PrimaryActionCard
-              href="/opening-check"
-              title="장초 확인"
-              count={formatQueueCount(openingSummary.counts.pending)}
-              caption="오늘 먼저 볼 종목"
-              summaryLine={openingSummaryLine}
-              accent="primary"
+              href={isMarketClosed ? "/portfolio?tab=reviews" : "/opening-check"}
+              title={isMarketClosed ? "지난 기록 복기" : "장초 확인"}
+              count={formatQueueCount(isMarketClosed ? closedDayReviewCount : openingSummary.counts.pending)}
+              caption={isMarketClosed ? "최근 종료·검토 기록" : "오늘 먼저 볼 종목"}
+              summaryLine={isMarketClosed ? "주말과 공휴일에는 지난 판단과 종료 거래를 먼저 복기합니다." : openingSummaryLine}
+              accent={isMarketClosed ? "muted" : "primary"}
               icon={<Clock3 className="h-4 w-4" />}
             />
             <PrimaryActionCard
-              href={buyReviewItems[0] ? `/analysis/${buyReviewItems[0].item.ticker}` : "/opening-check"}
-              title="오늘 매수 검토"
-              count={formatQueueCount(buyReviewItems.length)}
-              caption={buyReviewCaption}
-              summaryLine={buyReviewSummaryLine}
-              accent={buyReviewAccent}
+              href={
+                isMarketClosed
+                  ? "/signals?tab=candidates"
+                  : buyReviewItems[0]
+                    ? `/analysis/${buyReviewItems[0].item.ticker}`
+                    : "/opening-check"
+              }
+              title={isMarketClosed ? "새 계획 만들기" : "오늘 매수 검토"}
+              count={formatQueueCount(isMarketClosed ? closedDayPlanCount : buyReviewItems.length)}
+              caption={isMarketClosed ? "다음 개장 전 볼 공통 후보" : buyReviewCaption}
+              summaryLine={
+                isMarketClosed
+                  ? "Signals에서 공통 후보를 다시 고르고 다음 개장일 계획을 정리합니다."
+                  : buyReviewSummaryLine
+              }
+              accent={isMarketClosed ? "primary" : buyReviewAccent}
               icon={<Target className="h-4 w-4" />}
             />
             <PrimaryActionCard
@@ -391,6 +419,15 @@ export function DashboardFocusBoard({
         </CardContent>
       </Card>
 
+      {isMarketClosed && marketSession ? (
+        <ClosedMarketDetailPanel
+          marketSession={marketSession}
+          openingReview={openingReview}
+          holdingAttentionItems={holdingAttentionItems}
+          holdingAttentionCount={getHoldingAttentionCount(holdingActionBoard)}
+          candidateCount={closedDayPlanCount}
+        />
+      ) : (
       <details className="group rounded-[28px] border border-border/80 bg-white/90 shadow-[0_18px_46px_-32px_rgba(24,32,42,0.2)]">
         <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-5 py-4 [&::-webkit-details-marker]:hidden">
           <div>
@@ -606,6 +643,7 @@ export function DashboardFocusBoard({
           <OpeningCheckReviewCard review={openingReview} />
         </div>
       </details>
+      )}
     </section>
   );
 }
@@ -656,6 +694,163 @@ function TodayCommunityPulseCard({ stats }: { stats: TodayCommunityStatsDto }) {
           </Link>
         ))}
       </div>
+    </div>
+  );
+}
+
+function ClosedMarketBanner({ marketSession }: { marketSession: MarketSessionStatusDto }) {
+  return (
+    <div className="rounded-[24px] border border-primary/24 bg-primary/10 p-4">
+      <div className="flex flex-wrap items-center gap-2">
+        <Badge variant="neutral" className="whitespace-nowrap">
+          {marketSession.closureLabel}
+        </Badge>
+        <p className="text-sm font-medium text-foreground">{marketSession.headline}</p>
+      </div>
+      <p className="mt-2 text-sm leading-6 text-muted-foreground">{marketSession.detail}</p>
+    </div>
+  );
+}
+
+function ClosedMarketDetailPanel({
+  marketSession,
+  openingReview,
+  holdingAttentionItems,
+  holdingAttentionCount,
+  candidateCount
+}: {
+  marketSession: MarketSessionStatusDto;
+  openingReview?: OpeningRecheckReviewDto;
+  holdingAttentionItems: HoldingActionBoardDto["sections"][number]["items"];
+  holdingAttentionCount: number;
+  candidateCount: number;
+}) {
+  return (
+    <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,0.9fr)]">
+      <Card className="border-border/80 bg-white/90 shadow-[0_18px_46px_-32px_rgba(24,32,42,0.22)]">
+        <CardHeader className="space-y-3">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary/12 text-primary">
+                <Clock3 className="h-4 w-4" />
+              </div>
+              <div>
+                <CardTitle className="text-base text-foreground">지난 기록 복기</CardTitle>
+                <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                  종료 거래와 장초 판단 기록을 다시 읽는 날입니다.
+                </p>
+              </div>
+            </div>
+            <Badge variant="secondary" className="shrink-0 whitespace-nowrap">
+              {formatQueueCount(openingReview?.summary.resolvedCount ?? 0)}
+            </Badge>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-sm leading-6 text-foreground/82">
+            {openingReview?.summary.headline ?? "최근 종료 거래와 장초 판단 기록을 다시 복기해보세요."}
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <Link
+              href="/portfolio?tab=reviews"
+              className="inline-flex h-9 items-center rounded-full border border-primary/24 bg-primary/10 px-3.5 text-xs font-medium text-primary transition hover:bg-primary/14"
+            >
+              Reviews 열기
+            </Link>
+            <Link
+              href="/portfolio?tab=performance"
+              className="inline-flex h-9 items-center rounded-full border border-border/80 bg-white px-3.5 text-xs font-medium text-foreground/78 transition hover:border-primary/24 hover:text-primary"
+            >
+              Performance 보기
+            </Link>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="border-border/80 bg-white/90 shadow-[0_18px_46px_-32px_rgba(24,32,42,0.22)]">
+        <CardHeader className="space-y-3">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-positive/12 text-positive">
+                <Target className="h-4 w-4" />
+              </div>
+              <div>
+                <CardTitle className="text-base text-foreground">다음 계획 만들기</CardTitle>
+                <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                  다음 개장일 전에 볼 공통 후보를 다시 정리합니다.
+                </p>
+              </div>
+            </div>
+            <Badge variant="positive" className="shrink-0 whitespace-nowrap">
+              {formatQueueCount(candidateCount)}
+            </Badge>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-sm leading-6 text-foreground/82">{marketSession.detail}</p>
+          <div className="flex flex-wrap gap-2">
+            <Link
+              href="/signals?tab=candidates"
+              className="inline-flex h-9 items-center rounded-full border border-primary/24 bg-primary/10 px-3.5 text-xs font-medium text-primary transition hover:bg-primary/14"
+            >
+              Signals 보기
+            </Link>
+            <Link
+              href="/signals?tab=tracking"
+              className="inline-flex h-9 items-center rounded-full border border-border/80 bg-white px-3.5 text-xs font-medium text-foreground/78 transition hover:border-primary/24 hover:text-primary"
+            >
+              공용 복기 보기
+            </Link>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="border-border/80 bg-white/90 shadow-[0_18px_46px_-32px_rgba(24,32,42,0.22)]">
+        <CardHeader className="space-y-3">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[hsl(var(--caution)/0.12)] text-caution">
+                <ShieldAlert className="h-4 w-4" />
+              </div>
+              <div>
+                <CardTitle className="text-base text-foreground">보유 점검</CardTitle>
+                <p className="mt-1 text-xs leading-5 text-muted-foreground">보유 종목과 규칙 상태를 함께 점검합니다.</p>
+              </div>
+            </div>
+            <Badge
+              variant={holdingAttentionItems.length ? "caution" : "secondary"}
+              className="shrink-0 whitespace-nowrap"
+            >
+              {formatQueueCount(holdingAttentionCount)}
+            </Badge>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {holdingAttentionItems.length ? (
+            holdingAttentionItems.slice(0, 2).map((item) => {
+              const actionBadge = buildHoldingBadge(item.actionStatus);
+
+              return (
+                <Link
+                  key={item.ticker}
+                  href="/portfolio"
+                  className="block rounded-[20px] border border-border/80 bg-[hsl(42_38%_97%)] px-4 py-3 transition hover:border-primary/28 hover:bg-white"
+                >
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="text-sm font-semibold text-foreground">
+                      {item.company} <span className="text-xs font-medium text-muted-foreground">{item.ticker}</span>
+                    </p>
+                    <Badge variant={actionBadge.variant}>{actionBadge.label}</Badge>
+                  </div>
+                  <p className="mt-2 text-xs leading-5 text-muted-foreground">{item.nextAction}</p>
+                </Link>
+              );
+            })
+          ) : (
+            <DashboardEmptyState message="지금 급하게 다시 봐야 할 보유 종목은 많지 않습니다." />
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

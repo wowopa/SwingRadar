@@ -29,6 +29,11 @@ import type {
 } from "@/types/recommendation";
 
 type PortfolioWorkspaceTab = "holdings" | "journal" | "reviews" | "performance";
+const PORTFOLIO_WORKSPACE_TABS: PortfolioWorkspaceTab[] = ["holdings", "journal", "reviews", "performance"];
+
+function isPortfolioWorkspaceTab(value: string | null | undefined): value is PortfolioWorkspaceTab {
+  return Boolean(value && PORTFOLIO_WORKSPACE_TABS.includes(value as PortfolioWorkspaceTab));
+}
 
 type PortfolioTradeFollowUp = {
   ticker: string;
@@ -151,6 +156,7 @@ export function PortfolioWorkspace({
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const requestedTab = searchParams.get("tab");
 
   useEffect(() => {
     setProfile(initialProfile);
@@ -166,6 +172,26 @@ export function PortfolioWorkspace({
     const nextHref = params.size ? `${pathname}?${params.toString()}` : pathname;
     router.replace(nextHref, { scroll: false });
   }
+
+  function updateWorkspaceQuery(nextTab: PortfolioWorkspaceTab) {
+    const params = new URLSearchParams(searchParams.toString());
+    if (nextTab === "holdings") {
+      params.delete("tab");
+    } else {
+      params.set("tab", nextTab);
+    }
+
+    const nextHref = params.size ? `${pathname}?${params.toString()}` : pathname;
+    router.replace(nextHref, { scroll: false });
+  }
+
+  useEffect(() => {
+    if (!isPortfolioWorkspaceTab(requestedTab)) {
+      return;
+    }
+
+    setActiveTab(requestedTab);
+  }, [requestedTab]);
 
   function handleSaved(nextProfile: PortfolioProfilePayload) {
     setProfile(nextProfile);
@@ -284,6 +310,7 @@ export function PortfolioWorkspace({
         })
       });
       setActiveTab(followUp.highlightTab);
+      updateWorkspaceQuery(followUp.highlightTab);
     }
 
     setQuickTradePreset(null);
@@ -321,7 +348,10 @@ export function PortfolioWorkspace({
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() => setActiveTab(tradeFollowUp.highlightTab)}
+                  onClick={() => {
+                    setActiveTab(tradeFollowUp.highlightTab);
+                    updateWorkspaceQuery(tradeFollowUp.highlightTab);
+                  }}
                 >
                   {tradeFollowUp.highlightLabel}
                 </Button>
@@ -343,7 +373,15 @@ export function PortfolioWorkspace({
           </div>
         ) : null}
 
-      <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as PortfolioWorkspaceTab)} className="space-y-5">
+      <Tabs
+        value={activeTab}
+        onValueChange={(value) => {
+          const nextTab = value as PortfolioWorkspaceTab;
+          setActiveTab(nextTab);
+          updateWorkspaceQuery(nextTab);
+        }}
+        className="space-y-5"
+      >
         <TabsList className="w-full justify-start gap-1 overflow-x-auto rounded-[24px] border border-border/80 bg-white/90 p-1.5 shadow-[0_18px_44px_-34px_rgba(24,32,42,0.22)] sm:w-auto">
           <TabsTrigger value="holdings" className="min-w-[120px]">
             Holdings

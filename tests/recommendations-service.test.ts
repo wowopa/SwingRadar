@@ -19,7 +19,8 @@ const mocks = vi.hoisted(() => ({
   loadPortfolioProfileDocument: vi.fn(),
   loadPortfolioProfileForUser: vi.fn(),
   isPortfolioProfileConfigured: vi.fn(),
-  buildTodayCommunityStats: vi.fn()
+  buildTodayCommunityStats: vi.fn(),
+  getKrxMarketSessionStatus: vi.fn()
 }));
 
 vi.mock("@/lib/providers", () => ({
@@ -64,6 +65,10 @@ vi.mock("@/lib/server/portfolio-profile", () => ({
 
 vi.mock("@/lib/server/today-community-stats", () => ({
   buildTodayCommunityStats: mocks.buildTodayCommunityStats
+}));
+
+vi.mock("@/lib/server/krx-market-calendar", () => ({
+  getKrxMarketSessionStatus: mocks.getKrxMarketSessionStatus
 }));
 
 import { listRecommendations } from "@/lib/services/recommendations-service";
@@ -207,6 +212,14 @@ describe("listRecommendations", () => {
     mocks.loadPortfolioProfileForUser.mockResolvedValue(createEmptyProfile());
     mocks.isPortfolioProfileConfigured.mockReturnValue(false);
     mocks.buildTodayCommunityStats.mockResolvedValue(undefined);
+    mocks.getKrxMarketSessionStatus.mockReturnValue({
+      marketDate: "2026-04-03",
+      isOpenDay: true,
+      closureKind: "open",
+      closureLabel: "개장일",
+      headline: "오늘 장초 확인을 마친 뒤 실제 행동으로 이어가세요.",
+      detail: "장초 확인 뒤 실제 행동으로 이어집니다."
+    });
   });
 
   it("limits items to daily scan candidates and includes saved recheck state", async () => {
@@ -260,6 +273,44 @@ describe("listRecommendations", () => {
       ticker: "BBB001",
       boardStatus: "buy_review"
     });
+  });
+
+  it("switches today into review mode on closed market days", async () => {
+    mocks.getRecommendations.mockResolvedValue({
+      generatedAt: "2026-03-08T00:00:00.000Z",
+      items: [createRecommendation({ ticker: "AAA001", company: "Alpha" })]
+    });
+    mocks.getDailyCandidates.mockResolvedValue({
+      generatedAt: "2026-03-08T01:00:00.000Z",
+      batchSize: 20,
+      concurrency: 2,
+      topCandidatesLimit: 10,
+      totalTickers: 100,
+      totalBatches: 5,
+      succeededBatches: 5,
+      failedBatches: [],
+      topCandidates: [createCandidate({ ticker: "AAA001", company: "Alpha" })],
+      batchSummaries: []
+    });
+    mocks.getKrxMarketSessionStatus.mockReturnValue({
+      marketDate: "2026-04-04",
+      isOpenDay: false,
+      closureKind: "weekend",
+      closureLabel: "토요일 휴장",
+      headline: "오늘은 지난 기록을 검토하고, 새로운 계획을 만들어보세요.",
+      detail: "주말에는 장초 확인 대신 복기와 계획에 집중합니다."
+    });
+
+    const result = await listRecommendations({ sort: "score_desc" });
+
+    expect(result.marketSession.isOpenDay).toBe(false);
+    expect(result.todaySummary).toBeDefined();
+    expect(result.todaySummary?.marketStanceLabel).toBe("복기·계획");
+    expect(result.todaySummary?.summary).toBe("오늘은 지난 기록을 검토하고, 새로운 계획을 만들어보세요.");
+    expect(result.todaySummary?.maxNewPositions).toBe(0);
+    expect(result.dailyScan?.openingCheckLimit).toBe(0);
+    expect(result.dailyScan?.openingCheckCandidates).toEqual([]);
+    expect(result.todayActionBoard).toBeUndefined();
   });
 
   it("filters by signal tone and limit when no daily scan exists", async () => {

@@ -39,6 +39,7 @@ import {
   loadPortfolioProfileDocument,
   loadPortfolioProfileForUser
 } from "@/lib/server/portfolio-profile";
+import { getKrxMarketSessionStatus } from "@/lib/server/krx-market-calendar";
 import { getSymbolByTicker } from "@/lib/server/runtime-symbol-master";
 import { buildTodayCommunityStats } from "@/lib/server/today-community-stats";
 import { listUserOpeningRecheckDecisions, listUserOpeningRecheckScans } from "@/lib/server/user-opening-recheck-board";
@@ -332,6 +333,20 @@ function buildPersonalRuleAlert(
   };
 }
 
+function buildClosedMarketTodaySummary(
+  summary: ReturnType<typeof buildTodayOperatingSummary>,
+  marketSession: ReturnType<typeof getKrxMarketSessionStatus>
+) {
+  return {
+    ...summary,
+    marketStance: "watch" as const,
+    marketStanceLabel: "복기·계획",
+    summary: marketSession.headline,
+    maxNewPositions: 0,
+    focusNote: marketSession.detail
+  };
+}
+
 function formatRiskRewardRatio(entryPrice?: number | null, targetPrice?: number | null, invalidationPrice?: number | null) {
   const entry = Number(entryPrice ?? 0);
   const target = Number(targetPrice ?? 0);
@@ -484,6 +499,8 @@ export async function listRecommendations(
   query: RecommendationsQuery,
   options?: { userId?: string | null }
 ): Promise<RecommendationsResponseDto> {
+  const marketSession = getKrxMarketSessionStatus();
+  const isMarketClosed = !marketSession.isOpenDay;
   const provider = getDataProvider();
   const emptyOpeningRecheckByTicker: Record<string, OpeningRecheckDecisionDto> = {};
   const [source, analysisSource, dailyCandidates, tracking, portfolioProfile, portfolioJournal, userOpeningRecheckScans, closeReviews, personalRules] =
@@ -499,13 +516,13 @@ export async function listRecommendations(
     options?.userId ? loadPortfolioPersonalRulesForUser(options.userId) : Promise.resolve([])
   ]);
   const [sharedOpeningRecheckByTicker, userOpeningRecheckByTicker, openingRecheckScans] = await Promise.all([
-    dailyCandidates
+    dailyCandidates && !isMarketClosed
       ? listOpeningRecheckDecisions(dailyCandidates.generatedAt)
       : Promise.resolve(emptyOpeningRecheckByTicker),
-    dailyCandidates && options?.userId
+    dailyCandidates && options?.userId && !isMarketClosed
       ? listUserOpeningRecheckDecisions(options.userId, dailyCandidates.generatedAt)
       : Promise.resolve(emptyOpeningRecheckByTicker),
-    listOpeningRecheckScans()
+    isMarketClosed ? Promise.resolve([]) : listOpeningRecheckScans()
   ]);
   const todayCommunityStats = await buildTodayCommunityStats({
     scanKey: dailyCandidates?.generatedAt ?? null
@@ -605,7 +622,10 @@ export async function listRecommendations(
     items = items.slice(0, query.limit);
   }
 
-  const todaySummary = buildTodayOperatingSummary(items);
+  const baseTodaySummary = buildTodayOperatingSummary(items);
+  const todaySummary = isMarketClosed
+    ? buildClosedMarketTodaySummary(baseTodaySummary, marketSession)
+    : baseTodaySummary;
   const dailyScanCandidates = dailyCandidates
     ? dailyCandidates.topCandidates.map((candidate) =>
         enrichDailyCandidateItem(candidate, sourceByTicker.get(candidate.ticker), options?.userId
@@ -615,9 +635,9 @@ export async function listRecommendations(
         )
       )
     : null;
-  const openingCheckLimit = getOpeningCheckLimit();
-  const openingCheckCandidates = dailyScanCandidates?.slice(0, openingCheckLimit) ?? null;
-  const todayActionBoard = openingCheckCandidates
+  const openingCheckLimit = isMarketClosed ? 0 : getOpeningCheckLimit();
+  const openingCheckCandidates = isMarketClosed ? [] : dailyScanCandidates?.slice(0, openingCheckLimit) ?? [];
+  const todayActionBoard = !isMarketClosed && openingCheckCandidates.length
     ? buildTodayActionBoard(
         openingCheckCandidates.map((candidate, index) => ({
           ticker: candidate.ticker,
@@ -749,6 +769,7 @@ export async function listRecommendations(
   return {
     generatedAt: dailyCandidates?.generatedAt ?? source.generatedAt,
     items,
+    marketSession,
     dailyScan: dailyCandidates && dailyScanCandidates
       ? {
           generatedAt: dailyCandidates.generatedAt,
@@ -761,7 +782,7 @@ export async function listRecommendations(
           succeededBatches: dailyCandidates.succeededBatches,
           failedBatches: dailyCandidates.failedBatches,
           topCandidates: dailyScanCandidates,
-          openingCheckCandidates: openingCheckCandidates ?? []
+          openingCheckCandidates
         }
       : null,
     todaySummary,

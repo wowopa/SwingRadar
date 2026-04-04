@@ -32,6 +32,7 @@ export default async function RecommendationsPage({
         todayActionBoard={response.todayActionBoard}
         holdingActionBoard={response.holdingActionBoard}
         dailyScan={response.dailyScan}
+        marketSession={response.marketSession}
         openingCheckLearning={response.openingCheckLearning}
         openingCheckRiskPatterns={response.openingCheckRiskPatterns}
         openingCheckPositivePattern={response.openingCheckPositivePattern}

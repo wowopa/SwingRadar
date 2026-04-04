@@ -200,6 +200,16 @@ export interface TodayCommunityStats {
   stats: TodayCommunityStat[];
 }
 
+export interface MarketSessionStatus {
+  marketDate: string;
+  isOpenDay: boolean;
+  closureKind: "open" | "weekend" | "holiday";
+  closureLabel: string;
+  headline: string;
+  detail: string;
+  holidayName?: string;
+}
+
 export interface OpeningRecheckTickerInsight {
   scanKey: string;
   signalDate: string;

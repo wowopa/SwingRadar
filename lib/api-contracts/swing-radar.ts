@@ -175,6 +175,16 @@ export interface TodayCommunityStatsDto {
   stats: TodayCommunityStatDto[];
 }
 
+export interface MarketSessionStatusDto {
+  marketDate: string;
+  isOpenDay: boolean;
+  closureKind: "open" | "weekend" | "holiday";
+  closureLabel: string;
+  headline: string;
+  detail: string;
+  holidayName?: string;
+}
+
 export interface OpeningRecheckTickerInsightDto {
   scanKey: string;
   signalDate: string;
@@ -462,6 +472,7 @@ export interface RecommendationsResponseDto {
   generatedAt: string;
   items: RecommendationListItemDto[];
   dailyScan: DailyScanSummaryDto | null;
+  marketSession: MarketSessionStatusDto;
   todaySummary?: TodayActionSummaryDto;
   operatingWorkflow?: TodayOperatingWorkflowDto;
   todayActionBoard?: TodayActionBoardDto;

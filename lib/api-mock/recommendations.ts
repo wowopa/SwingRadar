@@ -3,6 +3,14 @@
 export const recommendationsResponse: RecommendationsResponseDto = {
   generatedAt: "2026-03-07T01:00:00+09:00",
   dailyScan: null,
+  marketSession: {
+    marketDate: "2026-03-07",
+    isOpenDay: true,
+    closureKind: "open",
+    closureLabel: "개장일",
+    headline: "오늘 장초 확인을 마친 뒤 실제 행동으로 이어가세요.",
+    detail: "장초 확인 뒤 실제 행동으로 이어집니다."
+  },
   items: [
     {
       ticker: "005930",

@@ -7,6 +7,7 @@
 import type { SwingRadarDataProvider } from "@/lib/providers/types";
 import { ApiError } from "@/lib/server/api-error";
 import { getPostgresPool } from "@/lib/server/postgres";
+import { getKrxMarketSessionStatus } from "@/lib/server/krx-market-calendar";
 
 interface RecommendationRow {
   generated_at: string;
@@ -49,7 +50,8 @@ export const postgresDataProvider: SwingRadarDataProvider = {
     return {
       generatedAt: result.rows[0].generated_at,
       items: result.rows.map((row: RecommendationRow) => row.payload),
-      dailyScan: null
+      dailyScan: null,
+      marketSession: getKrxMarketSessionStatus()
     } satisfies RecommendationsResponseDto;
   },
 

@@ -120,6 +120,14 @@ describe("news curation", () => {
 
     const recommendationResult = await applyNewsCurationToRecommendations({
       generatedAt: "2026-03-08T00:00:00.000Z",
+      marketSession: {
+        marketDate: "2026-03-08",
+        isOpenDay: true,
+        closureKind: "open",
+        closureLabel: "개장일",
+        headline: "오늘 장초 확인을 마친 뒤 실제 행동으로 이어가세요.",
+        detail: "장초 확인 뒤 실제 행동으로 이어집니다."
+      },
       items: [
         {
           ticker: "005930",
