@@ -32,6 +32,8 @@ Observed friction:
 - too many names can look equally important
 - portfolio rules are implied, not explicit
 - the app explains stocks one by one more clearly than it explains how to manage a full account
+- the landing page still needs stronger marketing framing for non-logged-in users
+- `Today` could benefit from compact anonymous social proof without becoming a feed
 
 ## Design principles
 ### 1. Action before explanation
@@ -73,6 +75,18 @@ Recommended order:
 - `/analysis/[ticker]`: one-name decision memo
 - `/guide`: onboarding for first-time users
 
+### Public landing direction
+The landing page should now:
+- reflect the improved authenticated UX
+- avoid admin and internal operating language
+- market the product through user outcomes, not feature inventory
+
+Recommended public message:
+1. reduce the number of names to watch
+2. make the morning routine shorter
+3. connect planning, execution, and review
+4. help users improve through repetition and feedback
+
 ## Screen-by-screen direction
 ### `/recommendations`
 Current role:
@@ -103,6 +117,13 @@ Strict content rule:
 - default visible buy-now ideas: `0 to 3`
 - default visible watch-only ideas: `3 to 5`
 - everything else belongs behind a secondary action
+
+Additional direction:
+- below the core action cards, allow a compact anonymous aggregate strip with examples like:
+  - most attempted buy today
+  - most widely held name
+  - most watched opening-check name
+- this strip must stay secondary and should never push the primary action cards below the fold
 
 ### `/ranking`
 Current role:
@@ -258,6 +279,11 @@ Success test:
 - add deeper rule-violation outcome analysis
 - add stronger tag-cohort comparisons
 - improve comparative period review
+
+### Public and community-facing signals
+- rewrite the landing page around benefits and marketing promises
+- add compact anonymous user-activity summaries to `Today`
+- do not turn the app into a social feed or public leaderboard
 
 ## Research and validation loop
 Each usability round should test these prompts:

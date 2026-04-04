@@ -29,6 +29,8 @@ The next bottleneck is now:
 - data quality
 - state consistency
 - learning-loop trust
+- clearer product marketing for non-users
+- lightweight social proof in the daily operating loop
 
 ## Status by workstream
 
@@ -165,6 +167,53 @@ Still missing:
 - explicit news policy simplification
 - better confidence around runtime state sync
 
+### Workstream 10: Public landing repositioning
+Status: Planned
+
+Goal:
+- rewrite the landing page so it matches the improved authenticated UX
+- remove admin-oriented or overly internal explanations
+- lead with marketing promises instead of feature inventory
+
+Scope:
+- explain the product as:
+  - a swing decision companion
+  - a way to narrow the morning workload
+  - a way to connect planning, execution, and review
+- exclude internal admin features from the public story
+- emphasize:
+  - faster morning decisions
+  - fewer names to watch
+  - account-aware action guidance
+  - review-driven improvement
+
+Success signal:
+- a new visitor can understand the user benefit without reading internal workflow language
+
+### Workstream 11: Today social proof and aggregate behavior
+Status: Planned
+
+Goal:
+- add lightweight user-wide activity signals to `Today`
+- show what other users are actually doing without turning the product into a social feed
+
+Scope:
+- simple aggregate modules such as:
+  - today's most attempted buy
+  - most widely held name
+  - most frequently reviewed holding
+  - top opening-check watch name
+- keep this anonymous and summary-based
+- avoid direct copying pressure or gamified social ranking
+
+Design constraints:
+- these modules should stay compact
+- they should support the user's own decision flow, not interrupt it
+- they belong below the primary action cards, not above them
+
+Success signal:
+- `Today` feels more alive and credible without becoming noisy or socially distracting
+
 ## What is no longer the main problem
 These are no longer the primary bottlenecks:
 - landing-page style copy inside the authenticated app
@@ -217,6 +266,25 @@ Focus:
 - stronger period comparisons
 - better tag and exit pattern interpretation
 
+### 5. Public landing marketing rewrite
+Why:
+- the logged-in product has evolved, but the landing page still needs to sell the right promise
+
+Focus:
+- marketing-first benefit copy
+- improved first-hero framing
+- removal of admin/internal product language
+- public explanation of planning -> execution -> review loop
+
+### 6. Today aggregate user activity signals
+Why:
+- small amounts of anonymous social proof can improve confidence and relevance
+
+Focus:
+- compact "most attempted", "most held", and similar daily aggregates
+- clear placement below the core action cards
+- anonymous, non-gamified presentation
+
 ## Not in near-term scope
 The following are still intentionally out of scope for the current rebuild:
 - social trading
@@ -230,6 +298,8 @@ The following are still intentionally out of scope for the current rebuild:
 2. journal / holdings / asset-setting consistency hardening
 3. personal rule management surface
 4. performance intelligence phase 2
+5. landing marketing rewrite
+6. Today aggregate user-activity signals
 
 ## Standard
 When choosing between:

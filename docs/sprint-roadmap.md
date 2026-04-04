@@ -24,6 +24,10 @@ The main risks now are:
 - operational reliability
 - trust in the learning loop
 
+The next product expansion areas are:
+- public marketing clarity
+- lightweight user-wide activity insight in `Today`
+
 ## Sprint status
 
 ### Sprint 1: App shell and file snapshot experience
@@ -164,6 +168,34 @@ Why this is now the best next step:
 1. performance intelligence phase 2
 2. rule-violation outcome comparisons
 3. stronger cohort summaries for strategy tags
+4. rewrite the landing page around marketing promises rather than internal feature explanation
+5. add compact anonymous user-activity aggregates to `Today`
+
+## Upcoming product-facing tasks
+### Landing page marketing rewrite
+Purpose:
+- align the public landing page with the current authenticated UX
+- remove admin and internal workflow language from the public story
+- lead with user benefits such as:
+  - fewer names to watch
+  - faster morning decisions
+  - clearer account-aware action guidance
+  - review and improvement over time
+
+Constraint:
+- admin features must stay out of the landing narrative
+
+### Today aggregate user activity signals
+Purpose:
+- show lightweight anonymous behavior summaries from all users
+
+Examples:
+- today's most attempted buy
+- most widely held name
+- most watched opening-check candidate
+
+Constraint:
+- keep these modules compact and secondary to the user's own action cards
 
 ## Notes
 - `docs/authenticated-app-ui-rules.md` remains the source of truth for logged-in screen behavior.
