@@ -15,7 +15,7 @@ export type HealthPayload = {
 export type OperationalIncident = {
   id: string;
   severity: "warning" | "critical";
-  source: "health" | "provider" | "daily-cycle" | "ops-recovery";
+  source: "health" | "provider" | "daily-cycle" | "ops-recovery" | "data-quality";
   summary: string;
   detail: string;
   detectedAt: string;
@@ -116,6 +116,7 @@ export type SnapshotGenerationReportPayload = {
   validationFallbackTickers: string[];
   validationBasisCounts?: {
     measured: number;
+    tracking?: number;
     sector: number;
     pattern: number;
     heuristic: number;
@@ -252,6 +253,17 @@ export type AdminDataQualitySummaryPayload = {
   validationFallbackCount: number | null;
   validationFallbackPercent: number | null;
   measuredValidationPercent: number | null;
+  validationBasisPercentages:
+    | {
+        measured: number;
+        tracking: number;
+        sector: number;
+        pattern: number;
+        heuristic: number;
+      }
+    | null;
+  failedBatchCount: number | null;
+  failedBatchPercent: number | null;
   newsLiveFetchPercent: number | null;
   newsCacheFallbackPercent: number | null;
   newsFileFallbackPercent: number | null;

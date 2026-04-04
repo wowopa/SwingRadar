@@ -207,6 +207,35 @@ export async function GET(request: Request) {
     const measuredValidationPercent = snapshotGenerationReport?.validationBasisCounts
       ? calculatePercent(snapshotGenerationReport.validationBasisCounts.measured, snapshotGenerationReport.totalTickers)
       : null;
+    const validationBasisPercentages = snapshotGenerationReport?.validationBasisCounts
+      ? {
+          measured: calculatePercent(
+            snapshotGenerationReport.validationBasisCounts.measured,
+            snapshotGenerationReport.totalTickers
+          ) ?? 0,
+          tracking: calculatePercent(
+            snapshotGenerationReport.validationBasisCounts.tracking ?? 0,
+            snapshotGenerationReport.totalTickers
+          ) ?? 0,
+          sector: calculatePercent(
+            snapshotGenerationReport.validationBasisCounts.sector,
+            snapshotGenerationReport.totalTickers
+          ) ?? 0,
+          pattern: calculatePercent(
+            snapshotGenerationReport.validationBasisCounts.pattern,
+            snapshotGenerationReport.totalTickers
+          ) ?? 0,
+          heuristic: calculatePercent(
+            snapshotGenerationReport.validationBasisCounts.heuristic,
+            snapshotGenerationReport.totalTickers
+          ) ?? 0
+        }
+      : null;
+    const failedBatchCount = dailyCycleReport?.summary?.failedBatchCount ?? null;
+    const failedBatchPercent =
+      dailyCycleReport?.summary && dailyCycleReport.summary.totalBatches > 0
+        ? calculatePercent(dailyCycleReport.summary.failedBatchCount, dailyCycleReport.summary.totalBatches)
+        : null;
     const newsLiveFetchPercent = newsFetchReport
       ? calculatePercent(newsFetchReport.liveFetchTickers, newsFetchReport.totalTickers)
       : null;
@@ -233,6 +262,9 @@ export async function GET(request: Request) {
           validationFallbackCount: snapshotGenerationReport?.validationFallbackCount ?? null,
           validationFallbackPercent,
           measuredValidationPercent,
+          validationBasisPercentages,
+          failedBatchCount,
+          failedBatchPercent,
           newsLiveFetchPercent,
           newsCacheFallbackPercent,
           newsFileFallbackPercent

@@ -123,10 +123,16 @@ export function DataQualityTab({
   const currentPolicy = thresholdAdviceReport?.currentPolicy;
   const validationFallbackPercent = dataQualitySummary?.validationFallbackPercent ?? 0;
   const measuredValidationPercent = dataQualitySummary?.measuredValidationPercent ?? 0;
+  const validationBasisPercentages = dataQualitySummary?.validationBasisPercentages;
+  const failedBatchCount = dataQualitySummary?.failedBatchCount ?? 0;
+  const failedBatchPercent = dataQualitySummary?.failedBatchPercent ?? 0;
   const newsLiveFetchPercent = dataQualitySummary?.newsLiveFetchPercent ?? 0;
   const newsFallbackPercent =
     (dataQualitySummary?.newsCacheFallbackPercent ?? 0) + (dataQualitySummary?.newsFileFallbackPercent ?? 0);
-  const needsFollowup = validationFallbackPercent >= 50 || newsLiveFetchPercent <= 70;
+  const needsFollowup = validationFallbackPercent >= 50 || newsLiveFetchPercent <= 70 || failedBatchPercent > 0;
+  const largestRuntimeSection = runtimeStorageReport
+    ? Object.entries(runtimeStorageReport.sections).sort((left, right) => right[1].sizeBytes - left[1].sizeBytes)[0]
+    : null;
 
   return (
     <div className="grid gap-6">
@@ -147,16 +153,20 @@ export function DataQualityTab({
             </Button>
             {needsFollowup ? (
               <span className="inline-flex rounded-full border border-caution/25 bg-caution/10 px-3 py-2 text-xs font-medium text-caution">
-                품질 경고가 있어 후보 운영 전에 먼저 이 화면을 확인하는 편이 좋습니다.
+                지금은 후보 운영 전 데이터 품질 경고를 먼저 확인하는 편이 좋습니다.
               </span>
-            ) : null}
+            ) : (
+              <span className="inline-flex rounded-full border border-positive/25 bg-positive/8 px-3 py-2 text-xs font-medium text-positive">
+                현재 기준에서는 데이터 품질 지표가 비교적 안정적입니다.
+              </span>
+            )}
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
             <QualityBadge
               label="validation fallback"
               value={formatPercent(validationFallbackPercent)}
-              note={`${dataQualitySummary?.validationFallbackCount ?? 0}건이 fallback 기준으로 생성됐습니다.`}
+              note={`${dataQualitySummary?.validationFallbackCount ?? 0}건이 fallback 기준으로 생성되었습니다.`}
               tone={getValidationTone(validationFallbackPercent, currentPolicy)}
             />
             <QualityBadge
@@ -164,6 +174,16 @@ export function DataQualityTab({
               value={formatPercent(measuredValidationPercent)}
               note="실측 기반 validation 비율입니다."
               tone={measuredValidationPercent >= 5 ? "positive" : "caution"}
+            />
+            <QualityBadge
+              label="failed batches"
+              value={failedBatchCount > 0 ? `${failedBatchCount}건` : "0건"}
+              note={
+                failedBatchPercent > 0
+                  ? `전체 배치의 ${formatPercent(failedBatchPercent)}가 실패했습니다.`
+                  : "현재 보고 기준으로 실패 배치가 없습니다."
+              }
+              tone={failedBatchPercent >= 20 ? "destructive" : failedBatchPercent > 0 ? "caution" : "positive"}
             />
             <QualityBadge
               label="news live fetch"
@@ -180,6 +200,49 @@ export function DataQualityTab({
               tone={newsFallbackPercent >= 50 ? "caution" : "neutral"}
             />
           </div>
+
+          {validationBasisPercentages ? (
+            <div className="rounded-[24px] border border-border/70 bg-secondary/40 p-4">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-sm font-semibold text-foreground">Validation 근거 분포</p>
+                <p className="text-xs text-muted-foreground">
+                  실측 {formatPercent(validationBasisPercentages.measured)} / 업종 {formatPercent(validationBasisPercentages.sector)}
+                </p>
+              </div>
+              <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+                <QualityBadge
+                  label="measured"
+                  value={formatPercent(validationBasisPercentages.measured)}
+                  note="같은 종목 종료 이력 기반"
+                  tone={validationBasisPercentages.measured >= 5 ? "positive" : "caution"}
+                />
+                <QualityBadge
+                  label="tracking"
+                  value={formatPercent(validationBasisPercentages.tracking)}
+                  note="공용 추적 종료 이력 참고"
+                  tone={validationBasisPercentages.tracking >= 5 ? "neutral" : "caution"}
+                />
+                <QualityBadge
+                  label="sector"
+                  value={formatPercent(validationBasisPercentages.sector)}
+                  note="유사 업종 fallback"
+                  tone={validationBasisPercentages.sector >= 50 ? "caution" : "neutral"}
+                />
+                <QualityBadge
+                  label="pattern"
+                  value={formatPercent(validationBasisPercentages.pattern)}
+                  note="유사 흐름 fallback"
+                  tone={validationBasisPercentages.pattern >= 20 ? "neutral" : "caution"}
+                />
+                <QualityBadge
+                  label="heuristic"
+                  value={formatPercent(validationBasisPercentages.heuristic)}
+                  note="보수 계산 fallback"
+                  tone={validationBasisPercentages.heuristic > 0 ? "destructive" : "positive"}
+                />
+              </div>
+            </div>
+          ) : null}
         </CardContent>
       </Card>
 
@@ -219,7 +282,7 @@ export function DataQualityTab({
                 </div>
               ))
             ) : (
-              <p className="text-sm text-muted-foreground">기록된 배치 step이 없습니다.</p>
+              <p className="text-sm text-muted-foreground">기록된 배치 step이 아직 없습니다.</p>
             )}
           </CardContent>
         </Card>
@@ -252,7 +315,7 @@ export function DataQualityTab({
               })
             ) : (
               <div className="rounded-[24px] border border-positive/25 bg-positive/8 p-4 text-sm text-muted-foreground">
-                현재 threshold 조정 권고가 없습니다.
+                현재 threshold 조정 권고는 없습니다.
               </div>
             )}
 
@@ -294,16 +357,8 @@ export function DataQualityTab({
             />
             <MetricCard
               label="largest section"
-              value={
-                runtimeStorageReport
-                  ? Object.entries(runtimeStorageReport.sections).sort((left, right) => right[1].sizeBytes - left[1].sizeBytes)[0]?.[0] ?? "none"
-                  : "대기"
-              }
-              note={
-                runtimeStorageReport
-                  ? Object.entries(runtimeStorageReport.sections).sort((left, right) => right[1].sizeBytes - left[1].sizeBytes)[0]?.[1]?.sizeLabel ?? "none"
-                  : "section metrics pending"
-              }
+              value={largestRuntimeSection?.[0] ?? "none"}
+              note={largestRuntimeSection?.[1]?.sizeLabel ?? "section metrics pending"}
             />
             <MetricCard
               label="largest doc"
