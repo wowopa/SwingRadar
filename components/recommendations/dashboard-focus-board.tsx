@@ -376,7 +376,7 @@ export function DashboardFocusBoard({
           {personalRuleReminder ? <CompactRuleReminderBanner reminder={personalRuleReminder} /> : null}
 
           <div data-tutorial="today-actions" className="grid gap-3 xl:grid-cols-3">
-            <div data-tutorial="today-opening-card">
+            <div data-tutorial="today-opening-card" className="h-full">
               <PrimaryActionCard
                 href={isMarketClosed ? "/portfolio?tab=reviews" : "/opening-check"}
                 title={isMarketClosed ? "지난 기록 복기" : "장초 확인"}
@@ -387,7 +387,7 @@ export function DashboardFocusBoard({
                 icon={<Clock3 className="h-4 w-4" />}
               />
             </div>
-            <div data-tutorial="today-buy-card">
+            <div data-tutorial="today-buy-card" className="h-full">
               <PrimaryActionCard
                 href={
                   isMarketClosed
@@ -408,7 +408,7 @@ export function DashboardFocusBoard({
                 icon={<Target className="h-4 w-4" />}
               />
             </div>
-            <div data-tutorial="today-holding-card">
+            <div data-tutorial="today-holding-card" className="h-full">
               <PrimaryActionCard
                 href="/portfolio"
                 title="보유 관리"
@@ -1074,7 +1074,13 @@ function PrimaryActionCard({
   const isPrimary = accent === "primary";
 
   return (
-    <Link href={href} className={`rounded-[24px] border p-5 shadow-sm transition ${toneByAccent[accent]}`}>
+    <Link
+      href={href}
+      className={cn(
+        "flex h-full min-h-[224px] flex-col rounded-[24px] border p-5 shadow-sm transition",
+        toneByAccent[accent]
+      )}
+    >
       <div className="flex items-start justify-between gap-3">
         <div className="space-y-2">
           <div className="flex items-center gap-2 text-sm font-semibold">
