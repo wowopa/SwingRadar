@@ -10,6 +10,7 @@ import { Banner, buildWatchlistChanges } from "@/components/admin/dashboard-shar
 import type {
   AccessStatsReportPayload,
   AdminDataQualitySummaryPayload,
+  AdminUsersPayload,
   AdminStatusPayload,
   AuditItem,
   AutoHealReportPayload,
@@ -35,13 +36,14 @@ import type {
 import { OverviewTab } from "@/components/admin/overview-tab";
 import { PortfolioProfileTab } from "@/components/admin/portfolio-profile-tab";
 import { PopupNoticeTab } from "@/components/admin/popup-notice-tab";
+import { UsersTab } from "@/components/admin/users-tab";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAdminToken } from "@/lib/use-admin-token";
 
-const ENABLED_TABS = new Set(["overview", "data-quality", "candidate-ops", "notices", "portfolio"]);
+const ENABLED_TABS = new Set(["overview", "data-quality", "candidate-ops", "users", "notices", "portfolio"]);
 
 function normalizeTab(value: string | null) {
   if (!value) {
@@ -85,6 +87,7 @@ export function AdminDashboard() {
   const [postLaunchHistory, setPostLaunchHistory] = useState<PostLaunchHistoryEntryPayload[]>([]);
   const [thresholdAdviceReport, setThresholdAdviceReport] = useState<ThresholdAdviceReportPayload | null>(null);
   const [dataQualitySummary, setDataQualitySummary] = useState<AdminDataQualitySummaryPayload | null>(null);
+  const [usersPayload, setUsersPayload] = useState<AdminUsersPayload | null>(null);
   const [accessStatsReport, setAccessStatsReport] = useState<AccessStatsReportPayload | null>(null);
   const [runtimeStorageReport, setRuntimeStorageReport] = useState<RuntimeStorageReportPayload | null>(null);
   const [databaseStorageReport, setDatabaseStorageReport] = useState<DatabaseStorageReportPayload | null>(null);
@@ -176,6 +179,7 @@ export function AdminDashboard() {
         setPostLaunchHistory([]);
         setThresholdAdviceReport(null);
         setDataQualitySummary(null);
+        setUsersPayload(null);
         setAccessStatsReport(null);
         setRuntimeStorageReport(null);
         setDatabaseStorageReport(null);
@@ -210,10 +214,11 @@ export function AdminDashboard() {
       setRuntimeStorageReport(statusJson.runtimeStorageReport ?? null);
       setDatabaseStorageReport(statusJson.databaseStorageReport ?? null);
 
-      const [auditResult, popupResult, portfolioResult, watchlistResult, universeResult] = await Promise.allSettled([
+      const [auditResult, popupResult, portfolioResult, usersResult, watchlistResult, universeResult] = await Promise.allSettled([
         fetchJson<{ items: AuditItem[] }>("/api/admin/audit", { headers: authHeaders }),
         fetchJson<{ document: PopupNoticeDocument }>("/api/admin/popup-notice", { headers: authHeaders }),
         fetchJson<{ profile: PortfolioProfilePayload }>("/api/admin/portfolio-profile", { headers: authHeaders }),
+        fetchJson<AdminUsersPayload>("/api/admin/users", { headers: authHeaders }),
         fetchJson<{ items: SymbolSearchItem[]; watchlist: WatchlistEntry[]; syncStatuses: Record<string, WatchlistSyncStatus> }>(
           `/api/admin/watchlist${symbolQuery.trim() ? `?q=${encodeURIComponent(symbolQuery.trim())}` : ""}`,
           { headers: authHeaders }
@@ -247,6 +252,12 @@ export function AdminDashboard() {
         warnings.push({ label: "portfolio-profile", message: getLoadErrorMessage(portfolioResult.reason) });
       }
 
+      if (usersResult.status === "fulfilled") {
+        setUsersPayload(usersResult.value);
+      } else {
+        warnings.push({ label: "users", message: getLoadErrorMessage(usersResult.reason) });
+      }
+
       if (watchlistResult.status === "fulfilled") {
         setSymbolResults(watchlistResult.value.items ?? []);
         setWatchlist(watchlistResult.value.watchlist ?? []);
@@ -268,6 +279,57 @@ export function AdminDashboard() {
     } catch (loadError) {
       setHasAdminAccess(false);
       setError(loadError instanceof Error ? loadError.message : "운영 데이터를 불러오지 못했습니다.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function loadUsers(query?: string) {
+    if (!authHeaders) {
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const normalizedQuery = query?.trim() ?? "";
+      const json = await fetchJson<AdminUsersPayload>(
+        `/api/admin/users${normalizedQuery ? `?q=${encodeURIComponent(normalizedQuery)}` : ""}`,
+        { headers: authHeaders }
+      );
+      setUsersPayload(json);
+    } catch (loadError) {
+      setError(loadError instanceof Error ? loadError.message : "가입자 목록을 불러오지 못했습니다.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function revokeUserSessions(userId: string) {
+    if (!authHeaders) {
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+    setMessage(null);
+
+    try {
+      const json = await fetchJson<{ result: { removedCount: number } }>("/api/admin/users", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...authHeaders },
+        body: JSON.stringify({ userId, action: "revoke-sessions" })
+      });
+
+      setMessage(
+        json.result.removedCount > 0
+          ? `가입자 세션 ${json.result.removedCount}개를 초기화했습니다.`
+          : "초기화할 활성 세션이 없습니다."
+      );
+      await loadUsers(usersPayload?.query ?? "");
+    } catch (revokeError) {
+      setError(revokeError instanceof Error ? revokeError.message : "가입자 세션 초기화에 실패했습니다.");
     } finally {
       setLoading(false);
     }
@@ -584,6 +646,7 @@ export function AdminDashboard() {
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="data-quality">Data Quality</TabsTrigger>
             <TabsTrigger value="candidate-ops">Candidate Ops</TabsTrigger>
+            <TabsTrigger value="users">Users</TabsTrigger>
             <TabsTrigger value="notices">Notices</TabsTrigger>
             <TabsTrigger value="portfolio">Internal Portfolio</TabsTrigger>
           </TabsList>
@@ -638,6 +701,16 @@ export function AdminDashboard() {
               watchlistChanges={watchlistChanges}
               onSaveMetadata={() => void saveWatchlistMetadata()}
               onSelectTab={(nextTab) => setTab(nextTab)}
+            />
+          </TabsContent>
+
+          <TabsContent value="users">
+            <UsersTab
+              usersPayload={usersPayload}
+              loading={loading}
+              onSearch={(query) => void loadUsers(query)}
+              onResetSearch={() => void loadUsers("")}
+              onRevokeSessions={(userId) => void revokeUserSessions(userId)}
             />
           </TabsContent>
 

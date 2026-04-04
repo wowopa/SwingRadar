@@ -257,6 +257,35 @@ export type AdminDataQualitySummaryPayload = {
   newsFileFallbackPercent: number | null;
 };
 
+export type AdminUserItemPayload = {
+  id: string;
+  email: string;
+  displayName: string;
+  createdAt: string;
+  updatedAt: string;
+  activeSessionCount: number;
+  lastActivityAt: string | null;
+  portfolioConfigured: boolean;
+  portfolioPositionCount: number;
+  portfolioUpdatedAt: string | null;
+};
+
+export type AdminUsersSummaryPayload = {
+  totalUsers: number;
+  recentSignups7d: number;
+  activeUsers: number;
+  configuredPortfolios: number;
+  activeSessions: number;
+};
+
+export type AdminUsersPayload = {
+  ok: boolean;
+  requestId: string;
+  summary: AdminUsersSummaryPayload;
+  items: AdminUserItemPayload[];
+  query: string;
+};
+
 export type AdminStatusPayload = {
   ok: boolean;
   requestId: string;

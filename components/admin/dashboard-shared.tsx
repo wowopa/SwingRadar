@@ -129,7 +129,8 @@ export function formatAuditEventType(eventType: string) {
     watchlist_update: "예외 편입 수정",
     universe_review_update: "유니버스 후보 검토",
     opening_recheck_update: "장초 확인 저장",
-    provider_fallback: "데이터 provider fallback"
+    provider_fallback: "데이터 provider fallback",
+    admin_user_sessions_revoked: "가입자 세션 초기화"
   };
 
   return labels[eventType] ?? eventType;
