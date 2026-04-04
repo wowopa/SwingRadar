@@ -76,6 +76,25 @@ function getNewsLiveTone(value: number | null | undefined, policy: ThresholdAdvi
   return "positive" as const;
 }
 
+function getRecommendationAction(key: string): { label: string; tab: DataQualityTargetTab } {
+  const normalized = key.toLowerCase();
+
+  if (
+    normalized.includes("validation") ||
+    normalized.includes("news") ||
+    normalized.includes("candidate") ||
+    normalized.includes("watchlist")
+  ) {
+    return { label: "Candidate Ops 열기", tab: "candidate-ops" };
+  }
+
+  if (normalized.includes("notice") || normalized.includes("popup")) {
+    return { label: "공지 열기", tab: "notices" };
+  }
+
+  return { label: "Overview 보기", tab: "overview" };
+}
+
 export function DataQualityTab({
   dataQualitySummary,
   dailyCycleReport,
@@ -128,7 +147,7 @@ export function DataQualityTab({
             </Button>
             {needsFollowup ? (
               <span className="inline-flex rounded-full border border-caution/25 bg-caution/10 px-3 py-2 text-xs font-medium text-caution">
-                먼저 이 화면에서 품질 경고를 확인한 뒤 후보 운영으로 넘어가세요.
+                품질 경고가 있어 후보 운영 전에 먼저 이 화면을 확인하는 편이 좋습니다.
               </span>
             ) : null}
           </div>
@@ -211,17 +230,26 @@ export function DataQualityTab({
           </CardHeader>
           <CardContent className="space-y-3">
             {thresholdAdviceReport?.recommendations?.length ? (
-              thresholdAdviceReport.recommendations.map((item) => (
-                <div key={item.key} className="rounded-[24px] border border-caution/25 bg-caution/8 p-4">
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="text-sm font-semibold text-foreground">{item.key}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {item.currentValue} → {item.suggestedValue}
-                    </p>
+              thresholdAdviceReport.recommendations.map((item) => {
+                const action = getRecommendationAction(item.key);
+
+                return (
+                  <div key={item.key} className="rounded-[24px] border border-caution/25 bg-caution/8 p-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="text-sm font-semibold text-foreground">{item.key}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {item.currentValue} → {item.suggestedValue}
+                      </p>
+                    </div>
+                    <p className="mt-2 text-sm leading-6 text-muted-foreground">{item.reason}</p>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <Button variant="outline" size="sm" onClick={() => onSelectTab(action.tab)}>
+                        {action.label}
+                      </Button>
+                    </div>
                   </div>
-                  <p className="mt-2 text-sm leading-6 text-muted-foreground">{item.reason}</p>
-                </div>
-              ))
+                );
+              })
             ) : (
               <div className="rounded-[24px] border border-positive/25 bg-positive/8 p-4 text-sm text-muted-foreground">
                 현재 threshold 조정 권고가 없습니다.

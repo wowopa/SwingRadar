@@ -557,19 +557,25 @@ export function AdminDashboard() {
       {error ? <Banner tone="error" message={error} /> : null}
 
       {hasAdminAccess && sectionWarnings.length ? (
-        <Card className="border-destructive/30 bg-destructive/5">
-          <CardHeader>
-            <CardTitle>섹션 경고</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
+        <details className="group rounded-[28px] border border-destructive/30 bg-destructive/5" open={sectionWarnings.length <= 2}>
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-6 py-5">
+            <div>
+              <p className="text-sm font-semibold text-foreground">섹션 경고 {sectionWarnings.length}건</p>
+              <p className="mt-1 text-sm text-muted-foreground">{sectionWarnings[0]?.message}</p>
+            </div>
+            <span className="inline-flex rounded-full border border-destructive/20 bg-white/80 px-3 py-1 text-xs text-destructive">
+              펼쳐 보기
+            </span>
+          </summary>
+          <div className="space-y-3 border-t border-destructive/10 px-6 py-5">
             {sectionWarnings.map((warning) => (
               <div key={warning.label} className="rounded-[20px] border border-destructive/20 bg-background/80 p-4">
                 <p className="text-sm font-semibold text-foreground">{warning.label}</p>
                 <p className="mt-2 text-sm text-muted-foreground">{warning.message}</p>
               </div>
             ))}
-          </CardContent>
-        </Card>
+          </div>
+        </details>
       ) : null}
 
       {hasAdminAccess ? (
