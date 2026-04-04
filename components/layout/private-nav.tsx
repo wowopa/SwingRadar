@@ -48,30 +48,29 @@ export function PrivateNav({ iconOnly = false }: { iconOnly?: boolean }) {
             key={item.href}
             href={item.href}
             className={cn(
-              "inline-flex shrink-0 items-center transition-colors duration-200",
+              "group inline-flex shrink-0 items-center transition-colors duration-200",
               iconOnly ? "h-10 w-10 justify-center rounded-full" : "h-10 gap-2 px-2.5",
-              isActive
-                ? iconOnly
-                  ? "text-white"
-                  : "text-white"
-                : iconOnly
-                  ? "text-white/52 hover:text-white"
-                  : "text-white/52 hover:text-white"
+              isActive ? undefined : undefined
             )}
             aria-label={item.label}
             title={item.label}
           >
             <div
               className={cn(
-                "flex items-center justify-center",
+                "flex items-center justify-center transition-colors duration-200",
                 iconOnly ? "h-10 w-10 rounded-full" : "h-4 w-4 rounded-none",
-                isActive ? "text-white" : "text-current"
+                isActive ? "text-white" : "text-slate-300 group-hover:text-white"
               )}
             >
               <Icon className="h-4 w-4" />
             </div>
             {!iconOnly ? (
-              <p className={cn("min-w-0 text-sm", isActive ? "font-bold" : "font-medium")}>
+              <p
+                className={cn(
+                  "min-w-0 text-sm transition-colors duration-200",
+                  isActive ? "font-bold text-white" : "font-medium text-slate-300 group-hover:text-white"
+                )}
+              >
                 {item.label}
               </p>
             ) : null}
