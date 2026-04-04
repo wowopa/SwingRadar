@@ -268,6 +268,18 @@ export type AdminUserItemPayload = {
   portfolioConfigured: boolean;
   portfolioPositionCount: number;
   portfolioUpdatedAt: string | null;
+  status: "active" | "suspended";
+  suspendedUntil: string | null;
+  adminNote: string | null;
+  journalEventCount: number;
+  closeReviewCount: number;
+  personalRuleCount: number;
+  openingScanCount: number;
+  recentSessions: Array<{
+    id: string;
+    updatedAt: string;
+    expiresAt: string;
+  }>;
 };
 
 export type AdminUsersSummaryPayload = {
@@ -276,6 +288,7 @@ export type AdminUsersSummaryPayload = {
   activeUsers: number;
   configuredPortfolios: number;
   activeSessions: number;
+  suspendedUsers: number;
 };
 
 export type AdminUsersPayload = {

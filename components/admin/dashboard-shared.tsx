@@ -130,7 +130,11 @@ export function formatAuditEventType(eventType: string) {
     universe_review_update: "유니버스 후보 검토",
     opening_recheck_update: "장초 확인 저장",
     provider_fallback: "데이터 provider fallback",
-    admin_user_sessions_revoked: "가입자 세션 초기화"
+    admin_user_sessions_revoked: "가입자 세션 초기화",
+    admin_user_updated: "가입자 정보 수정",
+    admin_user_suspended: "가입자 정지",
+    admin_user_reactivated: "가입자 정지 해제",
+    admin_user_deleted: "가입자 삭제"
   };
 
   return labels[eventType] ?? eventType;

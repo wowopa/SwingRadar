@@ -335,6 +335,106 @@ export function AdminDashboard() {
     }
   }
 
+  async function updateUserAccount(input: { userId: string; email: string; displayName: string; adminNote: string }) {
+    if (!authHeaders) {
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+    setMessage(null);
+
+    try {
+      await fetchJson("/api/admin/users", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...authHeaders },
+        body: JSON.stringify({ action: "update-account", ...input })
+      });
+      setMessage("가입자 계정 정보를 저장했습니다.");
+      await loadUsers(usersPayload?.query ?? "");
+    } catch (updateError) {
+      setError(updateError instanceof Error ? updateError.message : "가입자 계정 수정에 실패했습니다.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function suspendUserAccount(input: { userId: string; days: number; adminNote: string }) {
+    if (!authHeaders) {
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+    setMessage(null);
+
+    try {
+      const json = await fetchJson<{ result: { suspendedUntil: string; removedSessions: number } }>("/api/admin/users", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...authHeaders },
+        body: JSON.stringify({ action: "suspend-account", ...input })
+      });
+      setMessage(
+        `${input.days}일 정지를 적용했습니다. ${
+          json.result.removedSessions > 0 ? `활성 세션 ${json.result.removedSessions}개도 함께 정리했습니다.` : ""
+        }`.trim()
+      );
+      await loadUsers(usersPayload?.query ?? "");
+    } catch (suspendError) {
+      setError(suspendError instanceof Error ? suspendError.message : "가입자 계정 정지에 실패했습니다.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function clearUserSuspension(userId: string) {
+    if (!authHeaders) {
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+    setMessage(null);
+
+    try {
+      await fetchJson("/api/admin/users", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...authHeaders },
+        body: JSON.stringify({ action: "clear-suspension", userId })
+      });
+      setMessage("가입자 정지를 해제했습니다.");
+      await loadUsers(usersPayload?.query ?? "");
+    } catch (clearError) {
+      setError(clearError instanceof Error ? clearError.message : "가입자 정지 해제에 실패했습니다.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function deleteUserAccount(userId: string) {
+    if (!authHeaders) {
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+    setMessage(null);
+
+    try {
+      const json = await fetchJson<{ result: { email: string } }>("/api/admin/users", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...authHeaders },
+        body: JSON.stringify({ action: "delete-account", userId })
+      });
+      setMessage(`${json.result.email} 계정을 삭제했습니다.`);
+      await loadUsers(usersPayload?.query ?? "");
+    } catch (deleteError) {
+      setError(deleteError instanceof Error ? deleteError.message : "가입자 계정 삭제에 실패했습니다.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
   async function savePopupNotice() {
     if (!authHeaders || !popupNotice) {
       return;
@@ -711,6 +811,10 @@ export function AdminDashboard() {
               onSearch={(query) => void loadUsers(query)}
               onResetSearch={() => void loadUsers("")}
               onRevokeSessions={(userId) => void revokeUserSessions(userId)}
+              onUpdateUser={(input) => void updateUserAccount(input)}
+              onSuspendUser={(input) => void suspendUserAccount(input)}
+              onClearSuspension={(userId) => void clearUserSuspension(userId)}
+              onDeleteUser={(userId) => void deleteUserAccount(userId)}
             />
           </TabsContent>
 

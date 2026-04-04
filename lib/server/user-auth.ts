@@ -18,6 +18,9 @@ const USER_SESSION_TTL_DAYS = 30;
 interface StoredUserAccount extends AuthUser {
   passwordSalt: string;
   passwordHash: string;
+  status?: "active" | "suspended";
+  suspendedUntil?: string;
+  adminNote?: string;
 }
 
 interface StoredUserSession {
@@ -90,6 +93,19 @@ function toPublicUser(account: StoredUserAccount): AuthUser {
   };
 }
 
+function resolveStoredAccountStatus(account: StoredUserAccount, now = Date.now()) {
+  if (account.status !== "suspended") {
+    return "active" as const;
+  }
+
+  const suspendedUntil = account.suspendedUntil ? new Date(account.suspendedUntil).getTime() : null;
+  if (suspendedUntil && Number.isFinite(suspendedUntil) && suspendedUntil > now) {
+    return "suspended" as const;
+  }
+
+  return "active" as const;
+}
+
 function hashPassword(password: string, salt: string) {
   return scryptSync(password, salt, 64).toString("hex");
 }
@@ -136,6 +152,9 @@ function normalizeAccount(value: unknown): StoredUserAccount | null {
     displayName,
     passwordSalt,
     passwordHash,
+    status: payload.status === "suspended" ? "suspended" : "active",
+    suspendedUntil: normalizeOptionalString(payload.suspendedUntil) ?? undefined,
+    adminNote: normalizeOptionalString(payload.adminNote) ?? undefined,
     createdAt,
     updatedAt
   };
@@ -322,6 +341,7 @@ export async function createUserAccount(input: {
     email,
     displayName,
     ...createPasswordHash(password),
+    status: "active",
     createdAt: now,
     updatedAt: now
   };
@@ -340,7 +360,17 @@ export async function authenticateUserAccount(input: { email: string; password: 
   const account = userId ? document.accounts[userId] : null;
 
   if (!account || !verifyPassword(input.password, account)) {
-    throw new ApiError(401, "AUTH_INVALID_CREDENTIALS", "이메일 또는 비밀번호가 맞지 않습니다.");
+    throw new ApiError(401, "AUTH_INVALID_CREDENTIALS", "이메일 또는 비밀번호가 올바르지 않습니다.");
+  }
+
+  if (resolveStoredAccountStatus(account) === "suspended") {
+    throw new ApiError(
+      403,
+      "AUTH_ACCOUNT_SUSPENDED",
+      account.suspendedUntil
+        ? `계정이 ${account.suspendedUntil.slice(0, 10)}까지 정지되어 있습니다.`
+        : "계정이 정지되어 있습니다."
+    );
   }
 
   return toPublicUser(account);
@@ -386,6 +416,10 @@ async function resolveSessionByRawToken(rawToken: string | null): Promise<AuthSe
 
   const account = accountsDocument.accounts[session.userId];
   if (!account) {
+    return null;
+  }
+
+  if (resolveStoredAccountStatus(account) === "suspended") {
     return null;
   }
 

@@ -16,7 +16,11 @@ export type AuditEventType =
   | "opening_recheck_update"
   | "provider_fallback"
   | "auto_heal_run"
-  | "admin_user_sessions_revoked";
+  | "admin_user_sessions_revoked"
+  | "admin_user_updated"
+  | "admin_user_suspended"
+  | "admin_user_reactivated"
+  | "admin_user_deleted";
 
 export interface AuditLogRecord {
   id: number;
