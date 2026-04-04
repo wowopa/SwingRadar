@@ -667,11 +667,16 @@ export function DailyCandidatesPanel({
         {personalRuleReminder ? (
           <div className="rounded-2xl border border-caution/24 bg-[hsl(var(--caution)/0.1)] px-4 py-3">
             <div className="flex flex-wrap items-center gap-2">
-              <Badge variant="caution">내 규칙</Badge>
-              <p className="text-sm font-medium text-foreground">{personalRuleReminder.primaryRule}</p>
+              <Badge variant="caution">오늘 먼저 볼 규칙</Badge>
+              <p className="text-sm font-medium text-foreground">{personalRuleReminder.headline}</p>
             </div>
+            <p className="mt-2 text-base font-semibold text-foreground">{personalRuleReminder.primaryRule}</p>
+            <p className="mt-1 text-xs leading-5 text-muted-foreground">{personalRuleReminder.note}</p>
             {personalRuleReminder.secondaryRules.length ? (
-              <div className="mt-2 flex flex-wrap gap-2">
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <span className="text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
+                  함께 보기
+                </span>
                 {personalRuleReminder.secondaryRules.map((rule) => (
                   <span
                     key={rule}

@@ -279,15 +279,15 @@ function buildPersonalRuleReminder(
   const repeatedCount = sortedNotes.filter((item) => item.count > 1).length;
 
   return {
-    headline: primary.kind === "next" ? "내 다음 규칙" : "내가 자주 놓친 점",
+    headline: primary.kind === "next" ? "오늘 먼저 기억할 규칙" : "오늘 먼저 피할 실수",
     primaryRule: primary.text,
     secondaryRules,
     note:
       primary.count > 1
-        ? `최근 종료 회고 ${primary.count}건에서 반복된 규칙입니다.`
+        ? `최근 종료 거래 ${primary.count}건에서 반복된 문장입니다.`
         : repeatedCount > 0
-          ? "최근 종료 회고에서 반복된 주의점을 먼저 확인하세요."
-          : "최근 종료 회고에서 남긴 개인 규칙입니다."
+          ? "최근 회고에서 자주 나온 주의점입니다."
+          : "최근 회고에서 직접 남긴 개인 규칙입니다."
   };
 }
 

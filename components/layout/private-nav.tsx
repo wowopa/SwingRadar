@@ -52,7 +52,7 @@ export function PrivateNav({ iconOnly = false }: { iconOnly?: boolean }) {
               iconOnly ? "h-10 w-10 justify-center rounded-full" : "h-10 gap-2 px-2.5",
               isActive
                 ? "font-bold text-white"
-                : "font-medium text-white/58 hover:text-white"
+                : "font-medium text-slate-300 hover:text-white"
             )}
             aria-label={item.label}
             title={item.label}

@@ -1011,13 +1011,17 @@ function CompactRuleReminderBanner({ reminder }: { reminder: PersonalRuleReminde
     <div className="rounded-[24px] border border-caution/24 bg-[hsl(var(--caution)/0.1)] px-4 py-3">
       <div className="flex flex-wrap items-center gap-2">
         <Badge variant="caution" className="whitespace-nowrap">
-          내 규칙 우선
+          오늘 먼저 기억할 점
         </Badge>
         <p className="text-sm font-medium text-foreground">{reminder.headline}</p>
       </div>
-      <p className="mt-1 text-sm text-foreground/88">{reminder.primaryRule}</p>
+      <p className="mt-2 text-base font-semibold text-foreground">{reminder.primaryRule}</p>
+      <p className="mt-1 text-xs leading-5 text-muted-foreground">{reminder.note}</p>
       {reminder.secondaryRules.length ? (
-        <div className="mt-2 flex flex-wrap gap-2">
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <span className="text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
+            함께 보기
+          </span>
           {reminder.secondaryRules.map((rule) => (
             <span
               key={rule}
@@ -1028,7 +1032,6 @@ function CompactRuleReminderBanner({ reminder }: { reminder: PersonalRuleReminde
           ))}
         </div>
       ) : null}
-      <p className="mt-2 text-xs leading-5 text-muted-foreground">{reminder.note}</p>
     </div>
   );
 }
