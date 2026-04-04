@@ -27,6 +27,7 @@ import type {
   TodayActionBoardDto,
   TodayActionBoardItemDto,
   TodayActionBoardSummaryDto,
+  TodayCommunityStatsDto,
   TodayActionSummaryDto
 } from "@/lib/api-contracts/swing-radar";
 import { cn, formatPrice } from "@/lib/utils";
@@ -257,6 +258,7 @@ export function DashboardFocusBoard({
   strategyPerformanceHint,
   personalRuleReminder,
   personalRuleAlert,
+  todayCommunityStats,
   openingReview,
   openingCheckCompleted = false
 }: {
@@ -270,6 +272,7 @@ export function DashboardFocusBoard({
   strategyPerformanceHint?: StrategyPerformanceHintDto;
   personalRuleReminder?: PersonalRuleReminderDto;
   personalRuleAlert?: PersonalRuleAlertDto;
+  todayCommunityStats?: TodayCommunityStatsDto;
   openingReview?: OpeningRecheckReviewDto;
   openingCheckCompleted?: boolean;
 }) {
@@ -383,6 +386,8 @@ export function DashboardFocusBoard({
               icon={<ShieldAlert className="h-4 w-4" />}
             />
           </div>
+
+          {todayCommunityStats ? <TodayCommunityPulseCard stats={todayCommunityStats} /> : null}
         </CardContent>
       </Card>
 
@@ -602,6 +607,56 @@ export function DashboardFocusBoard({
         </div>
       </details>
     </section>
+  );
+}
+
+function TodayCommunityPulseCard({ stats }: { stats: TodayCommunityStatsDto }) {
+  return (
+    <div className="rounded-[24px] border border-border/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.95),rgba(246,241,232,0.88))] p-4 shadow-[0_16px_40px_-32px_rgba(24,32,42,0.18)]">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="space-y-1">
+          <p className="text-sm font-semibold text-foreground">{stats.headline}</p>
+          <p className="text-xs leading-5 text-muted-foreground">{stats.note}</p>
+        </div>
+        <Badge variant="secondary" className="shrink-0 whitespace-nowrap">
+          익명 집계
+        </Badge>
+      </div>
+      <div className="mt-4 grid gap-3 lg:grid-cols-3">
+        {stats.stats.map((item) => (
+          <Link
+            key={`${item.label}-${item.ticker}`}
+            href={`/analysis/${item.ticker}`}
+            className="rounded-[20px] border border-border/80 bg-white/88 px-4 py-3 transition hover:border-primary/24 hover:bg-white"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+                  {item.label}
+                </p>
+                <p className="mt-2 truncate text-sm font-semibold text-foreground">
+                  {item.company}
+                  <span className="ml-1 text-xs font-medium text-muted-foreground">{item.ticker}</span>
+                </p>
+                <p className="mt-2 text-xs leading-5 text-muted-foreground">{item.note}</p>
+              </div>
+              <Badge
+                variant={
+                  item.tone === "positive"
+                    ? "positive"
+                    : item.tone === "caution"
+                      ? "caution"
+                      : "neutral"
+                }
+                className="shrink-0 whitespace-nowrap"
+              >
+                {item.countLabel}
+              </Badge>
+            </div>
+          </Link>
+        ))}
+      </div>
+    </div>
   );
 }
 

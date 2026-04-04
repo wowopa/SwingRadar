@@ -184,6 +184,22 @@ export interface PersonalRuleAlert {
   ctaHref: string;
 }
 
+export interface TodayCommunityStat {
+  label: string;
+  ticker: string;
+  company: string;
+  count: number;
+  countLabel: string;
+  note: string;
+  tone: "positive" | "neutral" | "caution";
+}
+
+export interface TodayCommunityStats {
+  headline: string;
+  note: string;
+  stats: TodayCommunityStat[];
+}
+
 export interface OpeningRecheckTickerInsight {
   scanKey: string;
   signalDate: string;

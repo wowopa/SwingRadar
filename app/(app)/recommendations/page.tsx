@@ -38,6 +38,7 @@ export default async function RecommendationsPage({
         strategyPerformanceHint={response.strategyPerformanceHint}
         personalRuleReminder={response.personalRuleReminder}
         personalRuleAlert={response.personalRuleAlert}
+        todayCommunityStats={response.todayCommunityStats}
         openingReview={response.openingReview}
         openingCheckCompleted={openingCheckCompleted}
       />

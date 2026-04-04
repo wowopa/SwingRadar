@@ -18,7 +18,8 @@ const mocks = vi.hoisted(() => ({
   loadPortfolioPersonalRulesForUser: vi.fn(),
   loadPortfolioProfileDocument: vi.fn(),
   loadPortfolioProfileForUser: vi.fn(),
-  isPortfolioProfileConfigured: vi.fn()
+  isPortfolioProfileConfigured: vi.fn(),
+  buildTodayCommunityStats: vi.fn()
 }));
 
 vi.mock("@/lib/providers", () => ({
@@ -59,6 +60,10 @@ vi.mock("@/lib/server/portfolio-profile", () => ({
   loadPortfolioProfileDocument: mocks.loadPortfolioProfileDocument,
   loadPortfolioProfileForUser: mocks.loadPortfolioProfileForUser,
   isPortfolioProfileConfigured: mocks.isPortfolioProfileConfigured
+}));
+
+vi.mock("@/lib/server/today-community-stats", () => ({
+  buildTodayCommunityStats: mocks.buildTodayCommunityStats
 }));
 
 import { listRecommendations } from "@/lib/services/recommendations-service";
@@ -201,6 +206,7 @@ describe("listRecommendations", () => {
     mocks.loadPortfolioProfileDocument.mockResolvedValue(createEmptyProfile());
     mocks.loadPortfolioProfileForUser.mockResolvedValue(createEmptyProfile());
     mocks.isPortfolioProfileConfigured.mockReturnValue(false);
+    mocks.buildTodayCommunityStats.mockResolvedValue(undefined);
   });
 
   it("limits items to daily scan candidates and includes saved recheck state", async () => {

@@ -40,6 +40,7 @@ import {
   loadPortfolioProfileForUser
 } from "@/lib/server/portfolio-profile";
 import { getSymbolByTicker } from "@/lib/server/runtime-symbol-master";
+import { buildTodayCommunityStats } from "@/lib/server/today-community-stats";
 import { listUserOpeningRecheckDecisions, listUserOpeningRecheckScans } from "@/lib/server/user-opening-recheck-board";
 import type { RecommendationsQuery } from "@/lib/server/query-schemas";
 import { formatPrice } from "@/lib/utils";
@@ -506,6 +507,9 @@ export async function listRecommendations(
       : Promise.resolve(emptyOpeningRecheckByTicker),
     listOpeningRecheckScans()
   ]);
+  const todayCommunityStats = await buildTodayCommunityStats({
+    scanKey: dailyCandidates?.generatedAt ?? null
+  });
   const sourceByTicker = new Map(source.items.map((item) => [item.ticker, item]));
   const dailyCandidateByTicker = new Map((dailyCandidates?.topCandidates ?? []).map((candidate) => [candidate.ticker, candidate]));
   const featuredRankByTicker = new Map(
@@ -770,6 +774,7 @@ export async function listRecommendations(
     openingCheckPositivePattern,
     strategyPerformanceHint,
     personalRuleReminder,
-    personalRuleAlert
+    personalRuleAlert,
+    todayCommunityStats
   };
 }

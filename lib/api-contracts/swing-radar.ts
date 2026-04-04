@@ -159,6 +159,22 @@ export interface PersonalRuleAlertDto {
   ctaHref: string;
 }
 
+export interface TodayCommunityStatDto {
+  label: string;
+  ticker: string;
+  company: string;
+  count: number;
+  countLabel: string;
+  note: string;
+  tone: "positive" | "neutral" | "caution";
+}
+
+export interface TodayCommunityStatsDto {
+  headline: string;
+  note: string;
+  stats: TodayCommunityStatDto[];
+}
+
 export interface OpeningRecheckTickerInsightDto {
   scanKey: string;
   signalDate: string;
@@ -457,6 +473,7 @@ export interface RecommendationsResponseDto {
   strategyPerformanceHint?: StrategyPerformanceHintDto;
   personalRuleReminder?: PersonalRuleReminderDto;
   personalRuleAlert?: PersonalRuleAlertDto;
+  todayCommunityStats?: TodayCommunityStatsDto;
 }
 
 export interface AnalysisSummaryMetricDto {
