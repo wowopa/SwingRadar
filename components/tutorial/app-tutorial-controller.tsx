@@ -27,6 +27,18 @@ interface SpotlightRect {
   label?: string;
 }
 
+function isVisibleTutorialTarget(element: HTMLElement) {
+  const rect = element.getBoundingClientRect();
+  const style = window.getComputedStyle(element);
+
+  return rect.width > 0 && rect.height > 0 && style.visibility !== "hidden" && style.display !== "none";
+}
+
+function findTutorialTarget(selector: string) {
+  const elements = Array.from(document.querySelectorAll<HTMLElement>(selector));
+  return elements.find((element) => isVisibleTutorialTarget(element)) ?? null;
+}
+
 function loadTutorialProgress() {
   if (typeof window === "undefined") {
     return {};
@@ -119,7 +131,7 @@ export function AppTutorialController() {
       return;
     }
 
-    const target = document.querySelector<HTMLElement>(currentStep.target);
+    const target = findTutorialTarget(currentStep.target);
     if (!target) {
       return;
     }
@@ -129,9 +141,10 @@ export function AppTutorialController() {
     const bottomThreshold = window.innerHeight - (window.innerWidth < 640 ? 240 : 164);
 
     if (rect.top < topThreshold || rect.bottom > bottomThreshold) {
-      target.scrollIntoView({
-        block: "center",
-        inline: "nearest",
+      const absoluteTop = window.scrollY + rect.top;
+      const nextTop = Math.max(absoluteTop - topThreshold - 16, 0);
+      window.scrollTo({
+        top: nextTop,
         behavior: "smooth"
       });
     }
@@ -148,7 +161,7 @@ export function AppTutorialController() {
     const updateSpotlight = () => {
       cancelAnimationFrame(frame);
       frame = window.requestAnimationFrame(() => {
-        const target = document.querySelector<HTMLElement>(currentStep.target!);
+        const target = findTutorialTarget(currentStep.target!);
         if (!target) {
           setSpotlight(null);
           return;
@@ -196,6 +209,22 @@ export function AppTutorialController() {
     stepIndex
   ]);
 
+  useEffect(() => {
+    if (!isOpen || !scope || !currentStep) {
+      return;
+    }
+
+    window.dispatchEvent(
+      new CustomEvent("swing-radar:tutorial-step", {
+        detail: {
+          scope,
+          stepIndex,
+          target: currentStep.target ?? null
+        }
+      })
+    );
+  }, [currentStep, isOpen, scope, stepIndex]);
+
   if (!isHydrated || !definition || !scope || !currentStep || !isOpen) {
     return null;
   }
@@ -233,7 +262,7 @@ export function AppTutorialController() {
       <button
         type="button"
         aria-label="튜토리얼 닫기"
-        className="fixed z-[90] bg-[rgba(15,20,31,0.2)] transition-colors"
+        className="fixed z-[90] m-0 appearance-none rounded-none border-0 bg-[rgba(15,20,31,0.2)] p-0 shadow-none outline-none transition-colors"
         onClick={markSeenAndClose}
         style={style}
       />

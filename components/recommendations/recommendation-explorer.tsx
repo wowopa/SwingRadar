@@ -421,7 +421,10 @@ export function RecommendationExplorer({
           </details>
         ) : null}
 
-        <details className="rounded-3xl border border-border/80 bg-white/90 shadow-[0_18px_46px_-32px_rgba(24,32,42,0.22)]">
+        <details
+          data-tutorial="signals-filters"
+          className="rounded-3xl border border-border/80 bg-white/90 shadow-[0_18px_46px_-32px_rgba(24,32,42,0.22)]"
+        >
           <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-sm font-semibold text-foreground [&::-webkit-details-marker]:hidden">
             필터 / 검색
             <Badge variant="secondary">{filteredItems.length}개 표시</Badge>
@@ -490,7 +493,10 @@ export function RecommendationExplorer({
         </details>
       </div>
 
-      <section className="hidden gap-4 rounded-3xl border border-border/80 bg-white/90 p-5 shadow-[0_18px_46px_-32px_rgba(24,32,42,0.22)] lg:grid lg:grid-cols-[minmax(0,1.5fr)_repeat(5,minmax(0,0.75fr))] lg:items-end">
+      <section
+        data-tutorial="signals-filters"
+        className="hidden gap-4 rounded-3xl border border-border/80 bg-white/90 p-5 shadow-[0_18px_46px_-32px_rgba(24,32,42,0.22)] lg:grid lg:grid-cols-[minmax(0,1.5fr)_repeat(5,minmax(0,0.75fr))] lg:items-end"
+      >
         <div>
           <p className="mb-2 text-sm text-muted-foreground">종목명, 티커, 섹터로 바로 찾을 수 있습니다.</p>
           <Input

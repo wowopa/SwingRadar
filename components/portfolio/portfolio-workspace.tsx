@@ -193,6 +193,39 @@ export function PortfolioWorkspace({
     setActiveTab(requestedTab);
   }, [requestedTab]);
 
+  useEffect(() => {
+    function handleTutorialStep(event: Event) {
+      const customEvent = event as CustomEvent<{
+        scope?: string;
+        stepIndex?: number;
+      }>;
+
+      if (customEvent.detail?.scope !== "portfolio") {
+        return;
+      }
+
+      const nextTabByStep: Record<number, PortfolioWorkspaceTab> = {
+        0: "holdings",
+        1: "holdings",
+        2: "journal",
+        3: "reviews",
+        4: "performance"
+      };
+
+      const nextTab = nextTabByStep[customEvent.detail.stepIndex ?? -1];
+      if (!nextTab) {
+        return;
+      }
+
+      setActiveTab(nextTab);
+    }
+
+    window.addEventListener("swing-radar:tutorial-step", handleTutorialStep as EventListener);
+    return () => {
+      window.removeEventListener("swing-radar:tutorial-step", handleTutorialStep as EventListener);
+    };
+  }, []);
+
   function handleSaved(nextProfile: PortfolioProfilePayload) {
     setProfile(nextProfile);
     setIsSettingsOpen(false);
@@ -412,33 +445,39 @@ export function PortfolioWorkspace({
         </TabsContent>
 
         <TabsContent value="journal" className="mt-0">
-          <PortfolioJournalBoard
-            journal={journal}
-            positions={profile.positions}
-            currentProfile={profile}
-            view="journal"
-            focusTicker={tradeFollowUp?.highlightTab === "journal" ? tradeFollowUp.ticker : null}
-            onJournalUpdated={handleTradeSaved}
-          />
+          <div data-tutorial="portfolio-journal">
+            <PortfolioJournalBoard
+              journal={journal}
+              positions={profile.positions}
+              currentProfile={profile}
+              view="journal"
+              focusTicker={tradeFollowUp?.highlightTab === "journal" ? tradeFollowUp.ticker : null}
+              onJournalUpdated={handleTradeSaved}
+            />
+          </div>
         </TabsContent>
 
         <TabsContent value="reviews" className="mt-0">
-          <PortfolioReviewsBoard
-            journal={journal}
-            openingCheckScans={openingCheckScans}
-            closeReviews={closeReviews}
-            personalRules={personalRules}
-            focusTicker={tradeFollowUp?.highlightTab === "reviews" ? tradeFollowUp.ticker : null}
-          />
+          <div data-tutorial="portfolio-reviews">
+            <PortfolioReviewsBoard
+              journal={journal}
+              openingCheckScans={openingCheckScans}
+              closeReviews={closeReviews}
+              personalRules={personalRules}
+              focusTicker={tradeFollowUp?.highlightTab === "reviews" ? tradeFollowUp.ticker : null}
+            />
+          </div>
         </TabsContent>
 
         <TabsContent value="performance" className="mt-0">
-          <PortfolioPerformanceBoard
-            journal={journal}
-            openingCheckScans={openingCheckScans}
-            closeReviews={closeReviews}
-            personalRules={personalRules}
-          />
+          <div data-tutorial="portfolio-performance">
+            <PortfolioPerformanceBoard
+              journal={journal}
+              openingCheckScans={openingCheckScans}
+              closeReviews={closeReviews}
+              personalRules={personalRules}
+            />
+          </div>
         </TabsContent>
       </Tabs>
 

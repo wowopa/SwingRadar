@@ -104,16 +104,17 @@ export const APP_TUTORIAL_DEFINITIONS: Record<AppTutorialScope, AppTutorialDefin
         spotlightLabel: "빠른 보기 프리셋"
       },
       {
-        title: "현재 필터 결과는 내 기준으로 다시 해석됩니다.",
-        body: "공통 후보를 그대로 끝내지 않고, 내 계좌 기준 매수 검토·관찰·보류로 다시 읽을 수 있게 요약해 둡니다.",
-        target: '[data-tutorial="signals-summary"], [data-tutorial="signals-table"]',
-        spotlightLabel: "내 기준 빠른 해석"
+        title: "필터로 후보를 더 짧게 줄입니다.",
+        body: "검색, 섹터, 검증 기준, 내 기준 필터를 함께 써서 지금 필요한 종목만 남긴 뒤 표를 읽으면 훨씬 빠릅니다.",
+        target: '[data-tutorial="signals-filters"]',
+        spotlightLabel: "필터 / 검색"
       },
       {
         title: "마지막은 비교표로 정리합니다.",
         body: "카드보다 표를 중심으로 보고, 필요한 종목만 상세로 내려가면 훨씬 덜 복잡하게 사용할 수 있습니다.",
         target: '[data-tutorial="signals-table"]',
-        spotlightLabel: "순위표"
+        spotlightLabel: "전체 종목 순위표",
+        spotlightPadding: 10
       }
     ]
   },
@@ -153,9 +154,9 @@ export const APP_TUTORIAL_DEFINITIONS: Record<AppTutorialScope, AppTutorialDefin
     steps: [
       {
         title: "Portfolio는 내 자산과 보유를 관리하는 곳입니다.",
-        body: "현재 보유 종목, 자산 설정, 체결 기록, 종료 회고, 성과 흐름을 모두 여기서 관리합니다.",
-        target: '[data-tutorial="portfolio-holdings"]',
-        spotlightLabel: "보유 관리"
+        body: "현재 보유 종목, 체결 기록, 종료 회고, 성과 흐름을 모두 여기서 이어서 관리합니다.",
+        target: '[data-tutorial="portfolio-tabs"]',
+        spotlightLabel: "Portfolio 탭"
       },
       {
         title: "Holdings는 지금 들고 있는 종목만 봅니다.",
@@ -164,16 +165,22 @@ export const APP_TUTORIAL_DEFINITIONS: Record<AppTutorialScope, AppTutorialDefin
         spotlightLabel: "현재 보유 종목"
       },
       {
-        title: "Journal과 Reviews는 위쪽 탭에서 이동합니다.",
-        body: "체결 기록은 Journal, 종료 회고는 Reviews, 성과 해석은 Performance로 나눠 읽으면 더 깔끔합니다.",
-        target: '[data-tutorial="portfolio-tabs"]',
-        spotlightLabel: "Portfolio 탭"
+        title: "Journal은 실제 체결 기록을 모아 봅니다.",
+        body: "무엇을 언제 얼마에 기록했는지 시간 순서대로 확인하고, 방금 기록한 체결도 다시 수정할 수 있습니다.",
+        target: '[data-tutorial="portfolio-journal"]',
+        spotlightLabel: "Journal"
       },
       {
-        title: "Performance는 내 기록의 흐름을 보는 곳입니다.",
-        body: "실현손익, 규칙 영향, 전략 태그, 반복 회고 규칙을 시간 축으로 다시 읽는 단계입니다.",
-        target: '[data-tutorial="portfolio-tabs"]',
-        spotlightLabel: "Performance 탭"
+        title: "Reviews는 종료 거래를 복기하는 탭입니다.",
+        body: "종료된 거래의 회고, 반복 규칙 후보, 직접 남긴 메모를 다시 읽어 다음 행동 기준으로 연결합니다.",
+        target: '[data-tutorial="portfolio-reviews"]',
+        spotlightLabel: "Reviews"
+      },
+      {
+        title: "Performance는 기록의 흐름을 숫자로 다시 봅니다.",
+        body: "실현손익, 규칙 영향, 전략 태그, 반복 회고 규칙을 기간별로 다시 읽어 실제 성과 흐름을 확인합니다.",
+        target: '[data-tutorial="portfolio-performance"]',
+        spotlightLabel: "Performance"
       }
     ]
   },
