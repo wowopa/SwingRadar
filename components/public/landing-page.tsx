@@ -332,8 +332,8 @@ export function LandingPage() {
         <section id="product" className="scroll-mt-32 space-y-8 sm:scroll-mt-36">
           <ScrollReveal className="space-y-4">
             <p className="public-section-kicker text-[11px] font-semibold uppercase tracking-[0.24em]">Product</p>
-            <h2 className="headline-balance public-section-title text-[clamp(2.9rem,6.1vw,5.6rem)] font-semibold leading-[0.94] tracking-[-0.095em]">
-              하루의 판단이 그대로 쌓이는 운용 화면.
+            <h2 className="headline-balance public-section-title text-[clamp(2.5rem,5.4vw,4.9rem)] font-semibold leading-[0.96] tracking-[-0.09em]">
+              매일의 기록이 모여 나만의 거래 기준이 됩니다.
             </h2>
           </ScrollReveal>
 
