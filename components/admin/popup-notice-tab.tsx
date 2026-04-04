@@ -36,7 +36,7 @@ function formatDateTimeLocalValue(value: string | null) {
 
 function getPopupStatus(document: PopupNoticeDocument) {
   if (!document.enabled) {
-    return { label: "비활성", note: "저장돼 있어도 사이트에는 노출되지 않습니다." };
+    return { label: "비활성", note: "설정은 저장돼 있지만 사이트에는 노출되지 않습니다." };
   }
 
   const now = Date.now();
@@ -45,19 +45,28 @@ function getPopupStatus(document: PopupNoticeDocument) {
 
   if (startAt !== null && !Number.isNaN(startAt) && now < startAt) {
     return {
-      label: "예약됨",
-      note: `${formatDateTime(document.startAt ?? "")}부터 노출됩니다.`
+      label: "예약 중",
+      note: `${formatDateTime(document.startAt ?? "")}부터 표시됩니다.`
     };
   }
 
   if (endAt !== null && !Number.isNaN(endAt) && now > endAt) {
     return {
       label: "종료됨",
-      note: `${formatDateTime(document.endAt ?? "")} 이후로는 노출되지 않습니다.`
+      note: `${formatDateTime(document.endAt ?? "")} 이후에는 표시되지 않습니다.`
     };
   }
 
-  return { label: "노출 중", note: "기간 조건을 만족하는 방문자에게 첫 진입 시 팝업으로 노출됩니다." };
+  return { label: "노출 중", note: "조건을 만족하는 첫 방문자에게 팝업으로 노출됩니다." };
+}
+
+function SummaryPill({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-full border border-border/70 bg-secondary/35 px-3 py-2 text-xs font-medium text-foreground">
+      <span className="text-muted-foreground">{label}</span>
+      <span className="ml-2">{value}</span>
+    </div>
+  );
 }
 
 export function PopupNoticeTab({
@@ -80,13 +89,24 @@ export function PopupNoticeTab({
   return (
     <div className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between gap-4">
-          <div>
-            <CardTitle>팝업 공지 설정</CardTitle>
-            <p className="mt-2 text-sm leading-6 text-muted-foreground">
-              사이트에 처음 들어오는 방문자에게 세련된 모달 공지를 띄웁니다. 오늘 하루 안 보기와 닫기 버튼은
-              자동으로 함께 제공됩니다.
-            </p>
+        <CardHeader className="flex flex-row items-start justify-between gap-4">
+          <div className="space-y-3">
+            <div>
+              <CardTitle>팝업 공지</CardTitle>
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">첫 진입 사용자에게 보여줄 공지를 간단히 설정합니다.</p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <SummaryPill label="상태" value={status.label} />
+              <SummaryPill label="이미지" value={document.imageUrl ? "사용" : "없음"} />
+              <SummaryPill
+                label="기간"
+                value={
+                  document.startAt || document.endAt
+                    ? `${document.startAt ? "시작 설정" : "즉시"} · ${document.endAt ? "종료 설정" : "수동 종료"}`
+                    : "즉시 ~ 수동 종료"
+                }
+              />
+            </div>
           </div>
           <Button onClick={onSave} disabled={disabled}>
             저장
@@ -99,7 +119,7 @@ export function PopupNoticeTab({
               checked={document.enabled}
               onChange={(event) => setDocument((current) => ({ ...current, enabled: event.target.checked }))}
             />
-            <span className="font-medium">팝업 공지 노출 사용</span>
+            <span className="font-medium">팝업 공지 사용</span>
           </label>
 
           <div className="grid gap-4 md:grid-cols-2">
@@ -122,7 +142,7 @@ export function PopupNoticeTab({
           <Field label="제목">
             <Input
               value={document.title}
-              placeholder="예: 오전 배치 시간이 조정되었습니다."
+              placeholder="예: 오늘 점검 시간 안내"
               onChange={(event) => setDocument((current) => ({ ...current, title: event.target.value }))}
             />
           </Field>
@@ -131,7 +151,7 @@ export function PopupNoticeTab({
             <Textarea
               className="min-h-[180px]"
               value={document.body}
-              placeholder={"안내하고 싶은 내용을 문단 단위로 적어주세요.\n\n줄을 비우면 문단이 구분됩니다."}
+              placeholder={"공지 내용을 문단 단위로 적어주세요.\n\n빈 줄을 넣으면 문단이 나뉩니다."}
               onChange={(event) => setDocument((current) => ({ ...current, body: event.target.value }))}
             />
           </Field>
@@ -161,8 +181,10 @@ export function PopupNoticeTab({
             <BadgeAlert className="h-4 w-4 text-primary" />
             Popup Preview
           </div>
-          <CardTitle className="mt-3 text-xl">{document.title || "팝업 제목을 입력하면 이곳에 미리 보입니다."}</CardTitle>
-          <p className="mt-2 text-sm text-muted-foreground">{status.label} · {status.note}</p>
+          <CardTitle className="mt-3 text-xl">{document.title || "팝업 제목을 입력하면 여기에 미리 보입니다."}</CardTitle>
+          <p className="mt-2 text-sm text-muted-foreground">
+            {status.label} · {status.note}
+          </p>
         </CardHeader>
         <CardContent className="space-y-5 p-6">
           <div className="grid gap-3 sm:grid-cols-2">
@@ -181,7 +203,7 @@ export function PopupNoticeTab({
                 <ImageIcon className="h-4 w-4 text-primary" />
                 방문자 옵션
               </div>
-              <p className="mt-3 text-sm text-muted-foreground">오늘 하루 안 보기 체크박스와 닫기 버튼이 함께 표시됩니다.</p>
+              <p className="mt-3 text-sm text-muted-foreground">오늘 하루 보지 않기 체크박스와 닫기 버튼이 함께 보입니다.</p>
             </div>
           </div>
 

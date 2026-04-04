@@ -11,8 +11,11 @@ import type {
   OperationalIncident,
   SnapshotGenerationReportPayload
 } from "@/components/admin/dashboard-types";
-import { formatProviderLabel, formatPercent } from "@/components/admin/admin-status-utils";
+import { formatPercent, formatProviderLabel } from "@/components/admin/admin-status-utils";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+
+type OverviewTargetTab = "data-quality" | "candidate-ops" | "notices" | "portfolio";
 
 function StatusPill({
   label,
@@ -40,6 +43,19 @@ function StatusPill({
   );
 }
 
+function getCycleTone(status: DailyCycleReportPayload["status"] | null | undefined) {
+  if (status === "failed") {
+    return "destructive";
+  }
+  if (status === "warning") {
+    return "caution";
+  }
+  if (status === "ok") {
+    return "positive";
+  }
+  return "neutral";
+}
+
 export function OverviewTab({
   overallStatus,
   health,
@@ -47,7 +63,8 @@ export function OverviewTab({
   dailyCycleReport,
   snapshotGenerationReport,
   dataQualitySummary,
-  audits
+  audits,
+  onSelectTab
 }: {
   overallStatus: "ok" | "warning" | "critical";
   health: HealthPayload | null;
@@ -56,8 +73,9 @@ export function OverviewTab({
   snapshotGenerationReport: SnapshotGenerationReportPayload | null;
   dataQualitySummary: AdminDataQualitySummaryPayload | null;
   audits: AuditItem[];
+  onSelectTab: (tab: OverviewTargetTab) => void;
 }) {
-  const latestWarning = health?.warnings[0] ?? "현재 즉시 조치가 필요한 운영 경고는 없습니다.";
+  const latestWarning = health?.warnings[0] ?? "지금 즉시 처리해야 하는 운영 경고는 없습니다.";
   const overallTone =
     overallStatus === "critical" ? "destructive" : overallStatus === "warning" ? "caution" : "positive";
   const incidentTone =
@@ -84,13 +102,7 @@ export function OverviewTab({
             <StatusPill
               label="오늘 배치"
               value={dailyCycleReport?.status ?? "not_loaded"}
-              tone={
-                dailyCycleReport?.status === "failed"
-                  ? "destructive"
-                  : dailyCycleReport?.status === "warning"
-                    ? "caution"
-                    : "neutral"
-              }
+              tone={getCycleTone(dailyCycleReport?.status)}
             />
             <StatusPill
               label="validation fallback"
@@ -105,20 +117,34 @@ export function OverviewTab({
             />
           </div>
           <p className="text-sm leading-6 text-muted-foreground">{latestWarning}</p>
+          <div className="flex flex-wrap gap-2">
+            <Button variant="secondary" size="sm" onClick={() => onSelectTab("data-quality")}>
+              데이터 품질 보기
+            </Button>
+            <Button variant="secondary" size="sm" onClick={() => onSelectTab("candidate-ops")}>
+              후보 운영 열기
+            </Button>
+            <Button variant="secondary" size="sm" onClick={() => onSelectTab("notices")}>
+              공지 수정
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => onSelectTab("portfolio")}>
+              내부 포트폴리오
+            </Button>
+          </div>
         </CardContent>
       </Card>
 
       <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-        <MetricCard label="incident" value={String(incidents.length)} note="즉시 확인이 필요한 운영 경고 수" />
+        <MetricCard label="incident" value={String(incidents.length)} note="즉시 확인할 운영 경고 수" />
         <MetricCard
-          label="후보 수"
+          label="오늘 후보"
           value={String(dailyCycleReport?.summary?.topCandidateCount ?? snapshotGenerationReport?.recommendationCount ?? 0)}
-          note={dailyCycleReport?.summary?.generatedAt ? formatDateTime(dailyCycleReport.summary.generatedAt) : "후보 생성 시간 대기"}
+          note={dailyCycleReport?.summary?.generatedAt ? formatDateTime(dailyCycleReport.summary.generatedAt) : "후보 생성 시간 대기 중"}
         />
         <MetricCard
           label="추천 스냅샷"
           value={String(snapshotGenerationReport?.recommendationCount ?? 0)}
-          note={snapshotGenerationReport?.generatedAt ? formatDateTime(snapshotGenerationReport.generatedAt) : "스냅샷 대기"}
+          note={snapshotGenerationReport?.generatedAt ? formatDateTime(snapshotGenerationReport.generatedAt) : "스냅샷 시간 대기 중"}
         />
         <MetricCard
           label="최근 audit"
@@ -166,7 +192,7 @@ export function OverviewTab({
                   <CheckCircle2 className="h-4 w-4 text-positive" />
                   긴급 incident 없음
                 </div>
-                <p className="mt-2 leading-6 text-muted-foreground">현재 즉시 에스컬레이션할 운영 경고는 없습니다.</p>
+                <p className="mt-2 leading-6 text-muted-foreground">현재 즉시 에스컬레이션이 필요한 운영 경고는 없습니다.</p>
               </div>
             )}
           </CardContent>

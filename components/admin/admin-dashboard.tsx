@@ -527,6 +527,7 @@ export function AdminDashboard() {
               snapshotGenerationReport={snapshotGenerationReport}
               dataQualitySummary={dataQualitySummary}
               audits={audits}
+              onSelectTab={(nextTab) => setTab(nextTab)}
             />
           </TabsContent>
 

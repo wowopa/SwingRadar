@@ -37,6 +37,23 @@ function fromManwonValue(value: string) {
   return Math.round(updateNumber(value)) * 10000;
 }
 
+function formatManwon(value: number) {
+  return `${Math.round(value / 10000).toLocaleString("ko-KR")}만원`;
+}
+
+function formatRiskAmount(totalCapital: number, riskPercent: number) {
+  return `${Math.round((totalCapital * riskPercent) / 100).toLocaleString("ko-KR")}원`;
+}
+
+function SummaryPill({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-full border border-border/70 bg-secondary/35 px-3 py-2 text-xs font-medium text-foreground">
+      <span className="text-muted-foreground">{label}</span>
+      <span className="ml-2">{value}</span>
+    </div>
+  );
+}
+
 function PositionSymbolSearch({
   value,
   onSelect
@@ -51,9 +68,7 @@ function PositionSymbolSearch({
   const fieldRef = useRef<HTMLDivElement | null>(null);
   const [query, setQuery] = useState(value.company || value.ticker);
   const [results, setResults] = useState<SymbolSearchItem[]>([]);
-  const [description, setDescription] = useState(
-    "종목명이나 종목 코드를 입력하면 관련 종목을 바로 찾을 수 있습니다."
-  );
+  const [description, setDescription] = useState("종목명이나 종목 코드를 입력하면 관련 종목을 바로 찾을 수 있습니다.");
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -180,7 +195,7 @@ export function PortfolioProfileTab({
   setProfile,
   onSave,
   disabled,
-  saveButtonLabel = "자산 저장"
+  saveButtonLabel = "자산 설정 저장"
 }: {
   profile: PortfolioProfilePayload | null;
   setProfile: (updater: (current: PortfolioProfilePayload) => PortfolioProfilePayload) => void;
@@ -194,12 +209,21 @@ export function PortfolioProfileTab({
 
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between gap-4">
-        <div>
-          <CardTitle>자산 설정</CardTitle>
-          <p className="mt-2 text-sm leading-6 text-muted-foreground">
-            총 자산, 가용 현금, 손실 한도, 보유 종목을 저장해 내 포트폴리오 스냅샷과 행동 보드에 바로 반영합니다.
-          </p>
+      <CardHeader className="flex flex-row items-start justify-between gap-4">
+        <div className="space-y-3">
+          <div>
+            <CardTitle>자산 설정</CardTitle>
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">총자산, 가용 현금, 리스크 한도, 보유 종목을 한곳에서 관리합니다.</p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <SummaryPill label="총자산" value={formatManwon(profile.totalCapital)} />
+            <SummaryPill label="가용 현금" value={formatManwon(profile.availableCash)} />
+            <SummaryPill label="보유 종목" value={`${profile.positions.length}개`} />
+            <SummaryPill
+              label="1회 손실 한도"
+              value={formatRiskAmount(profile.totalCapital, profile.maxRiskPerTradePercent)}
+            />
+          </div>
         </div>
         <Button onClick={onSave} disabled={disabled}>
           {saveButtonLabel}
@@ -269,17 +293,14 @@ export function PortfolioProfileTab({
         </div>
 
         <div className="rounded-[24px] border border-border/70 bg-secondary/35 p-4 text-sm leading-6 text-muted-foreground">
-          총 자산과 가용 현금은 만원 단위로 입력합니다. 저장 후에는 내 포트폴리오 스냅샷, 보유 관리 보드, 오늘 행동
-          보드가 이 기준으로 다시 계산됩니다.
+          총 자산과 가용 현금은 만원 단위로 입력합니다. 저장하면 Today, Portfolio, 장초 확인 판단이 모두 같은 기준으로 다시 계산됩니다.
         </div>
 
         <div className="space-y-4 rounded-[28px] border border-border/70 bg-background/40 p-5">
           <div className="flex items-center justify-between gap-3">
             <div>
               <p className="text-sm font-semibold text-foreground">현재 보유 종목</p>
-              <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                티커만 넣어도 저장 시 종목명과 섹터를 자동으로 보강합니다.
-              </p>
+              <p className="mt-1 text-xs leading-5 text-muted-foreground">종목명이나 티커를 검색하면 종목명과 섹터가 자동으로 채워집니다.</p>
             </div>
             <Button
               type="button"
@@ -311,18 +332,10 @@ export function PortfolioProfileTab({
           {profile.positions.length ? (
             <div className="space-y-4">
               {profile.positions.map((position, index) => (
-                <div
-                  key={`position-${index}`}
-                  className="rounded-[24px] border border-border/70 bg-secondary/30 p-4"
-                >
+                <div key={`position-${index}`} className="rounded-[24px] border border-border/70 bg-secondary/30 p-4">
                   <div className="grid gap-4 xl:grid-cols-[0.9fr_1fr_1fr_1fr_auto]">
                     <Field label="종목 검색">
-                      <Input
-                        className="hidden"
-                        value={position.ticker}
-                        placeholder="005930"
-                        readOnly
-                      />
+                      <Input className="hidden" value={position.ticker} placeholder="005930" readOnly />
                       <PositionSymbolSearch
                         value={{
                           ticker: position.ticker,
@@ -411,10 +424,10 @@ export function PortfolioProfileTab({
 
                   <div className="mt-4 grid gap-4 xl:grid-cols-[1fr_1fr]">
                     <Field label="저장된 종목명">
-                      <Input value={position.company} placeholder="저장 후 자동 보강" readOnly />
+                      <Input value={position.company} placeholder="선택 시 자동 보강" readOnly />
                     </Field>
                     <Field label="저장된 섹터">
-                      <Input value={position.sector} placeholder="저장 후 자동 보강" readOnly />
+                      <Input value={position.sector} placeholder="선택 시 자동 보강" readOnly />
                     </Field>
                   </div>
 
@@ -437,8 +450,7 @@ export function PortfolioProfileTab({
             </div>
           ) : (
             <div className="rounded-[24px] border border-border/70 bg-secondary/20 p-4 text-sm text-muted-foreground">
-              아직 저장된 보유 종목이 없습니다. 첫 종목을 추가하면 오늘 행동 보드가 실제 포트폴리오 슬롯과 섹터 제한을
-              반영하기 시작합니다.
+              아직 등록된 보유 종목이 없습니다. 첫 종목을 추가하면 Today와 Portfolio가 실제 보유 기준으로 계산되기 시작합니다.
             </div>
           )}
 
