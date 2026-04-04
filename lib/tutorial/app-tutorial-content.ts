@@ -38,19 +38,19 @@ export const APP_TUTORIAL_DEFINITIONS: Record<AppTutorialScope, AppTutorialDefin
       {
         title: "장초 확인부터 시작합니다.",
         body: "개장 직후에는 장초 확인 카드부터 열어 오늘 먼저 볼 종목을 빠르게 걸러냅니다.",
-        target: '[data-tutorial="today-opening-card"]',
+        target: '[data-tutorial="today-actions"]',
         spotlightLabel: "장초 확인"
       },
       {
         title: "통과한 종목만 매수 검토로 이어집니다.",
         body: "장초 확인을 통과한 종목만 오늘 매수 검토 카드에 남아서 실제 분석과 행동으로 이어집니다.",
-        target: '[data-tutorial="today-buy-card"]',
+        target: '[data-tutorial="today-actions"]',
         spotlightLabel: "오늘 매수 검토"
       },
       {
         title: "보유 관리는 따로 모아 봅니다.",
         body: "이미 들고 있는 종목의 익절, 손절, 시간 점검은 Portfolio가 아니라 Today의 보유 관리 카드에서도 바로 이어집니다.",
-        target: '[data-tutorial="today-holding-card"]',
+        target: '[data-tutorial="today-actions"]',
         spotlightLabel: "보유 관리"
       }
     ]

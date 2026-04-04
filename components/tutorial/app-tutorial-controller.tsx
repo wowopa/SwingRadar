@@ -39,6 +39,60 @@ function findTutorialTarget(selector: string) {
   return elements.find((element) => isVisibleTutorialTarget(element)) ?? null;
 }
 
+function observeTutorialTarget(
+  selector: string,
+  onFound: () => void
+) {
+  let disposed = false;
+  let observer: MutationObserver | null = null;
+  const timeouts: number[] = [];
+
+  const tryResolve = () => {
+    if (disposed) {
+      return true;
+    }
+
+    const target = findTutorialTarget(selector);
+    if (!target) {
+      return false;
+    }
+
+    onFound();
+    return true;
+  };
+
+  if (!tryResolve()) {
+    observer = new MutationObserver(() => {
+      if (tryResolve()) {
+        observer?.disconnect();
+      }
+    });
+
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ["class", "style", "hidden", "data-state"]
+    });
+
+    [80, 180, 320, 520, 760].forEach((delay) => {
+      const timeout = window.setTimeout(() => {
+        if (tryResolve()) {
+          observer?.disconnect();
+        }
+      }, delay);
+
+      timeouts.push(timeout);
+    });
+  }
+
+  return () => {
+    disposed = true;
+    observer?.disconnect();
+    timeouts.forEach((timeout) => window.clearTimeout(timeout));
+  };
+}
+
 function loadTutorialProgress() {
   if (typeof window === "undefined") {
     return {};
@@ -73,6 +127,7 @@ export function AppTutorialController() {
   const [isOpen, setIsOpen] = useState(false);
   const [stepIndex, setStepIndex] = useState(0);
   const [spotlight, setSpotlight] = useState<SpotlightRect | null>(null);
+  const [targetVersion, setTargetVersion] = useState(0);
 
   useEffect(() => {
     setProgress(loadTutorialProgress());
@@ -131,6 +186,16 @@ export function AppTutorialController() {
       return;
     }
 
+    return observeTutorialTarget(currentStep.target, () => {
+      setTargetVersion((current) => current + 1);
+    });
+  }, [currentStep?.target, isOpen, pathname, stepIndex]);
+
+  useEffect(() => {
+    if (!isOpen || !currentStep?.target || targetVersion === 0) {
+      return;
+    }
+
     const target = findTutorialTarget(currentStep.target);
     if (!target) {
       return;
@@ -139,16 +204,29 @@ export function AppTutorialController() {
     const rect = target.getBoundingClientRect();
     const topThreshold = window.innerWidth < 640 ? 88 : 108;
     const bottomThreshold = window.innerHeight - (window.innerWidth < 640 ? 240 : 164);
+    const availableHeight = bottomThreshold - topThreshold;
+    const absoluteTop = window.scrollY + rect.top;
+    let nextTop: number | null = null;
 
-    if (rect.top < topThreshold || rect.bottom > bottomThreshold) {
-      const absoluteTop = window.scrollY + rect.top;
-      const nextTop = Math.max(absoluteTop - topThreshold - 16, 0);
-      window.scrollTo({
-        top: nextTop,
-        behavior: "smooth"
-      });
+    if (rect.height >= availableHeight) {
+      if (rect.top < topThreshold || rect.top > topThreshold + 20) {
+        nextTop = Math.max(absoluteTop - topThreshold - 16, 0);
+      }
+    } else if (rect.top < topThreshold) {
+      nextTop = Math.max(absoluteTop - topThreshold - 16, 0);
+    } else if (rect.bottom > bottomThreshold) {
+      nextTop = Math.max(window.scrollY + (rect.bottom - bottomThreshold) + 16, 0);
     }
-  }, [currentStep?.target, isOpen, pathname]);
+
+    if (nextTop === null || Math.abs(window.scrollY - nextTop) < 4) {
+      return;
+    }
+
+    window.scrollTo({
+      top: nextTop,
+      behavior: "smooth"
+    });
+  }, [currentStep?.target, isOpen, pathname, targetVersion]);
 
   useEffect(() => {
     if (!isOpen || !currentStep?.target) {
@@ -206,7 +284,8 @@ export function AppTutorialController() {
     currentStep?.target,
     isOpen,
     pathname,
-    stepIndex
+    stepIndex,
+    targetVersion
   ]);
 
   useEffect(() => {
