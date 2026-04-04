@@ -187,7 +187,7 @@ export function LandingPage() {
   return (
     <main className="space-y-28 pb-16">
       <section className="relative min-h-[calc(100vh-164px)] overflow-hidden rounded-[44px] border border-white/10 bg-[linear-gradient(135deg,hsl(221_24%_15%),hsl(222_22%_18%)_52%,hsl(37_34%_20%)_100%)] px-6 py-7 text-white shadow-[0_50px_140px_hsl(220_32%_8%_/_0.18)] sm:px-8 sm:py-9 lg:px-12 lg:py-10 xl:px-14">
-        <div className="relative lg:grid lg:min-h-[calc(100vh-244px)] lg:grid-cols-[minmax(0,1.14fr)_minmax(31rem,36rem)] lg:items-center lg:gap-12">
+        <div className="relative lg:grid lg:min-h-[calc(100vh-244px)] lg:grid-cols-[minmax(0,1fr)_minmax(39rem,47rem)] lg:items-center lg:gap-8 xl:grid-cols-[minmax(0,0.96fr)_minmax(42rem,50rem)]">
           <ScrollReveal>
             <div className="max-w-[980px] space-y-8">
               <div className="space-y-5">
@@ -238,8 +238,8 @@ export function LandingPage() {
             </div>
           </ScrollReveal>
 
-          <div className="landing-hero-board-enter relative mt-10 hidden lg:mt-0 lg:block lg:justify-self-end lg:self-center">
-            <div className="relative public-float lg:w-[33rem] xl:w-[36rem]">
+          <div className="landing-hero-board-enter relative mt-10 hidden lg:mt-0 lg:block lg:w-full lg:self-center">
+            <div className="relative public-float ml-auto lg:w-full lg:max-w-[47rem] xl:max-w-[50rem]">
               <div className="absolute -inset-x-6 -inset-y-6 rounded-[42px] bg-[radial-gradient(circle_at_center,hsl(37_80%_68%_/_0.14),transparent_72%)] blur-3xl" />
               <div className="relative rounded-[34px] border border-white/12 bg-[linear-gradient(180deg,rgba(255,255,255,0.17),rgba(255,255,255,0.08))] p-4 backdrop-blur-xl sm:p-5">
                 <div className="rounded-[30px] border border-white/12 bg-[linear-gradient(180deg,rgba(16,23,37,0.96),rgba(22,29,44,0.99))] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
