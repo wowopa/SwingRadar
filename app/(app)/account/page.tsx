@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 
 import { LogoutButton } from "@/components/auth/logout-button";
 import { PageHeader } from "@/components/shared/page-header";
+import { TutorialLauncherButton } from "@/components/tutorial/tutorial-launcher-button";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { loadPortfolioProfileForUser } from "@/lib/server/portfolio-profile";
@@ -69,6 +70,16 @@ export default async function AccountPage() {
           </CardContent>
         </Card>
       </div>
+
+      <Card className="border-border/70 bg-white/82 shadow-sm">
+        <CardHeader>
+          <CardTitle>튜토리얼</CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-wrap gap-2">
+          <TutorialLauncherButton label="현재 화면 튜토리얼" />
+          <TutorialLauncherButton label="전체 튜토리얼 다시 보기" resetAll />
+        </CardContent>
+      </Card>
     </main>
   );
 }

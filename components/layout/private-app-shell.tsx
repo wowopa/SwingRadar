@@ -5,6 +5,8 @@ import { AuthCta } from "@/components/layout/auth-cta";
 import { BrandMark, BrandSignature } from "@/components/layout/brand-signature";
 import { GlobalSymbolSearch } from "@/components/layout/global-symbol-search";
 import { PrivateNav } from "@/components/layout/private-nav";
+import { AppTutorialController } from "@/components/tutorial/app-tutorial-controller";
+import { TutorialLauncherButton } from "@/components/tutorial/tutorial-launcher-button";
 import type { AuthSession } from "@/types/auth";
 
 export function PrivateAppShell({
@@ -29,7 +31,10 @@ export function PrivateAppShell({
             <div className="min-w-0">
               <GlobalSymbolSearch compact />
             </div>
-            <PrivateNav iconOnly />
+            <div className="flex items-center justify-end gap-1.5">
+              <TutorialLauncherButton iconOnly tone="light" />
+              <PrivateNav iconOnly />
+            </div>
           </div>
 
           <div className="relative hidden min-h-[76px] grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-4 px-5 py-3 lg:grid xl:px-6">
@@ -45,6 +50,7 @@ export function PrivateAppShell({
               <div className="w-[280px] xl:w-[320px]">
                 <GlobalSymbolSearch compact />
               </div>
+              <TutorialLauncherButton tone="light" />
               <AuthCta session={session} compact tone="light" />
             </div>
           </div>
@@ -58,6 +64,8 @@ export function PrivateAppShell({
           <p className="text-xs tracking-[0.18em] text-muted-foreground">Copyright {currentYear} SWING-RADAR. All rights reserved.</p>
         </footer>
       </div>
+
+      <AppTutorialController />
     </div>
   );
 }
