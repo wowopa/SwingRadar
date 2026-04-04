@@ -52,11 +52,11 @@ export function PrivateNav({ iconOnly = false }: { iconOnly?: boolean }) {
               iconOnly ? "h-10 w-10 justify-center px-0 py-0" : "h-10 gap-2 px-4",
               isActive
                 ? iconOnly
-                  ? "border-white/18 bg-white/14 text-white shadow-[0_18px_40px_-30px_rgba(24,32,42,0.62)]"
-                  : "border-white/18 bg-white/12 text-white shadow-[0_18px_40px_-30px_rgba(24,32,42,0.48)]"
+                  ? "border-white/24 bg-white/18 text-white shadow-[0_18px_40px_-30px_rgba(24,32,42,0.62)]"
+                  : "border-white/24 bg-white/16 text-white shadow-[0_18px_40px_-30px_rgba(24,32,42,0.48)]"
                 : iconOnly
-                  ? "border-white/12 bg-white/8 text-white/92 hover:border-white/16 hover:bg-white/14 hover:text-white"
-                  : "border-white/10 bg-white/6 text-white/92 hover:border-white/16 hover:bg-white/12 hover:text-white"
+                  ? "border-white/18 bg-white/12 text-white hover:border-white/24 hover:bg-white/18 hover:text-white"
+                  : "border-white/18 bg-white/12 text-white hover:border-white/24 hover:bg-white/18 hover:text-white"
             )}
             aria-label={item.label}
             title={item.label}
