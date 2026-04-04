@@ -43,13 +43,15 @@ export function PortfolioCloseReviewEditor({
   ticker,
   closedAt,
   review,
-  compact = false
+  compact = false,
+  onSaved
 }: {
   positionKey: string;
   ticker: string;
   closedAt: string;
   review?: PortfolioCloseReviewEntry | null;
   compact?: boolean;
+  onSaved?: () => void;
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -92,6 +94,7 @@ export function PortfolioCloseReviewEditor({
       startTransition(() => {
         router.refresh();
       });
+      onSaved?.();
     } catch (saveError) {
       setError(saveError instanceof Error ? saveError.message : "회고 저장에 실패했습니다.");
     }

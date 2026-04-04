@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import Link from "next/link";
 
 import { AuthCta } from "@/components/layout/auth-cta";
 import { BrandMark, BrandSignature } from "@/components/layout/brand-signature";
@@ -16,38 +17,42 @@ export function PrivateAppShell({
   const currentYear = new Date().getFullYear();
 
   return (
-    <div className="min-h-screen">
-      <div className="mx-auto flex min-h-screen w-full max-w-[1480px] flex-col px-4 pb-12 pt-4 sm:px-6 lg:px-8">
-        <div className="sticky top-2 z-40 sm:top-3 lg:top-4">
-          <header className="overflow-visible rounded-[28px] border border-border/90 bg-white/94 px-3 py-3 shadow-[0_18px_40px_-30px_hsl(33_32%_22%_/_0.18)] backdrop-blur-md sm:px-4">
-            <div className="flex items-center gap-3 lg:hidden">
-              <BrandMark compact className="h-11 w-11" />
-              <div className="min-w-0 flex-1">
-                <GlobalSymbolSearch compact />
-              </div>
-              <div className="shrink-0">
-                <PrivateNav iconOnly />
-              </div>
+    <div className="min-h-screen bg-background text-foreground">
+      <div className="fixed inset-x-0 top-0 z-50 px-3 sm:px-4 lg:px-6">
+        <header className="relative overflow-visible rounded-b-[28px] border-x border-b border-white/10 bg-[linear-gradient(180deg,rgba(18,24,36,0.98),rgba(27,34,49,0.94))] shadow-[0_22px_60px_hsl(220_26%_8%_/_0.18)] backdrop-blur-xl">
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_12%_10%,hsl(42_76%_66%_/_0.13),transparent_18%),radial-gradient(circle_at_88%_22%,hsl(196_90%_72%_/_0.05),transparent_20%)]" />
+
+          <div className="relative grid min-h-[72px] grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 px-3 py-3 lg:hidden">
+            <Link href="/recommendations" className="justify-self-start">
+              <BrandMark compact mode="plain" className="h-11 w-11" />
+            </Link>
+            <div className="min-w-0">
+              <GlobalSymbolSearch compact />
+            </div>
+            <PrivateNav iconOnly />
+          </div>
+
+          <div className="relative hidden min-h-[76px] grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-4 px-5 py-3 lg:grid xl:px-6">
+            <Link href="/recommendations" className="min-w-0 justify-self-start">
+              <BrandSignature compact className="min-w-0 gap-3" tone="light" markMode="plain" />
+            </Link>
+
+            <div className="justify-self-center">
+              <PrivateNav />
             </div>
 
-            <div className="hidden lg:flex lg:flex-col lg:gap-3 xl:flex-row xl:items-center xl:gap-4">
-              <BrandSignature compact className="shrink-0" />
-
-              <div className="xl:min-w-0 xl:flex-1">
-                <PrivateNav />
-              </div>
-
-              <div className="flex flex-col gap-3 xl:w-[360px] xl:shrink-0">
+            <div className="flex min-w-0 items-center justify-self-end gap-3">
+              <div className="w-[280px] xl:w-[320px]">
                 <GlobalSymbolSearch compact />
-                <div className="flex justify-end">
-                  <AuthCta session={session} />
-                </div>
               </div>
+              <AuthCta session={session} compact tone="light" />
             </div>
-          </header>
-        </div>
+          </div>
+        </header>
+      </div>
 
-        <main className="mt-6 flex-1">{children}</main>
+      <div className="mx-auto flex min-h-screen w-full max-w-[1480px] flex-col px-4 pb-12 pt-[96px] sm:px-6 sm:pt-[102px] lg:px-8 lg:pt-[108px]">
+        <main className="flex-1 pt-2 sm:pt-4">{children}</main>
 
         <footer className="mt-12 border-t border-border/75 px-2 pt-6 text-center">
           <p className="text-xs tracking-[0.18em] text-muted-foreground">Copyright {currentYear} SWING-RADAR. All rights reserved.</p>

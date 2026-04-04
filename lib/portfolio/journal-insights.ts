@@ -398,26 +398,26 @@ function splitReviewRuleLines(value?: string) {
 const portfolioTagDefinitions = [
   {
     key: "opening_check",
-    label: "?μ큹/?쒖큹 硫붾어",
-    keywords: ["?μ큹", "?쒖큹", "?뺤씤", "opening", "preopen", "gap"],
-    note: "?μ큹 ?뺤씤 ???곹엺?댁슜???묎컻??거래"
+    label: "장초/시초 메모",
+    keywords: ["장초", "시초", "확인", "opening", "preopen", "gap"],
+    note: "장초 확인과 시초 반응을 함께 적어둔 거래"
   },
   {
     key: "risk_control",
-    label: "?먯젅/由ъ뒪??硫붾어",
-    keywords: ["?먯젅", "由ъ뒪??", "蹂댄샇", "stop", "risk", "loss"],
+    label: "손절/리스크 메모",
+    keywords: ["손절", "리스크", "보호", "stop", "risk", "loss"],
     note: "손절과 리스크 기준을 남긴 거래"
   },
   {
     key: "scale_out",
-    label: "遺遺??듭젅 硫붾어",
-    keywords: ["遺遺??듭젅", "遺꾪븷", "?듭젅", "partial", "scale", "profit"],
+    label: "부분 익절 메모",
+    keywords: ["부분 익절", "분할", "익절", "partial", "scale", "profit"],
     note: "부분 익절 계획을 남긴 거래"
   },
   {
     key: "hold_management",
-    label: "蹂댁쑀/愿由?硫붾어",
-    keywords: ["蹂댁쑀", "愿李?", "?좎?", "???", "hold", "watch", "manage"],
+    label: "보유/관찰 메모",
+    keywords: ["보유", "관찰", "유지", "홀드", "hold", "watch", "manage"],
     note: "보유 관리 메모를 남긴 거래"
   }
 ] as const;
@@ -425,19 +425,19 @@ const portfolioTagDefinitions = [
 const closingReasonDefinitions = [
   {
     key: "exit_full",
-    label: "?꾨웾 留ㅻ룄",
+    label: "전량 매도",
     tone: "positive" as const,
     note: "계획상 목표 도달 뒤 정리한 종료"
   },
   {
     key: "stop_loss",
-    label: "?먯젅 醫낅즺",
+    label: "손절 종료",
     tone: "caution" as const,
     note: "손실 제한을 위해 종료한 거래"
   },
   {
     key: "manual_exit",
-    label: "?섎룞 醫낅즺",
+    label: "수동 종료",
     tone: "neutral" as const,
     note: "계획 밖 판단으로 정리한 거래"
   }

@@ -1,14 +1,15 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 
 import { PortfolioCloseReviewEditor } from "@/components/portfolio/portfolio-close-review-editor";
 import { PortfolioPersonalRuleButton } from "@/components/portfolio/portfolio-personal-rule-button";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
-  buildPortfolioCloseReview,
   buildPortfolioCloseReviewRuleDashboard,
   buildPortfolioOpeningCheckAnalytics,
   buildPortfolioReviewAnalytics,
@@ -127,16 +128,11 @@ export function PortfolioReviewsBoard({
 
       {openingCheckAnalytics ? <OpeningCheckQualityCard analytics={openingCheckAnalytics} /> : null}
 
-      <div className="grid gap-4 xl:grid-cols-2">
-        {orderedClosedGroups.map((group) => (
-          <ClosedReviewCard
-            key={group.ticker + group.latestEvent.tradedAt}
-            group={group}
-            reviewEntry={closeReviews[getPortfolioCloseReviewKeyForGroup(group)]}
-            isFocused={focusTicker === group.ticker}
-          />
-        ))}
-      </div>
+      <ClosedReviewTable
+        groups={orderedClosedGroups}
+        closeReviews={closeReviews}
+        focusTicker={focusTicker}
+      />
     </section>
   );
 }
@@ -488,82 +484,6 @@ function OpeningCheckQualityCard({
   );
 }
 
-function ClosedReviewCard({
-  group,
-  reviewEntry,
-  isFocused = false
-}: {
-  group: PortfolioJournalGroup;
-  reviewEntry?: PortfolioCloseReviewEntry;
-  isFocused?: boolean;
-}) {
-  const review = buildPortfolioCloseReview(group);
-  const positionKey = getPortfolioCloseReviewKeyForGroup(group);
-
-  return (
-    <Card
-      className={
-        isFocused
-          ? "border-primary/28 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(246,241,232,0.92))] shadow-[0_22px_54px_-34px_rgba(139,107,46,0.28)]"
-          : "border-border/80 bg-white/90 shadow-[0_18px_44px_-34px_rgba(24,32,42,0.2)]"
-      }
-    >
-      <CardHeader className="space-y-4">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <CardTitle className="text-lg text-foreground">
-              {group.company} <span className="text-sm font-medium text-muted-foreground">{group.ticker}</span>
-            </CardTitle>
-            <p className="mt-2 text-sm leading-6 text-muted-foreground">
-              {group.sector} · {group.holdingDays}일 보유 · 이벤트 {group.events.length}건
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            {isFocused ? <Badge variant="neutral">방금 기록</Badge> : null}
-            <Badge variant={group.metrics.realizedPnl > 0 ? "positive" : group.metrics.realizedPnl < 0 ? "caution" : "secondary"}>
-              {group.latestEvent.type === "stop_loss"
-                ? "손절 종료"
-                : group.latestEvent.type === "manual_exit"
-                  ? "수동 종료"
-                  : "전량 매도"}
-            </Badge>
-            <Button asChild variant="ghost" size="sm">
-              <Link href={`/portfolio/${group.ticker}`}>상세 보기</Link>
-            </Button>
-          </div>
-        </div>
-
-        <div className="grid gap-3 sm:grid-cols-3">
-          <MiniMetric label="실현 손익" value={formatSignedPrice(group.metrics.realizedPnl)} />
-          <MiniMetric label="부분 익절" value={`${group.partialExitCount}회`} />
-          <MiniMetric label="종료 시점" value={new Date(group.latestEvent.tradedAt).toLocaleDateString("ko-KR")} />
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="rounded-[20px] border border-border/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.94),rgba(246,241,232,0.88))] px-4 py-4">
-          <p className="text-sm font-semibold text-foreground">{review.headline}</p>
-          <p className="mt-2 text-sm leading-6 text-muted-foreground">{review.summary}</p>
-        </div>
-
-        <div className="grid gap-3 sm:grid-cols-2">
-          <ReviewBlock title="잘한 점" items={review.strengths} tone="positive" emptyLabel="기록된 강점이 아직 없습니다." />
-          <ReviewBlock title="다음에 다시 볼 점" items={review.watchouts} tone="caution" emptyLabel="큰 경고 포인트는 아직 없습니다." />
-        </div>
-
-        <div className="rounded-[20px] border border-border/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.94),rgba(246,241,232,0.88))] px-4 py-4">
-          <PortfolioCloseReviewEditor
-            positionKey={positionKey}
-            ticker={group.ticker}
-            closedAt={group.latestEvent.tradedAt}
-            review={reviewEntry}
-            compact
-          />
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
 function ReviewMetric({ title, value }: { title: string; value: string }) {
   return (
     <div className="rounded-[22px] border border-border/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.95),rgba(246,241,232,0.9))] p-4">
@@ -600,15 +520,6 @@ function BehaviorMetric({
   );
 }
 
-function MiniMetric({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-2xl border border-border/80 bg-[hsl(42_40%_97%)] px-3 py-3">
-      <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">{label}</p>
-      <p className="mt-1 text-sm font-semibold text-foreground">{value}</p>
-    </div>
-  );
-}
-
 function PatternCard({
   pattern
 }: {
@@ -632,41 +543,6 @@ function PatternCard({
         </Badge>
       </div>
       <p className="mt-3 text-sm leading-6 text-muted-foreground">{pattern.note}</p>
-    </div>
-  );
-}
-
-function ReviewBlock({
-  title,
-  items,
-  tone,
-  emptyLabel
-}: {
-  title: string;
-  items: string[];
-  tone: "positive" | "caution";
-  emptyLabel: string;
-}) {
-  return (
-    <div
-      className={
-        tone === "positive"
-          ? "rounded-[20px] border border-positive/22 bg-[hsl(var(--positive)/0.1)] px-4 py-4"
-          : "rounded-[20px] border border-caution/22 bg-[hsl(var(--caution)/0.1)] px-4 py-4"
-      }
-    >
-      <p className="text-sm font-semibold text-foreground">{title}</p>
-      <div className="mt-3 space-y-2">
-        {items.length ? (
-          items.map((item) => (
-            <p key={item} className="text-sm leading-6 text-muted-foreground">
-              {item}
-            </p>
-          ))
-        ) : (
-          <p className="text-sm leading-6 text-muted-foreground">{emptyLabel}</p>
-        )}
-      </div>
     </div>
   );
 }
@@ -722,6 +598,177 @@ function DistributionCard({
         ))}
       </div>
     </div>
+  );
+}
+
+function formatReviewActivityDate(value: string) {
+  return new Intl.DateTimeFormat("ko-KR", {
+    timeZone: "Asia/Seoul",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit"
+  }).format(new Date(value));
+}
+
+function getClosedGroupStatusLabel(group: PortfolioJournalGroup) {
+  if (group.latestEvent.type === "stop_loss") {
+    return "손절 종료";
+  }
+
+  if (group.latestEvent.type === "manual_exit") {
+    return "수동 종료";
+  }
+
+  return "전량 매도";
+}
+
+function ClosedReviewTable({
+  groups,
+  closeReviews,
+  focusTicker
+}: {
+  groups: PortfolioJournalGroup[];
+  closeReviews: Record<string, PortfolioCloseReviewEntry>;
+  focusTicker?: string | null;
+}) {
+  const [editingKey, setEditingKey] = useState<string | null>(null);
+  const editingGroup =
+    editingKey === null
+      ? null
+      : groups.find((group) => getPortfolioCloseReviewKeyForGroup(group) === editingKey) ?? null;
+
+  return (
+    <>
+      <Card className="border-border/80 bg-white/90 shadow-[0_18px_44px_-34px_rgba(24,32,42,0.2)]">
+        <CardHeader className="space-y-3">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <CardTitle className="text-lg text-foreground">종목별 회고 목록</CardTitle>
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                종료된 종목을 표로 다시 보고, 필요한 회고만 수정하거나 상세 차트로 이어서 확인합니다.
+              </p>
+            </div>
+            <Badge variant="secondary">{groups.length}개 종목</Badge>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto">
+            <table className="min-w-[780px] w-full border-separate border-spacing-0">
+              <thead>
+                <tr className="text-left">
+                  <th className="border-b border-border/70 px-4 py-3 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                    종목
+                  </th>
+                  <th className="border-b border-border/70 px-4 py-3 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                    최근 진행일
+                  </th>
+                  <th className="border-b border-border/70 px-4 py-3 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                    진행 상태
+                  </th>
+                  <th className="border-b border-border/70 px-4 py-3 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                    회고 수정
+                  </th>
+                  <th className="border-b border-border/70 px-4 py-3 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                    상세 보기
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {groups.map((group) => {
+                  const positionKey = getPortfolioCloseReviewKeyForGroup(group);
+                  const reviewEntry = closeReviews[positionKey];
+                  const isFocused = focusTicker === group.ticker;
+                  const statusLabel = getClosedGroupStatusLabel(group);
+                  const statusVariant =
+                    group.latestEvent.type === "stop_loss"
+                      ? "caution"
+                      : group.latestEvent.type === "manual_exit"
+                        ? "neutral"
+                        : "positive";
+
+                  return (
+                    <tr
+                      key={positionKey}
+                      className={isFocused ? "bg-[hsl(var(--primary)/0.06)]" : undefined}
+                    >
+                      <td className="border-b border-border/60 px-4 py-4 align-top">
+                        <div className="space-y-1">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <p className="text-sm font-semibold text-foreground">{group.company}</p>
+                            <span className="text-xs text-muted-foreground">{group.ticker}</span>
+                            {isFocused ? <Badge variant="neutral">방금 기록</Badge> : null}
+                          </div>
+                          <p className="text-xs leading-5 text-muted-foreground">
+                            {group.sector} · {group.holdingDays}일 보유 · 실현 {formatSignedPrice(group.metrics.realizedPnl)}
+                          </p>
+                        </div>
+                      </td>
+                      <td className="border-b border-border/60 px-4 py-4 align-top">
+                        <div className="space-y-1">
+                          <p className="text-sm font-medium text-foreground">
+                            {formatReviewActivityDate(group.latestEvent.tradedAt)}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            이벤트 {group.events.length}건 · 부분 익절 {group.partialExitCount}회
+                          </p>
+                        </div>
+                      </td>
+                      <td className="border-b border-border/60 px-4 py-4 align-top">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Badge variant={statusVariant}>{statusLabel}</Badge>
+                          <Badge variant={reviewEntry ? "secondary" : "neutral"}>
+                            {reviewEntry ? "회고 작성됨" : "회고 작성 전"}
+                          </Badge>
+                        </div>
+                      </td>
+                      <td className="border-b border-border/60 px-4 py-4 align-top">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setEditingKey(positionKey)}
+                        >
+                          {reviewEntry ? "회고 수정" : "회고 작성"}
+                        </Button>
+                      </td>
+                      <td className="border-b border-border/60 px-4 py-4 align-top">
+                        <Button asChild size="sm" variant="ghost">
+                          <Link href={`/portfolio/${group.ticker}`}>상세 보기</Link>
+                        </Button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Dialog open={Boolean(editingGroup)} onOpenChange={(open) => (open ? null : setEditingKey(null))}>
+        <DialogContent className="max-w-2xl">
+          {editingGroup ? (
+            <>
+              <DialogHeader>
+                <DialogTitle>
+                  {editingGroup.company} 회고 {closeReviews[editingKey ?? ""] ? "수정" : "작성"}
+                </DialogTitle>
+                <DialogDescription>
+                  종료된 거래를 짧게 다시 적어두면 다음 장초 판단과 개인 규칙에 바로 이어집니다.
+                </DialogDescription>
+              </DialogHeader>
+              <PortfolioCloseReviewEditor
+                positionKey={editingKey ?? ""}
+                ticker={editingGroup.ticker}
+                closedAt={editingGroup.latestEvent.tradedAt}
+                review={closeReviews[editingKey ?? ""]}
+                onSaved={() => setEditingKey(null)}
+              />
+            </>
+          ) : null}
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 
