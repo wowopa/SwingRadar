@@ -19,7 +19,7 @@ export function PrivateAppShell({
   return (
     <div className="min-h-screen bg-background text-foreground">
       <div className="fixed inset-x-0 top-0 z-50 px-3 sm:px-4 lg:px-6">
-        <header className="relative overflow-visible rounded-b-[28px] border-x border-b border-white/10 bg-[linear-gradient(180deg,rgba(18,24,36,0.98),rgba(27,34,49,0.94))] shadow-[0_22px_60px_hsl(220_26%_8%_/_0.18)] backdrop-blur-xl">
+        <header className="relative overflow-visible rounded-b-[28px] border-x border-b border-white/12 bg-[linear-gradient(180deg,rgba(15,20,31,0.985),rgba(24,31,45,0.965))] shadow-[0_22px_60px_hsl(220_26%_8%_/_0.18)] backdrop-blur-xl">
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_12%_10%,hsl(42_76%_66%_/_0.13),transparent_18%),radial-gradient(circle_at_88%_22%,hsl(196_90%_72%_/_0.05),transparent_20%)]" />
 
           <div className="relative grid min-h-[72px] grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 px-3 py-3 lg:hidden">

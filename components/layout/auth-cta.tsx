@@ -37,7 +37,7 @@ export function AuthCta({
       <div
         className={
           isLight
-            ? "rounded-full border border-white/12 bg-white/8 px-3 py-2 text-xs text-white/78 sm:text-sm"
+            ? "rounded-full border border-white/14 bg-white/10 px-3 py-2 text-xs text-white/92 sm:text-sm"
             : "rounded-full border border-border/80 bg-white px-3 py-2 text-xs text-foreground/78 sm:text-sm"
         }
       >
@@ -47,14 +47,14 @@ export function AuthCta({
         asChild
         variant="secondary"
         size="sm"
-        className={isLight ? "border-white/12 bg-white/8 text-white hover:bg-white/12" : undefined}
+        className={isLight ? "border-white/14 bg-white/10 text-white hover:bg-white/14" : undefined}
       >
         <Link href="/account">내 계정</Link>
       </Button>
       <LogoutButton
         variant="ghost"
         size="sm"
-        className={isLight ? "text-white/72 hover:bg-white/10 hover:text-white" : undefined}
+        className={isLight ? "text-white/88 hover:bg-white/10 hover:text-white" : undefined}
       />
     </div>
   );

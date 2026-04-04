@@ -58,11 +58,11 @@ export function PrivateNav({ iconOnly = false }: { iconOnly?: boolean }) {
               iconOnly ? "h-10 w-10 justify-center px-0 py-0" : "h-10 gap-2 px-4",
               isActive
                 ? iconOnly
-                  ? "border-white/14 bg-white/12 text-white shadow-[0_18px_40px_-30px_rgba(24,32,42,0.62)]"
-                  : "border-white/14 bg-white/10 text-white shadow-[0_18px_40px_-30px_rgba(24,32,42,0.48)]"
+                  ? "border-white/18 bg-white/14 text-white shadow-[0_18px_40px_-30px_rgba(24,32,42,0.62)]"
+                  : "border-white/18 bg-white/12 text-white shadow-[0_18px_40px_-30px_rgba(24,32,42,0.48)]"
                 : iconOnly
-                  ? "border-white/10 bg-white/4 text-white/72 hover:bg-white/8 hover:text-white"
-                  : "border-transparent bg-transparent text-white/72 hover:border-white/10 hover:bg-white/6 hover:text-white"
+                  ? "border-white/12 bg-white/6 text-white/88 hover:bg-white/12 hover:text-white"
+                  : "border-transparent bg-transparent text-white/84 hover:border-white/12 hover:bg-white/8 hover:text-white"
             )}
             aria-label={item.label}
             title={item.label}
@@ -77,7 +77,7 @@ export function PrivateNav({ iconOnly = false }: { iconOnly?: boolean }) {
               <Icon className="h-4 w-4" />
             </div>
             {!iconOnly ? (
-              <p className="min-w-0 text-sm font-medium">
+              <p className="min-w-0 text-sm font-semibold">
                 {item.label}
               </p>
             ) : null}
