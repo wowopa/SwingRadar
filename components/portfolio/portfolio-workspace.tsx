@@ -382,7 +382,10 @@ export function PortfolioWorkspace({
         }}
         className="space-y-5"
       >
-        <TabsList className="w-full justify-start gap-1 overflow-x-auto rounded-[24px] border border-border/80 bg-white/90 p-1.5 shadow-[0_18px_44px_-34px_rgba(24,32,42,0.22)] sm:w-auto">
+        <TabsList
+          data-tutorial="portfolio-tabs"
+          className="w-full justify-start gap-1 overflow-x-auto rounded-[24px] border border-border/80 bg-white/90 p-1.5 shadow-[0_18px_44px_-34px_rgba(24,32,42,0.22)] sm:w-auto"
+        >
           <TabsTrigger value="holdings" className="min-w-[120px]">
             Holdings
           </TabsTrigger>
@@ -398,12 +401,14 @@ export function PortfolioWorkspace({
         </TabsList>
 
         <TabsContent value="holdings" className="mt-0">
-          <PortfolioOverviewBoard
-            profile={profile}
-            holdingActionBoard={holdingActionBoard}
-            onOpenSettings={() => setIsSettingsOpen(true)}
-            onQuickTradeAction={setQuickTradePreset}
-          />
+          <div data-tutorial="portfolio-holdings">
+            <PortfolioOverviewBoard
+              profile={profile}
+              holdingActionBoard={holdingActionBoard}
+              onOpenSettings={() => setIsSettingsOpen(true)}
+              onQuickTradeAction={setQuickTradePreset}
+            />
+          </div>
         </TabsContent>
 
         <TabsContent value="journal" className="mt-0">

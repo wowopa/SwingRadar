@@ -1,5 +1,6 @@
 "use client";
 
+import type { CSSProperties } from "react";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { X } from "lucide-react";
@@ -17,6 +18,14 @@ import { cn } from "@/lib/utils";
 const STORAGE_KEY = "swing-radar:tutorial-progress:v1";
 
 type TutorialProgress = Partial<Record<AppTutorialScope, boolean>>;
+
+interface SpotlightRect {
+  top: number;
+  left: number;
+  width: number;
+  height: number;
+  label?: string;
+}
 
 function loadTutorialProgress() {
   if (typeof window === "undefined") {
@@ -51,10 +60,10 @@ export function AppTutorialController() {
   const [isHydrated, setIsHydrated] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [stepIndex, setStepIndex] = useState(0);
+  const [spotlight, setSpotlight] = useState<SpotlightRect | null>(null);
 
   useEffect(() => {
-    const nextProgress = loadTutorialProgress();
-    setProgress(nextProgress);
+    setProgress(loadTutorialProgress());
     setIsHydrated(true);
   }, []);
 
@@ -103,11 +112,94 @@ export function AppTutorialController() {
     };
   }, [scope]);
 
-  if (!isHydrated || !definition || !scope || !isOpen) {
+  const currentStep = definition?.steps[stepIndex] ?? null;
+
+  useEffect(() => {
+    if (!isOpen || !currentStep?.target) {
+      return;
+    }
+
+    const target = document.querySelector<HTMLElement>(currentStep.target);
+    if (!target) {
+      return;
+    }
+
+    const rect = target.getBoundingClientRect();
+    const topThreshold = window.innerWidth < 640 ? 88 : 108;
+    const bottomThreshold = window.innerHeight - (window.innerWidth < 640 ? 240 : 164);
+
+    if (rect.top < topThreshold || rect.bottom > bottomThreshold) {
+      target.scrollIntoView({
+        block: "center",
+        inline: "nearest",
+        behavior: "smooth"
+      });
+    }
+  }, [currentStep?.target, isOpen, pathname]);
+
+  useEffect(() => {
+    if (!isOpen || !currentStep?.target) {
+      setSpotlight(null);
+      return;
+    }
+
+    let frame = 0;
+
+    const updateSpotlight = () => {
+      cancelAnimationFrame(frame);
+      frame = window.requestAnimationFrame(() => {
+        const target = document.querySelector<HTMLElement>(currentStep.target!);
+        if (!target) {
+          setSpotlight(null);
+          return;
+        }
+
+        const rect = target.getBoundingClientRect();
+        const padding = currentStep.spotlightPadding ?? (window.innerWidth < 640 ? 10 : 16);
+        const top = Math.max(rect.top - padding, 8);
+        const left = Math.max(rect.left - padding, 8);
+        const right = Math.min(rect.right + padding, window.innerWidth - 8);
+        const bottom = Math.min(rect.bottom + padding, window.innerHeight - 8);
+        const width = Math.max(right - left, 0);
+        const height = Math.max(bottom - top, 0);
+
+        if (width <= 0 || height <= 0) {
+          setSpotlight(null);
+          return;
+        }
+
+        setSpotlight({
+          top,
+          left,
+          width,
+          height,
+          label: currentStep.spotlightLabel
+        });
+      });
+    };
+
+    updateSpotlight();
+    window.addEventListener("resize", updateSpotlight);
+    window.addEventListener("scroll", updateSpotlight, true);
+
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener("resize", updateSpotlight);
+      window.removeEventListener("scroll", updateSpotlight, true);
+    };
+  }, [
+    currentStep?.spotlightLabel,
+    currentStep?.spotlightPadding,
+    currentStep?.target,
+    isOpen,
+    pathname,
+    stepIndex
+  ]);
+
+  if (!isHydrated || !definition || !scope || !currentStep || !isOpen) {
     return null;
   }
 
-  const currentStep = definition.steps[stepIndex];
   const isLastStep = stepIndex === definition.steps.length - 1;
   const currentScope = scope;
 
@@ -132,18 +224,80 @@ export function AppTutorialController() {
     setStepIndex((current) => Math.max(0, current - 1));
   }
 
-  return (
-    <div className="fixed inset-0 z-[90]">
+  function OverlaySlice({
+    style
+  }: {
+    style: CSSProperties;
+  }) {
+    return (
       <button
         type="button"
         aria-label="튜토리얼 닫기"
-        className="absolute inset-0 bg-[rgba(15,20,31,0.42)] backdrop-blur-[1px]"
+        className="fixed z-[90] bg-[rgba(15,20,31,0.2)] transition-colors"
         onClick={markSeenAndClose}
+        style={style}
       />
+    );
+  }
+
+  return (
+    <div className="fixed inset-0 z-[90]">
+      {spotlight ? (
+        <>
+          <OverlaySlice style={{ top: 0, left: 0, right: 0, height: spotlight.top }} />
+          <OverlaySlice style={{ top: spotlight.top, left: 0, width: spotlight.left, height: spotlight.height }} />
+          <OverlaySlice
+            style={{
+              top: spotlight.top,
+              left: spotlight.left + spotlight.width,
+              right: 0,
+              height: spotlight.height
+            }}
+          />
+          <OverlaySlice
+            style={{
+              top: spotlight.top + spotlight.height,
+              left: 0,
+              right: 0,
+              bottom: 0
+            }}
+          />
+
+          <div
+            className="pointer-events-none fixed z-[91] rounded-[30px] border-2 border-[hsl(42_76%_66%)] bg-white/[0.04] shadow-[0_0_0_1px_rgba(255,255,255,0.08),0_0_0_10px_rgba(139,107,46,0.14),0_28px_64px_-36px_rgba(15,20,31,0.72)]"
+            style={{
+              top: spotlight.top,
+              left: spotlight.left,
+              width: spotlight.width,
+              height: spotlight.height
+            }}
+          />
+
+          {spotlight.label ? (
+            <div
+              className="pointer-events-none fixed z-[91] rounded-full border border-[hsl(42_76%_66%_/_0.45)] bg-[rgba(15,20,31,0.92)] px-3 py-1.5 text-xs font-medium text-white shadow-[0_12px_24px_-18px_rgba(15,20,31,0.9)]"
+              style={{
+                top: Math.max(spotlight.top - 18, 10),
+                left: spotlight.left + 16,
+                maxWidth: "min(calc(100vw - 40px), 220px)"
+              }}
+            >
+              {spotlight.label}
+            </div>
+          ) : null}
+        </>
+      ) : (
+        <button
+          type="button"
+          aria-label="튜토리얼 닫기"
+          className="absolute inset-0 bg-[rgba(15,20,31,0.2)]"
+          onClick={markSeenAndClose}
+        />
+      )}
 
       <div
         className={cn(
-          "absolute inset-x-3 bottom-3 rounded-[28px] border border-white/12 bg-[linear-gradient(180deg,rgba(15,20,31,0.985),rgba(24,31,45,0.975))] p-4 text-white shadow-[0_28px_64px_-28px_rgba(15,20,31,0.76)]",
+          "absolute inset-x-3 bottom-3 z-[92] rounded-[28px] border border-white/12 bg-[linear-gradient(180deg,rgba(15,20,31,0.985),rgba(24,31,45,0.975))] p-4 text-white shadow-[0_28px_64px_-28px_rgba(15,20,31,0.76)]",
           "sm:bottom-6 sm:right-6 sm:left-auto sm:w-[460px] sm:p-5"
         )}
       >
@@ -201,7 +355,10 @@ export function AppTutorialController() {
           <span>
             {stepIndex + 1} / {definition.steps.length}
           </span>
-          <Link href="/account" className="font-medium text-white/72 underline-offset-4 hover:text-white hover:underline">
+          <Link
+            href="/account"
+            className="font-medium text-white/72 underline-offset-4 hover:text-white hover:underline"
+          >
             Account에서 다시 보기
           </Link>
         </div>

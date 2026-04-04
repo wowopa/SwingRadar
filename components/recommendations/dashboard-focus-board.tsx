@@ -375,47 +375,55 @@ export function DashboardFocusBoard({
           {personalRuleAlert ? <PersonalRuleAlertBanner alert={personalRuleAlert} /> : null}
           {personalRuleReminder ? <CompactRuleReminderBanner reminder={personalRuleReminder} /> : null}
 
-          <div className="grid gap-3 xl:grid-cols-3">
-            <PrimaryActionCard
-              href={isMarketClosed ? "/portfolio?tab=reviews" : "/opening-check"}
-              title={isMarketClosed ? "지난 기록 복기" : "장초 확인"}
-              count={formatQueueCount(isMarketClosed ? closedDayReviewCount : openingSummary.counts.pending)}
-              caption={isMarketClosed ? "최근 종료·검토 기록" : "오늘 먼저 볼 종목"}
-              summaryLine={isMarketClosed ? "주말과 공휴일에는 지난 판단과 종료 거래를 먼저 복기합니다." : openingSummaryLine}
-              accent={isMarketClosed ? "muted" : "primary"}
-              icon={<Clock3 className="h-4 w-4" />}
-            />
-            <PrimaryActionCard
-              href={
-                isMarketClosed
-                  ? "/signals?tab=candidates"
-                  : buyReviewItems[0]
-                    ? `/analysis/${buyReviewItems[0].item.ticker}`
-                    : "/opening-check"
-              }
-              title={isMarketClosed ? "새 계획 만들기" : "오늘 매수 검토"}
-              count={formatQueueCount(isMarketClosed ? closedDayPlanCount : buyReviewItems.length)}
-              caption={isMarketClosed ? "다음 개장 전 볼 공통 후보" : buyReviewCaption}
-              summaryLine={
-                isMarketClosed
-                  ? "Signals에서 공통 후보를 다시 고르고 다음 개장일 계획을 정리합니다."
-                  : buyReviewSummaryLine
-              }
-              accent={isMarketClosed ? "primary" : buyReviewAccent}
-              icon={<Target className="h-4 w-4" />}
-            />
-            <PrimaryActionCard
-              href="/portfolio"
-              title="보유 관리"
-              count={formatQueueCount(getHoldingAttentionCount(holdingActionBoard))}
-              caption={holdingAttentionItems.length ? "우선 점검이 필요한 보유 종목" : "지금 급한 보유 종목은 없습니다"}
-              summaryLine="즉시 점검, 익절, 시간 점검은 Portfolio에서 이어집니다."
-              accent={holdingAttentionItems.length ? "caution" : "muted"}
-              icon={<ShieldAlert className="h-4 w-4" />}
-            />
+          <div data-tutorial="today-actions" className="grid gap-3 xl:grid-cols-3">
+            <div data-tutorial="today-opening-card">
+              <PrimaryActionCard
+                href={isMarketClosed ? "/portfolio?tab=reviews" : "/opening-check"}
+                title={isMarketClosed ? "지난 기록 복기" : "장초 확인"}
+                count={formatQueueCount(isMarketClosed ? closedDayReviewCount : openingSummary.counts.pending)}
+                caption={isMarketClosed ? "최근 종료·검토 기록" : "오늘 먼저 볼 종목"}
+                summaryLine={isMarketClosed ? "주말과 공휴일에는 지난 판단과 종료 거래를 먼저 복기합니다." : openingSummaryLine}
+                accent={isMarketClosed ? "muted" : "primary"}
+                icon={<Clock3 className="h-4 w-4" />}
+              />
+            </div>
+            <div data-tutorial="today-buy-card">
+              <PrimaryActionCard
+                href={
+                  isMarketClosed
+                    ? "/signals?tab=candidates"
+                    : buyReviewItems[0]
+                      ? `/analysis/${buyReviewItems[0].item.ticker}`
+                      : "/opening-check"
+                }
+                title={isMarketClosed ? "새 계획 만들기" : "오늘 매수 검토"}
+                count={formatQueueCount(isMarketClosed ? closedDayPlanCount : buyReviewItems.length)}
+                caption={isMarketClosed ? "다음 개장 전 볼 공통 후보" : buyReviewCaption}
+                summaryLine={
+                  isMarketClosed
+                    ? "Signals에서 공통 후보를 다시 고르고 다음 개장일 계획을 정리합니다."
+                    : buyReviewSummaryLine
+                }
+                accent={isMarketClosed ? "primary" : buyReviewAccent}
+                icon={<Target className="h-4 w-4" />}
+              />
+            </div>
+            <div data-tutorial="today-holding-card">
+              <PrimaryActionCard
+                href="/portfolio"
+                title="보유 관리"
+                count={formatQueueCount(getHoldingAttentionCount(holdingActionBoard))}
+                caption={holdingAttentionItems.length ? "우선 점검이 필요한 보유 종목" : "지금 급한 보유 종목은 없습니다"}
+                summaryLine="즉시 점검, 익절, 시간 점검은 Portfolio에서 이어집니다."
+                accent={holdingAttentionItems.length ? "caution" : "muted"}
+                icon={<ShieldAlert className="h-4 w-4" />}
+              />
+            </div>
           </div>
 
-          <TodayCommunityPulseCard stats={todayCommunityStats} isMarketClosed={isMarketClosed} />
+          <div data-tutorial="today-community-stats">
+            <TodayCommunityPulseCard stats={todayCommunityStats} isMarketClosed={isMarketClosed} />
+          </div>
         </CardContent>
       </Card>
 

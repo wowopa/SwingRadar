@@ -354,7 +354,7 @@ export function RecommendationExplorer({
 
   return (
     <div className="space-y-6 lg:space-y-8">
-      <section className="flex flex-wrap gap-2">
+      <section data-tutorial="signals-quick-view" className="flex flex-wrap gap-2">
         {quickViewOptions.map((option) => {
           const active =
             (option.key === "all" && scopeFilter === "all" && personalActionFilter === "all") ||
@@ -390,7 +390,10 @@ export function RecommendationExplorer({
       </section>
 
       {quickViewSummary ? (
-        <section className="rounded-3xl border border-primary/16 bg-[linear-gradient(145deg,rgba(139,107,46,0.06),rgba(255,255,255,0.94))] px-4 py-3 shadow-[0_16px_40px_-30px_rgba(139,107,46,0.2)]">
+        <section
+          data-tutorial="signals-summary"
+          className="rounded-3xl border border-primary/16 bg-[linear-gradient(145deg,rgba(139,107,46,0.06),rgba(255,255,255,0.94))] px-4 py-3 shadow-[0_16px_40px_-30px_rgba(139,107,46,0.2)]"
+        >
           <div className="flex flex-wrap items-center gap-2">
             <Badge variant="neutral">{quickViewSummary.label}</Badge>
             <p className="text-sm font-medium text-foreground">{quickViewSummary.headline}</p>
@@ -623,7 +626,10 @@ export function RecommendationExplorer({
       ) : null}
 
       {hasPersonalActionSummary ? (
-        <section className="rounded-3xl border border-primary/18 bg-[linear-gradient(145deg,rgba(139,107,46,0.08),rgba(255,255,255,0.94))] p-5 shadow-[0_18px_46px_-32px_rgba(139,107,46,0.16)]">
+        <section
+          data-tutorial="signals-summary"
+          className="rounded-3xl border border-primary/18 bg-[linear-gradient(145deg,rgba(139,107,46,0.08),rgba(255,255,255,0.94))] p-5 shadow-[0_18px_46px_-32px_rgba(139,107,46,0.16)]"
+        >
           <div className="flex flex-wrap items-center gap-2">
             <Badge variant="neutral">내 기준 빠른 해석</Badge>
             <p className="text-sm font-medium text-foreground">현재 필터 결과를 내 계좌 기준으로 다시 보면 이렇게 나뉩니다.</p>
@@ -643,7 +649,7 @@ export function RecommendationExplorer({
       ) : null}
 
       {filteredItems.length ? (
-        <section id="signals-ranking-table" className="space-y-4">
+        <section id="signals-ranking-table" data-tutorial="signals-table" className="space-y-4">
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
               <h2 className="text-lg font-semibold text-foreground">전체 종목 순위표</h2>

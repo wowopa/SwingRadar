@@ -722,7 +722,10 @@ export function DailyCandidatesPanel({
         {hasCandidates ? (
           <>
             <div className="grid gap-3 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)] xl:gap-4">
-              <div className="rounded-3xl border border-border/80 bg-white/90 p-4 shadow-[0_20px_48px_-32px_rgba(24,32,42,0.24)] sm:p-5">
+              <div
+                data-tutorial="opening-current"
+                className="rounded-3xl border border-border/80 bg-white/90 p-4 shadow-[0_20px_48px_-32px_rgba(24,32,42,0.24)] sm:p-5"
+              >
                 {focusedCandidate && focusedDraft ? (
                   <>
                     <div className="flex flex-wrap items-start justify-between gap-3">
@@ -786,7 +789,7 @@ export function DailyCandidatesPanel({
                       </div>
                     </div>
 
-                    <div className="mt-3 grid gap-3 sm:mt-4 sm:gap-4">
+                    <div data-tutorial="opening-checklist" className="mt-3 grid gap-3 sm:mt-4 sm:gap-4">
                       <div className="rounded-2xl border border-border/80 bg-[hsl(42_40%_97%)] p-3.5 sm:p-4">
                         <div className="flex items-start justify-between gap-3">
                           <p className="text-sm font-semibold text-foreground">1. 갭 상태</p>
@@ -895,7 +898,10 @@ export function DailyCandidatesPanel({
                         </div>
                       </div>
 
-                      <div className="rounded-2xl border border-border/80 bg-[linear-gradient(180deg,rgba(246,241,232,0.9),rgba(255,255,255,0.92))] p-3.5 sm:p-4">
+                      <div
+                        data-tutorial="opening-suggestion"
+                        className="rounded-2xl border border-border/80 bg-[linear-gradient(180deg,rgba(246,241,232,0.9),rgba(255,255,255,0.92))] p-3.5 sm:p-4"
+                      >
                         <div className="flex flex-wrap items-center justify-between gap-3">
                           <div>
                             <p className="text-sm font-semibold text-foreground">자동 제안 상태</p>
@@ -1102,7 +1108,10 @@ export function DailyCandidatesPanel({
                 )}
               </div>
 
-                <div className="rounded-3xl border border-border/80 bg-[hsl(42_34%_97%)] p-4 sm:p-5">
+                <div
+                  data-tutorial="opening-queue"
+                  className="rounded-3xl border border-border/80 bg-[hsl(42_34%_97%)] p-4 sm:p-5"
+                >
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
                     <p className="text-sm font-semibold text-foreground">장초 확인 목록</p>

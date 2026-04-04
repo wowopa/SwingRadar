@@ -178,7 +178,10 @@ export function PositionDetailView({
   return (
     <>
       <section className="space-y-6">
-        <Card className="border-border/80 bg-white/90 shadow-[0_22px_56px_-36px_rgba(24,32,42,0.24)]">
+        <Card
+          data-tutorial="position-header"
+          className="border-border/80 bg-white/90 shadow-[0_22px_56px_-36px_rgba(24,32,42,0.24)]"
+        >
           <CardHeader className="space-y-4">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div className="space-y-3">
@@ -250,16 +253,21 @@ export function PositionDetailView({
         </Card>
 
         <div className="grid gap-6 xl:grid-cols-[1.4fr,0.92fr]">
-          <PortfolioPositionChartCard
-            company={company}
-            chartPoints={analysis?.chartSeries ?? []}
-            journalGroup={journalGroup}
-            tradePlan={tradePlan}
-            averagePrice={averagePrice}
-          />
+          <div data-tutorial="position-chart">
+            <PortfolioPositionChartCard
+              company={company}
+              chartPoints={analysis?.chartSeries ?? []}
+              journalGroup={journalGroup}
+              tradePlan={tradePlan}
+              averagePrice={averagePrice}
+            />
+          </div>
 
           <div className="space-y-6">
-            <Card className="border-border/80 bg-white/90 shadow-[0_18px_44px_-34px_rgba(24,32,42,0.2)]">
+            <Card
+              data-tutorial="position-comparison"
+              className="border-border/80 bg-white/90 shadow-[0_18px_44px_-34px_rgba(24,32,42,0.2)]"
+            >
               <CardHeader>
                 <CardTitle className="text-lg text-foreground">계획 대비 실제</CardTitle>
               </CardHeader>
@@ -379,7 +387,10 @@ export function PositionDetailView({
           </Card>
 
           <div className="space-y-6">
-            <Card className="border-border/80 bg-white/90 shadow-[0_18px_44px_-34px_rgba(24,32,42,0.2)]">
+            <Card
+              data-tutorial="position-review"
+              className="border-border/80 bg-white/90 shadow-[0_18px_44px_-34px_rgba(24,32,42,0.2)]"
+            >
               <CardHeader>
                 <CardTitle className="text-lg text-foreground">현재 계획과 다음 행동</CardTitle>
               </CardHeader>

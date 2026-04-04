@@ -64,7 +64,10 @@ export function AnalysisTradePlanPanel({
   const actionFlow = buildActionFlow({ ticker, featuredRank, personalActionItem });
 
   return (
-    <Card className="border-border/80 bg-white/92 shadow-[0_22px_56px_-36px_rgba(24,32,42,0.24)]">
+    <Card
+      data-tutorial="analysis-plan"
+      className="border-border/80 bg-white/92 shadow-[0_22px_56px_-36px_rgba(24,32,42,0.24)]"
+    >
       <CardHeader className="space-y-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex flex-wrap items-center gap-2">
@@ -91,7 +94,7 @@ export function AnalysisTradePlanPanel({
           <p className="text-sm leading-7 text-foreground/84">{plan.headline}</p>
         </div>
 
-        <div className="grid gap-3 md:grid-cols-3">
+        <div data-tutorial="analysis-action-flow" className="grid gap-3 md:grid-cols-3">
           <ActionFlowStep
             label="공통 후보"
             value={actionFlow.sharedLabel}
@@ -172,7 +175,10 @@ export function AnalysisTradePlanPanel({
       </CardHeader>
 
       <CardContent className="space-y-4">
-        <div className="rounded-[28px] border border-primary/24 bg-[linear-gradient(180deg,rgba(139,107,46,0.1),rgba(255,255,255,0.94))] p-5">
+        <div
+          data-tutorial="analysis-next-action"
+          className="rounded-[28px] border border-primary/24 bg-[linear-gradient(180deg,rgba(139,107,46,0.1),rgba(255,255,255,0.94))] p-5"
+        >
           <p className="text-xs font-medium uppercase tracking-[0.18em] text-primary">다음 행동</p>
           <p className="mt-3 text-sm leading-7 text-foreground/84">{plan.nextStep}</p>
         </div>
