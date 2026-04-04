@@ -14,7 +14,10 @@ import type {
   ThresholdAdviceReportPayload
 } from "@/components/admin/dashboard-types";
 import { formatBytes, formatDuration, formatPercent, formatShortDate } from "@/components/admin/admin-status-utils";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+
+type DataQualityTargetTab = "overview" | "candidate-ops" | "notices";
 
 function QualityBadge({
   label,
@@ -83,7 +86,8 @@ export function DataQualityTab({
   accessStatsReport,
   runtimeStorageReport,
   databaseStorageReport,
-  postLaunchHistory
+  postLaunchHistory,
+  onSelectTab
 }: {
   dataQualitySummary: AdminDataQualitySummaryPayload | null;
   dailyCycleReport: DailyCycleReportPayload | null;
@@ -95,8 +99,15 @@ export function DataQualityTab({
   runtimeStorageReport: RuntimeStorageReportPayload | null;
   databaseStorageReport: DatabaseStorageReportPayload | null;
   postLaunchHistory: PostLaunchHistoryEntryPayload[];
+  onSelectTab: (tab: DataQualityTargetTab) => void;
 }) {
   const currentPolicy = thresholdAdviceReport?.currentPolicy;
+  const validationFallbackPercent = dataQualitySummary?.validationFallbackPercent ?? 0;
+  const measuredValidationPercent = dataQualitySummary?.measuredValidationPercent ?? 0;
+  const newsLiveFetchPercent = dataQualitySummary?.newsLiveFetchPercent ?? 0;
+  const newsFallbackPercent =
+    (dataQualitySummary?.newsCacheFallbackPercent ?? 0) + (dataQualitySummary?.newsFileFallbackPercent ?? 0);
+  const needsFollowup = validationFallbackPercent >= 50 || newsLiveFetchPercent <= 70;
 
   return (
     <div className="grid gap-6">
@@ -104,39 +115,52 @@ export function DataQualityTab({
         <CardHeader className="pb-4">
           <CardTitle>Data Quality</CardTitle>
         </CardHeader>
-        <CardContent className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <QualityBadge
-            label="validation fallback"
-            value={formatPercent(dataQualitySummary?.validationFallbackPercent)}
-            note={`${dataQualitySummary?.validationFallbackCount ?? 0}건이 fallback 기준으로 생성됐습니다.`}
-            tone={getValidationTone(dataQualitySummary?.validationFallbackPercent, currentPolicy)}
-          />
-          <QualityBadge
-            label="measured validation"
-            value={formatPercent(dataQualitySummary?.measuredValidationPercent)}
-            note="실측 기반 validation 비율입니다."
-            tone={(dataQualitySummary?.measuredValidationPercent ?? 0) >= 5 ? "positive" : "caution"}
-          />
-          <QualityBadge
-            label="news live fetch"
-            value={formatPercent(dataQualitySummary?.newsLiveFetchPercent)}
-            note="live fetch 성공 비율입니다."
-            tone={getNewsLiveTone(dataQualitySummary?.newsLiveFetchPercent, currentPolicy)}
-          />
-          <QualityBadge
-            label="news fallback"
-            value={formatPercent(
-              (dataQualitySummary?.newsCacheFallbackPercent ?? 0) + (dataQualitySummary?.newsFileFallbackPercent ?? 0)
-            )}
-            note={`cache ${formatPercent(dataQualitySummary?.newsCacheFallbackPercent)} / file ${formatPercent(
-              dataQualitySummary?.newsFileFallbackPercent
-            )}`}
-            tone={
-              ((dataQualitySummary?.newsCacheFallbackPercent ?? 0) + (dataQualitySummary?.newsFileFallbackPercent ?? 0)) >= 50
-                ? "caution"
-                : "neutral"
-            }
-          />
+        <CardContent className="space-y-4">
+          <div className="flex flex-wrap gap-2">
+            <Button variant="outline" size="sm" onClick={() => onSelectTab("overview")}>
+              Overview로 돌아가기
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => onSelectTab("candidate-ops")}>
+              Candidate Ops 열기
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => onSelectTab("notices")}>
+              공지 열기
+            </Button>
+            {needsFollowup ? (
+              <span className="inline-flex rounded-full border border-caution/25 bg-caution/10 px-3 py-2 text-xs font-medium text-caution">
+                먼저 이 화면에서 품질 경고를 확인한 뒤 후보 운영으로 넘어가세요.
+              </span>
+            ) : null}
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <QualityBadge
+              label="validation fallback"
+              value={formatPercent(validationFallbackPercent)}
+              note={`${dataQualitySummary?.validationFallbackCount ?? 0}건이 fallback 기준으로 생성됐습니다.`}
+              tone={getValidationTone(validationFallbackPercent, currentPolicy)}
+            />
+            <QualityBadge
+              label="measured validation"
+              value={formatPercent(measuredValidationPercent)}
+              note="실측 기반 validation 비율입니다."
+              tone={measuredValidationPercent >= 5 ? "positive" : "caution"}
+            />
+            <QualityBadge
+              label="news live fetch"
+              value={formatPercent(newsLiveFetchPercent)}
+              note="live fetch 성공 비율입니다."
+              tone={getNewsLiveTone(newsLiveFetchPercent, currentPolicy)}
+            />
+            <QualityBadge
+              label="news fallback"
+              value={formatPercent(newsFallbackPercent)}
+              note={`cache ${formatPercent(dataQualitySummary?.newsCacheFallbackPercent)} / file ${formatPercent(
+                dataQualitySummary?.newsFileFallbackPercent
+              )}`}
+              tone={newsFallbackPercent >= 50 ? "caution" : "neutral"}
+            />
+          </div>
         </CardContent>
       </Card>
 

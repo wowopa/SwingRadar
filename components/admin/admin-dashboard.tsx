@@ -68,6 +68,7 @@ export function AdminDashboard() {
   const searchParams = useSearchParams();
   const { token, setToken, authHeaders } = useAdminToken();
   const [tab, setTab] = useState("overview");
+  const [showTokenEditor, setShowTokenEditor] = useState(false);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -115,6 +116,8 @@ export function AdminDashboard() {
     return buildWatchlistChanges(baselineWatchlist, activeWatchlist);
   }, [activeWatchlist, baselineWatchlist]);
   const watchlistTickers = useMemo(() => watchlist.map((item) => item.ticker), [watchlist]);
+  const providerLabel = health?.dataProvider.lastUsed?.provider ?? health?.dataProvider.configured.provider ?? "unknown";
+  const validationFallbackPercent = dataQualitySummary?.validationFallbackPercent ?? 0;
 
   function getLoadErrorMessage(loadError: unknown) {
     return loadError instanceof Error ? loadError.message : "예상하지 못한 섹션 로드 실패";
@@ -161,6 +164,7 @@ export function AdminDashboard() {
     try {
       if (!authHeaders) {
         setHasAdminAccess(false);
+        setShowTokenEditor(true);
         setHealth(await fetchJson<HealthPayload>("/api/health"));
         setOverallStatus("ok");
         setIncidents([]);
@@ -190,6 +194,7 @@ export function AdminDashboard() {
 
       const statusJson = await fetchJson<AdminStatusPayload>("/api/admin/status", { headers: authHeaders });
       setHasAdminAccess(true);
+      setShowTokenEditor(false);
       setOverallStatus(statusJson.overallStatus ?? "ok");
       setHealth(statusJson.health);
       setIncidents(statusJson.incidents ?? []);
@@ -466,26 +471,85 @@ export function AdminDashboard() {
   return (
     <div className="space-y-6">
       <Card>
-        <CardHeader>
-          <CardTitle>운영 콘솔 접속</CardTitle>
+        <CardHeader className="pb-4">
+          <CardTitle>{hasAdminAccess ? "운영 콘솔" : "운영 콘솔 접속"}</CardTitle>
         </CardHeader>
-        <CardContent className="grid gap-4 lg:grid-cols-[1fr_auto] lg:items-end">
-          <div>
-            <p className="mb-2 text-sm text-muted-foreground">
-              관리자 토큰을 입력하면 서비스 상태, 데이터 품질, 공통 후보 운영, 운영 공지 설정을 확인할 수 있습니다.
-            </p>
-            <Input type="password" placeholder="관리자 토큰" value={token} onChange={(event) => setToken(event.target.value)} />
-          </div>
-          <Button
-            onClick={() => {
-              void loadDashboard();
-            }}
-            disabled={loading}
-            variant="secondary"
-          >
-            <RefreshCw className="h-4 w-4" />
-            새로고침
-          </Button>
+        <CardContent className="space-y-4">
+          {hasAdminAccess ? (
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+              <div className="flex flex-wrap gap-2">
+                <span className="inline-flex rounded-full border border-positive/25 bg-positive/8 px-3 py-2 text-xs font-medium text-positive">
+                  관리자 접근 활성
+                </span>
+                <span className="inline-flex rounded-full border border-border/70 bg-white/80 px-3 py-2 text-xs font-medium text-foreground">
+                  전체 상태
+                  <span className="ml-2 text-muted-foreground">{overallStatus}</span>
+                </span>
+                <span className="inline-flex rounded-full border border-border/70 bg-white/80 px-3 py-2 text-xs font-medium text-foreground">
+                  데이터 제공
+                  <span className="ml-2 text-muted-foreground">{providerLabel}</span>
+                </span>
+                <span className="inline-flex rounded-full border border-border/70 bg-white/80 px-3 py-2 text-xs font-medium text-foreground">
+                  validation fallback
+                  <span className="ml-2 text-muted-foreground">{validationFallbackPercent.toFixed(1)}%</span>
+                </span>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  onClick={() => {
+                    void loadDashboard();
+                  }}
+                  disabled={loading}
+                  variant="secondary"
+                  size="sm"
+                >
+                  <RefreshCw className="h-4 w-4" />
+                  새로고침
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => setShowTokenEditor((current) => !current)}>
+                  {showTokenEditor ? "토큰 입력 닫기" : "토큰 변경"}
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="grid gap-4 lg:grid-cols-[1fr_auto] lg:items-end">
+              <div>
+                <p className="mb-2 text-sm text-muted-foreground">
+                  관리자 토큰을 입력하면 서비스 상태, 데이터 품질, 공통 후보 운영, 운영 공지 설정을 확인할 수 있습니다.
+                </p>
+                <Input type="password" placeholder="관리자 토큰" value={token} onChange={(event) => setToken(event.target.value)} />
+              </div>
+              <Button
+                onClick={() => {
+                  void loadDashboard();
+                }}
+                disabled={loading}
+                variant="secondary"
+              >
+                <RefreshCw className="h-4 w-4" />
+                새로고침
+              </Button>
+            </div>
+          )}
+
+          {hasAdminAccess && showTokenEditor ? (
+            <div className="rounded-[24px] border border-border/70 bg-secondary/35 p-4">
+              <p className="mb-2 text-sm text-muted-foreground">필요하면 관리자 토큰을 바꾸고 다시 불러오세요.</p>
+              <div className="grid gap-3 lg:grid-cols-[1fr_auto] lg:items-end">
+                <Input type="password" placeholder="관리자 토큰" value={token} onChange={(event) => setToken(event.target.value)} />
+                <Button
+                  onClick={() => {
+                    void loadDashboard();
+                  }}
+                  disabled={loading}
+                  variant="secondary"
+                >
+                  <RefreshCw className="h-4 w-4" />
+                  다시 인증
+                </Button>
+              </div>
+            </div>
+          ) : null}
         </CardContent>
       </Card>
 
@@ -543,6 +607,7 @@ export function AdminDashboard() {
               runtimeStorageReport={runtimeStorageReport}
               databaseStorageReport={databaseStorageReport}
               postLaunchHistory={postLaunchHistory}
+              onSelectTab={(nextTab) => setTab(nextTab)}
             />
           </TabsContent>
 
