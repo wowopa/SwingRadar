@@ -6,9 +6,9 @@ import { BrandSignature } from "@/components/layout/brand-signature";
 import { Button } from "@/components/ui/button";
 
 const navItems = [
-  { href: "/#overview", label: "Overview" },
-  { href: "/#workflow", label: "Workflow" },
-  { href: "/#product", label: "Product" },
+  { href: "/#overview", label: "이점" },
+  { href: "/#workflow", label: "흐름" },
+  { href: "/#product", label: "제품" },
   { href: "/#faq", label: "FAQ" }
 ] as const;
 

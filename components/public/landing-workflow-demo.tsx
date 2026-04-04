@@ -15,14 +15,14 @@ const landingStatusToneClasses = {
 const stages = [
   {
     id: "preopen",
-    label: "오늘 먼저 볼 종목",
+    label: "장전 후보",
     eyebrow: "08:00",
-    title: "먼저 볼 것만 남깁니다.",
+    title: "먼저 볼 종목만 남깁니다.",
     description:
-      "전일 데이터로 종목을 먼저 줄입니다. 이 단계는 매수 지시가 아니라, 오늘 아침에 먼저 확인할 목록을 만드는 단계입니다.",
-    bullets: ["매수 검토 0~3개", "관찰 종목 5~10개", "과열 종목 감점"],
-    panelTitle: "오늘 먼저 볼 종목",
-    panelNote: "전일 종가 기준 장전 계획",
+      "시장을 열기 전에 시선을 먼저 줄입니다. 많은 종목을 늘어놓는 대신, 오늘 아침 다시 볼 이유가 있는 후보만 정리합니다.",
+    bullets: ["매수 검토 후보 0~3개", "관찰 후보 5~10개", "쫓지 않을 종목 미리 분리"],
+    panelTitle: "오늘 먼저 볼 후보",
+    panelNote: "전일 기준 장전 정리",
     boardItems: [
       { name: "ISC", status: "매수 검토", tone: "positive" as const },
       { name: "DN오토모티브", status: "관찰 우선", tone: "neutral" as const },
@@ -33,12 +33,12 @@ const stages = [
     id: "opening",
     label: "장초 확인",
     eyebrow: "09:00-09:10",
-    title: "살지 말지 다시 거릅니다.",
+    title: "시초가에서 한 번 더 걸러냅니다.",
     description:
-      "시초가와 초반 구조를 짧게 다시 봅니다. 많이 튄 종목은 추격 금지로 돌리고, 손절 여유가 무너지면 바로 제외합니다.",
+      "시초가와 초반 반응만 짧게 확인합니다. 그래서 무리한 추격보다 통과, 관찰, 보류를 더 빠르게 나눌 수 있습니다.",
     bullets: ["통과", "관찰 유지", "추격 금지", "제외"],
     panelTitle: "장초 확인 결과",
-    panelNote: "시초가와 구조를 짧게 다시 점검",
+    panelNote: "초반 반응 짧게 재확인",
     boardItems: [
       { name: "ISC", status: "통과", tone: "positive" as const },
       { name: "DN오토모티브", status: "관찰 유지", tone: "neutral" as const },
@@ -47,18 +47,18 @@ const stages = [
   },
   {
     id: "action",
-    label: "당일 행동",
+    label: "오늘 행동",
     eyebrow: "09:10 이후",
-    title: "실제로 볼 종목만 남깁니다.",
+    title: "실제로 움직일 후보만 남깁니다.",
     description:
-      "통과한 종목도 전부 사지 않습니다. 포트폴리오 한도, 현금, 섹터 중복까지 함께 보고 오늘 행동 보드로 연결합니다.",
-    bullets: ["오늘 매수 검토 0~2개", "권장 비중과 수량 계산", "손절과 목표가 함께 제시"],
+      "통과한 종목을 모두 사는 화면이 아닙니다. 내 현금, 보유 종목, 한도까지 함께 보고 오늘 실제로 움직일 후보만 남깁니다.",
+    bullets: ["오늘 매수 검토 0~2개", "보유 우선 관리", "손절과 목표가 함께 확인"],
     panelTitle: "오늘 실제 행동 보드",
-    panelNote: "행동으로 끝나는 최종 보드",
+    panelNote: "내 계좌 기준 최종 정리",
     boardItems: [
       { name: "ISC", status: "오늘 매수 검토", tone: "positive" as const },
-      { name: "로킷헬스케어", status: "관찰 유지", tone: "neutral" as const },
-      { name: "같은 섹터 과밀", status: "오늘은 보류", tone: "secondary" as const }
+      { name: "로보티즈", status: "관찰 유지", tone: "neutral" as const },
+      { name: "같은 섹터 중복", status: "오늘은 보류", tone: "secondary" as const }
     ]
   }
 ] as const;
@@ -120,9 +120,9 @@ export function LandingWorkflowDemo() {
               </h3>
               <p className="public-panel-copy mt-4 max-w-2xl text-[1.02rem] leading-8">{stage.description}</p>
             </div>
-                    <Badge className="border-white/10 bg-white/6 text-white" variant="secondary">
-                      {stage.label}
-                    </Badge>
+            <Badge className="border-white/10 bg-white/6 text-white" variant="secondary">
+              {stage.label}
+            </Badge>
           </div>
 
           <div className="mt-5 grid gap-3 md:grid-cols-3">
@@ -156,7 +156,7 @@ export function LandingWorkflowDemo() {
           </div>
 
           <div className="public-panel-copy mt-5 rounded-[24px] border border-amber-300/14 bg-amber-300/8 px-4 py-4 text-sm leading-7">
-            핵심은 많이 보여주는 것이 아니라, 지금 뭘 해야 하는지 먼저 답하는 것입니다.
+            많이 읽게 만드는 서비스가 아니라, 더 빨리 결정하게 만드는 서비스입니다.
           </div>
         </div>
       </div>
