@@ -56,6 +56,34 @@ function getCycleTone(status: DailyCycleReportPayload["status"] | null | undefin
   return "neutral";
 }
 
+function getIncidentAction(item: OperationalIncident): { label: string; tab: OverviewTargetTab } | null {
+  const sourceText = `${item.source} ${item.summary} ${item.detail}`.toLowerCase();
+
+  if (
+    sourceText.includes("validation") ||
+    sourceText.includes("news") ||
+    sourceText.includes("fallback") ||
+    sourceText.includes("storage") ||
+    sourceText.includes("batch")
+  ) {
+    return { label: "데이터 품질", tab: "data-quality" };
+  }
+
+  if (sourceText.includes("watchlist") || sourceText.includes("universe") || sourceText.includes("candidate")) {
+    return { label: "후보 운영", tab: "candidate-ops" };
+  }
+
+  if (sourceText.includes("popup") || sourceText.includes("notice")) {
+    return { label: "공지", tab: "notices" };
+  }
+
+  if (sourceText.includes("portfolio")) {
+    return { label: "내부 포트폴리오", tab: "portfolio" };
+  }
+
+  return null;
+}
+
 export function OverviewTab({
   overallStatus,
   health,
@@ -160,32 +188,43 @@ export function OverviewTab({
           </CardHeader>
           <CardContent className="space-y-3">
             {incidents.length ? (
-              incidents.slice(0, 5).map((item) => (
-                <div
-                  key={item.id}
-                  className={
-                    item.severity === "critical"
-                      ? "rounded-[24px] border border-destructive/25 bg-destructive/5 p-4"
-                      : "rounded-[24px] border border-caution/25 bg-caution/8 p-4"
-                  }
-                >
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-2">
-                      {item.severity === "critical" ? (
-                        <ShieldAlert className="h-4 w-4 text-destructive" />
-                      ) : (
-                        <AlertTriangle className="h-4 w-4 text-caution" />
-                      )}
-                      <p className="text-sm font-semibold text-foreground">{item.summary}</p>
+              incidents.slice(0, 5).map((item) => {
+                const action = getIncidentAction(item);
+
+                return (
+                  <div
+                    key={item.id}
+                    className={
+                      item.severity === "critical"
+                        ? "rounded-[24px] border border-destructive/25 bg-destructive/5 p-4"
+                        : "rounded-[24px] border border-caution/25 bg-caution/8 p-4"
+                    }
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-2">
+                        {item.severity === "critical" ? (
+                          <ShieldAlert className="h-4 w-4 text-destructive" />
+                        ) : (
+                          <AlertTriangle className="h-4 w-4 text-caution" />
+                        )}
+                        <p className="text-sm font-semibold text-foreground">{item.summary}</p>
+                      </div>
+                      <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">{item.severity}</p>
                     </div>
-                    <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">{item.severity}</p>
+                    <p className="mt-2 text-sm leading-6 text-foreground/80">{item.detail}</p>
+                    <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+                      <p className="text-xs text-muted-foreground">
+                        {item.source} · {formatDateTime(item.detectedAt)}
+                      </p>
+                      {action ? (
+                        <Button variant="outline" size="sm" onClick={() => onSelectTab(action.tab)}>
+                          {action.label} 열기
+                        </Button>
+                      ) : null}
+                    </div>
                   </div>
-                  <p className="mt-2 text-sm leading-6 text-foreground/80">{item.detail}</p>
-                  <p className="mt-2 text-xs text-muted-foreground">
-                    {item.source} · {formatDateTime(item.detectedAt)}
-                  </p>
-                </div>
-              ))
+                );
+              })
             ) : (
               <div className="rounded-[24px] border border-positive/25 bg-positive/8 p-4 text-sm text-foreground">
                 <div className="flex items-center gap-2 font-semibold">

@@ -207,18 +207,21 @@ export function PortfolioProfileTab({
     return null;
   }
 
+  const totalQuantity = profile.positions.reduce((sum, position) => sum + position.quantity, 0);
+
   return (
     <Card>
       <CardHeader className="flex flex-row items-start justify-between gap-4">
         <div className="space-y-3">
           <div>
             <CardTitle>자산 설정</CardTitle>
-            <p className="mt-2 text-sm leading-6 text-muted-foreground">총자산, 가용 현금, 리스크 한도, 보유 종목을 한곳에서 관리합니다.</p>
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">총자산, 가용 현금, 리스크 한도, 보유 종목을 내부 테스트 기준으로 관리합니다.</p>
           </div>
           <div className="flex flex-wrap gap-2">
             <SummaryPill label="총자산" value={formatManwon(profile.totalCapital)} />
             <SummaryPill label="가용 현금" value={formatManwon(profile.availableCash)} />
             <SummaryPill label="보유 종목" value={`${profile.positions.length}개`} />
+            <SummaryPill label="총 수량" value={totalQuantity.toLocaleString("ko-KR")} />
             <SummaryPill
               label="1회 손실 한도"
               value={formatRiskAmount(profile.totalCapital, profile.maxRiskPerTradePercent)}
@@ -296,165 +299,180 @@ export function PortfolioProfileTab({
           총 자산과 가용 현금은 만원 단위로 입력합니다. 저장하면 Today, Portfolio, 장초 확인 판단이 모두 같은 기준으로 다시 계산됩니다.
         </div>
 
-        <div className="space-y-4 rounded-[28px] border border-border/70 bg-background/40 p-5">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <p className="text-sm font-semibold text-foreground">현재 보유 종목</p>
-              <p className="mt-1 text-xs leading-5 text-muted-foreground">종목명이나 티커를 검색하면 종목명과 섹터가 자동으로 채워집니다.</p>
-            </div>
-            <Button
-              type="button"
-              variant="secondary"
-              size="sm"
-              onClick={() =>
-                setProfile((current) => ({
-                  ...current,
-                  positions: [
-                    ...current.positions,
-                    {
-                      ticker: "",
-                      company: "",
-                      sector: "",
-                      quantity: 0,
-                      averagePrice: 0,
-                      enteredAt: "",
-                      note: ""
-                    }
-                  ]
-                }))
-              }
-            >
-              <Plus className="h-4 w-4" />
-              보유 추가
-            </Button>
-          </div>
+        <div className="rounded-[28px] border border-border/70 bg-background/40 p-5">
+          <details className="group rounded-[24px] border border-border/70 bg-secondary/20" open={!profile.positions.length}>
+            <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-4">
+              <div>
+                <p className="text-sm font-semibold text-foreground">보유 종목 편집</p>
+                <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                  {profile.positions.length
+                    ? `${profile.positions.length}개 종목 · 총 수량 ${totalQuantity.toLocaleString("ko-KR")}`
+                    : "아직 등록된 보유 종목이 없습니다."}
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  onClick={(event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    setProfile((current) => ({
+                      ...current,
+                      positions: [
+                        ...current.positions,
+                        {
+                          ticker: "",
+                          company: "",
+                          sector: "",
+                          quantity: 0,
+                          averagePrice: 0,
+                          enteredAt: "",
+                          note: ""
+                        }
+                      ]
+                    }));
+                  }}
+                >
+                  <Plus className="h-4 w-4" />
+                  보유 추가
+                </Button>
+                <span className="text-xs text-muted-foreground transition group-open:rotate-180">⌄</span>
+              </div>
+            </summary>
 
-          {profile.positions.length ? (
-            <div className="space-y-4">
-              {profile.positions.map((position, index) => (
-                <div key={`position-${index}`} className="rounded-[24px] border border-border/70 bg-secondary/30 p-4">
-                  <div className="grid gap-4 xl:grid-cols-[0.9fr_1fr_1fr_1fr_auto]">
-                    <Field label="종목 검색">
-                      <Input className="hidden" value={position.ticker} placeholder="005930" readOnly />
-                      <PositionSymbolSearch
-                        value={{
-                          ticker: position.ticker,
-                          company: position.company,
-                          sector: position.sector
-                        }}
-                        onSelect={(next) =>
-                          setProfile((current) => ({
-                            ...current,
-                            positions: current.positions.map((item, itemIndex) =>
-                              itemIndex === index
-                                ? {
-                                    ...item,
-                                    ticker: next.ticker,
-                                    company: next.company,
-                                    sector: next.sector
-                                  }
-                                : item
-                            )
-                          }))
-                        }
-                      />
-                    </Field>
-                    <Field label="수량">
-                      <Input
-                        type="number"
-                        min={0}
-                        step="0.0001"
-                        value={String(position.quantity)}
-                        onChange={(event) =>
-                          setProfile((current) => ({
-                            ...current,
-                            positions: current.positions.map((item, itemIndex) =>
-                              itemIndex === index ? { ...item, quantity: updateNumber(event.target.value) } : item
-                            )
-                          }))
-                        }
-                      />
-                    </Field>
-                    <Field label="평균단가">
-                      <Input
-                        type="number"
-                        min={0}
-                        value={String(position.averagePrice)}
-                        onChange={(event) =>
-                          setProfile((current) => ({
-                            ...current,
-                            positions: current.positions.map((item, itemIndex) =>
-                              itemIndex === index ? { ...item, averagePrice: updateNumber(event.target.value) } : item
-                            )
-                          }))
-                        }
-                      />
-                    </Field>
-                    <Field label="진입일">
-                      <Input
-                        type="date"
-                        value={position.enteredAt ?? ""}
-                        onChange={(event) =>
-                          setProfile((current) => ({
-                            ...current,
-                            positions: current.positions.map((item, itemIndex) =>
-                              itemIndex === index ? { ...item, enteredAt: event.target.value } : item
-                            )
-                          }))
-                        }
-                      />
-                    </Field>
-                    <div className="flex items-end">
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() =>
-                          setProfile((current) => ({
-                            ...current,
-                            positions: current.positions.filter((_, itemIndex) => itemIndex !== index)
-                          }))
-                        }
-                      >
-                        <Trash2 className="h-4 w-4" />
-                        삭제
-                      </Button>
+            <div className="space-y-4 border-t border-border/70 px-4 py-4">
+              <p className="text-xs leading-5 text-muted-foreground">종목명이나 티커를 검색하면 종목명과 섹터가 자동으로 채워집니다.</p>
+
+              {profile.positions.length ? (
+                <div className="space-y-4">
+                  {profile.positions.map((position, index) => (
+                    <div key={`position-${index}`} className="rounded-[24px] border border-border/70 bg-secondary/30 p-4">
+                      <div className="grid gap-4 xl:grid-cols-[0.9fr_1fr_1fr_1fr_auto]">
+                        <Field label="종목 검색">
+                          <Input className="hidden" value={position.ticker} placeholder="005930" readOnly />
+                          <PositionSymbolSearch
+                            value={{
+                              ticker: position.ticker,
+                              company: position.company,
+                              sector: position.sector
+                            }}
+                            onSelect={(next) =>
+                              setProfile((current) => ({
+                                ...current,
+                                positions: current.positions.map((item, itemIndex) =>
+                                  itemIndex === index
+                                    ? {
+                                        ...item,
+                                        ticker: next.ticker,
+                                        company: next.company,
+                                        sector: next.sector
+                                      }
+                                    : item
+                                )
+                              }))
+                            }
+                          />
+                        </Field>
+                        <Field label="수량">
+                          <Input
+                            type="number"
+                            min={0}
+                            step="0.0001"
+                            value={String(position.quantity)}
+                            onChange={(event) =>
+                              setProfile((current) => ({
+                                ...current,
+                                positions: current.positions.map((item, itemIndex) =>
+                                  itemIndex === index ? { ...item, quantity: updateNumber(event.target.value) } : item
+                                )
+                              }))
+                            }
+                          />
+                        </Field>
+                        <Field label="평균단가">
+                          <Input
+                            type="number"
+                            min={0}
+                            value={String(position.averagePrice)}
+                            onChange={(event) =>
+                              setProfile((current) => ({
+                                ...current,
+                                positions: current.positions.map((item, itemIndex) =>
+                                  itemIndex === index ? { ...item, averagePrice: updateNumber(event.target.value) } : item
+                                )
+                              }))
+                            }
+                          />
+                        </Field>
+                        <Field label="진입일">
+                          <Input
+                            type="date"
+                            value={position.enteredAt ?? ""}
+                            onChange={(event) =>
+                              setProfile((current) => ({
+                                ...current,
+                                positions: current.positions.map((item, itemIndex) =>
+                                  itemIndex === index ? { ...item, enteredAt: event.target.value } : item
+                                )
+                              }))
+                            }
+                          />
+                        </Field>
+                        <div className="flex items-end">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() =>
+                              setProfile((current) => ({
+                                ...current,
+                                positions: current.positions.filter((_, itemIndex) => itemIndex !== index)
+                              }))
+                            }
+                          >
+                            <Trash2 className="h-4 w-4" />
+                            삭제
+                          </Button>
+                        </div>
+                      </div>
+
+                      <div className="mt-4 grid gap-4 xl:grid-cols-[1fr_1fr]">
+                        <Field label="저장된 종목명">
+                          <Input value={position.company} placeholder="선택 시 자동 보강" readOnly />
+                        </Field>
+                        <Field label="저장된 섹터">
+                          <Input value={position.sector} placeholder="선택 시 자동 보강" readOnly />
+                        </Field>
+                      </div>
+
+                      <Field label="운용 메모">
+                        <Textarea
+                          value={position.note ?? ""}
+                          placeholder="예: 실적 발표 전 비중 축소, 진입 5일 차 관리"
+                          onChange={(event) =>
+                            setProfile((current) => ({
+                              ...current,
+                              positions: current.positions.map((item, itemIndex) =>
+                                itemIndex === index ? { ...item, note: event.target.value } : item
+                              )
+                            }))
+                          }
+                        />
+                      </Field>
                     </div>
-                  </div>
-
-                  <div className="mt-4 grid gap-4 xl:grid-cols-[1fr_1fr]">
-                    <Field label="저장된 종목명">
-                      <Input value={position.company} placeholder="선택 시 자동 보강" readOnly />
-                    </Field>
-                    <Field label="저장된 섹터">
-                      <Input value={position.sector} placeholder="선택 시 자동 보강" readOnly />
-                    </Field>
-                  </div>
-
-                  <Field label="운용 메모">
-                    <Textarea
-                      value={position.note ?? ""}
-                      placeholder="예: 실적 발표 전 비중 축소, 진입 5일 차 관리"
-                      onChange={(event) =>
-                        setProfile((current) => ({
-                          ...current,
-                          positions: current.positions.map((item, itemIndex) =>
-                            itemIndex === index ? { ...item, note: event.target.value } : item
-                          )
-                        }))
-                      }
-                    />
-                  </Field>
+                  ))}
                 </div>
-              ))}
+              ) : (
+                <div className="rounded-[24px] border border-border/70 bg-secondary/20 p-4 text-sm text-muted-foreground">
+                  첫 종목을 추가하면 Today와 Portfolio가 실제 보유 기준으로 계산되기 시작합니다.
+                </div>
+              )}
             </div>
-          ) : (
-            <div className="rounded-[24px] border border-border/70 bg-secondary/20 p-4 text-sm text-muted-foreground">
-              아직 등록된 보유 종목이 없습니다. 첫 종목을 추가하면 Today와 Portfolio가 실제 보유 기준으로 계산되기 시작합니다.
-            </div>
-          )}
+          </details>
 
-          <div className="rounded-[24px] border border-border/70 bg-secondary/20 px-4 py-3 text-xs leading-5 text-muted-foreground">
+          <div className="mt-4 rounded-[24px] border border-border/70 bg-secondary/20 px-4 py-3 text-xs leading-5 text-muted-foreground">
             마지막 저장 {formatDateTime(profile.updatedAt)} · {profile.updatedBy}
           </div>
         </div>
