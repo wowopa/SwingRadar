@@ -4,6 +4,7 @@ import {
   Radar,
   ShieldCheck,
   TimerReset,
+  TrendingUp,
   WalletCards
 } from "lucide-react";
 
@@ -34,6 +35,25 @@ const heroOutcomeStrip = [
     value: "계획→실행→회고",
     note: "하루의 판단이 다음 날 더 분명한 규칙으로 이어집니다."
   }
+] as const;
+
+const heroMorningChecklist = [
+  "장전 후보를 먼저 줄입니다.",
+  "시초가 반응으로 통과와 보류를 나눕니다.",
+  "종료 기록이 다음 규칙으로 돌아옵니다."
+] as const;
+
+const heroChartBars = [
+  { height: 28, tone: "bg-rose-300/80" },
+  { height: 54, tone: "bg-emerald-300/80" },
+  { height: 38, tone: "bg-emerald-300/75" },
+  { height: 68, tone: "bg-emerald-300/85" },
+  { height: 44, tone: "bg-amber-300/80" },
+  { height: 82, tone: "bg-emerald-200/90" },
+  { height: 58, tone: "bg-emerald-300/78" },
+  { height: 96, tone: "bg-emerald-200/95" },
+  { height: 72, tone: "bg-rose-300/76" },
+  { height: 62, tone: "bg-emerald-300/84" }
 ] as const;
 
 const benefitNarrative = [
@@ -204,13 +224,13 @@ export function LandingPage() {
 
               <div className="grid max-w-[1120px] gap-3 md:grid-cols-3">
                 {heroOutcomeStrip.map((item, index) => (
-                  <ScrollReveal key={item.label} delay={120 + index * 70}>
-                    <div className="rounded-[28px] border border-white/10 bg-white/6 px-4 py-4 backdrop-blur-sm">
+                  <ScrollReveal key={item.label} delay={120 + index * 70} className="h-full">
+                    <div className="flex h-full min-h-[128px] flex-col rounded-[28px] border border-white/10 bg-white/6 px-4 py-4 backdrop-blur-sm">
                       <p className="public-hero-label text-[11px] font-semibold uppercase tracking-[0.24em]">{item.label}</p>
                       <p className="public-hero-title mt-3 text-[clamp(1.72rem,2.55vw,2.36rem)] font-semibold leading-none tracking-[-0.08em] md:whitespace-nowrap">
                         {item.value}
                       </p>
-                      <p className="public-hero-note mt-2 text-sm leading-6">{item.note}</p>
+                      <p className="public-hero-note mt-auto pt-2 text-sm leading-6">{item.note}</p>
                     </div>
                   </ScrollReveal>
                 ))}
@@ -225,57 +245,102 @@ export function LandingPage() {
                 <div className="rounded-[30px] border border-white/12 bg-[linear-gradient(180deg,rgba(16,23,37,0.96),rgba(22,29,44,0.99))] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
                   <div className="flex items-center justify-between gap-3 border-b border-white/8 pb-4">
                     <div>
-                      <p className="public-panel-kicker text-[11px] font-semibold uppercase tracking-[0.24em]">Today board</p>
-                      <p className="public-panel-title mt-2 text-[clamp(2.2rem,3vw,3.15rem)] font-semibold tracking-[-0.08em]">
-                        오늘 실제 행동 2개
+                      <p className="public-panel-kicker text-[11px] font-semibold uppercase tracking-[0.24em]">Morning flow board</p>
+                      <p className="public-panel-title mt-2 text-[clamp(2rem,2.7vw,2.85rem)] font-semibold tracking-[-0.08em]">
+                        PLAN → CHECK → REVIEW
                       </p>
                     </div>
                     <span className="rounded-full border border-emerald-300/16 bg-emerald-300/10 px-3 py-1 text-xs font-medium text-emerald-100">
-                      선별 모드
+                      action mode
                     </span>
                   </div>
 
-                  <div className="mt-5 grid gap-3 sm:grid-cols-3">
-                    {[
-                      ["매수 검토", "2개"],
-                      ["보유 점검", "1개"],
-                      ["장초 확인 대기", "3개"]
-                    ].map(([label, value]) => (
-                      <div key={label} className="rounded-[22px] border border-white/8 bg-white/5 px-4 py-4">
-                        <p className="public-panel-kicker text-xs font-medium">{label}</p>
-                        <p className="public-panel-title mt-2 text-[clamp(1.8rem,2.4vw,2.5rem)] font-semibold tracking-[-0.07em]">
-                          {value}
+                  <div className="mt-5 rounded-[24px] border border-white/8 bg-white/[0.045] px-4 py-4">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="space-y-2">
+                        <p className="public-panel-kicker text-[11px] font-semibold uppercase tracking-[0.22em]">
+                          Shared setup
                         </p>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="mt-4 space-y-3">
-                    {heroBoardItems.map((item, index) => (
-                      <div
-                        key={item.name}
-                        className="rounded-[24px] border border-white/8 bg-white/[0.045] px-4 py-4 transition duration-300 hover:bg-white/[0.075]"
-                      >
-                        <div className="flex items-center justify-between gap-3">
-                          <div className="flex items-center gap-3">
-                            <span className="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/6 text-xs font-semibold text-white/72">
-                              0{index + 1}
-                            </span>
-                            <div>
-                              <p className="public-panel-title text-sm font-semibold">{item.name}</p>
-                              <p className="public-panel-note mt-1 text-xs">{item.note}</p>
-                            </div>
-                          </div>
-                          <Badge variant="secondary" className={landingStatusToneClasses[item.tone]}>
-                            {item.status}
+                        <div className="flex items-center gap-2">
+                          <p className="public-panel-title text-lg font-semibold">ISC</p>
+                          <Badge variant="secondary" className={landingStatusToneClasses.positive}>
+                            구조 유지
                           </Badge>
                         </div>
+                        <p className="public-panel-note text-xs leading-6">
+                          진입 87,000 ~ 88,200 · 손절 83,400 · 1차 목표 92,500
+                        </p>
                       </div>
-                    ))}
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.06] text-emerald-100">
+                        <TrendingUp className="h-5 w-5" />
+                      </div>
+                    </div>
+
+                    <div className="mt-4 rounded-[20px] border border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02))] px-4 py-4">
+                      <div className="flex items-end justify-between gap-2">
+                        {heroChartBars.map((bar, index) => (
+                          <div key={`${bar.height}-${index}`} className="flex min-w-0 flex-1 items-end justify-center">
+                            <div className="relative flex h-[106px] w-full max-w-[22px] items-end justify-center">
+                              <span className="absolute inset-x-1/2 top-1 bottom-1 -translate-x-1/2 border-l border-white/20" />
+                              <span
+                                className={`relative z-10 w-3 rounded-full ${bar.tone}`}
+                                style={{ height: `${bar.height}px` }}
+                              />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      <div className="mt-4 grid gap-2 sm:grid-cols-3">
+                        {[
+                          ["Entry zone", "87,000 ~ 88,200"],
+                          ["Opening check", "09:00 ~ 09:10"],
+                          ["Position size", "내 계좌 기준 계산"]
+                        ].map(([label, value]) => (
+                          <div key={label} className="rounded-[18px] border border-white/8 bg-white/[0.05] px-3 py-3">
+                            <p className="public-panel-kicker text-[10px] font-semibold uppercase tracking-[0.18em]">{label}</p>
+                            <p className="public-panel-title mt-2 text-sm font-semibold">{value}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 grid gap-3 sm:grid-cols-[1.05fr_0.95fr]">
+                    <div className="rounded-[24px] border border-white/8 bg-white/[0.045] px-4 py-4">
+                      <p className="public-panel-kicker text-[11px] font-semibold uppercase tracking-[0.22em]">Opening check</p>
+                      <div className="mt-3 space-y-2">
+                        {heroMorningChecklist.map((item, index) => (
+                          <div key={item} className="flex items-start gap-3">
+                            <span className="mt-1.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-emerald-300/18 bg-emerald-300/10 text-[10px] font-semibold text-emerald-100">
+                              {index + 1}
+                            </span>
+                            <p className="public-panel-note text-sm leading-6">{item}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="rounded-[24px] border border-white/8 bg-white/[0.045] px-4 py-4">
+                      <p className="public-panel-kicker text-[11px] font-semibold uppercase tracking-[0.22em]">Personal rule</p>
+                      <div className="mt-3 space-y-3">
+                        <div className="rounded-[18px] border border-amber-300/16 bg-amber-300/10 px-3 py-3">
+                          <p className="public-panel-title text-sm font-semibold">추격보다 보류 우선</p>
+                          <p className="public-panel-note mt-1 text-xs leading-6">최근 회고에서 반복된 규칙이 다음 장초 판단에 바로 반영됩니다.</p>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {heroBoardItems.map((item) => (
+                            <Badge key={item.name} variant="secondary" className={landingStatusToneClasses[item.tone]}>
+                              {item.status}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
                   </div>
 
                   <div className="public-panel-copy mt-4 rounded-[24px] border border-amber-300/16 bg-amber-300/8 px-4 py-4 text-sm leading-6">
-                    좋은 종목이 많아도, 오늘 실제로 움직일 후보는 많지 않습니다. 그래서 아침이 더 짧고 더 차분해집니다.
+                    차트로 구조를 보고, 장초에 한 번 더 걸러내고, 끝난 거래는 규칙으로 남깁니다. 이 흐름이 SWING-RADAR의 핵심입니다.
                   </div>
                 </div>
               </div>
