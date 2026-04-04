@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckCircle2 } from "lucide-react";
+import { AlertTriangle, CheckCircle2, ShieldAlert } from "lucide-react";
 
 import { MetricCard, formatAuditEventType, formatDateTime } from "@/components/admin/dashboard-shared";
 import type {
@@ -13,6 +13,32 @@ import type {
 } from "@/components/admin/dashboard-types";
 import { formatProviderLabel, formatPercent } from "@/components/admin/admin-status-utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+
+function StatusPill({
+  label,
+  value,
+  tone
+}: {
+  label: string;
+  value: string;
+  tone: "positive" | "caution" | "destructive" | "neutral";
+}) {
+  const toneClass =
+    tone === "positive"
+      ? "border-positive/25 bg-positive/8 text-positive"
+      : tone === "caution"
+        ? "border-caution/25 bg-caution/10 text-caution"
+        : tone === "destructive"
+          ? "border-destructive/25 bg-destructive/8 text-destructive"
+          : "border-border/70 bg-white/70 text-foreground";
+
+  return (
+    <div className={`rounded-full border px-3 py-2 text-xs font-medium ${toneClass}`}>
+      <span className="text-muted-foreground">{label}</span>
+      <span className="ml-2">{value}</span>
+    </div>
+  );
+}
 
 export function OverviewTab({
   overallStatus,
@@ -31,7 +57,9 @@ export function OverviewTab({
   dataQualitySummary: AdminDataQualitySummaryPayload | null;
   audits: AuditItem[];
 }) {
-  const latestWarning = health?.warnings[0] ?? "현재 감지된 주요 경고는 없습니다.";
+  const latestWarning = health?.warnings[0] ?? "현재 즉시 조치가 필요한 운영 경고는 없습니다.";
+  const overallTone =
+    overallStatus === "critical" ? "destructive" : overallStatus === "warning" ? "caution" : "positive";
   const incidentTone =
     overallStatus === "critical"
       ? "border-destructive/30 bg-destructive/8"
@@ -42,34 +70,64 @@ export function OverviewTab({
   return (
     <div className="grid gap-6">
       <Card className={incidentTone}>
-        <CardHeader>
+        <CardHeader className="pb-4">
           <CardTitle>운영 개요</CardTitle>
         </CardHeader>
-        <CardContent className="grid gap-4 md:grid-cols-4">
-          <MetricCard label="전체 상태" value={overallStatus} note={latestWarning} />
-          <MetricCard
-            label="데이터 제공"
-            value={formatProviderLabel(health?.dataProvider.lastUsed?.provider ?? health?.dataProvider.configured.provider)}
-            note={health?.dataProvider.fallbackTriggered ? "fallback 감지" : "primary 유지"}
-          />
-          <MetricCard
-            label="오늘 배치"
-            value={dailyCycleReport?.status ?? "not_loaded"}
-            note={dailyCycleReport?.completedAt ? formatDateTime(dailyCycleReport.completedAt) : "아직 완료 이력 없음"}
-          />
-          <MetricCard
-            label="validation"
-            value={formatPercent(dataQualitySummary?.validationFallbackPercent)}
-            note={
-              dataQualitySummary?.measuredValidationPercent != null
-                ? `실측 기반 ${formatPercent(dataQualitySummary.measuredValidationPercent)}`
-                : "실측 기반 집계 대기"
-            }
-          />
+        <CardContent className="space-y-4">
+          <div className="flex flex-wrap gap-2">
+            <StatusPill label="전체 상태" value={overallStatus} tone={overallTone} />
+            <StatusPill
+              label="데이터 제공"
+              value={formatProviderLabel(health?.dataProvider.lastUsed?.provider ?? health?.dataProvider.configured.provider)}
+              tone={health?.dataProvider.fallbackTriggered ? "caution" : "neutral"}
+            />
+            <StatusPill
+              label="오늘 배치"
+              value={dailyCycleReport?.status ?? "not_loaded"}
+              tone={
+                dailyCycleReport?.status === "failed"
+                  ? "destructive"
+                  : dailyCycleReport?.status === "warning"
+                    ? "caution"
+                    : "neutral"
+              }
+            />
+            <StatusPill
+              label="validation fallback"
+              value={formatPercent(dataQualitySummary?.validationFallbackPercent)}
+              tone={
+                (dataQualitySummary?.validationFallbackPercent ?? 0) >= 80
+                  ? "destructive"
+                  : (dataQualitySummary?.validationFallbackPercent ?? 0) >= 50
+                    ? "caution"
+                    : "neutral"
+              }
+            />
+          </div>
+          <p className="text-sm leading-6 text-muted-foreground">{latestWarning}</p>
         </CardContent>
       </Card>
 
-      <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
+      <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+        <MetricCard label="incident" value={String(incidents.length)} note="즉시 확인이 필요한 운영 경고 수" />
+        <MetricCard
+          label="후보 수"
+          value={String(dailyCycleReport?.summary?.topCandidateCount ?? snapshotGenerationReport?.recommendationCount ?? 0)}
+          note={dailyCycleReport?.summary?.generatedAt ? formatDateTime(dailyCycleReport.summary.generatedAt) : "후보 생성 시간 대기"}
+        />
+        <MetricCard
+          label="추천 스냅샷"
+          value={String(snapshotGenerationReport?.recommendationCount ?? 0)}
+          note={snapshotGenerationReport?.generatedAt ? formatDateTime(snapshotGenerationReport.generatedAt) : "스냅샷 대기"}
+        />
+        <MetricCard
+          label="최근 audit"
+          value={String(audits.length)}
+          note={audits[0]?.createdAt ? formatDateTime(audits[0].createdAt) : "최근 운영 로그 없음"}
+        />
+      </div>
+
+      <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
         <Card>
           <CardHeader>
             <CardTitle>즉시 확인할 운영 경고</CardTitle>
@@ -86,7 +144,14 @@ export function OverviewTab({
                   }
                 >
                   <div className="flex items-center justify-between gap-3">
-                    <p className="text-sm font-semibold text-foreground">{item.summary}</p>
+                    <div className="flex items-center gap-2">
+                      {item.severity === "critical" ? (
+                        <ShieldAlert className="h-4 w-4 text-destructive" />
+                      ) : (
+                        <AlertTriangle className="h-4 w-4 text-caution" />
+                      )}
+                      <p className="text-sm font-semibold text-foreground">{item.summary}</p>
+                    </div>
                     <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">{item.severity}</p>
                   </div>
                   <p className="mt-2 text-sm leading-6 text-foreground/80">{item.detail}</p>
@@ -140,34 +205,6 @@ export function OverviewTab({
           </CardContent>
         </Card>
       </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>배치 요약</CardTitle>
-        </CardHeader>
-        <CardContent className="grid gap-4 md:grid-cols-4">
-          <MetricCard
-            label="후보 수"
-            value={String(dailyCycleReport?.summary?.topCandidateCount ?? snapshotGenerationReport?.recommendationCount ?? 0)}
-            note={dailyCycleReport?.summary?.generatedAt ? formatDateTime(dailyCycleReport.summary.generatedAt) : "후보 생성 시간 대기"}
-          />
-          <MetricCard
-            label="추천 스냅샷"
-            value={String(snapshotGenerationReport?.recommendationCount ?? 0)}
-            note={snapshotGenerationReport?.generatedAt ? formatDateTime(snapshotGenerationReport.generatedAt) : "snapshot 대기"}
-          />
-          <MetricCard
-            label="analysis"
-            value={String(snapshotGenerationReport?.analysisCount ?? 0)}
-            note={`tracking ${snapshotGenerationReport?.trackingHistoryCount ?? 0}`}
-          />
-          <MetricCard
-            label="validation 누락"
-            value={String(snapshotGenerationReport?.validationFallbackCount ?? 0)}
-            note={formatPercent(dataQualitySummary?.validationFallbackPercent)}
-          />
-        </CardContent>
-      </Card>
     </div>
   );
 }

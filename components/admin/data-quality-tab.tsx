@@ -11,11 +11,67 @@ import type {
   OpsHealthReportPayload,
   PostLaunchHistoryEntryPayload,
   RuntimeStorageReportPayload,
-  SnapshotGenerationReportPayload,
   ThresholdAdviceReportPayload
 } from "@/components/admin/dashboard-types";
 import { formatBytes, formatDuration, formatPercent, formatShortDate } from "@/components/admin/admin-status-utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+
+function QualityBadge({
+  label,
+  value,
+  note,
+  tone
+}: {
+  label: string;
+  value: string;
+  note: string;
+  tone: "positive" | "caution" | "destructive" | "neutral";
+}) {
+  const toneClass =
+    tone === "positive"
+      ? "border-positive/25 bg-positive/8"
+      : tone === "caution"
+        ? "border-caution/25 bg-caution/10"
+        : tone === "destructive"
+          ? "border-destructive/25 bg-destructive/8"
+          : "border-border/70 bg-white/70";
+
+  return (
+    <div className={`rounded-[22px] border p-4 ${toneClass}`}>
+      <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">{label}</p>
+      <p className="mt-2 text-lg font-semibold text-foreground">{value}</p>
+      <p className="mt-2 text-xs leading-5 text-muted-foreground">{note}</p>
+    </div>
+  );
+}
+
+function getValidationTone(value: number | null | undefined, policy: ThresholdAdviceReportPayload["currentPolicy"] | undefined) {
+  const fallback = value ?? 0;
+  const warning = policy?.validationFallbackWarningPercent ?? 50;
+  const critical = policy?.validationFallbackCriticalPercent ?? 80;
+
+  if (fallback >= critical) {
+    return "destructive" as const;
+  }
+  if (fallback >= warning) {
+    return "caution" as const;
+  }
+  return "positive" as const;
+}
+
+function getNewsLiveTone(value: number | null | undefined, policy: ThresholdAdviceReportPayload["currentPolicy"] | undefined) {
+  const live = value ?? 0;
+  const warning = policy?.newsLiveFetchWarningPercent ?? 70;
+  const critical = policy?.newsLiveFetchCriticalPercent ?? 40;
+
+  if (live <= critical) {
+    return "destructive" as const;
+  }
+  if (live <= warning) {
+    return "caution" as const;
+  }
+  return "positive" as const;
+}
 
 export function DataQualityTab({
   dataQualitySummary,
@@ -23,7 +79,6 @@ export function DataQualityTab({
   opsHealthReport,
   autoHealReport,
   newsFetchReport,
-  snapshotGenerationReport,
   thresholdAdviceReport,
   accessStatsReport,
   runtimeStorageReport,
@@ -35,49 +90,52 @@ export function DataQualityTab({
   opsHealthReport: OpsHealthReportPayload | null;
   autoHealReport: AutoHealReportPayload | null;
   newsFetchReport: NewsFetchReportPayload | null;
-  snapshotGenerationReport: SnapshotGenerationReportPayload | null;
   thresholdAdviceReport: ThresholdAdviceReportPayload | null;
   accessStatsReport: AccessStatsReportPayload | null;
   runtimeStorageReport: RuntimeStorageReportPayload | null;
   databaseStorageReport: DatabaseStorageReportPayload | null;
   postLaunchHistory: PostLaunchHistoryEntryPayload[];
 }) {
+  const currentPolicy = thresholdAdviceReport?.currentPolicy;
+
   return (
     <div className="grid gap-6">
       <Card>
-        <CardHeader>
+        <CardHeader className="pb-4">
           <CardTitle>Data Quality</CardTitle>
         </CardHeader>
-        <CardContent className="grid gap-4 md:grid-cols-3 xl:grid-cols-6">
-          <MetricCard
+        <CardContent className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <QualityBadge
             label="validation fallback"
             value={formatPercent(dataQualitySummary?.validationFallbackPercent)}
-            note={`${dataQualitySummary?.validationFallbackCount ?? 0}건 fallback`}
+            note={`${dataQualitySummary?.validationFallbackCount ?? 0}건이 fallback 기준으로 생성됐습니다.`}
+            tone={getValidationTone(dataQualitySummary?.validationFallbackPercent, currentPolicy)}
           />
-          <MetricCard
-            label="measured"
+          <QualityBadge
+            label="measured validation"
             value={formatPercent(dataQualitySummary?.measuredValidationPercent)}
-            note="실측 기반 검증 비율"
+            note="실측 기반 validation 비율입니다."
+            tone={(dataQualitySummary?.measuredValidationPercent ?? 0) >= 5 ? "positive" : "caution"}
           />
-          <MetricCard
-            label="news live"
+          <QualityBadge
+            label="news live fetch"
             value={formatPercent(dataQualitySummary?.newsLiveFetchPercent)}
-            note="실시간 기사 fetch 비율"
+            note="live fetch 성공 비율입니다."
+            tone={getNewsLiveTone(dataQualitySummary?.newsLiveFetchPercent, currentPolicy)}
           />
-          <MetricCard
-            label="news cache"
-            value={formatPercent(dataQualitySummary?.newsCacheFallbackPercent)}
-            note="cache fallback 비율"
-          />
-          <MetricCard
-            label="news file"
-            value={formatPercent(dataQualitySummary?.newsFileFallbackPercent)}
-            note="file fallback 비율"
-          />
-          <MetricCard
-            label="snapshot"
-            value={snapshotGenerationReport?.generatedAt ? formatDateTime(snapshotGenerationReport.generatedAt) : "대기"}
-            note={`${snapshotGenerationReport?.totalTickers ?? 0} 종목`}
+          <QualityBadge
+            label="news fallback"
+            value={formatPercent(
+              (dataQualitySummary?.newsCacheFallbackPercent ?? 0) + (dataQualitySummary?.newsFileFallbackPercent ?? 0)
+            )}
+            note={`cache ${formatPercent(dataQualitySummary?.newsCacheFallbackPercent)} / file ${formatPercent(
+              dataQualitySummary?.newsFileFallbackPercent
+            )}`}
+            tone={
+              ((dataQualitySummary?.newsCacheFallbackPercent ?? 0) + (dataQualitySummary?.newsFileFallbackPercent ?? 0)) >= 50
+                ? "caution"
+                : "neutral"
+            }
           />
         </CardContent>
       </Card>
@@ -87,25 +145,24 @@ export function DataQualityTab({
           <CardHeader>
             <CardTitle>배치 / 복구 상태</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="grid gap-4 md:grid-cols-3">
-              <MetricCard
-                label="daily cycle"
-                value={dailyCycleReport?.status ?? "none"}
-                note={dailyCycleReport?.completedAt ? formatDateTime(dailyCycleReport.completedAt) : "완료 이력 없음"}
-              />
-              <MetricCard
-                label="ops check"
-                value={opsHealthReport?.finalHealth.status ?? "unknown"}
-                note={opsHealthReport?.checkedAt ? formatDateTime(opsHealthReport.checkedAt) : "체크 이력 없음"}
-              />
-              <MetricCard
-                label="auto heal"
-                value={autoHealReport?.status ?? "none"}
-                note={autoHealReport?.completedAt ? formatDateTime(autoHealReport.completedAt) : "복구 이력 없음"}
-              />
-            </div>
-
+          <CardContent className="grid gap-4 md:grid-cols-3">
+            <MetricCard
+              label="daily cycle"
+              value={dailyCycleReport?.status ?? "none"}
+              note={dailyCycleReport?.completedAt ? formatDateTime(dailyCycleReport.completedAt) : "완료 이력 없음"}
+            />
+            <MetricCard
+              label="ops check"
+              value={opsHealthReport?.finalHealth.status ?? "unknown"}
+              note={opsHealthReport?.checkedAt ? formatDateTime(opsHealthReport.checkedAt) : "체크 이력 없음"}
+            />
+            <MetricCard
+              label="auto heal"
+              value={autoHealReport?.status ?? "none"}
+              note={autoHealReport?.completedAt ? formatDateTime(autoHealReport.completedAt) : "복구 이력 없음"}
+            />
+          </CardContent>
+          <CardContent className="space-y-3 pt-0">
             {dailyCycleReport?.steps?.length ? (
               dailyCycleReport.steps.map((step) => (
                 <div key={`${step.name}-${step.startedAt}`} className="rounded-[24px] border border-border/70 bg-secondary/45 p-4">
@@ -126,28 +183,9 @@ export function DataQualityTab({
 
         <Card>
           <CardHeader>
-            <CardTitle>뉴스 / validation 근거</CardTitle>
+            <CardTitle>Threshold 권고</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            {newsFetchReport ? (
-              <div className="rounded-[24px] border border-border/70 bg-secondary/45 p-4">
-                <div className="grid gap-4 md:grid-cols-2">
-                  <MetricCard
-                    label="요청 종목"
-                    value={String(newsFetchReport.totalTickers)}
-                    note={`${newsFetchReport.totalItems}건 기사 적재`}
-                  />
-                  <MetricCard
-                    label="provider order"
-                    value={newsFetchReport.providerOrder.join(" → ")}
-                    note={newsFetchReport.completedAt ? formatDateTime(newsFetchReport.completedAt) : "뉴스 수집 진행 중"}
-                  />
-                </div>
-              </div>
-            ) : (
-              <p className="text-sm text-muted-foreground">뉴스 fetch 리포트가 없습니다.</p>
-            )}
-
             {thresholdAdviceReport?.recommendations?.length ? (
               thresholdAdviceReport.recommendations.map((item) => (
                 <div key={item.key} className="rounded-[24px] border border-caution/25 bg-caution/8 p-4">
@@ -165,6 +203,23 @@ export function DataQualityTab({
                 현재 threshold 조정 권고가 없습니다.
               </div>
             )}
+
+            {newsFetchReport ? (
+              <div className="rounded-[24px] border border-border/70 bg-secondary/45 p-4">
+                <div className="grid gap-4 md:grid-cols-2">
+                  <MetricCard
+                    label="요청 종목"
+                    value={String(newsFetchReport.totalTickers)}
+                    note={`${newsFetchReport.totalItems}건 기사 적재`}
+                  />
+                  <MetricCard
+                    label="provider order"
+                    value={newsFetchReport.providerOrder.join(" → ")}
+                    note={newsFetchReport.completedAt ? formatDateTime(newsFetchReport.completedAt) : "뉴스 수집 진행 중"}
+                  />
+                </div>
+              </div>
+            ) : null}
           </CardContent>
         </Card>
       </div>

@@ -537,7 +537,6 @@ export function AdminDashboard() {
               opsHealthReport={opsHealthReport}
               autoHealReport={autoHealReport}
               newsFetchReport={newsFetchReport}
-              snapshotGenerationReport={snapshotGenerationReport}
               thresholdAdviceReport={thresholdAdviceReport}
               accessStatsReport={accessStatsReport}
               runtimeStorageReport={runtimeStorageReport}
