@@ -346,7 +346,10 @@ export function PositionDetailView({
         </div>
 
         <div className="grid gap-6 xl:grid-cols-[1.16fr,0.84fr]">
-          <Card className="border-border/80 bg-white/90 shadow-[0_18px_44px_-34px_rgba(24,32,42,0.2)]">
+          <Card
+            data-tutorial="position-timeline"
+            className="border-border/80 bg-white/90 shadow-[0_18px_44px_-34px_rgba(24,32,42,0.2)]"
+          >
             <CardHeader>
               <CardTitle className="text-lg text-foreground">체결 타임라인</CardTitle>
             </CardHeader>
@@ -388,7 +391,7 @@ export function PositionDetailView({
 
           <div className="space-y-6">
             <Card
-              data-tutorial="position-review"
+              data-tutorial="position-next-action"
               className="border-border/80 bg-white/90 shadow-[0_18px_44px_-34px_rgba(24,32,42,0.2)]"
             >
               <CardHeader>
@@ -439,7 +442,10 @@ export function PositionDetailView({
               </CardContent>
             </Card>
 
-            <Card className="border-border/80 bg-white/90 shadow-[0_18px_44px_-34px_rgba(24,32,42,0.2)]">
+            <Card
+              data-tutorial="position-review"
+              className="border-border/80 bg-white/90 shadow-[0_18px_44px_-34px_rgba(24,32,42,0.2)]"
+            >
               <CardHeader>
                 <CardTitle className="text-lg text-foreground">{isClosed ? "종료 회고" : "포지션 메모"}</CardTitle>
               </CardHeader>

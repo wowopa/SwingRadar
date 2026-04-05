@@ -15,14 +15,17 @@ import {
 } from "@/lib/popup-notice/popup-notice-events";
 import {
   APP_TUTORIAL_DEFINITIONS,
-  resolveTutorialScope,
-  type AppTutorialScope
+  resolveTutorialScope
 } from "@/lib/tutorial/app-tutorial-content";
+import {
+  hasSeenTutorial,
+  markTutorialSeen,
+  normalizeTutorialProgress,
+  type TutorialProgress
+} from "@/lib/tutorial/tutorial-progress";
 import { cn } from "@/lib/utils";
 
 const STORAGE_KEY = "swing-radar:tutorial-progress:v1";
-
-type TutorialProgress = Partial<Record<AppTutorialScope, boolean>>;
 
 interface SpotlightRect {
   top: number;
@@ -109,7 +112,7 @@ function loadTutorialProgress() {
       return {};
     }
 
-    return JSON.parse(raw) as TutorialProgress;
+    return normalizeTutorialProgress(JSON.parse(raw));
   } catch {
     return {};
   }
@@ -174,7 +177,7 @@ export function AppTutorialController() {
     }
 
     setStepIndex(0);
-    setIsOpen(!progress[scope]);
+    setIsOpen(!hasSeenTutorial(progress, definition));
   }, [definition, isHydrated, progress, scope]);
 
   useEffect(() => {
@@ -331,13 +334,9 @@ export function AppTutorialController() {
   }
 
   const isLastStep = stepIndex === definition.steps.length - 1;
-  const currentScope = scope;
 
   function markSeenAndClose() {
-    setProgress((current) => ({
-      ...current,
-      [currentScope]: true
-    }));
+    setProgress((current) => (definition ? markTutorialSeen(current, definition) : current));
     setIsOpen(false);
   }
 

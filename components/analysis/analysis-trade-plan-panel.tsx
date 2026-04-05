@@ -182,7 +182,7 @@ export function AnalysisTradePlanPanel({
           </div>
         ) : null}
 
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        <div data-tutorial="analysis-metrics" className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
           <MetricCard label="현재가 기준" value={plan.currentPriceLabel} note="최신 스냅샷 기준 가격 위치" icon={Flag} />
           <MetricCard label="매수 구간" value={plan.entryLabel} note="지금 계획으로 확인할 가격 범위" icon={ArrowUpRight} />
           <MetricCard label="손절 기준" value={plan.stopLabel} note="틀리면 다시 볼 가격" icon={ShieldAlert} />
@@ -201,15 +201,17 @@ export function AnalysisTradePlanPanel({
           <p className="mt-3 text-sm leading-7 text-foreground/84">{plan.nextStep}</p>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-3">
-          <DetailCard title="진입 전에 볼 것" body={plan.entryGuide} />
-          <DetailCard title="손절은 이렇게" body={plan.stopGuide} />
-          <DetailCard title="목표 구간 읽기" body={`${plan.targetGuide} 확장 목표는 ${plan.stretchTargetLabel}까지 이어집니다.`} />
-        </div>
+        <div data-tutorial="analysis-guides" className="space-y-4">
+          <div className="grid gap-4 md:grid-cols-3">
+            <DetailCard title="진입 전에 볼 것" body={plan.entryGuide} />
+            <DetailCard title="손절은 이렇게" body={plan.stopGuide} />
+            <DetailCard title="목표 구간 읽기" body={`${plan.targetGuide} 확장 목표는 ${plan.stretchTargetLabel}까지 이어집니다.`} />
+          </div>
 
-        <div className="grid gap-4 md:grid-cols-2">
-          <BulletCard title="왜 지금 보는가" items={plan.supportPoints} />
-          <BulletCard title="조심할 점" items={plan.cautionPoints} />
+          <div className="grid gap-4 md:grid-cols-2">
+            <BulletCard title="왜 지금 보는가" items={plan.supportPoints} />
+            <BulletCard title="조심할 점" items={plan.cautionPoints} />
+          </div>
         </div>
       </CardContent>
     </Card>

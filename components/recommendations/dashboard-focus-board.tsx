@@ -473,7 +473,10 @@ export function DashboardFocusBoard({
           candidateCount={closedDayPlanCount}
         />
       ) : (
-      <details className="group rounded-[28px] border border-border/80 bg-white/90 shadow-[0_18px_46px_-32px_rgba(24,32,42,0.2)]">
+      <details
+        data-tutorial="today-detail-list"
+        className="group rounded-[28px] border border-border/80 bg-white/90 shadow-[0_18px_46px_-32px_rgba(24,32,42,0.2)]"
+      >
         <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-5 py-4 [&::-webkit-details-marker]:hidden">
           <div>
             <p className="text-sm font-semibold text-foreground">세부 목록 보기</p>
@@ -800,7 +803,10 @@ function ClosedMarketDetailPanel({
   candidateCount: number;
 }) {
   return (
-    <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,0.9fr)]">
+    <div
+      data-tutorial="today-detail-list"
+      className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,0.9fr)]"
+    >
       <Card className="border-border/80 bg-white/90 shadow-[0_18px_46px_-32px_rgba(24,32,42,0.22)]">
         <CardHeader className="space-y-3">
           <div className="flex items-center justify-between gap-3">

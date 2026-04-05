@@ -30,7 +30,7 @@ export default async function AccountPage() {
       />
 
       <div data-tutorial="account-overview" className="grid gap-4 xl:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
-        <Card className="border-border/70 bg-white/82 shadow-sm">
+        <Card data-tutorial="account-info" className="border-border/70 bg-white/82 shadow-sm">
           <CardHeader className="flex flex-row items-start justify-between gap-3 space-y-0">
             <CardTitle>계정 정보</CardTitle>
             <LogoutButton variant="ghost" size="sm" />
@@ -43,7 +43,7 @@ export default async function AccountPage() {
           </CardContent>
         </Card>
 
-        <Card className="border-border/70 bg-white/82 shadow-sm">
+        <Card data-tutorial="account-portfolio" className="border-border/70 bg-white/82 shadow-sm">
           <CardHeader>
             <CardTitle>현재 포트폴리오 연결</CardTitle>
           </CardHeader>

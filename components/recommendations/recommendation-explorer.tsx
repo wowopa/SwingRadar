@@ -471,7 +471,10 @@ export function RecommendationExplorer({
         </section>
       ) : null}
 
-      <section className="rounded-3xl border border-border/80 bg-white/92 p-4 shadow-[0_18px_46px_-32px_rgba(24,32,42,0.16)]">
+      <section
+        data-tutorial="signals-trust"
+        className="rounded-3xl border border-border/80 bg-white/92 p-4 shadow-[0_18px_46px_-32px_rgba(24,32,42,0.16)]"
+      >
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <div className="flex flex-wrap items-center gap-2">
@@ -553,7 +556,10 @@ export function RecommendationExplorer({
           </div>
         </details>
 
-        <details className="rounded-3xl border border-border/80 bg-white/90 shadow-[0_18px_46px_-32px_rgba(24,32,42,0.18)]">
+        <details
+          data-tutorial="signals-distribution"
+          className="rounded-3xl border border-border/80 bg-white/90 shadow-[0_18px_46px_-32px_rgba(24,32,42,0.18)]"
+        >
           <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-sm font-semibold text-foreground [&::-webkit-details-marker]:hidden">
             요약 / 검증 분포
             <Badge variant="secondary">{actionableCount}개 행동 가능</Badge>
@@ -669,7 +675,10 @@ export function RecommendationExplorer({
           </div>
         </div>
 
-        <div className="rounded-3xl border border-border/80 bg-white/90 p-5 shadow-[0_18px_46px_-32px_rgba(24,32,42,0.18)]">
+        <div
+          data-tutorial="signals-distribution"
+          className="rounded-3xl border border-border/80 bg-white/90 p-5 shadow-[0_18px_46px_-32px_rgba(24,32,42,0.18)]"
+        >
           <div className="flex flex-col gap-4 border-b border-border/60 pb-4 sm:flex-row sm:items-start sm:justify-between">
             <div className="min-w-0 flex-1">
               <p className="text-sm font-semibold text-foreground">검증 근거 분포</p>
@@ -734,7 +743,7 @@ export function RecommendationExplorer({
 
       {hasPersonalActionSummary ? (
         <section
-          data-tutorial="signals-summary"
+          data-tutorial="signals-personal-summary"
           className="rounded-3xl border border-primary/18 bg-[linear-gradient(145deg,rgba(139,107,46,0.08),rgba(255,255,255,0.94))] p-5 shadow-[0_18px_46px_-32px_rgba(139,107,46,0.16)]"
         >
           <div className="flex flex-wrap items-center gap-2">
