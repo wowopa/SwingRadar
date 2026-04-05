@@ -68,7 +68,7 @@ export function LandingWorkflowDemo() {
   const stage = stages.find((item) => item.id === activeStage) ?? stages[0];
 
   return (
-    <section className="overflow-hidden rounded-[40px] border border-border/70 bg-[linear-gradient(180deg,hsl(35_23%_98%_/_0.95),hsl(33_18%_94%_/_0.98))] p-4 shadow-[0_30px_100px_hsl(33_22%_24%_/_0.07)] sm:p-5">
+    <section className="overflow-hidden rounded-[40px] border border-border/70 bg-card/94 p-4 shadow-[0_30px_100px_rgba(15,23,42,0.08)] sm:p-5">
       <div className="grid gap-4 xl:grid-cols-[320px_minmax(0,1fr)]">
         <div className="space-y-3">
           {stages.map((item, index) => {
@@ -82,8 +82,8 @@ export function LandingWorkflowDemo() {
                 className={cn(
                   "w-full rounded-[30px] border px-5 py-5 text-left transition-all duration-300",
                   isActive
-                    ? "border-primary/20 bg-primary/[0.08] shadow-[0_16px_40px_hsl(33_22%_24%_/_0.08)]"
-                    : "border-border/70 bg-white/76 hover:border-primary/20 hover:bg-white"
+                    ? "border-primary/20 bg-primary/[0.08] shadow-[0_16px_40px_rgba(15,23,42,0.08)]"
+                    : "border-border/70 bg-card/92 hover:border-primary/20 hover:bg-card/98"
                 )}
               >
                 <div className="flex items-start justify-between gap-3">

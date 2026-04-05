@@ -4,30 +4,73 @@
 
 @layer base {
   :root {
-    --background: 39 28% 95%;
-    --foreground: 220 22% 14%;
-    --card: 36 26% 98%;
-    --card-foreground: 220 22% 14%;
-    --popover: 36 26% 98%;
-    --popover-foreground: 220 22% 14%;
-    --primary: 42 57% 38%;
-    --primary-foreground: 40 38% 97%;
-    --secondary: 34 23% 91%;
-    --secondary-foreground: 220 18% 18%;
-    --muted: 35 18% 92%;
-    --muted-foreground: 220 10% 34%;
-    --accent: 39 30% 84%;
-    --accent-foreground: 220 18% 18%;
-    --destructive: 356 58% 47%;
-    --destructive-foreground: 40 38% 97%;
-    --border: 34 18% 79%;
-    --input: 34 18% 85%;
-    --ring: 42 57% 38%;
-    --positive: 154 53% 34%;
-    --neutral: 40 79% 46%;
-    --caution: 355 63% 53%;
+    --background: 210 29% 98%;
+    --foreground: 222 34% 12%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 34% 12%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 34% 12%;
+    --primary: 213 79% 42%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 24% 96%;
+    --secondary-foreground: 222 28% 18%;
+    --muted: 210 22% 95%;
+    --muted-foreground: 215 16% 41%;
+    --accent: 212 32% 92%;
+    --accent-foreground: 222 28% 18%;
+    --destructive: 356 72% 52%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 214 22% 88%;
+    --input: 214 24% 90%;
+    --ring: 213 79% 42%;
+    --positive: 156 61% 36%;
+    --neutral: 38 92% 44%;
+    --caution: 357 70% 55%;
     --radius: 1.35rem;
+    --page-glow-a: radial-gradient(circle at top left, hsl(213 94% 60% / 0.08), transparent 26%);
+    --page-glow-b: radial-gradient(circle at top right, hsl(196 88% 58% / 0.06), transparent 22%);
+    --page-base: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(210 33% 98%) 52%, hsl(214 32% 95%) 100%);
+    --page-grid: 216 21% 22%;
+    --page-sheen: linear-gradient(135deg, transparent 0%, hsl(213 94% 58% / 0.04) 48%, transparent 100%);
+    --page-sheen-blend: multiply;
+    --surface-top: hsl(0 0% 100% / 0.98);
+    --surface-bottom: hsl(210 30% 98% / 0.95);
+    --surface-accent: hsl(214 94% 60% / 0.08);
     color-scheme: light;
+  }
+
+  html[data-theme-resolved="dark"] {
+    --background: 222 28% 9%;
+    --foreground: 210 24% 96%;
+    --card: 222 24% 13%;
+    --card-foreground: 210 24% 96%;
+    --popover: 222 24% 13%;
+    --popover-foreground: 210 24% 96%;
+    --primary: 210 88% 62%;
+    --primary-foreground: 222 30% 12%;
+    --secondary: 222 19% 18%;
+    --secondary-foreground: 210 24% 96%;
+    --muted: 222 18% 16%;
+    --muted-foreground: 215 15% 72%;
+    --accent: 220 18% 20%;
+    --accent-foreground: 210 24% 96%;
+    --destructive: 356 78% 62%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 220 16% 24%;
+    --input: 220 16% 24%;
+    --ring: 210 88% 62%;
+    --positive: 156 58% 48%;
+    --neutral: 38 90% 58%;
+    --caution: 357 82% 66%;
+    --page-glow-a: radial-gradient(circle at top left, hsl(213 88% 62% / 0.16), transparent 28%);
+    --page-glow-b: radial-gradient(circle at top right, hsl(190 72% 50% / 0.12), transparent 24%);
+    --page-base: linear-gradient(180deg, hsl(223 28% 10%) 0%, hsl(222 26% 8%) 52%, hsl(220 28% 7%) 100%);
+    --page-grid: 215 18% 92%;
+    --page-sheen: linear-gradient(135deg, transparent 0%, hsl(213 88% 62% / 0.07) 52%, transparent 100%);
+    --page-sheen-blend: screen;
+    --surface-top: hsl(223 23% 14% / 0.96);
+    --surface-bottom: hsl(222 20% 12% / 0.98);
+    --surface-accent: hsl(213 88% 62% / 0.11);
   }
 
   * {
@@ -41,10 +84,7 @@
   body {
     @apply bg-background text-foreground antialiased;
     min-height: 100vh;
-    background:
-      radial-gradient(circle at top left, hsl(42 58% 68% / 0.12), transparent 28%),
-      radial-gradient(circle at top right, hsl(218 38% 30% / 0.08), transparent 24%),
-      linear-gradient(180deg, hsl(40 28% 97%) 0%, hsl(38 22% 94%) 44%, hsl(35 18% 90%) 100%);
+    background: var(--page-glow-a), var(--page-glow-b), var(--page-base);
     font-family: var(--font-body), sans-serif;
   }
 
@@ -54,8 +94,8 @@
     inset: 0;
     pointer-events: none;
     background-image:
-      linear-gradient(hsl(220 18% 18% / 0.04) 1px, transparent 1px),
-      linear-gradient(90deg, hsl(220 18% 18% / 0.04) 1px, transparent 1px);
+      linear-gradient(hsl(var(--page-grid) / 0.035) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(var(--page-grid) / 0.035) 1px, transparent 1px);
     background-size: 36px 36px;
     mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.32), transparent 72%);
   }
@@ -65,9 +105,8 @@
     position: fixed;
     inset: 0;
     pointer-events: none;
-    background:
-      linear-gradient(135deg, transparent 0%, hsl(42 46% 32% / 0.03) 48%, transparent 100%);
-    mix-blend-mode: multiply;
+    background: var(--page-sheen);
+    mix-blend-mode: var(--page-sheen-blend);
     opacity: 0.7;
   }
 
@@ -93,12 +132,12 @@
   .surface-panel {
     @apply border border-border/80 shadow-panel backdrop-blur-xl;
     background-image:
-      linear-gradient(180deg, hsl(37 28% 99% / 0.94), hsl(35 20% 96% / 0.98)),
-      linear-gradient(135deg, hsl(42 44% 74% / 0.12), transparent 42%);
+      linear-gradient(180deg, var(--surface-top), var(--surface-bottom)),
+      linear-gradient(135deg, var(--surface-accent), transparent 48%);
   }
 
   .data-chip {
-    @apply rounded-full border border-border/80 bg-white/80 px-3 py-1.5 text-xs text-foreground/90;
+    @apply rounded-full border border-border/80 bg-card/82 px-3 py-1.5 text-xs text-foreground/90;
   }
 
   .eyebrow-label {
@@ -120,11 +159,11 @@
   }
 
   .public-shell-copy {
-    color: hsl(219 16% 28%);
+    color: hsl(var(--foreground) / 0.82);
   }
 
   .public-shell-copy-soft {
-    color: hsl(220 10% 38%);
+    color: hsl(var(--muted-foreground));
   }
 
   .public-hero-badge {
@@ -166,19 +205,19 @@
   }
 
   .public-section-kicker {
-    color: hsl(42 54% 36%);
+    color: hsl(var(--primary) / 0.92);
   }
 
   .public-section-title {
-    color: hsl(220 24% 15%);
+    color: hsl(var(--foreground));
   }
 
   .public-section-copy {
-    color: hsl(219 14% 31%);
+    color: hsl(var(--foreground) / 0.8);
   }
 
   .public-section-copy-soft {
-    color: hsl(219 10% 38%);
+    color: hsl(var(--muted-foreground));
   }
 
   .brand-mark {
@@ -243,6 +282,72 @@
 
   .public-pan {
     animation: public-pan 16s ease-in-out infinite;
+  }
+}
+
+@layer utilities {
+  html[data-theme-resolved="dark"] .bg-white\/98 {
+    background-color: hsl(var(--card) / 0.98) !important;
+  }
+
+  html[data-theme-resolved="dark"] .bg-white\/96 {
+    background-color: hsl(var(--card) / 0.96) !important;
+  }
+
+  html[data-theme-resolved="dark"] .bg-white\/95 {
+    background-color: hsl(var(--card) / 0.95) !important;
+  }
+
+  html[data-theme-resolved="dark"] .bg-white\/94 {
+    background-color: hsl(var(--card) / 0.94) !important;
+  }
+
+  html[data-theme-resolved="dark"] .bg-white\/92 {
+    background-color: hsl(var(--card) / 0.92) !important;
+  }
+
+  html[data-theme-resolved="dark"] .bg-white\/90 {
+    background-color: hsl(var(--card) / 0.9) !important;
+  }
+
+  html[data-theme-resolved="dark"] .bg-white\/88 {
+    background-color: hsl(var(--card) / 0.88) !important;
+  }
+
+  html[data-theme-resolved="dark"] .bg-white\/86 {
+    background-color: hsl(var(--card) / 0.86) !important;
+  }
+
+  html[data-theme-resolved="dark"] .bg-white\/85 {
+    background-color: hsl(var(--card) / 0.85) !important;
+  }
+
+  html[data-theme-resolved="dark"] .bg-white\/84 {
+    background-color: hsl(var(--card) / 0.84) !important;
+  }
+
+  html[data-theme-resolved="dark"] .bg-white\/82 {
+    background-color: hsl(var(--card) / 0.82) !important;
+  }
+
+  html[data-theme-resolved="dark"] .bg-white\/80 {
+    background-color: hsl(var(--card) / 0.8) !important;
+  }
+
+  html[data-theme-resolved="dark"] .bg-white\/78 {
+    background-color: hsl(var(--card) / 0.78) !important;
+  }
+
+  html[data-theme-resolved="dark"] .bg-white\/76 {
+    background-color: hsl(var(--card) / 0.76) !important;
+  }
+
+  html[data-theme-resolved="dark"] .bg-white\/70 {
+    background-color: hsl(var(--card) / 0.7) !important;
+  }
+
+  html[data-theme-resolved="dark"] .hover\:bg-white:hover {
+    background-color: hsl(var(--card) / 0.98) !important;
   }
 }
 

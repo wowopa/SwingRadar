@@ -361,7 +361,7 @@ export function LandingPage() {
           <div className="grid gap-4 xl:grid-cols-3">
             {benefitNarrative.map((item, index) => (
               <ScrollReveal key={item.title} delay={index * 90}>
-                <article className="h-full rounded-[34px] border border-border/70 bg-white/76 p-6 shadow-[0_24px_80px_hsl(33_22%_26%_/_0.06)] backdrop-blur-xl sm:p-8">
+                <article className="h-full rounded-[34px] border border-border/70 bg-card/96 p-6 shadow-[0_24px_80px_rgba(15,23,42,0.08)] backdrop-blur-xl sm:p-8">
                   <div className="flex items-start gap-4">
                     <span className="mt-0.5 shrink-0 text-[1.35rem] font-semibold tracking-[-0.04em] text-primary sm:text-[1.55rem]">
                       #{index + 1}
@@ -408,7 +408,7 @@ export function LandingPage() {
 
               return (
                 <ScrollReveal key={item.title} delay={index * 70} className={item.span}>
-                  <section className="relative h-full overflow-hidden rounded-[34px] border border-border/70 bg-white/78 p-6 shadow-[0_24px_80px_hsl(33_22%_26%_/_0.06)] backdrop-blur-xl">
+                  <section className="relative h-full overflow-hidden rounded-[34px] border border-border/70 bg-card/96 p-6 shadow-[0_24px_80px_rgba(15,23,42,0.08)] backdrop-blur-xl">
                     <div className="relative flex items-start justify-between gap-4">
                       <div className="max-w-[620px] space-y-3">
                         <p className="public-section-kicker text-[11px] font-semibold uppercase tracking-[0.24em]">{item.eyebrow}</p>
@@ -442,7 +442,7 @@ export function LandingPage() {
 
               return (
                 <ScrollReveal key={item.title} delay={100 + index * 70}>
-                  <div className="rounded-[28px] border border-border/70 bg-[linear-gradient(180deg,hsl(35_23%_98%_/_0.92),hsl(33_18%_95%_/_0.98))] px-5 py-5 shadow-[0_18px_56px_hsl(33_22%_24%_/_0.05)]">
+                  <div className="rounded-[28px] border border-border/70 bg-card/94 px-5 py-5 shadow-[0_18px_56px_rgba(15,23,42,0.07)]">
                     <div className="flex items-center gap-3">
                       <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary/10 text-primary">
                         <Icon className="h-4 w-4" />
@@ -503,7 +503,7 @@ export function LandingPage() {
 
         <section
           id="faq"
-          className="scroll-mt-32 rounded-[42px] border border-border/70 bg-[linear-gradient(180deg,hsl(36_26%_98%_/_0.94),hsl(34_18%_95%_/_0.98))] px-6 py-8 shadow-[0_30px_100px_hsl(33_22%_24%_/_0.07)] sm:scroll-mt-36 sm:px-8 sm:py-10"
+          className="scroll-mt-32 rounded-[42px] border border-border/70 bg-card/94 px-6 py-8 shadow-[0_30px_100px_rgba(15,23,42,0.08)] sm:scroll-mt-36 sm:px-8 sm:py-10"
         >
           <div className="grid gap-10 xl:grid-cols-[minmax(0,0.86fr)_minmax(0,1.14fr)]">
             <ScrollReveal className="space-y-4">
@@ -524,7 +524,7 @@ export function LandingPage() {
             <div className="space-y-3">
               {faqs.map((item, index) => (
                 <ScrollReveal key={item.question} delay={index * 70}>
-                  <article className="rounded-[28px] border border-border/70 bg-white/82 px-5 py-5">
+                  <article className="rounded-[28px] border border-border/70 bg-card/96 px-5 py-5">
                     <h3 className="public-section-title text-[clamp(1.2rem,1.8vw,1.55rem)] font-semibold leading-[1.08] tracking-[-0.05em]">
                       {item.question}
                     </h3>

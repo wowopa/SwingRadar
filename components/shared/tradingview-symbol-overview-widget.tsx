@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+
+import { getResolvedThemeFromDocument, THEME_PREFERENCE_EVENT, type ResolvedTheme } from "@/lib/theme/theme-preference";
 
 type TradingViewSymbolOverviewWidgetProps = {
   symbol: string;
@@ -12,6 +14,27 @@ export function TradingViewSymbolOverviewWidget({
   height = 420
 }: TradingViewSymbolOverviewWidgetProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const [theme, setTheme] = useState<ResolvedTheme>("light");
+
+  useEffect(() => {
+    setTheme(getResolvedThemeFromDocument());
+
+    const syncTheme = () => {
+      setTheme(getResolvedThemeFromDocument());
+    };
+
+    const media = window.matchMedia("(prefers-color-scheme: dark)");
+
+    window.addEventListener(THEME_PREFERENCE_EVENT, syncTheme as EventListener);
+    window.addEventListener("storage", syncTheme);
+    media.addEventListener("change", syncTheme);
+
+    return () => {
+      window.removeEventListener(THEME_PREFERENCE_EVENT, syncTheme as EventListener);
+      window.removeEventListener("storage", syncTheme);
+      media.removeEventListener("change", syncTheme);
+    };
+  }, []);
 
   useEffect(() => {
     const host = containerRef.current;
@@ -44,7 +67,7 @@ export function TradingViewSymbolOverviewWidget({
       width: "100%",
       height,
       locale: "kr",
-      colorTheme: "light",
+      colorTheme: theme,
       autosize: true,
       showVolume: false,
       showMA: false,
@@ -67,7 +90,7 @@ export function TradingViewSymbolOverviewWidget({
     return () => {
       host.innerHTML = "";
     };
-  }, [height, symbol]);
+  }, [height, symbol, theme]);
 
   return <div ref={containerRef} className="min-h-[460px]" />;
 }

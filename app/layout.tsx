@@ -5,6 +5,8 @@ import { RouteScrollReset } from "@/components/layout/route-scroll-reset";
 import { ScrollToTopButton } from "@/components/layout/scroll-to-top-button";
 import { SitePopupNotice } from "@/components/layout/site-popup-notice";
 import { SiteVisitTracker } from "@/components/layout/site-visit-tracker";
+import { ThemeController } from "@/components/theme/theme-controller";
+import { createThemeInitScript } from "@/lib/theme/theme-preference";
 
 import "./globals.css";
 
@@ -21,8 +23,12 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="ko" className="dark">
+    <html lang="ko" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: createThemeInitScript() }} />
+      </head>
       <body className={bodyFont.variable}>
+        <ThemeController />
         <RouteScrollReset />
         <SitePopupNotice />
         <SiteVisitTracker />
