@@ -71,8 +71,14 @@ export function PrivateAppShell({
       <div className="mx-auto flex min-h-screen w-full max-w-[1480px] flex-col px-4 pb-12 pt-[96px] sm:px-6 sm:pt-[102px] lg:px-8 lg:pt-[108px]">
         <main className="flex-1 pt-2 sm:pt-4">{children}</main>
 
-        <footer className="mt-12 border-t border-border/75 px-2 pt-6 text-center">
-          <p className="text-xs tracking-[0.18em] text-muted-foreground">Copyright {currentYear} SWING-RADAR. All rights reserved.</p>
+        <footer className="mt-12 border-t border-border/75 px-2 pt-6">
+          <div className="flex flex-col gap-3 text-sm md:flex-row md:items-center md:justify-between">
+            <p className="public-shell-copy">
+              투자 유의: 본 서비스는 투자 판단을 보조하는 참고 도구이며, 최종 투자 결정과 그에 따른 책임은 사용자에게
+              있습니다.
+            </p>
+            <p className="public-shell-copy-soft text-xs tracking-[0.18em]">COPYRIGHT {currentYear} SWING-RADAR</p>
+          </div>
         </footer>
       </div>
 
