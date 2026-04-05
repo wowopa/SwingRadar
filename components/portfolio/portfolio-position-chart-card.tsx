@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { ArrowDown, ArrowUp, Flag, Plus, ShieldX, Target, type LucideIcon } from "lucide-react";
 import {
   CandlestickSeries,
   ColorType,
@@ -24,15 +25,14 @@ import { cn, formatPrice } from "@/lib/utils";
 
 const MAX_POINTS = 60;
 const CHART_HEIGHT = 360;
-const EVENT_BADGE_HORIZONTAL_PADDING = 72;
-const EVENT_BADGE_STACK_OFFSET = 36;
-const EVENT_BADGE_VERTICAL_OFFSET = 56;
-const EVENT_BADGE_VERTICAL_PADDING = 34;
+const EVENT_MARKER_HORIZONTAL_PADDING = 18;
+const EVENT_MARKER_STACK_OFFSET = 24;
+const EVENT_MARKER_VERTICAL_OFFSET = 18;
+const EVENT_MARKER_VERTICAL_PADDING = 20;
 
-interface EventBadgePosition extends PositionChartEventDisplay {
+interface EventMarkerPosition extends PositionChartEventDisplay {
   x: number;
-  anchorY: number;
-  badgeY: number;
+  y: number;
 }
 
 function toBusinessDay(value: string): BusinessDay | null {
@@ -83,10 +83,7 @@ function toChartValue(value: number | null | undefined) {
   return typeof value === "number" && Number.isFinite(value) ? value : undefined;
 }
 
-function buildReferenceLines(
-  tradePlan?: RecommendationTradePlanDto | null,
-  averagePrice?: number | null
-) {
+function buildReferenceLines(tradePlan?: RecommendationTradePlanDto | null, averagePrice?: number | null) {
   return [
     {
       label: "평균 단가",
@@ -123,64 +120,65 @@ function buildReferenceLines(
   });
 }
 
-function formatEventQuantity(quantity: number) {
-  return `${new Intl.NumberFormat("ko-KR").format(quantity)}주`;
+function clampMarkerX(x: number, width: number) {
+  const horizontalPadding = Math.min(EVENT_MARKER_HORIZONTAL_PADDING, Math.max(14, width / 8));
+  return Math.max(horizontalPadding, Math.min(width - horizontalPadding, x));
 }
 
-function clampBadgeY(y: number) {
-  return Math.max(EVENT_BADGE_VERTICAL_PADDING, Math.min(CHART_HEIGHT - EVENT_BADGE_VERTICAL_PADDING, y));
+function clampMarkerY(y: number) {
+  return Math.max(EVENT_MARKER_VERTICAL_PADDING, Math.min(CHART_HEIGHT - EVENT_MARKER_VERTICAL_PADDING, y));
 }
 
 function getEventToneStyles(tone: PositionChartEventTone) {
   switch (tone) {
     case "buy":
       return {
-        line: "bg-emerald-500/42",
-        marker: "border-emerald-400/40 bg-emerald-500 text-white shadow-[0_18px_34px_-18px_rgba(16,185,129,0.85)]",
-        chip: "border-emerald-400/28 bg-[rgba(16,185,129,0.96)] text-white",
-        code: "bg-white/16 text-white/90"
+        marker:
+          "border-emerald-400/45 bg-emerald-500 text-white shadow-[0_0_0_3px_rgba(255,255,255,0.96),0_0_0_4px_rgba(15,23,42,0.14),0_14px_22px_-18px_rgba(16,185,129,0.95)]"
       };
     case "add":
       return {
-        line: "bg-sky-500/42",
-        marker: "border-sky-400/42 bg-sky-500 text-white shadow-[0_18px_34px_-18px_rgba(14,165,233,0.85)]",
-        chip: "border-sky-400/30 bg-[rgba(14,165,233,0.96)] text-white",
-        code: "bg-white/16 text-white/90"
+        marker:
+          "border-sky-400/45 bg-sky-500 text-white shadow-[0_0_0_3px_rgba(255,255,255,0.96),0_0_0_4px_rgba(15,23,42,0.14),0_14px_22px_-18px_rgba(14,165,233,0.95)]"
       };
     case "take":
       return {
-        line: "bg-amber-500/42",
-        marker: "border-amber-300/42 bg-amber-500 text-white shadow-[0_18px_34px_-18px_rgba(245,158,11,0.85)]",
-        chip: "border-amber-300/30 bg-[rgba(245,158,11,0.97)] text-white",
-        code: "bg-white/16 text-white/92"
+        marker:
+          "border-amber-300/45 bg-amber-500 text-white shadow-[0_0_0_3px_rgba(255,255,255,0.96),0_0_0_4px_rgba(15,23,42,0.14),0_14px_22px_-18px_rgba(245,158,11,0.95)]"
       };
     case "exit":
       return {
-        line: "bg-rose-500/42",
-        marker: "border-rose-300/42 bg-rose-500 text-white shadow-[0_18px_34px_-18px_rgba(244,63,94,0.85)]",
-        chip: "border-rose-300/30 bg-[rgba(244,63,94,0.97)] text-white",
-        code: "bg-white/16 text-white/92"
+        marker:
+          "border-rose-300/45 bg-rose-500 text-white shadow-[0_0_0_3px_rgba(255,255,255,0.96),0_0_0_4px_rgba(15,23,42,0.14),0_14px_22px_-18px_rgba(244,63,94,0.95)]"
       };
     case "stop":
       return {
-        line: "bg-red-500/46",
-        marker: "border-red-300/44 bg-red-500 text-white shadow-[0_18px_34px_-18px_rgba(239,68,68,0.85)]",
-        chip: "border-red-300/30 bg-[rgba(239,68,68,0.98)] text-white",
-        code: "bg-white/16 text-white/92"
+        marker:
+          "border-red-300/46 bg-red-500 text-white shadow-[0_0_0_3px_rgba(255,255,255,0.96),0_0_0_4px_rgba(15,23,42,0.14),0_14px_22px_-18px_rgba(239,68,68,0.95)]"
       };
     case "manual":
       return {
-        line: "bg-slate-500/42",
-        marker: "border-slate-300/36 bg-slate-600 text-white shadow-[0_18px_34px_-18px_rgba(71,85,105,0.85)]",
-        chip: "border-slate-300/24 bg-[rgba(71,85,105,0.96)] text-white",
-        code: "bg-white/14 text-white/88"
+        marker:
+          "border-slate-300/40 bg-slate-600 text-white shadow-[0_0_0_3px_rgba(255,255,255,0.96),0_0_0_4px_rgba(15,23,42,0.14),0_14px_22px_-18px_rgba(71,85,105,0.95)]"
       };
   }
 }
 
-function clampBadgeX(x: number, width: number) {
-  const horizontalPadding = Math.min(EVENT_BADGE_HORIZONTAL_PADDING, Math.max(24, width / 4));
-  return Math.max(horizontalPadding, Math.min(width - horizontalPadding, x));
+function getEventIcon(type: PositionChartEventDisplay["type"]): LucideIcon {
+  switch (type) {
+    case "buy":
+      return ArrowUp;
+    case "add":
+      return Plus;
+    case "take_profit_partial":
+      return Target;
+    case "exit_full":
+      return ArrowDown;
+    case "stop_loss":
+      return ShieldX;
+    case "manual_exit":
+      return Flag;
+  }
 }
 
 export function PortfolioPositionChartCard({
@@ -200,11 +198,12 @@ export function PortfolioPositionChartCard({
 }) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const chartRef = useRef<IChartApi | null>(null);
-  const [eventBadges, setEventBadges] = useState<EventBadgePosition[]>([]);
+  const [eventMarkers, setEventMarkers] = useState<EventMarkerPosition[]>([]);
 
   const visiblePoints = useMemo(() => chartPoints.slice(-MAX_POINTS), [chartPoints]);
   const latestPoint = visiblePoints.at(-1);
   const firstEntryEvent = getPortfolioEntryEvent(journalGroup);
+
   const availableDates = useMemo(
     () =>
       new Set(
@@ -217,6 +216,7 @@ export function PortfolioPositionChartCard({
       ),
     [generatedAt, latestPoint?.date, visiblePoints]
   );
+
   const eventDisplayDefinitions = useMemo(
     () => buildPositionChartEventDisplays(journalGroup, availableDates),
     [availableDates, journalGroup]
@@ -224,7 +224,7 @@ export function PortfolioPositionChartCard({
 
   useEffect(() => {
     if (!containerRef.current || !visiblePoints.length) {
-      setEventBadges([]);
+      setEventMarkers([]);
       return;
     }
 
@@ -347,45 +347,44 @@ export function PortfolioPositionChartCard({
       series.setData(seriesData.map((point) => ({ time: point.time, value: line.value })));
     }
 
-    const syncEventBadges = () => {
+    const syncEventMarkers = () => {
       if (!containerRef.current) {
         return;
       }
 
       const width = containerRef.current.clientWidth;
       const stackCounts = new Map<string, number>();
-      const nextBadges = eventDisplayDefinitions
-        .map((badge) => {
-          const x = chart.timeScale().timeToCoordinate(toBusinessDay(badge.date)!);
-          const y = priceSeries.priceToCoordinate(badge.price);
+      const nextMarkers = eventDisplayDefinitions
+        .map((event) => {
+          const x = chart.timeScale().timeToCoordinate(toBusinessDay(event.date)!);
+          const y = priceSeries.priceToCoordinate(event.price);
 
           if (x === null || y === null) {
             return null;
           }
 
-          const stackKey = `${badge.date}:${badge.placement}`;
+          const stackKey = `${event.date}:${event.placement}`;
           const stackIndex = stackCounts.get(stackKey) ?? 0;
           stackCounts.set(stackKey, stackIndex + 1);
-          const anchorY = clampBadgeY(y);
-          const desiredBadgeY =
-            badge.placement === "above"
-              ? anchorY - EVENT_BADGE_VERTICAL_OFFSET - stackIndex * EVENT_BADGE_STACK_OFFSET
-              : anchorY + EVENT_BADGE_VERTICAL_OFFSET + stackIndex * EVENT_BADGE_STACK_OFFSET;
+
+          const stackedY =
+            event.placement === "above"
+              ? y - EVENT_MARKER_VERTICAL_OFFSET - stackIndex * EVENT_MARKER_STACK_OFFSET
+              : y + EVENT_MARKER_VERTICAL_OFFSET + stackIndex * EVENT_MARKER_STACK_OFFSET;
 
           return {
-            ...badge,
-            x: clampBadgeX(x, width),
-            anchorY,
-            badgeY: clampBadgeY(desiredBadgeY)
+            ...event,
+            x: clampMarkerX(x, width),
+            y: clampMarkerY(stackedY)
           };
         })
-        .filter((item): item is EventBadgePosition => item !== null);
+        .filter((item): item is EventMarkerPosition => item !== null);
 
-      setEventBadges(nextBadges);
+      setEventMarkers(nextMarkers);
     };
 
     chart.timeScale().fitContent();
-    requestAnimationFrame(syncEventBadges);
+    requestAnimationFrame(syncEventMarkers);
     chartRef.current = chart;
 
     const resizeObserver = new ResizeObserver(() => {
@@ -395,11 +394,11 @@ export function PortfolioPositionChartCard({
 
       chartRef.current.applyOptions({ width: containerRef.current.clientWidth });
       chartRef.current.timeScale().fitContent();
-      requestAnimationFrame(syncEventBadges);
+      requestAnimationFrame(syncEventMarkers);
     });
 
     const handleVisibleRangeChange = () => {
-      requestAnimationFrame(syncEventBadges);
+      requestAnimationFrame(syncEventMarkers);
     };
 
     chart.timeScale().subscribeVisibleLogicalRangeChange(handleVisibleRangeChange);
@@ -410,7 +409,7 @@ export function PortfolioPositionChartCard({
       resizeObserver.disconnect();
       chart.remove();
       chartRef.current = null;
-      setEventBadges([]);
+      setEventMarkers([]);
     };
   }, [averagePrice, eventDisplayDefinitions, generatedAt, latestPoint?.date, tradePlan, visiblePoints]);
 
@@ -422,7 +421,7 @@ export function PortfolioPositionChartCard({
         </CardHeader>
         <CardContent>
           <div className="rounded-[24px] border border-border/80 bg-[hsl(42_40%_97%)] px-5 py-10 text-sm leading-6 text-muted-foreground">
-            {company} 가격 이력이 아직 충분하지 않아 포지션 차트를 준비하는 중입니다.
+            {company} 가격 이력이 아직 충분하지 않아 상세 차트를 준비하고 있습니다.
           </div>
         </CardContent>
       </Card>
@@ -466,26 +465,13 @@ export function PortfolioPositionChartCard({
         <div className="overflow-hidden rounded-[28px] border border-border/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(246,241,232,0.92))] p-3">
           <div className="relative h-[360px] w-full">
             <div ref={containerRef} className="h-full w-full" />
-            <div className="pointer-events-none absolute inset-0 z-20">
-              {eventBadges.map((badge) => (
-                <ChartEventOverlayItem key={badge.id} badge={badge} />
+            <div className="pointer-events-none absolute inset-0 z-30">
+              {eventMarkers.map((marker) => (
+                <ChartEventMarker key={marker.id} marker={marker} />
               ))}
             </div>
           </div>
         </div>
-        {eventDisplayDefinitions.length ? (
-          <div className="rounded-[22px] border border-border/80 bg-background/76 px-3 py-3">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">Events In View</p>
-              <p className="text-[11px] text-muted-foreground">IN / ADD / TP / OUT / SL / MAN</p>
-            </div>
-            <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
-              {eventDisplayDefinitions.map((event) => (
-                <ChartEventSummaryChip key={event.id} event={event} />
-              ))}
-            </div>
-          </div>
-        ) : null}
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           {metricItems.map((item) => (
             <div
@@ -502,80 +488,23 @@ export function PortfolioPositionChartCard({
   );
 }
 
-function ChartEventOverlayItem({ badge }: { badge: EventBadgePosition }) {
-  const styles = getEventToneStyles(badge.tone);
-  const connectorTop = Math.min(badge.anchorY, badge.badgeY);
-  const connectorHeight = Math.max(Math.abs(badge.anchorY - badge.badgeY) - 10, 12);
-
-  return (
-    <>
-      <div
-        className={cn("absolute z-10 w-px -translate-x-1/2 rounded-full", styles.line)}
-        style={{
-          left: badge.x,
-          top: connectorTop + 5,
-          height: connectorHeight
-        }}
-      />
-      <div
-        className={cn(
-          "absolute z-20 flex min-w-[2.5rem] -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border px-2 py-1 text-[10px] font-bold tracking-[0.12em]",
-          styles.marker
-        )}
-        style={{
-          left: badge.x,
-          top: badge.anchorY
-        }}
-      >
-        {badge.shortLabel}
-      </div>
-      <div
-        className={cn(
-          "absolute z-30 min-w-[112px] max-w-[160px] -translate-x-1/2 -translate-y-1/2 rounded-[18px] border px-3 py-2 shadow-[0_18px_34px_-20px_rgba(15,23,42,0.72)] backdrop-blur-md",
-          styles.chip
-        )}
-        style={{
-          left: badge.x,
-          top: badge.badgeY
-        }}
-      >
-        <div className="flex items-center gap-1.5">
-          <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-bold tracking-[0.12em]", styles.code)}>
-            {badge.shortLabel}
-          </span>
-          <span className="truncate text-[11px] font-semibold">{badge.label}</span>
-        </div>
-        <p className="mt-1 text-[10px] leading-4 text-white/84">
-          {formatPrice(badge.price)} · {formatEventQuantity(badge.quantity)}
-        </p>
-      </div>
-    </>
-  );
-}
-
-function ChartEventSummaryChip({ event }: { event: PositionChartEventDisplay }) {
-  const styles = getEventToneStyles(event.tone);
+function ChartEventMarker({ marker }: { marker: EventMarkerPosition }) {
+  const styles = getEventToneStyles(marker.tone);
+  const Icon = getEventIcon(marker.type);
 
   return (
     <div
       className={cn(
-        "min-w-[168px] rounded-[18px] border px-3 py-3 shadow-[0_14px_28px_-24px_rgba(15,23,42,0.6)] backdrop-blur-sm",
-        styles.chip
+        "absolute z-30 flex h-8 w-8 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border",
+        styles.marker
       )}
+      style={{
+        left: marker.x,
+        top: marker.y
+      }}
+      aria-label={`${marker.label} ${formatPrice(marker.price)}`}
     >
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-bold tracking-[0.12em]", styles.code)}>
-            {event.shortLabel}
-          </span>
-          <p className="text-xs font-semibold text-white">{event.label}</p>
-        </div>
-        <span className="text-[10px] font-medium text-white/72">#{event.sequence}</span>
-      </div>
-      <p className="mt-2 text-xs font-semibold text-white">{formatPrice(event.price)}</p>
-      <p className="mt-1 text-[11px] text-white/76">
-        {event.dateLabel} · {formatEventQuantity(event.quantity)}
-      </p>
+      <Icon className="h-4 w-4" strokeWidth={2.4} />
     </div>
   );
 }
