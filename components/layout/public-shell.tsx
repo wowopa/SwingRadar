@@ -38,13 +38,9 @@ export function PublicShell({ children }: { children: ReactNode }) {
             </nav>
 
             <div className="flex items-center gap-2 justify-self-end">
-              <Button
-                asChild
-                variant="ghost"
-                className="hidden border-white/10 bg-white/4 text-white hover:bg-white/8 sm:inline-flex"
-              >
-                <Link href="/?auth=login">로그인</Link>
-              </Button>
+              <Link href="/?auth=login" className="public-shell-link hidden h-10 items-center text-sm font-medium transition sm:inline-flex">
+                로그인
+              </Link>
               <Button asChild className="bg-white text-slate-950 hover:bg-white/92">
                 <Link href="/?auth=signup">시작하기</Link>
               </Button>

@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { LogIn, UserRound } from "lucide-react";
+import { LogIn, LogOut, UserRound } from "lucide-react";
 
 import { LogoutButton } from "@/components/auth/logout-button";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import type { AuthSession } from "@/types/auth";
 
 export function AuthCta({
@@ -21,6 +22,12 @@ export function AuthCta({
   hideLogout?: boolean;
 }) {
   const isLight = tone === "light";
+  const menuActionClass = cn(
+    "h-10 gap-2 rounded-full px-2.5 text-sm font-medium shadow-none",
+    isLight
+      ? "text-slate-300 hover:bg-transparent hover:text-white"
+      : "text-muted-foreground hover:bg-transparent hover:text-foreground"
+  );
 
   if (iconOnly) {
     const label = session ? "내 계정" : "로그인 / 가입";
@@ -74,8 +81,11 @@ export function AuthCta({
         <LogoutButton
           variant="ghost"
           size="sm"
-          className={isLight ? "text-white/88 hover:bg-white/10 hover:text-white" : undefined}
-        />
+          className={menuActionClass}
+        >
+          <LogOut className="h-4 w-4" />
+          <span className="min-w-0 text-sm">로그아웃</span>
+        </LogoutButton>
       )}
     </div>
   );
