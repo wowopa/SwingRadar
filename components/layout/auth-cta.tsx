@@ -11,12 +11,14 @@ export function AuthCta({
   session,
   compact = false,
   tone = "default",
-  iconOnly = false
+  iconOnly = false,
+  hideLogout = false
 }: {
   session: AuthSession | null;
   compact?: boolean;
   tone?: "default" | "light";
   iconOnly?: boolean;
+  hideLogout?: boolean;
 }) {
   const isLight = tone === "light";
 
@@ -45,7 +47,7 @@ export function AuthCta({
 
   if (!session) {
     return (
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex items-center gap-2">
         <Button
           asChild
           variant="secondary"
@@ -59,7 +61,7 @@ export function AuthCta({
   }
 
   return (
-    <div className={compact ? "flex flex-wrap items-center gap-1.5" : "flex flex-wrap items-center gap-2"}>
+    <div className={compact ? "flex items-center gap-1.5" : "flex items-center gap-2"}>
       <Button
         asChild
         variant="secondary"
@@ -68,11 +70,13 @@ export function AuthCta({
       >
         <Link href="/account">내 계정</Link>
       </Button>
-      <LogoutButton
-        variant="ghost"
-        size="sm"
-        className={isLight ? "text-white/88 hover:bg-white/10 hover:text-white" : undefined}
-      />
+      {hideLogout ? null : (
+        <LogoutButton
+          variant="ghost"
+          size="sm"
+          className={isLight ? "text-white/88 hover:bg-white/10 hover:text-white" : undefined}
+        />
+      )}
     </div>
   );
 }

@@ -47,12 +47,22 @@ export function PrivateAppShell({
               <PrivateNav />
             </div>
 
-            <div className="flex min-w-0 items-center justify-self-end gap-3">
-              <div className="w-[260px] 2xl:w-[320px]">
+            <div className="flex min-w-0 items-center justify-self-end gap-2 xl:gap-2.5 2xl:gap-3">
+              <div className="w-[220px] xl:w-[240px] 2xl:w-[320px]">
                 <GlobalSymbolSearch compact />
               </div>
-              <TutorialLauncherButton tone="light" />
-              <AuthCta session={session} compact tone="light" />
+              <div className="2xl:hidden">
+                <TutorialLauncherButton iconOnly tone="light" />
+              </div>
+              <div className="hidden 2xl:block">
+                <TutorialLauncherButton tone="light" />
+              </div>
+              <div className="2xl:hidden">
+                <AuthCta session={session} compact tone="light" hideLogout />
+              </div>
+              <div className="hidden 2xl:block">
+                <AuthCta session={session} compact tone="light" />
+              </div>
             </div>
           </div>
         </header>
