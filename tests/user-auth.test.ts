@@ -1,4 +1,4 @@
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 
@@ -22,6 +22,7 @@ describe("user auth storage", () => {
   const previousActionsFile = process.env.SWING_RADAR_USER_AUTH_ACTIONS_FILE;
   const previousDatabaseUrl = process.env.SWING_RADAR_DATABASE_URL;
   const previousNodeEnv = process.env.NODE_ENV;
+  const previousRuntimeRoot = process.env.SWING_RADAR_RUNTIME_ROOT;
 
   beforeEach(async () => {
     tempDir = await mkdtemp(path.join(os.tmpdir(), "swing-radar-user-auth-"));
@@ -67,6 +68,12 @@ describe("user auth storage", () => {
       delete env.NODE_ENV;
     } else {
       env.NODE_ENV = previousNodeEnv;
+    }
+
+    if (previousRuntimeRoot === undefined) {
+      delete process.env.SWING_RADAR_RUNTIME_ROOT;
+    } else {
+      process.env.SWING_RADAR_RUNTIME_ROOT = previousRuntimeRoot;
     }
 
     await rm(tempDir, { recursive: true, force: true });
@@ -116,5 +123,54 @@ describe("user auth storage", () => {
 
     expect(accountsFile).toContain("ops@example.com");
     expect(sessionsFile).toContain(createdSession.session.sessionId);
+  });
+
+  it("loads legacy auth files and migrates them into the preferred storage path", async () => {
+    env.NODE_ENV = "production";
+
+    const user = await createUserAccount({
+      email: "legacy@example.com",
+      displayName: "Legacy User",
+      password: "strong-pass-789"
+    });
+    const createdSession = await createUserSession(user);
+    const [accountsFile, sessionsFile] = await Promise.all([
+      readFile(process.env.SWING_RADAR_USER_ACCOUNTS_FILE!, "utf8"),
+      readFile(process.env.SWING_RADAR_USER_SESSIONS_FILE!, "utf8")
+    ]);
+
+    const runtimeRoot = path.join(tempDir, "runtime-root");
+    const legacyAuthDir = path.join(runtimeRoot, "users", "auth");
+    process.env.SWING_RADAR_RUNTIME_ROOT = runtimeRoot;
+    delete process.env.SWING_RADAR_USER_ACCOUNTS_FILE;
+    delete process.env.SWING_RADAR_USER_SESSIONS_FILE;
+    delete process.env.SWING_RADAR_USER_LOGIN_ATTEMPTS_FILE;
+    delete process.env.SWING_RADAR_USER_AUTH_ACTIONS_FILE;
+
+    await mkdir(legacyAuthDir, { recursive: true });
+    await Promise.all([
+      writeFile(path.join(legacyAuthDir, "user-accounts.json"), accountsFile, "utf8"),
+      writeFile(path.join(legacyAuthDir, "user-sessions.json"), sessionsFile, "utf8")
+    ]);
+
+    const authenticated = await authenticateUserAccount({
+      email: "legacy@example.com",
+      password: "strong-pass-789"
+    });
+    const request = new Request("http://localhost/recommendations", {
+      headers: {
+        cookie: `${getUserSessionCookieName()}=${createdSession.rawToken}`
+      }
+    });
+    const resolvedSession = await getUserSessionFromRequest(request);
+    const [migratedAccountsFile, migratedSessionsFile] = await Promise.all([
+      readFile(path.join(legacyAuthDir, "user-accounts-default.json"), "utf8"),
+      readFile(path.join(legacyAuthDir, "user-sessions-default.json"), "utf8")
+    ]);
+
+    expect(authenticated.email).toBe("legacy@example.com");
+    expect(resolvedSession?.user.email).toBe("legacy@example.com");
+    expect(migratedAccountsFile).toContain("legacy@example.com");
+    expect(migratedSessionsFile).toContain(createdSession.session.sessionId);
   });
 });

@@ -124,26 +124,42 @@ export function hashIdentifier(value: string) {
   return createHash("sha256").update(value).digest("hex");
 }
 
-function resolveAuthStorageNamespace() {
-  const explicit = normalizeOptionalString(process.env.SWING_RADAR_AUTH_STORAGE_NAMESPACE);
-  if (explicit) {
-    return explicit;
-  }
-
+function resolveLegacyAuthStorageNamespace() {
   const legacySeed =
     normalizeOptionalString(process.env.SWING_RADAR_USER_ACCOUNTS_FILE) ??
     normalizeOptionalString(process.env.SWING_RADAR_USER_SESSIONS_FILE) ??
     normalizeOptionalString(process.env.SWING_RADAR_USER_LOGIN_ATTEMPTS_FILE);
 
-  if (legacySeed) {
-    return hashIdentifier(legacySeed).slice(0, 16);
+  if (!legacySeed) {
+    return null;
   }
 
-  return "default";
+  return hashIdentifier(legacySeed).slice(0, 16);
 }
 
-function getScopedDocumentName(documentName: string) {
-  return `${documentName}:${resolveAuthStorageNamespace()}`;
+function resolvePreferredAuthStorageNamespace() {
+  return normalizeOptionalString(process.env.SWING_RADAR_AUTH_STORAGE_NAMESPACE) ?? "default";
+}
+
+function getScopedDocumentName(documentName: string, namespace = resolvePreferredAuthStorageNamespace()) {
+  return `${documentName}:${namespace}`;
+}
+
+function getPreferredScopedDocumentName(documentName: string) {
+  return getScopedDocumentName(documentName, resolvePreferredAuthStorageNamespace());
+}
+
+function getDocumentLookupNames(documentName: string) {
+  const preferred = getPreferredScopedDocumentName(documentName);
+  const legacyNamespace = resolveLegacyAuthStorageNamespace();
+
+  return Array.from(
+    new Set([
+      preferred,
+      legacyNamespace ? getScopedDocumentName(documentName, legacyNamespace) : null,
+      documentName
+    ].filter((value): value is string => Boolean(value)))
+  );
 }
 
 function sanitizeDocumentFileName(value: string) {
@@ -174,15 +190,31 @@ function getLegacyDocumentPath(documentName: string) {
   return undefined;
 }
 
-function getDocumentFilePath(documentName: string) {
+function getPreferredDocumentFilePath(documentName: string) {
   const legacyPath = getLegacyDocumentPath(documentName);
   if (legacyPath) {
     return path.resolve(legacyPath);
   }
 
-  const scopedName = getScopedDocumentName(documentName);
+  const scopedName = getPreferredScopedDocumentName(documentName);
   const runtimePaths = getRuntimePaths(resolveProjectRoot());
   return path.join(runtimePaths.usersDir, "auth", `${sanitizeDocumentFileName(scopedName)}.json`);
+}
+
+function getDocumentFileCandidatePaths(documentName: string) {
+  const legacyPath = getLegacyDocumentPath(documentName);
+  if (legacyPath) {
+    return [path.resolve(legacyPath)];
+  }
+
+  const runtimePaths = getRuntimePaths(resolveProjectRoot());
+  return Array.from(
+    new Set(
+      getDocumentLookupNames(documentName).map((candidateName) =>
+        path.join(runtimePaths.usersDir, "auth", `${sanitizeDocumentFileName(candidateName)}.json`)
+      )
+    )
+  );
 }
 
 function allowInMemoryAuthStore() {
@@ -216,48 +248,114 @@ async function readJsonFile<T>(filePath: string): Promise<T | null> {
 }
 
 async function loadFromFileStorage<T>(documentName: string) {
-  return readJsonFile<T>(getDocumentFilePath(documentName));
+  for (const filePath of getDocumentFileCandidatePaths(documentName)) {
+    const document = await readJsonFile<T>(filePath);
+    if (document !== null) {
+      return {
+        document,
+        filePath
+      };
+    }
+  }
+
+  return null;
 }
 
 async function saveToFileStorage(documentName: string, payload: unknown) {
-  const filePath = getDocumentFilePath(documentName);
+  const filePath = getPreferredDocumentFilePath(documentName);
   await mkdir(path.dirname(filePath), { recursive: true });
   await writeFile(filePath, `${JSON.stringify(payload, null, 2)}\n`, "utf8");
 }
 
 async function loadStoredDocument<T>(documentName: string) {
-  const scopedName = getScopedDocumentName(documentName);
-  try {
-    const runtimeDocument = await loadRuntimeDocument<T>(scopedName);
-    if (runtimeDocument) {
+  const preferredScopedName = getPreferredScopedDocumentName(documentName);
+  const lookupNames = getDocumentLookupNames(documentName);
+
+  for (const runtimeName of lookupNames) {
+    try {
+      const runtimeDocument = await loadRuntimeDocument<T>(runtimeName);
+      if (!runtimeDocument) {
+        continue;
+      }
+
+      if (runtimeName !== preferredScopedName) {
+        try {
+          await saveRuntimeDocument(preferredScopedName, runtimeDocument);
+        } catch (error) {
+          console.warn(
+            `[user-auth-store] Runtime auth storage migration failed for ${documentName}, continuing with legacy runtime document.`,
+            error
+          );
+        }
+      }
+
+      try {
+        await saveToFileStorage(documentName, runtimeDocument);
+      } catch (error) {
+        console.warn(
+          `[user-auth-store] File auth backup sync failed for ${documentName}, continuing with runtime storage.`,
+          error
+        );
+      }
+
       return runtimeDocument;
+    } catch (error) {
+      console.warn(
+        `[user-auth-store] Runtime auth storage read failed for ${documentName} (${runtimeName}), falling back to next storage.`,
+        error
+      );
     }
-  } catch (error) {
-    console.warn(
-      `[user-auth-store] Runtime auth storage read failed for ${documentName}, falling back to file storage.`,
-      error
-    );
   }
 
-  const fileDocument = await loadFromFileStorage<T>(documentName);
-  if (fileDocument !== null) {
-    return fileDocument;
+  const fileEntry = await loadFromFileStorage<T>(documentName);
+  if (fileEntry !== null) {
+    try {
+      await saveRuntimeDocument(preferredScopedName, fileEntry.document);
+    } catch (error) {
+      console.warn(
+        `[user-auth-store] Runtime auth storage sync failed for ${documentName}, continuing with file storage.`,
+        error
+      );
+    }
+
+    if (fileEntry.filePath !== getPreferredDocumentFilePath(documentName)) {
+      try {
+        await saveToFileStorage(documentName, fileEntry.document);
+      } catch (error) {
+        console.warn(
+          `[user-auth-store] Preferred file auth storage sync failed for ${documentName}, continuing with legacy file storage.`,
+          error
+        );
+      }
+    }
+
+    return fileEntry.document;
   }
 
   if (allowInMemoryAuthStore()) {
-    return (getInMemoryAuthStore().get(scopedName) as T | undefined) ?? null;
+    const store = getInMemoryAuthStore();
+    for (const lookupName of lookupNames) {
+      const inMemoryDocument = store.get(lookupName) as T | undefined;
+      if (inMemoryDocument !== undefined) {
+        if (lookupName !== preferredScopedName) {
+          store.set(preferredScopedName, inMemoryDocument);
+        }
+        return inMemoryDocument;
+      }
+    }
+
+    return null;
   }
 
   return null;
 }
 
 async function saveStoredDocument(documentName: string, payload: unknown) {
-  const scopedName = getScopedDocumentName(documentName);
+  const scopedName = getPreferredScopedDocumentName(documentName);
+  let runtimeSaved = false;
+
   try {
-    const savedToRuntime = await saveRuntimeDocument(scopedName, payload);
-    if (savedToRuntime) {
-      return;
-    }
+    runtimeSaved = await saveRuntimeDocument(scopedName, payload);
   } catch (error) {
     console.warn(
       `[user-auth-store] Runtime auth storage write failed for ${documentName}, falling back to file storage.`,
@@ -269,6 +367,14 @@ async function saveStoredDocument(documentName: string, payload: unknown) {
     await saveToFileStorage(documentName, payload);
     return;
   } catch (error) {
+    if (runtimeSaved) {
+      console.warn(
+        `[user-auth-store] File auth backup write failed for ${documentName}, keeping runtime storage as source of truth.`,
+        error
+      );
+      return;
+    }
+
     if (!allowInMemoryAuthStore()) {
       throw new Error(`Persistent auth storage is not configured for ${documentName}.`);
     }
