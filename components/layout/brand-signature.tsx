@@ -52,7 +52,7 @@ export function BrandSignature({ compact = false, className, tone = "default", m
             isLight ? "text-[#D8B86A]" : "text-foreground/66"
           )}
         >
-          SWING SIGNAL RECOMMENDED SERVICE
+          SWING TRADING MANAGEMENT SERVICE
         </p>
         <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
           <p
