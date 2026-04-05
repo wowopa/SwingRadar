@@ -18,26 +18,26 @@ import { cn } from "@/lib/utils";
 const THEME_OPTIONS = [
   {
     value: "light" as const,
-    label: "\uD654\uC774\uD2B8",
-    description: "\uBC1D\uACE0 \uC120\uBA85\uD55C \uD654\uC774\uD2B8 \uC911\uC2EC \uCEEC\uB7EC\uB85C \uD45C\uC2DC\uD569\uB2C8\uB2E4.",
+    label: "화이트",
+    description: "밝고 선명한 화이트 중심 컬러로 표시합니다.",
     icon: SunMedium
   },
   {
     value: "dark" as const,
-    label: "\uB2E4\uD06C",
-    description: "\uC5B4\uB450\uC6B4 \uBC30\uACBD\uACFC \uB192\uC740 \uB300\uBE44\uB85C \uD45C\uC2DC\uD569\uB2C8\uB2E4.",
+    label: "다크",
+    description: "어두운 배경과 높은 대비로 표시합니다.",
     icon: MoonStar
   },
   {
     value: "system" as const,
-    label: "\uC2DC\uC2A4\uD15C",
-    description: "OS \uC124\uC815\uC5D0 \uB9DE\uCDB0 \uC790\uB3D9\uC73C\uB85C \uBCC0\uACBD\uD569\uB2C8\uB2E4.",
+    label: "시스템",
+    description: "OS 설정에 맞춰 자동으로 변경합니다.",
     icon: LaptopMinimal
   }
 ];
 
 function getResolvedThemeLabel(theme: ResolvedTheme) {
-  return theme === "dark" ? "\uB2E4\uD06C" : "\uD654\uC774\uD2B8";
+  return theme === "dark" ? "다크" : "화이트";
 }
 
 export function AccountThemeSettingsCard() {
@@ -58,20 +58,17 @@ export function AccountThemeSettingsCard() {
     };
   }, []);
 
-  const activeLabel = THEME_OPTIONS.find((option) => option.value === preference)?.label ?? "\uD654\uC774\uD2B8";
+  const activeLabel = THEME_OPTIONS.find((option) => option.value === preference)?.label ?? "화이트";
 
   return (
     <Card data-tutorial="account-theme" className="border-border/70 bg-card/92 shadow-sm">
       <CardHeader className="space-y-3">
         <div className="flex flex-wrap items-center gap-2">
-          <CardTitle>\uD654\uBA74 \uD14C\uB9C8</CardTitle>
-          <Badge variant="secondary">
-            \uD604\uC7AC \uC801\uC6A9 {getResolvedThemeLabel(resolvedTheme)}
-          </Badge>
+          <CardTitle>화면 테마</CardTitle>
+          <Badge variant="secondary">현재 적용 {getResolvedThemeLabel(resolvedTheme)}</Badge>
         </div>
         <p className="text-sm leading-6 text-muted-foreground">
-          \uB79C\uB529 \uD398\uC774\uC9C0\uC640 \uB85C\uADF8\uC778 \uD6C4 \uD654\uBA74 \uC804\uCCB4\uC758 \uCEEC\uB7EC \uD14C\uB9C8\uB97C \uBC14\uAFC9\uB2C8\uB2E4.
-          \uAE30\uBCF8\uAC12\uC740 \uB354 \uC120\uBA85\uD55C \uD654\uC774\uD2B8 \uD14C\uB9C8\uC785\uB2C8\uB2E4.
+          랜딩 페이지와 로그인 후 화면 전체의 컬러 테마를 바꿉니다. 기본값은 더 선명한 화이트 테마입니다.
         </p>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -99,7 +96,7 @@ export function AccountThemeSettingsCard() {
                   <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-border/70 bg-card text-foreground">
                     <Icon className="h-4 w-4" />
                   </div>
-                  {isActive ? <Badge variant="neutral">\uC120\uD0DD\uB428</Badge> : null}
+                  {isActive ? <Badge variant="neutral">선택됨</Badge> : null}
                 </div>
                 <p className="mt-4 text-base font-semibold text-foreground">{option.label}</p>
                 <p className="mt-2 text-sm leading-6 text-muted-foreground">{option.description}</p>
@@ -110,8 +107,8 @@ export function AccountThemeSettingsCard() {
 
         <div className="rounded-[24px] border border-border/70 bg-secondary/28 px-4 py-4 text-sm leading-6 text-muted-foreground">
           {preference === "system"
-            ? `\uD604\uC7AC\uB294 \uC2DC\uC2A4\uD15C \uC124\uC815\uC5D0 \uB530\uB77C ${getResolvedThemeLabel(resolvedTheme)} \uD14C\uB9C8\uB85C \uBCF4\uC774\uACE0 \uC788\uC2B5\uB2C8\uB2E4.`
-            : `\uC9C0\uAE08 \uC120\uD0DD\uD55C ${activeLabel} \uD14C\uB9C8\uAC00 \uBC14\uB85C \uC801\uC6A9\uB418\uACE0 \uC788\uC2B5\uB2C8\uB2E4.`}
+            ? `현재는 시스템 설정에 따라 ${getResolvedThemeLabel(resolvedTheme)} 테마로 보이고 있습니다.`
+            : `지금 선택한 ${activeLabel} 테마가 바로 적용되고 있습니다.`}
         </div>
       </CardContent>
     </Card>
