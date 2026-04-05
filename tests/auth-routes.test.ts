@@ -26,6 +26,7 @@ describe("auth routes", () => {
   let tempDir = "";
   const previousAccountsFile = process.env.SWING_RADAR_USER_ACCOUNTS_FILE;
   const previousSessionsFile = process.env.SWING_RADAR_USER_SESSIONS_FILE;
+  const previousLoginAttemptsFile = process.env.SWING_RADAR_USER_LOGIN_ATTEMPTS_FILE;
   const previousUserProfilesFile = process.env.SWING_RADAR_USER_PORTFOLIO_PROFILES_FILE;
   const previousDatabaseUrl = process.env.SWING_RADAR_DATABASE_URL;
 
@@ -33,6 +34,7 @@ describe("auth routes", () => {
     tempDir = await mkdtemp(path.join(os.tmpdir(), "swing-radar-auth-routes-"));
     process.env.SWING_RADAR_USER_ACCOUNTS_FILE = path.join(tempDir, "accounts.json");
     process.env.SWING_RADAR_USER_SESSIONS_FILE = path.join(tempDir, "sessions.json");
+    process.env.SWING_RADAR_USER_LOGIN_ATTEMPTS_FILE = path.join(tempDir, "login-attempts.json");
     process.env.SWING_RADAR_USER_PORTFOLIO_PROFILES_FILE = path.join(tempDir, "portfolio-profiles.json");
     delete process.env.SWING_RADAR_DATABASE_URL;
   });
@@ -48,6 +50,12 @@ describe("auth routes", () => {
       delete process.env.SWING_RADAR_USER_SESSIONS_FILE;
     } else {
       process.env.SWING_RADAR_USER_SESSIONS_FILE = previousSessionsFile;
+    }
+
+    if (previousLoginAttemptsFile === undefined) {
+      delete process.env.SWING_RADAR_USER_LOGIN_ATTEMPTS_FILE;
+    } else {
+      process.env.SWING_RADAR_USER_LOGIN_ATTEMPTS_FILE = previousLoginAttemptsFile;
     }
 
     if (previousUserProfilesFile === undefined) {
@@ -179,5 +187,72 @@ describe("auth routes", () => {
     });
     expect(loadedPayload.profile).toEqual(savedPayload.profile);
     expect(logoutResponse.headers.get("set-cookie")).toContain("swing_radar_session=");
+  });
+
+  it("temporarily blocks repeated failed login attempts", async () => {
+    await postSignupRoute(
+      createRequest("http://localhost/api/auth/signup", {
+        method: "POST",
+        body: JSON.stringify({
+          email: "tester@example.com",
+          displayName: "Tester",
+          password: "strong-pass-123"
+        })
+      })
+    );
+
+    for (let attempt = 0; attempt < 4; attempt += 1) {
+      const response = await postLoginRoute(
+        createRequest("http://localhost/api/auth/login", {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            "user-agent": "vitest-browser"
+          },
+          body: JSON.stringify({
+            email: "tester@example.com",
+            password: "wrong-pass"
+          })
+        })
+      );
+
+      expect(response.status).toBe(401);
+    }
+
+    const blockedResponse = await postLoginRoute(
+      createRequest("http://localhost/api/auth/login", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "user-agent": "vitest-browser"
+        },
+        body: JSON.stringify({
+          email: "tester@example.com",
+          password: "wrong-pass"
+        })
+      })
+    );
+    const blockedPayload = await parseJson<{ message?: string; code?: string }>(blockedResponse);
+
+    expect(blockedResponse.status).toBe(401);
+
+    const cooldownResponse = await postLoginRoute(
+      createRequest("http://localhost/api/auth/login", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "user-agent": "vitest-browser"
+        },
+        body: JSON.stringify({
+          email: "tester@example.com",
+          password: "strong-pass-123"
+        })
+      })
+    );
+    const cooldownPayload = await parseJson<{ message?: string; code?: string }>(cooldownResponse);
+
+    expect(blockedPayload.code).toBe("AUTH_INVALID_CREDENTIALS");
+    expect(cooldownResponse.status).toBe(429);
+    expect(cooldownPayload.code).toBe("AUTH_TOO_MANY_ATTEMPTS");
   });
 });

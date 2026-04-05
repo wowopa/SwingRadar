@@ -1,9 +1,10 @@
 import Link from "next/link";
-import { ArrowUpRight, Clock3, ShieldAlert, Target, WalletCards } from "lucide-react";
+import { ArrowUpRight, Clock3, Compass, ShieldAlert, Target, WalletCards } from "lucide-react";
 
 import type { PortfolioTradeEventDialogPreset } from "@/components/portfolio/portfolio-trade-event-dialog";
 import { buildPortfolioTradeDialogPreset } from "@/components/portfolio/trade-event-dialog-presets";
 import { SignalToneBadge } from "@/components/shared/signal-tone-badge";
+import { TutorialLauncherButton } from "@/components/tutorial/tutorial-launcher-button";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -167,6 +168,56 @@ export function PortfolioOverviewBoard({
           ) : null}
         </CardContent>
       </Card>
+
+      {!hasPositions ? (
+        <Card className="border-border/80 bg-white/92 shadow-[0_18px_46px_-32px_rgba(24,32,42,0.18)]">
+          <CardHeader className="space-y-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <CardTitle className="text-lg text-foreground">처음 보유 관리 시작</CardTitle>
+              <Badge variant="secondary">온보딩</Badge>
+            </div>
+            <p className="text-sm leading-6 text-muted-foreground">
+              Portfolio는 현재 들고 있는 종목을 관리하는 공간입니다. 보유가 아직 없다면 자산 기준을 먼저 넣고, Today에서 계획을 만든 뒤 Journal 기록으로
+              이어가는 흐름이 가장 자연스럽습니다.
+            </p>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid gap-3 md:grid-cols-3">
+              <EmptyStepCard
+                title="1. 자산 기준 입력"
+                description="총 자산, 가용 현금, 기존 보유를 먼저 맞춰 놓으면 Today와 Rules가 같은 기준으로 움직입니다."
+              />
+              <EmptyStepCard
+                title="2. Today 확인"
+                description="오늘 먼저 볼 후보와 매수 검토 흐름을 본 뒤, 실제로 진입한 종목만 Portfolio에 기록합니다."
+              />
+              <EmptyStepCard
+                title="3. 기록 루프 시작"
+                description="첫 매수 이후엔 Journal, Reviews, Rules가 이어지면서 개인 규칙이 점점 더 강해집니다."
+              />
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              {onOpenSettings ? (
+                <Button type="button" onClick={onOpenSettings}>
+                  자산 설정 열기
+                </Button>
+              ) : (
+                <Button asChild>
+                  <Link href="/portfolio?asset-settings=1">자산 설정 열기</Link>
+                </Button>
+              )}
+              <Button asChild variant="outline">
+                <Link href="/recommendations">
+                  <Compass className="h-4 w-4" />
+                  Today 보기
+                </Link>
+              </Button>
+              <TutorialLauncherButton scope="portfolio" label="Portfolio 가이드" />
+            </div>
+          </CardContent>
+        </Card>
+      ) : null}
 
       <Card className="border-border/80 bg-white/90 shadow-[0_18px_46px_-32px_rgba(24,32,42,0.22)]">
         <CardHeader className="space-y-4">
@@ -386,6 +437,15 @@ function SummaryMetric({
           <Icon className="h-4 w-4" />
         </div>
       </div>
+    </div>
+  );
+}
+
+function EmptyStepCard({ title, description }: { title: string; description: string }) {
+  return (
+    <div className="rounded-[22px] border border-border/70 bg-background/85 p-4">
+      <p className="text-sm font-semibold text-foreground">{title}</p>
+      <p className="mt-2 text-sm leading-6 text-muted-foreground">{description}</p>
     </div>
   );
 }

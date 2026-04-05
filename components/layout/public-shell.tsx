@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import { PublicAuthDialog } from "@/components/auth/public-auth-dialog";
 import { BrandSignature } from "@/components/layout/brand-signature";
+import { FooterPolicyLinks } from "@/components/layout/footer-policy-links";
 import { Button } from "@/components/ui/button";
 
 const navItems = [
@@ -27,11 +28,7 @@ export function PublicShell({ children }: { children: ReactNode }) {
 
             <nav className="hidden items-center justify-center gap-8 lg:flex lg:justify-self-center">
               {navItems.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className="public-shell-link text-sm font-medium transition"
-                >
+                <Link key={item.href} href={item.href} className="public-shell-link text-sm font-medium transition">
                   {item.label}
                 </Link>
               ))}
@@ -57,10 +54,12 @@ export function PublicShell({ children }: { children: ReactNode }) {
         <footer className="mt-16 border-t border-border/60 px-2 pt-6">
           <div className="flex flex-col gap-3 text-sm md:flex-row md:items-center md:justify-between">
             <p className="public-shell-copy">
-              투자 유의: 본 서비스는 투자 판단을 보조하는 참고 도구이며, 최종 투자 결정과 그에 따른 책임은 사용자에게
-              있습니다.
+              투자 유의: 본 서비스는 투자 판단을 보조하는 참고 도구이며, 최종 투자 결정과 그에 따른 책임은 사용자에게 있습니다.
             </p>
-            <p className="public-shell-copy-soft text-xs tracking-[0.18em]">COPYRIGHT {currentYear} SWING-RADAR</p>
+            <div className="flex flex-col items-start gap-2 md:items-end">
+              <FooterPolicyLinks className="public-shell-copy-soft" />
+              <p className="public-shell-copy-soft text-xs tracking-[0.18em]">COPYRIGHT {currentYear} SWING-RADAR</p>
+            </div>
           </div>
         </footer>
       </div>

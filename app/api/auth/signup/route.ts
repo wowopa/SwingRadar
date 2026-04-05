@@ -31,7 +31,7 @@ export async function POST(request: Request) {
       updatedBy: user.email
     });
 
-    const { rawToken, session } = await createUserSession(user);
+    const { rawToken, session } = await createUserSession(user, request);
     const response = jsonOk(
       {
         ok: true,

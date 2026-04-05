@@ -8,12 +8,16 @@ import { NextResponse } from "next/server";
 import { ApiError } from "@/lib/server/api-error";
 import { loadRuntimeDocument, saveRuntimeDocument } from "@/lib/server/runtime-documents";
 import { getRuntimePaths } from "@/lib/server/runtime-paths";
-import type { AuthSession, AuthUser } from "@/types/auth";
+import type { AccountSessionItem, AuthSession, AuthUser } from "@/types/auth";
 
 const USER_ACCOUNTS_DOCUMENT_NAME = "user-accounts";
 const USER_SESSIONS_DOCUMENT_NAME = "user-sessions";
+const USER_LOGIN_ATTEMPTS_DOCUMENT_NAME = "user-login-attempts";
 const USER_SESSION_COOKIE_NAME = "swing_radar_session";
 const USER_SESSION_TTL_DAYS = 30;
+const LOGIN_ATTEMPT_WINDOW_MS = 15 * 60 * 1000;
+const LOGIN_ATTEMPT_BLOCK_MS = 15 * 60 * 1000;
+const LOGIN_ATTEMPT_MAX_FAILURES = 5;
 
 interface StoredUserAccount extends AuthUser {
   passwordSalt: string;
@@ -30,6 +34,8 @@ interface StoredUserSession {
   createdAt: string;
   updatedAt: string;
   expiresAt: string;
+  userAgent?: string;
+  ipHash?: string;
 }
 
 interface UserAccountsDocument {
@@ -39,6 +45,16 @@ interface UserAccountsDocument {
 
 interface UserSessionsDocument {
   sessions: Record<string, StoredUserSession>;
+}
+
+interface StoredLoginAttempt {
+  failures: string[];
+  blockedUntil?: string;
+  updatedAt: string;
+}
+
+interface UserLoginAttemptsDocument {
+  attempts: Record<string, StoredLoginAttempt>;
 }
 
 function getUserAccountsPath() {
@@ -53,6 +69,12 @@ function getUserSessionsPath() {
     : path.join(getRuntimePaths().usersDir, "sessions.json");
 }
 
+function getUserLoginAttemptsPath() {
+  return process.env.SWING_RADAR_USER_LOGIN_ATTEMPTS_FILE
+    ? path.resolve(process.env.SWING_RADAR_USER_LOGIN_ATTEMPTS_FILE)
+    : path.join(getRuntimePaths().usersDir, "login-attempts.json");
+}
+
 function createEmptyAccountsDocument(): UserAccountsDocument {
   return {
     accounts: {},
@@ -63,6 +85,12 @@ function createEmptyAccountsDocument(): UserAccountsDocument {
 function createEmptySessionsDocument(): UserSessionsDocument {
   return {
     sessions: {}
+  };
+}
+
+function createEmptyLoginAttemptsDocument(): UserLoginAttemptsDocument {
+  return {
+    attempts: {}
   };
 }
 
@@ -126,6 +154,10 @@ function verifyPassword(password: string, account: StoredUserAccount) {
 
 function hashSessionToken(token: string) {
   return createHash("sha256").update(token).digest("hex");
+}
+
+function hashIdentifier(value: string) {
+  return createHash("sha256").update(value).digest("hex");
 }
 
 function normalizeAccount(value: unknown): StoredUserAccount | null {
@@ -207,7 +239,30 @@ function normalizeSession(value: unknown): StoredUserSession | null {
     tokenHash,
     createdAt,
     updatedAt,
-    expiresAt
+    expiresAt,
+    userAgent: normalizeOptionalString(payload.userAgent) ?? undefined,
+    ipHash: normalizeOptionalString(payload.ipHash) ?? undefined
+  };
+}
+
+function normalizeLoginAttempt(value: unknown): StoredLoginAttempt | null {
+  if (!value || typeof value !== "object") {
+    return null;
+  }
+
+  const payload = value as Record<string, unknown>;
+  const failures = Array.isArray(payload.failures)
+    ? payload.failures.flatMap((item) => (isIsoDate(item) ? [String(item)] : []))
+    : [];
+  const updatedAt = isIsoDate(payload.updatedAt)
+    ? String(payload.updatedAt)
+    : failures.at(-1) ?? new Date(0).toISOString();
+  const blockedUntil = isIsoDate(payload.blockedUntil) ? String(payload.blockedUntil) : undefined;
+
+  return {
+    failures,
+    blockedUntil,
+    updatedAt
   };
 }
 
@@ -252,6 +307,64 @@ function normalizeSessionsDocument(value: unknown): UserSessionsDocument {
   });
 }
 
+function trimExpiredLoginAttempts(document: UserLoginAttemptsDocument, now = Date.now()) {
+  return {
+    attempts: Object.fromEntries(
+      Object.entries(document.attempts).flatMap(([key, value]) => {
+        const normalized = normalizeLoginAttempt(value);
+        if (!normalized) {
+          return [];
+        }
+
+        const failures = normalized.failures.filter((failureAt) => {
+          const failureTime = new Date(failureAt).getTime();
+          return Number.isFinite(failureTime) && now - failureTime <= LOGIN_ATTEMPT_WINDOW_MS;
+        });
+        const blockedUntil =
+          normalized.blockedUntil && new Date(normalized.blockedUntil).getTime() > now
+            ? normalized.blockedUntil
+            : undefined;
+
+        if (!failures.length && !blockedUntil) {
+          return [];
+        }
+
+        return [
+          [
+            key,
+            {
+              failures,
+              blockedUntil,
+              updatedAt: failures.at(-1) ?? normalized.updatedAt
+            } satisfies StoredLoginAttempt
+          ]
+        ];
+      })
+    )
+  };
+}
+
+function normalizeLoginAttemptsDocument(value: unknown): UserLoginAttemptsDocument {
+  if (!value || typeof value !== "object") {
+    return createEmptyLoginAttemptsDocument();
+  }
+
+  const payload = value as Record<string, unknown>;
+  const attemptsPayload = payload.attempts;
+  if (!attemptsPayload || typeof attemptsPayload !== "object") {
+    return createEmptyLoginAttemptsDocument();
+  }
+
+  return trimExpiredLoginAttempts({
+    attempts: Object.fromEntries(
+      Object.entries(attemptsPayload).flatMap(([key, attemptValue]) => {
+        const normalized = normalizeLoginAttempt(attemptValue);
+        return normalized ? [[key, normalized]] : [];
+      })
+    )
+  });
+}
+
 async function loadAccountsDocument() {
   try {
     const content = await readFile(getUserAccountsPath(), "utf8");
@@ -286,6 +399,23 @@ async function saveSessionsDocument(document: UserSessionsDocument) {
   await saveRuntimeDocument(USER_SESSIONS_DOCUMENT_NAME, normalized);
 }
 
+async function loadLoginAttemptsDocument() {
+  try {
+    const content = await readFile(getUserLoginAttemptsPath(), "utf8");
+    return normalizeLoginAttemptsDocument(JSON.parse(content.replace(/^\uFEFF/, "")));
+  } catch {
+    const runtimeDocument = await loadRuntimeDocument<UserLoginAttemptsDocument>(USER_LOGIN_ATTEMPTS_DOCUMENT_NAME);
+    return normalizeLoginAttemptsDocument(runtimeDocument);
+  }
+}
+
+async function saveLoginAttemptsDocument(document: UserLoginAttemptsDocument) {
+  const normalized = normalizeLoginAttemptsDocument(document);
+  await mkdir(path.dirname(getUserLoginAttemptsPath()), { recursive: true });
+  await writeFile(getUserLoginAttemptsPath(), `${JSON.stringify(normalized, null, 2)}\n`, "utf8");
+  await saveRuntimeDocument(USER_LOGIN_ATTEMPTS_DOCUMENT_NAME, normalized);
+}
+
 function extractCookieValue(cookieHeader: string | null, name: string) {
   if (!cookieHeader) {
     return null;
@@ -303,6 +433,88 @@ function extractCookieValue(cookieHeader: string | null, name: string) {
 
 function createSessionExpiration() {
   return new Date(Date.now() + USER_SESSION_TTL_DAYS * 86_400_000).toISOString();
+}
+
+function resolveClientIp(request: Request) {
+  const forwardedFor = request.headers.get("x-forwarded-for");
+  if (forwardedFor) {
+    const [candidate] = forwardedFor.split(",");
+    const normalized = normalizeOptionalString(candidate);
+    if (normalized) {
+      return normalized;
+    }
+  }
+
+  return (
+    normalizeOptionalString(request.headers.get("cf-connecting-ip")) ??
+    normalizeOptionalString(request.headers.get("x-real-ip")) ??
+    null
+  );
+}
+
+function resolveSessionUserAgent(request?: Request) {
+  return request ? normalizeOptionalString(request.headers.get("user-agent"))?.slice(0, 180) ?? undefined : undefined;
+}
+
+function resolveSessionIpHash(request?: Request) {
+  const clientIp = request ? resolveClientIp(request) : null;
+  return clientIp ? hashIdentifier(clientIp) : undefined;
+}
+
+function buildLoginAttemptKey(request: Request, email: string) {
+  const fingerprint = [normalizeEmail(email), resolveClientIp(request) ?? "unknown", request.headers.get("user-agent") ?? "unknown"].join("|");
+  return hashIdentifier(fingerprint);
+}
+
+function formatRetryMinutes(blockedUntil: string) {
+  const remainingMs = new Date(blockedUntil).getTime() - Date.now();
+  return Math.max(1, Math.ceil(remainingMs / 60_000));
+}
+
+function describeSessionClient(userAgent?: string) {
+  const normalized = userAgent?.toLowerCase() ?? "";
+
+  const device = normalized.includes("iphone")
+    ? "iPhone"
+    : normalized.includes("ipad")
+      ? "iPad"
+      : normalized.includes("android")
+        ? "Android"
+        : normalized.includes("windows")
+          ? "Windows"
+          : normalized.includes("macintosh") || normalized.includes("mac os x")
+            ? "Mac"
+            : normalized.includes("linux")
+              ? "Linux"
+              : "알 수 없는 기기";
+
+  const browser = normalized.includes("whale")
+    ? "Whale"
+    : normalized.includes("edg/")
+      ? "Edge"
+      : normalized.includes("chrome/")
+        ? "Chrome"
+        : normalized.includes("safari/")
+          ? "Safari"
+          : normalized.includes("firefox/")
+            ? "Firefox"
+            : "브라우저";
+
+  return `${device} · ${browser}`;
+}
+
+function buildPublicSession(session: StoredUserSession, account: StoredUserAccount): AuthSession {
+  return {
+    sessionId: session.id,
+    user: toPublicUser(account),
+    createdAt: session.createdAt,
+    updatedAt: session.updatedAt,
+    expiresAt: session.expiresAt
+  };
+}
+
+export function getUserSessionTokenFromRequest(request: Request) {
+  return extractCookieValue(request.headers.get("cookie"), USER_SESSION_COOKIE_NAME);
 }
 
 export function getUserSessionCookieName() {
@@ -376,7 +588,66 @@ export async function authenticateUserAccount(input: { email: string; password: 
   return toPublicUser(account);
 }
 
-export async function createUserSession(user: AuthUser) {
+export async function assertLoginAttemptAllowed(request: Request, email: string) {
+  const document = await loadLoginAttemptsDocument();
+  const attempt = document.attempts[buildLoginAttemptKey(request, email)];
+
+  if (!attempt?.blockedUntil) {
+    return;
+  }
+
+  if (new Date(attempt.blockedUntil).getTime() <= Date.now()) {
+    delete document.attempts[buildLoginAttemptKey(request, email)];
+    await saveLoginAttemptsDocument(document);
+    return;
+  }
+
+  const retryMinutes = formatRetryMinutes(attempt.blockedUntil);
+  throw new ApiError(
+    429,
+    "AUTH_TOO_MANY_ATTEMPTS",
+    `로그인 시도가 너무 많습니다. ${retryMinutes}분 뒤에 다시 시도해 주세요.`,
+    {
+      retryAfterMinutes: retryMinutes
+    }
+  );
+}
+
+export async function recordLoginAttemptFailure(request: Request, email: string) {
+  const key = buildLoginAttemptKey(request, email);
+  const document = await loadLoginAttemptsDocument();
+  const current = document.attempts[key];
+  const now = new Date().toISOString();
+  const recentFailures = (current?.failures ?? []).filter((failureAt) => {
+    const failureTime = new Date(failureAt).getTime();
+    return Number.isFinite(failureTime) && Date.now() - failureTime <= LOGIN_ATTEMPT_WINDOW_MS;
+  });
+  const nextFailures = [...recentFailures, now];
+
+  document.attempts[key] = {
+    failures: nextFailures,
+    blockedUntil:
+      nextFailures.length >= LOGIN_ATTEMPT_MAX_FAILURES
+        ? new Date(Date.now() + LOGIN_ATTEMPT_BLOCK_MS).toISOString()
+        : undefined,
+    updatedAt: now
+  };
+
+  await saveLoginAttemptsDocument(document);
+}
+
+export async function clearLoginAttemptFailures(request: Request, email: string) {
+  const key = buildLoginAttemptKey(request, email);
+  const document = await loadLoginAttemptsDocument();
+  if (!document.attempts[key]) {
+    return;
+  }
+
+  delete document.attempts[key];
+  await saveLoginAttemptsDocument(document);
+}
+
+export async function createUserSession(user: AuthUser, request?: Request) {
   const rawToken = randomBytes(24).toString("hex");
   const now = new Date().toISOString();
   const session: StoredUserSession = {
@@ -385,7 +656,9 @@ export async function createUserSession(user: AuthUser) {
     tokenHash: hashSessionToken(rawToken),
     createdAt: now,
     updatedAt: now,
-    expiresAt: createSessionExpiration()
+    expiresAt: createSessionExpiration(),
+    userAgent: resolveSessionUserAgent(request),
+    ipHash: resolveSessionIpHash(request)
   };
 
   const document = await loadSessionsDocument();
@@ -397,6 +670,8 @@ export async function createUserSession(user: AuthUser) {
     session: {
       sessionId: session.id,
       user,
+      createdAt: session.createdAt,
+      updatedAt: session.updatedAt,
       expiresAt: session.expiresAt
     } satisfies AuthSession
   };
@@ -423,11 +698,7 @@ async function resolveSessionByRawToken(rawToken: string | null): Promise<AuthSe
     return null;
   }
 
-  return {
-    sessionId: session.id,
-    user: toPublicUser(account),
-    expiresAt: session.expiresAt
-  };
+  return buildPublicSession(session, account);
 }
 
 export async function getUserSessionFromRequest(request: Request) {
@@ -494,4 +765,60 @@ export async function revokeUserSession(rawToken: string | null) {
   delete document.sessions[sessionId];
   await saveSessionsDocument(document);
   return true;
+}
+
+export async function listUserSessions(userId: string, rawToken: string | null) {
+  const tokenHash = rawToken ? hashSessionToken(rawToken) : null;
+  const document = await loadSessionsDocument();
+
+  return Object.values(document.sessions)
+    .filter((session) => session.userId === userId)
+    .sort((left, right) => {
+      const leftCurrent = left.tokenHash === tokenHash ? 1 : 0;
+      const rightCurrent = right.tokenHash === tokenHash ? 1 : 0;
+      if (leftCurrent !== rightCurrent) {
+        return rightCurrent - leftCurrent;
+      }
+
+      return new Date(right.updatedAt).getTime() - new Date(left.updatedAt).getTime();
+    })
+    .map((session) => ({
+      sessionId: session.id,
+      createdAt: session.createdAt,
+      updatedAt: session.updatedAt,
+      expiresAt: session.expiresAt,
+      clientLabel: describeSessionClient(session.userAgent),
+      isCurrent: session.tokenHash === tokenHash
+    }) satisfies AccountSessionItem);
+}
+
+export async function revokeUserSessionById(userId: string, sessionId: string) {
+  const document = await loadSessionsDocument();
+  const session = document.sessions[sessionId];
+  if (!session || session.userId !== userId) {
+    return false;
+  }
+
+  delete document.sessions[sessionId];
+  await saveSessionsDocument(document);
+  return true;
+}
+
+export async function revokeOtherUserSessions(userId: string, rawToken: string | null) {
+  const tokenHash = rawToken ? hashSessionToken(rawToken) : null;
+  const document = await loadSessionsDocument();
+  const removableSessionIds = Object.entries(document.sessions)
+    .filter(([, session]) => session.userId === userId && session.tokenHash !== tokenHash)
+    .map(([sessionId]) => sessionId);
+
+  if (!removableSessionIds.length) {
+    return 0;
+  }
+
+  for (const sessionId of removableSessionIds) {
+    delete document.sessions[sessionId];
+  }
+
+  await saveSessionsDocument(document);
+  return removableSessionIds.length;
 }

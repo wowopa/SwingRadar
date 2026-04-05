@@ -1,5 +1,6 @@
 ﻿"use client";
 
+import Link from "next/link";
 import type { ReactNode } from "react";
 import { useMemo, useState } from "react";
 
@@ -7,8 +8,11 @@ import { RecommendationMobileList } from "@/components/recommendations/recommend
 import { RecommendationTable } from "@/components/recommendations/recommendation-table";
 import { RecommendationTrustSummary } from "@/components/recommendations/recommendation-trust-summary";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { TutorialLauncherButton } from "@/components/tutorial/tutorial-launcher-button";
 import type {
+  MarketSessionStatusDto,
   OpeningCheckPositivePatternDto,
   OpeningCheckRiskPatternDto,
   TodayActionBoardItemDto
@@ -83,13 +87,15 @@ export function RecommendationExplorer({
   openingCheckRiskPatterns = [],
   openingCheckPositivePattern,
   openingCheckCandidateTickers = [],
-  personalActionByTicker = {}
+  personalActionByTicker = {},
+  marketSession
 }: {
   items: Recommendation[];
   openingCheckRiskPatterns?: OpeningCheckRiskPatternDto[];
   openingCheckPositivePattern?: OpeningCheckPositivePatternDto;
   openingCheckCandidateTickers?: string[];
   personalActionByTicker?: Record<string, TodayActionBoardItemDto>;
+  marketSession?: MarketSessionStatusDto;
 }) {
   const [query, setQuery] = useState("");
   const [tone, setTone] = useState<ToneFilter>("all");
@@ -302,6 +308,14 @@ export function RecommendationExplorer({
   const hasAnyPersonalActionSummary = useMemo(() => {
     return Object.values(overallPersonalActionSummary).some((count) => count > 0);
   }, [overallPersonalActionSummary]);
+  const hasCustomFilters =
+    query.trim().length > 0 ||
+    tone !== "all" ||
+    sector !== "all" ||
+    favoriteFilter !== "all" ||
+    trustFilter !== "all" ||
+    scopeFilter !== "all" ||
+    personalActionFilter !== "all";
 
   const bucketedItems = useMemo(() => {
     return filteredItems.reduce<Record<RecommendationActionBucket, Recommendation[]>>(
@@ -423,6 +437,22 @@ export function RecommendationExplorer({
     watchCount: personalActionSummary.watch,
     openingCheckCount: filteredItems.filter((item) => openingCheckCandidateSet.has(item.ticker.toUpperCase())).length
   });
+  const emptyState = getSignalsEmptyState({
+    totalCount: items.length,
+    hasCustomFilters,
+    marketSession
+  });
+
+  function resetFilters() {
+    setQuery("");
+    setTone("all");
+    setSector("all");
+    setFavoriteFilter("all");
+    setTrustFilter("all");
+    setScopeFilter("all");
+    setPersonalActionFilter("all");
+    setSort("rank");
+  }
 
   return (
     <div className="space-y-6 lg:space-y-8">
@@ -810,16 +840,76 @@ export function RecommendationExplorer({
           </div>
         </section>
       ) : (
-        <section className="rounded-3xl border border-border/80 bg-white/90 p-8 text-center shadow-[0_18px_46px_-32px_rgba(24,32,42,0.18)]">
-          <p className="text-lg font-semibold text-foreground">조건에 맞는 종목이 없습니다.</p>
-          <p className="mt-3 text-sm leading-6 text-muted-foreground">
-            검색어 또는 섹터, 검증 기준 조건을 조금 더 넓히면 더 많은 종목을 볼 수 있습니다.
-          </p>
+        <section className="rounded-3xl border border-border/80 bg-white/92 p-8 shadow-[0_18px_46px_-32px_rgba(24,32,42,0.18)]">
+          <div className="mx-auto max-w-3xl text-center">
+            <Badge variant={items.length === 0 ? "secondary" : "neutral"}>{emptyState.badge}</Badge>
+            <p className="mt-4 text-xl font-semibold text-foreground">{emptyState.title}</p>
+            <p className="mt-3 text-sm leading-6 text-muted-foreground">{emptyState.body}</p>
+            <div className="mt-4 rounded-[24px] border border-border/70 bg-[hsl(42_40%_97%)] px-4 py-4 text-left text-sm leading-6 text-muted-foreground">
+              {emptyState.note}
+            </div>
+
+            <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
+              {hasCustomFilters ? (
+                <Button type="button" variant="outline" onClick={resetFilters}>
+                  필터 초기화
+                </Button>
+              ) : null}
+              <Button asChild variant="secondary">
+                <Link href="/recommendations">Today 보기</Link>
+              </Button>
+              <TutorialLauncherButton scope="signals" label="Signals 가이드" />
+            </div>
+          </div>
         </section>
       )}
 
     </div>
   );
+}
+
+function getSignalsEmptyState({
+  totalCount,
+  hasCustomFilters,
+  marketSession
+}: {
+  totalCount: number;
+  hasCustomFilters: boolean;
+  marketSession?: MarketSessionStatusDto;
+}) {
+  if (totalCount === 0 && marketSession && !marketSession.isOpenDay) {
+    return {
+      badge: marketSession.closureLabel,
+      title: "오늘은 휴장일 모드입니다.",
+      body: marketSession.detail,
+      note: "Signals 후보는 장이 열리는 날 다시 채워집니다. 오늘은 Today와 Portfolio에서 복기와 다음 계획 정리에 더 집중하는 편이 자연스럽습니다."
+    };
+  }
+
+  if (totalCount === 0) {
+    return {
+      badge: "데이터 준비 중",
+      title: "오늘 공통 후보가 아직 준비되지 않았습니다.",
+      body: "데이터 기준 시각과 배치 상태를 확인한 뒤 잠시 후 다시 보면 후보가 채워질 수 있습니다.",
+      note: "이 구간에서는 필터 문제보다 데이터 생성 시점 문제일 가능성이 큽니다. Today 화면과 데이터 기준 바를 함께 확인해 주세요."
+    };
+  }
+
+  if (hasCustomFilters) {
+    return {
+      badge: "필터 0개",
+      title: "지금 필터 조합에서는 종목이 남지 않습니다.",
+      body: "검색어, 섹터, 신뢰 기준, 개인 실행 상태를 조금만 넓히면 후보가 다시 나타날 가능성이 높습니다.",
+      note: "처음에는 빠른 보기 프리셋으로 전체 흐름을 본 뒤, 필요한 필터만 하나씩 더하는 순서가 가장 안정적입니다."
+    };
+  }
+
+  return {
+    badge: "후보 없음",
+    title: "지금은 바로 꺼낼 공통 후보가 없습니다.",
+    body: "오늘은 Today 보드에서 복기와 계획 정리를 먼저 보고, 장초 확인이나 데이터 갱신이 끝난 뒤 다시 보는 편이 좋습니다.",
+    note: "Signals는 항상 종목을 많이 보여주는 화면이 아니라, 오늘 비교할 만한 후보를 좁혀 보여주는 탐색 화면이라는 기준으로 보는 편이 좋습니다."
+  };
 }
 
 function getQuickViewSummary({

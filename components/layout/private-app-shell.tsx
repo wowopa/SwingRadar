@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import { AuthCta } from "@/components/layout/auth-cta";
 import { BrandMark, BrandSignature } from "@/components/layout/brand-signature";
+import { FooterPolicyLinks } from "@/components/layout/footer-policy-links";
 import { GlobalSymbolSearch } from "@/components/layout/global-symbol-search";
 import { PrivateNav } from "@/components/layout/private-nav";
 import { AppTutorialController } from "@/components/tutorial/app-tutorial-controller";
@@ -74,10 +75,12 @@ export function PrivateAppShell({
         <footer className="mt-12 border-t border-border/75 px-2 pt-6">
           <div className="flex flex-col gap-3 text-sm md:flex-row md:items-center md:justify-between">
             <p className="public-shell-copy">
-              투자 유의: 본 서비스는 투자 판단을 보조하는 참고 도구이며, 최종 투자 결정과 그에 따른 책임은 사용자에게
-              있습니다.
+              투자 유의: 본 서비스는 투자 판단을 보조하는 참고 도구이며, 최종 투자 결정과 그에 따른 책임은 사용자에게 있습니다.
             </p>
-            <p className="public-shell-copy-soft text-xs tracking-[0.18em]">COPYRIGHT {currentYear} SWING-RADAR</p>
+            <div className="flex flex-col items-start gap-2 md:items-end">
+              <FooterPolicyLinks className="public-shell-copy-soft" />
+              <p className="public-shell-copy-soft text-xs tracking-[0.18em]">COPYRIGHT {currentYear} SWING-RADAR</p>
+            </div>
           </div>
         </footer>
       </div>

@@ -116,6 +116,7 @@ export default async function SignalsPage({
               (recommendations.dailyScan?.openingCheckCandidates ?? []).map((item) => item.ticker)
             }
             personalActionByTicker={personalActionByTicker}
+            marketSession={recommendations.marketSession}
           />
         </section>
       ) : (

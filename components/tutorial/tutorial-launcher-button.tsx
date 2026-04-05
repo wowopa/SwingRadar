@@ -1,8 +1,11 @@
 "use client";
 
 import { CircleHelp } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
+import type { AppTutorialScope } from "@/lib/tutorial/app-tutorial-content";
+import { writeTutorialLaunchRequest } from "@/lib/tutorial/tutorial-launch-request";
 import { cn } from "@/lib/utils";
 
 interface TutorialLauncherButtonProps {
@@ -11,6 +14,8 @@ interface TutorialLauncherButtonProps {
   resetAll?: boolean;
   className?: string;
   label?: string;
+  scope?: AppTutorialScope;
+  href?: string;
 }
 
 export function TutorialLauncherButton({
@@ -18,15 +23,29 @@ export function TutorialLauncherButton({
   tone = "default",
   resetAll = false,
   className,
-  label
+  label,
+  scope,
+  href
 }: TutorialLauncherButtonProps) {
   const isLight = tone === "light";
+  const router = useRouter();
+  const pathname = usePathname();
 
   function openTutorial() {
+    if (scope && href && pathname !== href) {
+      writeTutorialLaunchRequest({
+        scope,
+        resetAll
+      });
+      router.push(href);
+      return;
+    }
+
     window.dispatchEvent(
       new CustomEvent("swing-radar:tutorial-open", {
         detail: {
-          resetAll
+          resetAll,
+          scope
         }
       })
     );

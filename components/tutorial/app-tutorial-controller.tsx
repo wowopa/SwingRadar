@@ -18,6 +18,10 @@ import {
   resolveTutorialScope
 } from "@/lib/tutorial/app-tutorial-content";
 import {
+  clearTutorialLaunchRequest,
+  readTutorialLaunchRequest
+} from "@/lib/tutorial/tutorial-launch-request";
+import {
   hasSeenTutorial,
   markTutorialSeen,
   normalizeTutorialProgress,
@@ -181,15 +185,34 @@ export function AppTutorialController() {
   }, [definition, isHydrated, progress, scope]);
 
   useEffect(() => {
+    if (!isHydrated || !scope) {
+      return;
+    }
+
+    const launchRequest = readTutorialLaunchRequest();
+    if (!launchRequest || launchRequest.scope !== scope) {
+      return;
+    }
+
+    clearTutorialLaunchRequest();
+    if (launchRequest.resetAll) {
+      setProgress({});
+    }
+    setStepIndex(0);
+    setIsOpen(true);
+  }, [isHydrated, scope]);
+
+  useEffect(() => {
     function handleOpenTutorial(event: Event) {
-      const customEvent = event as CustomEvent<{ resetAll?: boolean }>;
+      const customEvent = event as CustomEvent<{ resetAll?: boolean; scope?: string }>;
       const resetAll = Boolean(customEvent.detail?.resetAll);
+      const requestedScope = customEvent.detail?.scope;
 
       if (resetAll) {
         setProgress({});
       }
 
-      if (!scope) {
+      if (!scope || (requestedScope && requestedScope !== scope)) {
         return;
       }
 
