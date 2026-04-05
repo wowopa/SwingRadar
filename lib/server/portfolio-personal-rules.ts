@@ -218,3 +218,14 @@ export async function setPortfolioPersonalRuleActiveForUser(
   await saveDocument(document);
   return nextEntry;
 }
+
+export async function deletePortfolioPersonalRulesForUser(userId: string) {
+  const document = await loadDocument();
+  if (!document.rules[userId]) {
+    return false;
+  }
+
+  delete document.rules[userId];
+  await saveDocument(document);
+  return true;
+}

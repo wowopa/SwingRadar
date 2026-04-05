@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { AccountGuideLibraryCard } from "@/components/account/account-guide-library-card";
+import { AccountLifecycleCard } from "@/components/account/account-lifecycle-card";
 import { AccountSessionSecurityCard } from "@/components/account/account-session-security-card";
 import { AccountSupportPolicyCard } from "@/components/account/account-support-policy-card";
 import { AccountThemeSettingsCard } from "@/components/account/account-theme-settings-card";
@@ -90,6 +91,7 @@ export default async function AccountPage() {
         <AccountSessionSecurityCard sessionExpiresAt={session.expiresAt} />
 
         <div className="space-y-4">
+          <AccountLifecycleCard user={session.user} supportEmail={contact.supportEmail} />
           <AccountGuideLibraryCard />
           <AccountSupportPolicyCard contact={contact} />
         </div>

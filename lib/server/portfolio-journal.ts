@@ -200,6 +200,17 @@ export async function savePortfolioJournalForUser(userId: string, journal: unkno
   return document.journals[userId];
 }
 
+export async function deletePortfolioJournalForUser(userId: string) {
+  const document = await loadUserPortfolioJournalsDocument();
+  if (!document.journals[userId]) {
+    return false;
+  }
+
+  delete document.journals[userId];
+  await saveUserPortfolioJournalsDocument(document);
+  return true;
+}
+
 export async function appendPortfolioTradeEventForUser(
   userId: string,
   event: Omit<PortfolioTradeEvent, "id" | "createdAt" | "createdBy" | "company" | "sector"> & {

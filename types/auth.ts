@@ -2,6 +2,8 @@ export interface AuthUser {
   id: string;
   email: string;
   displayName: string;
+  emailVerifiedAt?: string | null;
+  passwordUpdatedAt?: string | null;
   createdAt: string;
   updatedAt: string;
 }

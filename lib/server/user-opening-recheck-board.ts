@@ -286,3 +286,14 @@ export async function clearUserOpeningRecheckDecisions(userId: string, scanKey: 
 
   await saveDocument(document);
 }
+
+export async function deleteUserOpeningRecheckBoardForUser(userId: string) {
+  const document = await loadDocument();
+  if (!document.boards[userId]) {
+    return false;
+  }
+
+  delete document.boards[userId];
+  await saveDocument(document);
+  return true;
+}

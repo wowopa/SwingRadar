@@ -150,3 +150,14 @@ export async function savePortfolioCloseReviewForUser(
   await saveDocument(document);
   return review;
 }
+
+export async function deletePortfolioCloseReviewsForUser(userId: string) {
+  const document = await loadDocument();
+  if (!document.reviews[userId]) {
+    return false;
+  }
+
+  delete document.reviews[userId];
+  await saveDocument(document);
+  return true;
+}

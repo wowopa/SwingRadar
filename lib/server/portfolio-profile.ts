@@ -254,6 +254,17 @@ export async function savePortfolioProfileForUser(userId: string, profile: unkno
   return document.profiles[userId];
 }
 
+export async function deletePortfolioProfileForUser(userId: string) {
+  const document = await loadUserPortfolioProfilesDocument();
+  if (!document.profiles[userId]) {
+    return false;
+  }
+
+  delete document.profiles[userId];
+  await saveUserPortfolioProfilesDocument(document);
+  return true;
+}
+
 type SyncablePortfolioTradeEvent = {
   ticker: string;
   type: PortfolioTradeEventType;

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
@@ -104,6 +105,11 @@ export function AuthPanel({
           >
             로그인
           </Button>
+          <p className="text-center text-sm text-muted-foreground">
+            <Link href="/reset-password" className="font-medium text-foreground underline underline-offset-4">
+              비밀번호를 잊으셨나요?
+            </Link>
+          </p>
           <p className="text-center text-sm text-muted-foreground">
             계정이 없으신가요?{" "}
             <button
