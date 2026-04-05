@@ -215,7 +215,8 @@ export function PortfolioWorkspace({
         1: "holdings",
         2: "journal",
         3: "reviews",
-        4: "performance"
+        4: "performance",
+        5: "rules"
       };
 
       const nextTab = nextTabByStep[customEvent.detail.stepIndex ?? -1];
@@ -437,7 +438,7 @@ export function PortfolioWorkspace({
           <TabsTrigger value="performance" className="min-w-[120px]">
             Performance
           </TabsTrigger>
-          <TabsTrigger value="rules" className="min-w-[120px]">
+          <TabsTrigger value="rules" className="min-w-[120px]" data-tutorial="portfolio-rules-tab">
             Rules
           </TabsTrigger>
         </TabsList>

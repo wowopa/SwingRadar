@@ -270,7 +270,7 @@ export const APP_TUTORIAL_DEFINITIONS: Record<AppTutorialScope, AppTutorialDefin
       {
         title: "Rules 탭은 승격된 개인 규칙의 관리 화면입니다.",
         body: "이제 규칙 엔진을 보이지 않는 내부 기능으로 두지 않고, 언제 승격됐는지, 최근 어디에 영향을 줬는지, 지금 켜져 있는지를 한 곳에서 관리합니다.",
-        target: '[data-tutorial="portfolio-rules"]',
+        target: '[data-tutorial="portfolio-rules-tab"]',
         spotlightLabel: "Rules"
       }
     ]

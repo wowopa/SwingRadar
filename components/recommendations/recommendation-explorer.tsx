@@ -299,6 +299,9 @@ export function RecommendationExplorer({
   const hasPersonalActionSummary = useMemo(() => {
     return Object.values(personalActionSummary).some((count) => count > 0);
   }, [personalActionSummary]);
+  const hasAnyPersonalActionSummary = useMemo(() => {
+    return Object.values(overallPersonalActionSummary).some((count) => count > 0);
+  }, [overallPersonalActionSummary]);
 
   const bucketedItems = useMemo(() => {
     return filteredItems.reduce<Record<RecommendationActionBucket, Recommendation[]>>(
@@ -458,18 +461,16 @@ export function RecommendationExplorer({
         })}
       </section>
 
-      {quickViewSummary ? (
-        <section
-          data-tutorial="signals-summary"
-          className="rounded-3xl border border-primary/16 bg-[linear-gradient(145deg,rgba(139,107,46,0.06),rgba(255,255,255,0.94))] px-4 py-3 shadow-[0_16px_40px_-30px_rgba(139,107,46,0.2)]"
-        >
-          <div className="flex flex-wrap items-center gap-2">
-            <Badge variant="neutral">{quickViewSummary.label}</Badge>
-            <p className="text-sm font-medium text-foreground">{quickViewSummary.headline}</p>
-          </div>
-          <p className="mt-2 text-sm leading-6 text-muted-foreground">{quickViewSummary.detail}</p>
-        </section>
-      ) : null}
+      <section
+        data-tutorial="signals-summary"
+        className="rounded-3xl border border-primary/16 bg-[linear-gradient(145deg,rgba(139,107,46,0.06),rgba(255,255,255,0.94))] px-4 py-3 shadow-[0_16px_40px_-30px_rgba(139,107,46,0.2)]"
+      >
+        <div className="flex flex-wrap items-center gap-2">
+          <Badge variant="neutral">{quickViewSummary.label}</Badge>
+          <p className="text-sm font-medium text-foreground">{quickViewSummary.headline}</p>
+        </div>
+        <p className="mt-2 text-sm leading-6 text-muted-foreground">{quickViewSummary.detail}</p>
+      </section>
 
       <section
         data-tutorial="signals-trust"
@@ -741,28 +742,37 @@ export function RecommendationExplorer({
         </section>
       ) : null}
 
-      {hasPersonalActionSummary ? (
-        <section
-          data-tutorial="signals-personal-summary"
-          className="rounded-3xl border border-primary/18 bg-[linear-gradient(145deg,rgba(139,107,46,0.08),rgba(255,255,255,0.94))] p-5 shadow-[0_18px_46px_-32px_rgba(139,107,46,0.16)]"
-        >
-          <div className="flex flex-wrap items-center gap-2">
-            <Badge variant="neutral">내 기준 빠른 해석</Badge>
-            <p className="text-sm font-medium text-foreground">현재 필터 결과를 내 계좌 기준으로 다시 보면 이렇게 나뉩니다.</p>
-          </div>
-          <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            <SummaryCard label="내 기준 매수 검토" value={`${personalActionSummary.buy_review}개`} detail="Today에서 바로 검토" tone="emerald" />
-            <SummaryCard label="내 기준 관찰" value={`${personalActionSummary.watch}개`} detail="조금 더 보고 판단" tone="sky" />
-            <SummaryCard
-              label="내 기준 보류 / 제외"
-              value={`${personalActionSummary.avoid + personalActionSummary.excluded}개`}
-              detail="최근 규칙과 포트폴리오 기준상 뒤로 미룸"
-              tone="amber"
-            />
-            <SummaryCard label="장초 확인 전" value={`${personalActionSummary.pending}개`} detail="먼저 장초 확인이 필요한 종목" tone="stone" />
-          </div>
-        </section>
-      ) : null}
+      <section
+        data-tutorial="signals-personal-summary"
+        className="rounded-3xl border border-primary/18 bg-[linear-gradient(145deg,rgba(139,107,46,0.08),rgba(255,255,255,0.94))] p-5 shadow-[0_18px_46px_-32px_rgba(139,107,46,0.16)]"
+      >
+        <div className="flex flex-wrap items-center gap-2">
+          <Badge variant="neutral">내 기준 빠른 해석</Badge>
+          <p className="text-sm font-medium text-foreground">
+            {hasAnyPersonalActionSummary
+              ? "현재 필터 결과를 내 계좌 기준으로 다시 보면 이렇게 나뉩니다."
+              : "아직 내 기준 상태가 충분히 쌓이지 않았으면 이 영역이 0개로 보일 수 있습니다."}
+          </p>
+        </div>
+        <p className="mt-2 text-sm leading-6 text-muted-foreground">
+          {hasPersonalActionSummary
+            ? "필터를 바꿔도 공통 후보와 개인 실행 후보를 따로 읽는 흐름은 유지하는 것이 좋습니다."
+            : hasAnyPersonalActionSummary
+              ? "현재 필터에서는 0개지만, 다른 빠른 보기나 필터 조합에서는 개인 실행 후보가 다시 나타날 수 있습니다."
+              : "Today, Opening Check, Portfolio 기준이 더 쌓이면 여기서 매수 검토·관찰·보류 흐름을 빠르게 읽을 수 있습니다."}
+        </p>
+        <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <SummaryCard label="내 기준 매수 검토" value={`${personalActionSummary.buy_review}개`} detail="Today에서 바로 검토" tone="emerald" />
+          <SummaryCard label="내 기준 관찰" value={`${personalActionSummary.watch}개`} detail="조금 더 보고 판단" tone="sky" />
+          <SummaryCard
+            label="내 기준 보류 / 제외"
+            value={`${personalActionSummary.avoid + personalActionSummary.excluded}개`}
+            detail="최근 규칙과 포트폴리오 기준상 뒤로 미룸"
+            tone="amber"
+          />
+          <SummaryCard label="장초 확인 전" value={`${personalActionSummary.pending}개`} detail="먼저 장초 확인이 필요한 종목" tone="stone" />
+        </div>
+      </section>
 
       {filteredItems.length ? (
         <section id="signals-ranking-table" data-tutorial="signals-table" className="space-y-4">
@@ -829,7 +839,11 @@ function getQuickViewSummary({
 }) {
   switch (mode) {
     case "all":
-      return null;
+      return {
+        label: "전체 보기",
+        headline: `${totalCount}개 공통 후보를 전체 범위로 보고 있습니다.`,
+        detail: "처음에는 전체 흐름을 보고, 이후 빠른 보기와 필터로 필요한 후보만 줄여 가는 순서가 가장 자연스럽습니다."
+      };
     case "my_actionable":
       return {
         label: "내 기준만",
