@@ -1,6 +1,9 @@
 import { createHash } from "node:crypto";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
+import path from "node:path";
 
 import { loadRuntimeDocument, saveRuntimeDocument } from "@/lib/server/runtime-documents";
+import { getRuntimePaths } from "@/lib/server/runtime-paths";
 import type { AuthUser } from "@/types/auth";
 
 export const USER_ACCOUNTS_DOCUMENT_NAME = "user-accounts";
@@ -143,6 +146,45 @@ function getScopedDocumentName(documentName: string) {
   return `${documentName}:${resolveAuthStorageNamespace()}`;
 }
 
+function sanitizeDocumentFileName(value: string) {
+  return value.replace(/[^a-zA-Z0-9._-]+/g, "-");
+}
+
+function resolveProjectRoot() {
+  return process.cwd();
+}
+
+function getLegacyDocumentPath(documentName: string) {
+  if (documentName === USER_ACCOUNTS_DOCUMENT_NAME) {
+    return normalizeOptionalString(process.env.SWING_RADAR_USER_ACCOUNTS_FILE);
+  }
+
+  if (documentName === USER_SESSIONS_DOCUMENT_NAME) {
+    return normalizeOptionalString(process.env.SWING_RADAR_USER_SESSIONS_FILE);
+  }
+
+  if (documentName === USER_LOGIN_ATTEMPTS_DOCUMENT_NAME) {
+    return normalizeOptionalString(process.env.SWING_RADAR_USER_LOGIN_ATTEMPTS_FILE);
+  }
+
+  if (documentName === USER_AUTH_ACTIONS_DOCUMENT_NAME) {
+    return normalizeOptionalString(process.env.SWING_RADAR_USER_AUTH_ACTIONS_FILE);
+  }
+
+  return undefined;
+}
+
+function getDocumentFilePath(documentName: string) {
+  const legacyPath = getLegacyDocumentPath(documentName);
+  if (legacyPath) {
+    return path.resolve(legacyPath);
+  }
+
+  const scopedName = getScopedDocumentName(documentName);
+  const runtimePaths = getRuntimePaths(resolveProjectRoot());
+  return path.join(runtimePaths.usersDir, "auth", `${sanitizeDocumentFileName(scopedName)}.json`);
+}
+
 function allowInMemoryAuthStore() {
   return process.env.NODE_ENV !== "production" || process.env.SWING_RADAR_ALLOW_IN_MEMORY_AUTH === "1";
 }
@@ -155,29 +197,92 @@ function getInMemoryAuthStore() {
   return globalThis.__swingRadarAuthMemoryStore;
 }
 
+async function readJsonFile<T>(filePath: string): Promise<T | null> {
+  try {
+    const content = await readFile(filePath, "utf8");
+    return JSON.parse(content.replace(/^\uFEFF/, "")) as T;
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+      return null;
+    }
+
+    if (error instanceof SyntaxError) {
+      console.warn(`[user-auth-store] Invalid JSON ignored: ${filePath}`, error.message);
+      return null;
+    }
+
+    throw error;
+  }
+}
+
+async function loadFromFileStorage<T>(documentName: string) {
+  return readJsonFile<T>(getDocumentFilePath(documentName));
+}
+
+async function saveToFileStorage(documentName: string, payload: unknown) {
+  const filePath = getDocumentFilePath(documentName);
+  await mkdir(path.dirname(filePath), { recursive: true });
+  await writeFile(filePath, `${JSON.stringify(payload, null, 2)}\n`, "utf8");
+}
+
 async function loadStoredDocument<T>(documentName: string) {
   const scopedName = getScopedDocumentName(documentName);
-  const runtimeDocument = await loadRuntimeDocument<T>(scopedName);
-  if (runtimeDocument) {
-    return runtimeDocument;
+  try {
+    const runtimeDocument = await loadRuntimeDocument<T>(scopedName);
+    if (runtimeDocument) {
+      return runtimeDocument;
+    }
+  } catch (error) {
+    console.warn(
+      `[user-auth-store] Runtime auth storage read failed for ${documentName}, falling back to file storage.`,
+      error
+    );
   }
 
-  if (!allowInMemoryAuthStore()) {
-    throw new Error(`Persistent auth storage is not configured for ${documentName}.`);
+  const fileDocument = await loadFromFileStorage<T>(documentName);
+  if (fileDocument !== null) {
+    return fileDocument;
   }
 
-  return (getInMemoryAuthStore().get(scopedName) as T | undefined) ?? null;
+  if (allowInMemoryAuthStore()) {
+    return (getInMemoryAuthStore().get(scopedName) as T | undefined) ?? null;
+  }
+
+  return null;
 }
 
 async function saveStoredDocument(documentName: string, payload: unknown) {
   const scopedName = getScopedDocumentName(documentName);
-  const savedToRuntime = await saveRuntimeDocument(scopedName, payload);
-  if (!savedToRuntime) {
+  try {
+    const savedToRuntime = await saveRuntimeDocument(scopedName, payload);
+    if (savedToRuntime) {
+      return;
+    }
+  } catch (error) {
+    console.warn(
+      `[user-auth-store] Runtime auth storage write failed for ${documentName}, falling back to file storage.`,
+      error
+    );
+  }
+
+  try {
+    await saveToFileStorage(documentName, payload);
+    return;
+  } catch (error) {
     if (!allowInMemoryAuthStore()) {
       throw new Error(`Persistent auth storage is not configured for ${documentName}.`);
     }
 
+    console.warn(
+      `[user-auth-store] File auth storage write failed for ${documentName}, falling back to in-memory storage.`,
+      error
+    );
     getInMemoryAuthStore().set(scopedName, payload);
+    return;
+  }
+
+  if (!allowInMemoryAuthStore()) {
+    throw new Error(`Persistent auth storage is not configured for ${documentName}.`);
   }
 }
 
