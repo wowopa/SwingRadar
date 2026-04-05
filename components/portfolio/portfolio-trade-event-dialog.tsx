@@ -12,6 +12,7 @@ import {
   buildTradeNoteTemplates,
   buildTradeTagSuggestions
 } from "@/lib/portfolio/trade-note-templates";
+import type { PortfolioStateConsistencyReport } from "@/lib/portfolio/portfolio-state-consistency";
 import { cn } from "@/lib/utils";
 import type {
   PortfolioJournal,
@@ -230,6 +231,7 @@ export function PortfolioTradeEventDialog({
     event: PortfolioTradeEvent;
     journal: PortfolioJournal;
     profile?: PortfolioProfilePayload;
+    consistency?: PortfolioStateConsistencyReport;
     previousJournal?: PortfolioJournal;
     previousProfile?: PortfolioProfilePayload;
   }) => void;
@@ -428,6 +430,7 @@ export function PortfolioTradeEventDialog({
         event?: PortfolioTradeEvent;
         journal?: PortfolioJournal;
         profile?: PortfolioProfilePayload;
+        consistency?: PortfolioStateConsistencyReport;
       };
 
       if (!response.ok || !payload.journal || !payload.event) {
@@ -437,11 +440,12 @@ export function PortfolioTradeEventDialog({
       setMessage("체결 기록을 저장했습니다.");
       onSaved?.({
         event: payload.event,
-        journal: payload.journal,
-        profile: payload.profile,
-        previousJournal: currentJournal,
-        previousProfile: currentProfile
-      });
+          journal: payload.journal,
+          profile: payload.profile,
+          consistency: payload.consistency,
+          previousJournal: currentJournal,
+          previousProfile: currentProfile
+        });
       onOpenChange(false);
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : "체결 기록 저장에 실패했습니다.");

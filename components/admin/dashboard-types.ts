@@ -269,6 +269,23 @@ export type AdminDataQualitySummaryPayload = {
   newsFileFallbackPercent: number | null;
 };
 
+export type ServiceReadinessPayload = {
+  status: "ready" | "monitor" | "blocked";
+  label: string;
+  summary: string;
+  nextAction: string;
+  passCount: number;
+  warningCount: number;
+  failureCount: number;
+  blockers: string[];
+  checks: Array<{
+    key: "health" | "scheduler" | "batch" | "validation" | "news" | "release-safety";
+    label: string;
+    status: "pass" | "warn" | "fail";
+    note: string;
+  }>;
+};
+
 export type AdminUserItemPayload = {
   id: string;
   email: string;
@@ -326,6 +343,7 @@ export type AdminStatusPayload = {
   postLaunchHistory: PostLaunchHistoryEntryPayload[];
   thresholdAdviceReport: ThresholdAdviceReportPayload | null;
   dataQualitySummary: AdminDataQualitySummaryPayload | null;
+  serviceReadiness: ServiceReadinessPayload;
   accessStatsReport: AccessStatsReportPayload | null;
   runtimeStorageReport: RuntimeStorageReportPayload | null;
   databaseStorageReport: DatabaseStorageReportPayload | null;

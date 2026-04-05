@@ -15,6 +15,7 @@ const mocks = vi.hoisted(() => ({
   loadNewsFetchReport: vi.fn(),
   loadSnapshotGenerationReport: vi.fn(),
   loadPostLaunchHistory: vi.fn(),
+  appendPostLaunchHistoryEntry: vi.fn(),
   loadThresholdAdviceReport: vi.fn(),
   loadRuntimeStorageReport: vi.fn(),
   loadDatabaseStorageReport: vi.fn(),
@@ -61,8 +62,8 @@ vi.mock("@/lib/server/ops-reports", () => ({
   loadAutoHealReport: mocks.loadAutoHealReport,
   loadNewsFetchReport: mocks.loadNewsFetchReport,
   loadSnapshotGenerationReport: mocks.loadSnapshotGenerationReport,
-  loadPostLaunchHistory: mocks.loadPostLaunchHistory
-  ,
+  loadPostLaunchHistory: mocks.loadPostLaunchHistory,
+  appendPostLaunchHistoryEntry: mocks.appendPostLaunchHistoryEntry,
   loadThresholdAdviceReport: mocks.loadThresholdAdviceReport,
   loadRuntimeStorageReport: mocks.loadRuntimeStorageReport
 }));
@@ -172,6 +173,7 @@ describe("admin routes", () => {
     mocks.loadNewsFetchReport.mockResolvedValue(null);
     mocks.loadSnapshotGenerationReport.mockResolvedValue(null);
     mocks.loadPostLaunchHistory.mockResolvedValue([]);
+    mocks.appendPostLaunchHistoryEntry.mockResolvedValue([]);
     mocks.loadThresholdAdviceReport.mockResolvedValue(null);
     mocks.loadRuntimeStorageReport.mockResolvedValue(null);
     mocks.loadDatabaseStorageReport.mockResolvedValue(null);
@@ -330,6 +332,7 @@ describe("admin routes", () => {
         requestId: string;
         operationalMode: string;
         overallStatus: string;
+        serviceReadiness: { status: string; failureCount: number; warningCount: number };
         health: { status: string; recentAuditCount: number; warnings: string[] };
         opsHealthReport: { finalHealth: { status: string } } | null;
         dailyCycleReport: { status: string; summary: { failedBatchCount: number } | null } | null;
@@ -356,6 +359,11 @@ describe("admin routes", () => {
         requestId: "req-test",
         operationalMode: "postgres",
         overallStatus: "warning",
+        serviceReadiness: {
+          status: "blocked",
+          failureCount: 2,
+          warningCount: 4
+        },
         health: {
           status: "warning",
           recentAuditCount: 3,
@@ -473,6 +481,17 @@ describe("admin routes", () => {
           audits: { total: 4, failureCount: 0, warningCount: 1 }
         }
       ]);
+      mocks.appendPostLaunchHistoryEntry.mockResolvedValue([
+        {
+          checkedAt: "2026-03-08T19:00:00.000Z",
+          healthStatus: "ok",
+          overallStatus: "warning",
+          dailyTaskRegistered: true,
+          autoHealTaskRegistered: true,
+          incidents: { criticalCount: 0, warningCount: 2 },
+          audits: { total: 4, failureCount: 0, warningCount: 1 }
+        }
+      ]);
       mocks.loadThresholdAdviceReport.mockResolvedValue({
         generatedAt: "2026-03-08T19:05:00.000Z",
         sampleSize: 3,
@@ -515,6 +534,7 @@ describe("admin routes", () => {
       const response = await getStatusRoute(createRequest("http://localhost/api/admin/status"));
       const payload = await parseJson<{
         overallStatus: string;
+        serviceReadiness: { status: string; passCount: number; warningCount: number; failureCount: number };
         opsHealthReport: { finalHealth: { status: string } } | null;
         dailyCycleReport: { status: string; summary: { failedBatchCount: number } | null } | null;
         autoHealReport: { status: string; actions: Array<{ name: string }> } | null;
@@ -529,6 +549,12 @@ describe("admin routes", () => {
       expect(response.status).toBe(200);
       expect(payload).toMatchObject({
         overallStatus: "warning",
+        serviceReadiness: {
+          status: "monitor",
+          passCount: 3,
+          warningCount: 3,
+          failureCount: 0
+        },
         opsHealthReport: {
           finalHealth: { status: "ok" }
         },

@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { buildPortfolioStateConsistencyReport } from "@/lib/portfolio/portfolio-state-consistency";
+import { mergePortfolioProfileWithJournal } from "@/lib/portfolio/merge-profile-with-journal";
 import { jsonOk } from "@/lib/server/api-response";
 import {
   appendPortfolioTradeEventForUser,
@@ -7,6 +9,7 @@ import {
   savePortfolioJournalForUser
 } from "@/lib/server/portfolio-journal";
 import {
+  loadPortfolioProfileForUser,
   savePortfolioProfileForUser,
   syncPortfolioProfileWithTradeEventForUser
 } from "@/lib/server/portfolio-profile";
@@ -54,7 +57,7 @@ export async function POST(request: Request) {
       note: payload.note ?? undefined,
       createdBy: session.user.email
     });
-    const profile = payload.syncProfilePosition
+    const syncedProfile = payload.syncProfilePosition
       ? await syncPortfolioProfileWithTradeEventForUser(
           session.user.id,
           {
@@ -69,6 +72,16 @@ export async function POST(request: Request) {
           session.user.email
         )
       : undefined;
+    const profile = syncedProfile
+      ? await savePortfolioProfileForUser(
+          session.user.id,
+          mergePortfolioProfileWithJournal(syncedProfile, result.journal)
+        )
+      : undefined;
+    const consistency = buildPortfolioStateConsistencyReport(
+      profile ?? (await loadPortfolioProfileForUser(session.user.id)),
+      result.journal
+    );
 
     return jsonOk(
       {
@@ -76,7 +89,8 @@ export async function POST(request: Request) {
         requestId: context.requestId,
         event: result.event,
         journal: result.journal,
-        profile
+        profile,
+        consistency
       },
       buildResponseMeta(context, 0)
     );
@@ -95,16 +109,22 @@ export async function PATCH(request: Request) {
     }
 
     const journal = await savePortfolioJournalForUser(session.user.id, payload.journal);
-    const profile = payload.profile
-      ? await savePortfolioProfileForUser(session.user.id, payload.profile)
+    const savedProfile = payload.profile ? await savePortfolioProfileForUser(session.user.id, payload.profile) : undefined;
+    const profile = savedProfile
+      ? await savePortfolioProfileForUser(session.user.id, mergePortfolioProfileWithJournal(savedProfile, journal))
       : undefined;
+    const consistency = buildPortfolioStateConsistencyReport(
+      profile ?? (await loadPortfolioProfileForUser(session.user.id)),
+      journal
+    );
 
     return jsonOk(
       {
         ok: true,
         requestId: context.requestId,
         journal,
-        profile
+        profile,
+        consistency
       },
       buildResponseMeta(context, 0)
     );

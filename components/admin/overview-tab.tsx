@@ -3,12 +3,14 @@
 import { AlertTriangle, CheckCircle2, ShieldAlert } from "lucide-react";
 
 import { MetricCard, formatAuditEventType, formatDateTime } from "@/components/admin/dashboard-shared";
+import { ServiceReadinessCard } from "@/components/admin/service-readiness-card";
 import type {
   AdminDataQualitySummaryPayload,
   AuditItem,
   DailyCycleReportPayload,
   HealthPayload,
   OperationalIncident,
+  ServiceReadinessPayload,
   SnapshotGenerationReportPayload
 } from "@/components/admin/dashboard-types";
 import { formatPercent, formatProviderLabel } from "@/components/admin/admin-status-utils";
@@ -116,6 +118,7 @@ export function OverviewTab({
   dailyCycleReport,
   snapshotGenerationReport,
   dataQualitySummary,
+  serviceReadiness,
   audits,
   onSelectTab
 }: {
@@ -125,6 +128,7 @@ export function OverviewTab({
   dailyCycleReport: DailyCycleReportPayload | null;
   snapshotGenerationReport: SnapshotGenerationReportPayload | null;
   dataQualitySummary: AdminDataQualitySummaryPayload | null;
+  serviceReadiness: ServiceReadinessPayload | null;
   audits: AuditItem[];
   onSelectTab: (tab: OverviewTargetTab) => void;
 }) {
@@ -195,6 +199,15 @@ export function OverviewTab({
           </div>
         </CardContent>
       </Card>
+
+      {serviceReadiness ? (
+        <ServiceReadinessCard
+          readiness={serviceReadiness}
+          onSelectTab={(tab) => {
+            onSelectTab(tab);
+          }}
+        />
+      ) : null}
 
       <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
         <MetricCard label="incident" value={String(incidents.length)} note="즉시 확인할 운영 경고 수" />

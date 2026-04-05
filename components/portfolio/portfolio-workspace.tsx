@@ -11,6 +11,7 @@ import { PortfolioOverviewBoard } from "@/components/portfolio/portfolio-overvie
 import { PortfolioPerformanceBoard } from "@/components/portfolio/portfolio-performance-board";
 import { PortfolioRulesBoard } from "@/components/portfolio/portfolio-rules-board";
 import { PortfolioReviewsBoard } from "@/components/portfolio/portfolio-reviews-board";
+import { PortfolioStateConsistencyBanner } from "@/components/portfolio/portfolio-state-consistency-banner";
 import {
   PortfolioTradeEventDialog,
   type PortfolioTradeEventDialogPreset
@@ -21,6 +22,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { HoldingActionBoardDto } from "@/lib/api-contracts/swing-radar";
 import type { OpeningCheckRiskPatternDto, TodayActionBoardDto } from "@/lib/api-contracts/swing-radar";
+import type { PortfolioStateConsistencyReport } from "@/lib/portfolio/portfolio-state-consistency";
 import type { UserOpeningRecheckScanSnapshot } from "@/lib/server/user-opening-recheck-board";
 import type {
   PortfolioCloseReviewEntry,
@@ -140,7 +142,8 @@ export function PortfolioWorkspace({
   holdingActionBoard,
   todayActionBoard,
   openingCheckRiskPatterns = [],
-  initialSettingsOpen = false
+  initialSettingsOpen = false,
+  initialConsistency = null
 }: {
   initialProfile: PortfolioProfilePayload;
   initialJournal: PortfolioJournal;
@@ -151,6 +154,7 @@ export function PortfolioWorkspace({
   todayActionBoard?: TodayActionBoardDto;
   openingCheckRiskPatterns?: OpeningCheckRiskPatternDto[];
   initialSettingsOpen?: boolean;
+  initialConsistency?: PortfolioStateConsistencyReport | null;
 }) {
   const [profile, setProfile] = useState(initialProfile);
   const [journal, setJournal] = useState(initialJournal);
@@ -158,6 +162,7 @@ export function PortfolioWorkspace({
   const [quickTradePreset, setQuickTradePreset] = useState<PortfolioTradeEventDialogPreset | null>(null);
   const [activeTab, setActiveTab] = useState<PortfolioWorkspaceTab>("holdings");
   const [tradeFollowUp, setTradeFollowUp] = useState<PortfolioTradeFollowUp | null>(null);
+  const [consistency, setConsistency] = useState<PortfolioStateConsistencyReport | null>(initialConsistency);
   const [, startTransition] = useTransition();
   const pathname = usePathname();
   const router = useRouter();
@@ -263,6 +268,7 @@ export function PortfolioWorkspace({
       message?: string;
       journal?: PortfolioJournal;
       profile?: PortfolioProfilePayload;
+      consistency?: PortfolioStateConsistencyReport;
     };
 
     if (!response.ok || !payload.journal) {
@@ -270,6 +276,7 @@ export function PortfolioWorkspace({
     }
 
     setJournal(payload.journal);
+    setConsistency(payload.consistency ?? null);
     if (payload.profile) {
       setProfile(payload.profile);
     } else if (followUp.previousProfile) {
@@ -322,11 +329,13 @@ export function PortfolioWorkspace({
     event: PortfolioTradeEvent;
     journal: PortfolioJournal;
     profile?: PortfolioProfilePayload;
+    consistency?: PortfolioStateConsistencyReport;
     previousJournal?: PortfolioJournal;
     previousProfile?: PortfolioProfilePayload;
   }) {
     const savedEvent = payload.event;
     setJournal(payload.journal);
+    setConsistency(payload.consistency ?? null);
     if (payload.profile) {
       setProfile(payload.profile);
     }
@@ -369,6 +378,8 @@ export function PortfolioWorkspace({
   return (
     <>
       <div className="space-y-5">
+        {consistency ? <PortfolioStateConsistencyBanner report={consistency} /> : null}
+
         {tradeFollowUp ? (
           <div className="rounded-[28px] border border-primary/24 bg-[linear-gradient(180deg,rgba(139,107,46,0.08),rgba(255,255,255,0.94))] px-5 py-4 shadow-[0_18px_44px_-34px_rgba(24,32,42,0.18)]">
             <div className="flex flex-wrap items-start justify-between gap-3">

@@ -7,6 +7,7 @@ import { ArrowLeft, ArrowUpRight } from "lucide-react";
 
 import { PortfolioCloseReviewEditor } from "@/components/portfolio/portfolio-close-review-editor";
 import { PortfolioPositionChartCard } from "@/components/portfolio/portfolio-position-chart-card";
+import { RecommendationTrustSummary } from "@/components/recommendations/recommendation-trust-summary";
 import {
   PortfolioTradeEventDialog,
   type PortfolioTradeEventDialogPreset
@@ -24,6 +25,7 @@ import {
   type PortfolioJournalGroup
 } from "@/lib/portfolio/journal-insights";
 import { buildPositionPlanComparison, getPortfolioEventLabel } from "@/lib/portfolio/position-detail";
+import { buildRecommendationTrustSummary } from "@/lib/recommendations/recommendation-trust";
 import { getPortfolioCloseReviewKeyForGroup } from "@/lib/portfolio/review-keys";
 import { formatPercent, formatPrice } from "@/lib/utils";
 import type {
@@ -122,6 +124,15 @@ export function PositionDetailView({
     : (position?.averagePrice ?? actionItem?.averagePrice ?? 0);
   const enteredAt = journalGroup?.firstEntryAt ?? position?.enteredAt ?? actionItem?.enteredAt;
   const tradePlan = actionItem?.tradePlan ?? analysis?.tradePlan ?? null;
+  const trustSummary =
+    analysis?.validation
+      ? buildRecommendationTrustSummary({
+          validation: analysis.validation,
+          validationBasis: analysis.validationBasis,
+          validationInsight: analysis.validationInsight,
+          trackingDiagnostic: analysis.trackingDiagnostic
+        })
+      : null;
   const planComparison = buildPositionPlanComparison({
     tradePlan,
     journalGroup,
@@ -264,6 +275,20 @@ export function PositionDetailView({
           </div>
 
           <div className="space-y-6">
+            {trustSummary ? (
+              <Card
+                data-tutorial="position-trust"
+                className="border-border/80 bg-white/90 shadow-[0_18px_44px_-34px_rgba(24,32,42,0.2)]"
+              >
+                <CardHeader>
+                  <CardTitle className="text-lg text-foreground">보유 근거 신뢰도</CardTitle>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <RecommendationTrustSummary summary={trustSummary} />
+                </CardContent>
+              </Card>
+            ) : null}
+
             <Card
               data-tutorial="position-comparison"
               className="border-border/80 bg-white/90 shadow-[0_18px_44px_-34px_rgba(24,32,42,0.2)]"

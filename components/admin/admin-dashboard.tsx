@@ -24,6 +24,7 @@ import type {
   PortfolioProfilePayload,
   PostLaunchHistoryEntryPayload,
   RuntimeStorageReportPayload,
+  ServiceReadinessPayload,
   SnapshotGenerationReportPayload,
   SymbolSearchItem,
   ThresholdAdviceReportPayload,
@@ -87,6 +88,7 @@ export function AdminDashboard() {
   const [postLaunchHistory, setPostLaunchHistory] = useState<PostLaunchHistoryEntryPayload[]>([]);
   const [thresholdAdviceReport, setThresholdAdviceReport] = useState<ThresholdAdviceReportPayload | null>(null);
   const [dataQualitySummary, setDataQualitySummary] = useState<AdminDataQualitySummaryPayload | null>(null);
+  const [serviceReadiness, setServiceReadiness] = useState<ServiceReadinessPayload | null>(null);
   const [usersPayload, setUsersPayload] = useState<AdminUsersPayload | null>(null);
   const [accessStatsReport, setAccessStatsReport] = useState<AccessStatsReportPayload | null>(null);
   const [runtimeStorageReport, setRuntimeStorageReport] = useState<RuntimeStorageReportPayload | null>(null);
@@ -179,6 +181,7 @@ export function AdminDashboard() {
         setPostLaunchHistory([]);
         setThresholdAdviceReport(null);
         setDataQualitySummary(null);
+        setServiceReadiness(null);
         setUsersPayload(null);
         setAccessStatsReport(null);
         setRuntimeStorageReport(null);
@@ -210,6 +213,7 @@ export function AdminDashboard() {
       setPostLaunchHistory(statusJson.postLaunchHistory ?? []);
       setThresholdAdviceReport(statusJson.thresholdAdviceReport ?? null);
       setDataQualitySummary(statusJson.dataQualitySummary ?? null);
+      setServiceReadiness(statusJson.serviceReadiness ?? null);
       setAccessStatsReport(statusJson.accessStatsReport ?? null);
       setRuntimeStorageReport(statusJson.runtimeStorageReport ?? null);
       setDatabaseStorageReport(statusJson.databaseStorageReport ?? null);
@@ -759,6 +763,7 @@ export function AdminDashboard() {
               dailyCycleReport={dailyCycleReport}
               snapshotGenerationReport={snapshotGenerationReport}
               dataQualitySummary={dataQualitySummary}
+              serviceReadiness={serviceReadiness}
               audits={audits}
               onSelectTab={(nextTab) => setTab(nextTab)}
             />

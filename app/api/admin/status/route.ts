@@ -16,6 +16,7 @@ import {
   loadThresholdAdviceReport
 } from "@/lib/server/ops-reports";
 import { loadDatabaseStorageReport } from "@/lib/server/postgres-storage-report";
+import { buildServiceReadinessSummary } from "@/lib/server/service-readiness";
 import { getHealthReport } from "@/lib/services/health-service";
 import type { HealthReport } from "@/lib/services/health-service";
 import { buildResponseMeta, withRouteTelemetry } from "@/lib/server/telemetry";
@@ -245,6 +246,32 @@ export async function GET(request: Request) {
     const newsFileFallbackPercent = newsFetchReport
       ? calculatePercent(newsFetchReport.fileFallbackTickers, newsFetchReport.totalTickers)
       : null;
+    const dataQualitySummary = {
+      validationFallbackCount: snapshotGenerationReport?.validationFallbackCount ?? null,
+      validationFallbackPercent,
+      measuredValidationPercent,
+      validationBasisPercentages,
+      failedBatchCount,
+      failedBatchPercent,
+      newsLiveFetchPercent,
+      newsCacheFallbackPercent,
+      newsFileFallbackPercent
+    };
+    const serviceReadiness = buildServiceReadinessSummary({
+      overallStatus: escalation.overallStatus as "ok" | "warning" | "critical",
+      health,
+      dailyCycleReport,
+      autoHealReport,
+      incidents: escalation.incidents,
+      postLaunchHistory: refreshedPostLaunchHistory.slice(-3),
+      statusWarnings,
+      dataQualitySummary: {
+        validationFallbackPercent,
+        measuredValidationPercent,
+        failedBatchCount,
+        newsLiveFetchPercent
+      }
+    });
 
     return jsonOk(
       {
@@ -258,17 +285,8 @@ export async function GET(request: Request) {
         snapshotGenerationReport,
         postLaunchHistory: refreshedPostLaunchHistory.slice(-3).reverse(),
         thresholdAdviceReport,
-        dataQualitySummary: {
-          validationFallbackCount: snapshotGenerationReport?.validationFallbackCount ?? null,
-          validationFallbackPercent,
-          measuredValidationPercent,
-          validationBasisPercentages,
-          failedBatchCount,
-          failedBatchPercent,
-          newsLiveFetchPercent,
-          newsCacheFallbackPercent,
-          newsFileFallbackPercent
-        },
+        dataQualitySummary,
+        serviceReadiness,
         accessStatsReport,
         runtimeStorageReport,
         databaseStorageReport,

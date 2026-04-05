@@ -18,6 +18,7 @@ import {
   groupPortfolioJournalByTicker,
   isClosingPortfolioTradeEventType
 } from "@/lib/portfolio/journal-insights";
+import type { PortfolioStateConsistencyReport } from "@/lib/portfolio/portfolio-state-consistency";
 import { formatPrice } from "@/lib/utils";
 import type {
   PortfolioJournal,
@@ -112,6 +113,7 @@ export function PortfolioJournalBoard({
     event: PortfolioTradeEvent;
     journal: PortfolioJournal;
     profile?: PortfolioProfilePayload;
+    consistency?: PortfolioStateConsistencyReport;
     previousJournal?: PortfolioJournal;
     previousProfile?: PortfolioProfilePayload;
   }) => void;
@@ -163,6 +165,7 @@ export function PortfolioJournalBoard({
     event: PortfolioTradeEvent;
     journal: PortfolioJournal;
     profile?: PortfolioProfilePayload;
+    consistency?: PortfolioStateConsistencyReport;
     previousJournal?: PortfolioJournal;
     previousProfile?: PortfolioProfilePayload;
   }) {
