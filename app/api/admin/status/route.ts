@@ -18,6 +18,7 @@ import {
 import { loadDatabaseStorageReport } from "@/lib/server/postgres-storage-report";
 import { buildPrelaunchDryRunSummary } from "@/lib/server/prelaunch-dry-run";
 import { buildOpsVerificationSummary, loadOpsVerificationDocument } from "@/lib/server/ops-verification";
+import { buildRuntimeSyncTrustSummary } from "@/lib/server/runtime-sync-trust";
 import { buildServiceReadinessSummary } from "@/lib/server/service-readiness";
 import { getHealthReport } from "@/lib/services/health-service";
 import type { HealthReport } from "@/lib/services/health-service";
@@ -258,11 +259,23 @@ export async function GET(request: Request) {
           ) ?? 0
         }
       : null;
+    const validationTrackingRecoveredCount = snapshotGenerationReport?.validationTrackingRecoveredCount ?? null;
+    const validationTrackingRecoveredPercent = snapshotGenerationReport
+      ? calculatePercent(snapshotGenerationReport.validationTrackingRecoveredCount ?? 0, snapshotGenerationReport.totalTickers)
+      : null;
     const failedBatchCount = dailyCycleReport?.summary?.failedBatchCount ?? null;
     const failedBatchPercent =
       dailyCycleReport?.summary && dailyCycleReport.summary.totalBatches > 0
         ? calculatePercent(dailyCycleReport.summary.failedBatchCount, dailyCycleReport.summary.totalBatches)
         : null;
+    const failedBatchSteps =
+      dailyCycleReport?.steps
+        ?.filter((step) => step.status === "failed" || Boolean(step.error))
+        .map((step) => ({
+          name: step.name,
+          status: step.status === "failed" ? "failed" : "warning",
+          detail: step.error ?? "Step completed with a partial failure signal."
+        })) ?? null;
     const newsLiveFetchPercent = newsFetchReport
       ? calculatePercent(newsFetchReport.liveFetchTickers, newsFetchReport.totalTickers)
       : null;
@@ -272,16 +285,33 @@ export async function GET(request: Request) {
     const newsFileFallbackPercent = newsFetchReport
       ? calculatePercent(newsFetchReport.fileFallbackTickers, newsFetchReport.totalTickers)
       : null;
+    const runtimeSyncTrust = buildRuntimeSyncTrustSummary({
+      opsHealthReport,
+      dailyCycleReport,
+      autoHealReport,
+      newsFetchReport,
+      snapshotGenerationReport,
+      thresholdAdviceReport,
+      postLaunchHistory: refreshedPostLaunchHistory
+    });
+    if (runtimeSyncTrust.status !== "healthy") {
+      statusWarnings.push(`runtime-sync: ${runtimeSyncTrust.summary}`);
+    }
     const dataQualitySummary = {
       validationFallbackCount: snapshotGenerationReport?.validationFallbackCount ?? null,
       validationFallbackPercent,
+      validationTrackingRecoveredCount,
+      validationTrackingRecoveredPercent,
+      validationFallbackDetails: snapshotGenerationReport?.validationFallbackDetails ?? null,
       measuredValidationPercent,
       validationBasisPercentages,
       failedBatchCount,
       failedBatchPercent,
+      failedBatchSteps,
       newsLiveFetchPercent,
       newsCacheFallbackPercent,
-      newsFileFallbackPercent
+      newsFileFallbackPercent,
+      runtimeSyncTrust
     };
     const opsVerification = buildOpsVerificationSummary({
       document: opsVerificationDocument,
@@ -296,6 +326,7 @@ export async function GET(request: Request) {
       incidents: escalation.incidents,
       postLaunchHistory: refreshedPostLaunchHistory.slice(-3),
       opsVerification,
+      runtimeSyncTrust,
       statusWarnings,
       dataQualitySummary: {
         validationFallbackPercent,

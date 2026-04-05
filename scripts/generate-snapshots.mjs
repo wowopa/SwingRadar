@@ -4,6 +4,11 @@ import process from "node:process";
 import { fileURLToPath } from "node:url";
 
 import { loadLocalEnv } from "./load-env.mjs";
+import {
+  aggregateValidationProfile,
+  buildDirectTrackingValidationProfile,
+  buildTrackingValidationProxy
+} from "./lib/validation-fallback-utils.mjs";
 import { getProjectPaths } from "./lib/external-source-utils.mjs";
 import { writeLiveSnapshotManifest } from "./lib/live-snapshot-manifest.mjs";
 import { persistRuntimeDocument } from "./lib/runtime-document-store.mjs";
@@ -655,64 +660,10 @@ function getMarketScore(item) {
   return getSwingBaseScore(item);
 }
 
-function resolveTrackingResult(item) {
-  if (item.mae <= -5.5 || (item.holdingDays <= 5 && item.mfe < 2 && item.mae <= -4)) {
-    return "무효화";
-  }
-  if (item.mfe >= 5 && item.mae > -4) {
-    return "성공";
-  }
-  if (item.holdingDays >= 5 && item.mfe > 0) {
-    return "진행중";
-  }
-  return "실패";
-}
-
-function buildTrackingValidationProxy(item) {
-  const result = resolveTrackingResult(item);
-  const hitRateByResult = {
-    성공: 62,
-    진행중: 54,
-    실패: 39,
-    무효화: 28
-  };
-  const sampleSize = result === "성공" ? 10 : result === "진행중" ? 8 : 7;
-  const avgReturn = roundNumber(clamp(item.mfe * 0.6 + item.mae * 0.2, -4.5, 7.5), 1);
-
-  return {
-    hitRate: hitRateByResult[result],
-    avgReturn,
-    sampleSize,
-    maxDrawdown: roundNumber(item.mae, 1)
-  };
-}
-
-function aggregateValidationProfile(items) {
-  if (!items.length) {
-    return null;
-  }
-
-  const totalWeight = items.reduce((sum, item) => sum + Math.max(item.sampleSize, 1), 0);
-  const weighted = (field) =>
-    items.reduce((sum, item) => sum + item[field] * Math.max(item.sampleSize, 1), 0) / Math.max(totalWeight, 1);
-
-  const hitRate = Math.round(weighted("hitRate"));
-  const avgReturn = roundNumber(weighted("avgReturn"), 1);
-  const maxDrawdown = roundNumber(weighted("maxDrawdown"), 1);
-  const sampleSize = clamp(Math.round(totalWeight / items.length), 14, 42);
-
-  return {
-    hitRate,
-    avgReturn,
-    sampleSize,
-    maxDrawdown,
-    sourceCount: items.length
-  };
-}
-
 function buildValidationProfiles(validationItems, trackingItems, marketByTicker) {
   const sectorBuckets = new Map();
   const bandBuckets = new Map();
+  const directTrackingBuckets = new Map();
 
   const addProfile = (sector, band, profile) => {
     if (sector) {
@@ -754,10 +705,18 @@ function buildValidationProfiles(validationItems, trackingItems, marketByTicker)
       continue;
     }
 
+    const directTrackingItems = directTrackingBuckets.get(item.ticker) ?? [];
+    directTrackingItems.push(item);
+    directTrackingBuckets.set(item.ticker, directTrackingItems);
     addProfile(marketItem.sector, getScoreBand(item.entryScore), buildTrackingValidationProxy(item));
   }
 
   return {
+    directTracking: new Map(
+      Array.from(directTrackingBuckets.entries())
+        .map(([key, items]) => [key, buildDirectTrackingValidationProfile(items)])
+        .filter((entry) => Boolean(entry[1]))
+    ),
     sector: new Map(Array.from(sectorBuckets.entries(), ([key, items]) => [key, aggregateValidationProfile(items)])),
     band: new Map(Array.from(bandBuckets.entries(), ([key, items]) => [key, aggregateValidationProfile(items)]))
   };
@@ -775,9 +734,31 @@ function getValidationFallbackMinimums() {
 
 function buildEstimatedValidationItem(item, profiles) {
   const minimums = getValidationFallbackMinimums();
+  const directTrackingProfile = profiles.directTracking.get(item.ticker);
   const sectorProfile = profiles.sector.get(item.sector);
   const bandProfile = profiles.band.get(getScoreBand(getMarketScore(item)));
   const scoreBase = item.trendScore + item.flowScore + item.volatilityScore + item.qualityScore;
+
+  if (directTrackingProfile && directTrackingProfile.sourceCount >= 1) {
+    const hitRate = clamp(Math.round(directTrackingProfile.hitRate), 42, 68);
+    const avgReturn = roundNumber(directTrackingProfile.avgReturn, 1);
+    const sampleSize = clamp(Math.round(directTrackingProfile.sampleSize), 12, 32);
+    const maxDrawdown = roundNumber(directTrackingProfile.maxDrawdown, 1);
+
+    return {
+      ticker: item.ticker,
+      hitRate,
+      avgReturn,
+      sampleSize,
+      maxDrawdown,
+      basis: "공용 추적 참고",
+      observationWindow: resolveObservationWindow(sampleSize, hitRate),
+      validationSummary:
+        directTrackingProfile.sourceCount >= 3
+          ? `같은 종목 추적 종료 ${directTrackingProfile.sourceCount}건을 바탕으로 공용 추적 참고값을 만들었습니다. 실측 이력이 더 쌓이기 전까지는 이 흐름을 기준선으로 봅니다.`
+          : "같은 종목 공용 추적 기록이 적게 남아 있어 우선 추적 종료 흐름을 참고값으로 반영했습니다."
+    };
+  }
 
   if (sectorProfile && sectorProfile.sourceCount >= minimums.sectorSources) {
     const hitRate = clamp(Math.round(sectorProfile.hitRate), 38, 66);
@@ -2525,6 +2506,8 @@ async function main() {
   const recommendations = [];
   const analysisItems = [];
   const validationFallbackTickers = [];
+  const validationFallbackDetails = [];
+  const validationTrackingRecoveredTickers = [];
   const validationBasisCounts = {
     measured: 0,
     tracking: 0,
@@ -2534,11 +2517,24 @@ async function main() {
   };
 
   for (const item of market.items) {
-    const usesEstimatedValidation = !validationByTicker.has(item.ticker);
+    const hasExplicitValidation = validationByTicker.has(item.ticker);
+    const usesEstimatedValidation = !hasExplicitValidation;
     const validationItem = validationByTicker.get(item.ticker) ?? buildEstimatedValidationItem(item, validationProfiles);
-    if (usesEstimatedValidation) {
+    const countsAsFallback =
+      validationItem.basis === "유사 업종 참고" ||
+      validationItem.basis === "유사 흐름 참고" ||
+      validationItem.basis === "보수 계산";
+
+    if (usesEstimatedValidation && countsAsFallback) {
       validationFallbackTickers.push(item.ticker);
+      validationFallbackDetails.push({
+        ticker: item.ticker,
+        basis: validationItem.basis,
+        sampleSize: validationItem.sampleSize
+      });
       console.warn(`Validation data missing for ${item.ticker}; using ${validationItem.basis}.`);
+    } else if (usesEstimatedValidation && validationItem.basis === "공용 추적 참고") {
+      validationTrackingRecoveredTickers.push(item.ticker);
     }
 
     if (validationItem.basis === "실측 기반") {
@@ -2788,6 +2784,9 @@ async function main() {
     trackingHistoryCount: trackingHistory.length,
     validationFallbackCount: validationFallbackTickers.length,
     validationFallbackTickers,
+    validationFallbackDetails,
+    validationTrackingRecoveredCount: validationTrackingRecoveredTickers.length,
+    validationTrackingRecoveredTickers,
     validationBasisCounts
   };
 

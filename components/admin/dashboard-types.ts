@@ -114,6 +114,13 @@ export type SnapshotGenerationReportPayload = {
   trackingHistoryCount: number;
   validationFallbackCount: number;
   validationFallbackTickers: string[];
+  validationFallbackDetails?: Array<{
+    ticker: string;
+    basis: "유사 업종 참고" | "유사 흐름 참고" | "보수 계산";
+    sampleSize: number;
+  }>;
+  validationTrackingRecoveredCount?: number;
+  validationTrackingRecoveredTickers?: string[];
   validationBasisCounts?: {
     measured: number;
     tracking?: number;
@@ -121,6 +128,23 @@ export type SnapshotGenerationReportPayload = {
     pattern: number;
     heuristic: number;
   };
+};
+
+export type RuntimeSyncTrustPayload = {
+  status: "healthy" | "watch" | "blocked";
+  label: string;
+  summary: string;
+  missingCount: number;
+  staleCount: number;
+  blockingCount: number;
+  checks: Array<{
+    key: string;
+    label: string;
+    status: "healthy" | "watch" | "blocked";
+    updatedAt: string | null;
+    ageMinutes: number | null;
+    note: string;
+  }>;
 };
 
 export type PostLaunchHistoryEntryPayload = {
@@ -252,6 +276,15 @@ export type PopupNoticeDocument = {
 export type AdminDataQualitySummaryPayload = {
   validationFallbackCount: number | null;
   validationFallbackPercent: number | null;
+  validationTrackingRecoveredCount: number | null;
+  validationTrackingRecoveredPercent: number | null;
+  validationFallbackDetails:
+    | Array<{
+        ticker: string;
+        basis: "유사 업종 참고" | "유사 흐름 참고" | "보수 계산";
+        sampleSize: number;
+      }>
+    | null;
   measuredValidationPercent: number | null;
   validationBasisPercentages:
     | {
@@ -264,9 +297,17 @@ export type AdminDataQualitySummaryPayload = {
     | null;
   failedBatchCount: number | null;
   failedBatchPercent: number | null;
+  failedBatchSteps:
+    | Array<{
+        name: string;
+        status: "failed" | "warning";
+        detail: string;
+      }>
+    | null;
   newsLiveFetchPercent: number | null;
   newsCacheFallbackPercent: number | null;
   newsFileFallbackPercent: number | null;
+  runtimeSyncTrust: RuntimeSyncTrustPayload | null;
 };
 
 export type ServiceReadinessPayload = {

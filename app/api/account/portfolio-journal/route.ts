@@ -1,7 +1,9 @@
 import { z } from "zod";
 
-import { buildPortfolioStateConsistencyReport } from "@/lib/portfolio/portfolio-state-consistency";
 import { mergePortfolioProfileWithJournal } from "@/lib/portfolio/merge-profile-with-journal";
+import { buildPortfolioStateConsistencyReport } from "@/lib/portfolio/portfolio-state-consistency";
+import { buildPortfolioWritePathSnapshot } from "@/lib/portfolio/portfolio-write-path";
+import { ApiError } from "@/lib/server/api-error";
 import { jsonOk } from "@/lib/server/api-response";
 import {
   appendPortfolioTradeEventForUser,
@@ -52,11 +54,15 @@ export async function POST(request: Request) {
   return withRouteTelemetry(request, { route: "/api/account/portfolio-journal" }, async (context) => {
     const session = await requireUserSession(request);
     const payload = tradeEventSchema.parse(await request.json());
+    const previousJournal = await loadPortfolioJournalForUser(session.user.id);
+    const previousProfile = await loadPortfolioProfileForUser(session.user.id);
+
     const result = await appendPortfolioTradeEventForUser(session.user.id, {
       ...payload,
       note: payload.note ?? undefined,
       createdBy: session.user.email
     });
+
     const syncedProfile = payload.syncProfilePosition
       ? await syncPortfolioProfileWithTradeEventForUser(
           session.user.id,
@@ -72,16 +78,26 @@ export async function POST(request: Request) {
           session.user.email
         )
       : undefined;
+
     const profile = syncedProfile
       ? await savePortfolioProfileForUser(
           session.user.id,
           mergePortfolioProfileWithJournal(syncedProfile, result.journal)
         )
       : undefined;
-    const consistency = buildPortfolioStateConsistencyReport(
-      profile ?? (await loadPortfolioProfileForUser(session.user.id)),
-      result.journal
-    );
+
+    const finalProfile = profile ?? previousProfile;
+    const consistency = buildPortfolioStateConsistencyReport(finalProfile, result.journal);
+    const writePath = buildPortfolioWritePathSnapshot({
+      action: "append",
+      previousJournal,
+      nextJournal: result.journal,
+      finalProfile,
+      consistency,
+      event: result.event,
+      previousProfile,
+      syncProfilePosition: payload.syncProfilePosition
+    });
 
     return jsonOk(
       {
@@ -90,7 +106,8 @@ export async function POST(request: Request) {
         event: result.event,
         journal: result.journal,
         profile,
-        consistency
+        consistency,
+        writePath
       },
       buildResponseMeta(context, 0)
     );
@@ -102,10 +119,11 @@ export async function PATCH(request: Request) {
     const session = await requireUserSession(request);
     const payload = undoTradeEventSchema.parse(await request.json());
     const currentJournal = await loadPortfolioJournalForUser(session.user.id);
+    const currentProfile = await loadPortfolioProfileForUser(session.user.id);
     const latestEvent = currentJournal.events[0] ?? null;
 
     if (!latestEvent || latestEvent.id !== payload.eventId) {
-      throw new Error("마지막으로 기록한 체결만 되돌릴 수 있습니다.");
+      throw new ApiError(409, "LATEST_EVENT_ONLY", "Only the latest journal event can be undone.");
     }
 
     const journal = await savePortfolioJournalForUser(session.user.id, payload.journal);
@@ -113,10 +131,18 @@ export async function PATCH(request: Request) {
     const profile = savedProfile
       ? await savePortfolioProfileForUser(session.user.id, mergePortfolioProfileWithJournal(savedProfile, journal))
       : undefined;
-    const consistency = buildPortfolioStateConsistencyReport(
-      profile ?? (await loadPortfolioProfileForUser(session.user.id)),
-      journal
-    );
+
+    const finalProfile = profile ?? currentProfile;
+    const consistency = buildPortfolioStateConsistencyReport(finalProfile, journal);
+    const writePath = buildPortfolioWritePathSnapshot({
+      action: "undo",
+      previousJournal: currentJournal,
+      nextJournal: journal,
+      finalProfile,
+      consistency,
+      event: latestEvent,
+      undoProfile: savedProfile ?? undefined
+    });
 
     return jsonOk(
       {
@@ -124,7 +150,8 @@ export async function PATCH(request: Request) {
         requestId: context.requestId,
         journal,
         profile,
-        consistency
+        consistency,
+        writePath
       },
       buildResponseMeta(context, 0)
     );

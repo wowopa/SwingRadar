@@ -413,7 +413,7 @@ describe("admin routes", () => {
 
     it("returns recent automation reports on status GET", async () => {
       mocks.loadOpsHealthCheckReport.mockResolvedValue({
-        checkedAt: "2026-03-08T13:00:00.000Z",
+        checkedAt: "2026-04-05T05:00:00.000Z",
         mode: "auto-recover",
         initialHealth: { status: "warning", warnings: ["analysis stale"] },
         recovery: {
@@ -423,21 +423,29 @@ describe("admin routes", () => {
         finalHealth: { status: "ok", warnings: [] }
       });
       mocks.loadDailyCycleReport.mockResolvedValue({
-        startedAt: "2026-03-08T18:10:00.000Z",
-        completedAt: "2026-03-08T18:12:00.000Z",
+        startedAt: "2026-04-05T05:10:00.000Z",
+        completedAt: "2026-04-05T05:12:00.000Z",
         status: "warning",
         steps: [
           {
             name: "symbol-sync",
             status: "completed",
-            startedAt: "2026-03-08T18:10:00.000Z",
-            completedAt: "2026-03-08T18:10:30.000Z",
+            startedAt: "2026-04-05T05:10:00.000Z",
+            completedAt: "2026-04-05T05:10:30.000Z",
             durationMs: 30000,
             error: null
+          },
+          {
+            name: "recommendations",
+            status: "failed",
+            startedAt: "2026-04-05T05:10:30.000Z",
+            completedAt: "2026-04-05T05:12:00.000Z",
+            durationMs: 90000,
+            error: "Fallback exceeded threshold"
           }
         ],
         summary: {
-          generatedAt: "2026-03-08T18:12:00.000Z",
+          generatedAt: "2026-04-05T05:12:00.000Z",
           topCandidateCount: 5,
           totalBatches: 10,
           succeededBatches: 9,
@@ -447,16 +455,16 @@ describe("admin routes", () => {
         error: null
       });
       mocks.loadAutoHealReport.mockResolvedValue({
-        startedAt: "2026-03-08T18:15:00.000Z",
-        completedAt: "2026-03-08T18:16:00.000Z",
+        startedAt: "2026-04-05T05:15:00.000Z",
+        completedAt: "2026-04-05T05:16:00.000Z",
         status: "ok",
         triggers: ["daily-cycle-warning"],
         actions: [
           {
             name: "daily-cycle-rerun",
             status: "completed",
-            startedAt: "2026-03-08T18:15:00.000Z",
-            completedAt: "2026-03-08T18:16:00.000Z",
+            startedAt: "2026-04-05T05:15:00.000Z",
+            completedAt: "2026-04-05T05:16:00.000Z",
             durationMs: 60000,
             detail: "daily universe cycle warning or failure",
             error: null
@@ -465,8 +473,8 @@ describe("admin routes", () => {
         error: null
       });
       mocks.loadNewsFetchReport.mockResolvedValue({
-        startedAt: "2026-03-08T17:40:00.000Z",
-        completedAt: "2026-03-08T17:42:00.000Z",
+        startedAt: "2026-04-05T04:40:00.000Z",
+        completedAt: "2026-04-05T04:42:00.000Z",
         providerOrder: ["naver", "gnews"],
         requestedProvider: "naver",
         totalTickers: 20,
@@ -478,19 +486,28 @@ describe("admin routes", () => {
         totalItems: 62
       });
       mocks.loadSnapshotGenerationReport.mockResolvedValue({
-        startedAt: "2026-03-08T17:42:10.000Z",
-        completedAt: "2026-03-08T17:42:40.000Z",
-        generatedAt: "2026-03-08T17:42:40.000Z",
+        startedAt: "2026-04-05T04:42:10.000Z",
+        completedAt: "2026-04-05T04:42:40.000Z",
+        generatedAt: "2026-04-05T04:42:40.000Z",
         totalTickers: 20,
         recommendationCount: 20,
         analysisCount: 20,
         trackingHistoryCount: 9,
         validationFallbackCount: 1,
-        validationFallbackTickers: ["000660"]
+        validationFallbackTickers: ["000660"],
+        validationFallbackDetails: [
+          {
+            ticker: "000660",
+            basis: "보수 계산",
+            sampleSize: 14
+          }
+        ],
+        validationTrackingRecoveredCount: 2,
+        validationTrackingRecoveredTickers: ["005930", "035420"]
       });
       mocks.loadPostLaunchHistory.mockResolvedValue([
         {
-          checkedAt: "2026-03-08T19:00:00.000Z",
+          checkedAt: "2026-04-05T05:00:00.000Z",
           healthStatus: "ok",
           overallStatus: "warning",
           dailyTaskRegistered: true,
@@ -501,7 +518,7 @@ describe("admin routes", () => {
       ]);
       mocks.appendPostLaunchHistoryEntry.mockResolvedValue([
         {
-          checkedAt: "2026-03-08T19:00:00.000Z",
+          checkedAt: "2026-04-05T05:00:00.000Z",
           healthStatus: "ok",
           overallStatus: "warning",
           dailyTaskRegistered: true,
@@ -511,7 +528,7 @@ describe("admin routes", () => {
         }
       ]);
       mocks.loadThresholdAdviceReport.mockResolvedValue({
-        generatedAt: "2026-03-08T19:05:00.000Z",
+        generatedAt: "2026-04-05T05:05:00.000Z",
         sampleSize: 3,
         currentPolicy: {
           newsLiveFetchWarningPercent: 70,
@@ -558,7 +575,13 @@ describe("admin routes", () => {
         autoHealReport: { status: string; actions: Array<{ name: string }> } | null;
         newsFetchReport: { retryCount: number; liveFetchTickers: number } | null;
         snapshotGenerationReport: { validationFallbackCount: number } | null;
-        dataQualitySummary: { validationFallbackPercent: number | null; newsLiveFetchPercent: number | null } | null;
+        dataQualitySummary: {
+          validationFallbackPercent: number | null;
+          validationTrackingRecoveredCount: number | null;
+          newsLiveFetchPercent: number | null;
+          failedBatchSteps: Array<{ name: string }> | null;
+          runtimeSyncTrust: { status: string } | null;
+        } | null;
         postLaunchHistory: Array<{ overallStatus: string; incidents: { criticalCount: number } }>;
         thresholdAdviceReport: { recommendations: Array<{ key: string }> } | null;
         incidents: Array<{ id: string; severity: string }>;
@@ -593,6 +616,9 @@ describe("admin routes", () => {
         },
         dataQualitySummary: {
           validationFallbackPercent: 5,
+          validationTrackingRecoveredCount: 2,
+          failedBatchSteps: [{ name: "recommendations" }],
+          runtimeSyncTrust: { status: "healthy" },
           newsLiveFetchPercent: 90
         },
         postLaunchHistory: [

@@ -175,6 +175,13 @@ export type SnapshotGenerationReport = {
   trackingHistoryCount: number;
   validationFallbackCount: number;
   validationFallbackTickers: string[];
+  validationFallbackDetails?: Array<{
+    ticker: string;
+    basis: "유사 업종 참고" | "유사 흐름 참고" | "보수 계산";
+    sampleSize: number;
+  }>;
+  validationTrackingRecoveredCount?: number;
+  validationTrackingRecoveredTickers?: string[];
   validationBasisCounts?: {
     measured: number;
     tracking?: number;

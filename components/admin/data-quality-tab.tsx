@@ -126,10 +126,19 @@ export function DataQualityTab({
   const validationBasisPercentages = dataQualitySummary?.validationBasisPercentages;
   const failedBatchCount = dataQualitySummary?.failedBatchCount ?? 0;
   const failedBatchPercent = dataQualitySummary?.failedBatchPercent ?? 0;
+  const failedBatchSteps = dataQualitySummary?.failedBatchSteps ?? [];
   const newsLiveFetchPercent = dataQualitySummary?.newsLiveFetchPercent ?? 0;
+  const validationTrackingRecoveredCount = dataQualitySummary?.validationTrackingRecoveredCount ?? 0;
+  const validationTrackingRecoveredPercent = dataQualitySummary?.validationTrackingRecoveredPercent ?? 0;
+  const validationFallbackDetails = dataQualitySummary?.validationFallbackDetails ?? [];
+  const runtimeSyncTrust = dataQualitySummary?.runtimeSyncTrust ?? null;
   const newsFallbackPercent =
     (dataQualitySummary?.newsCacheFallbackPercent ?? 0) + (dataQualitySummary?.newsFileFallbackPercent ?? 0);
-  const needsFollowup = validationFallbackPercent >= 50 || newsLiveFetchPercent <= 70 || failedBatchPercent > 0;
+  const needsFollowup =
+    validationFallbackPercent >= 50 ||
+    newsLiveFetchPercent <= 70 ||
+    failedBatchPercent > 0 ||
+    runtimeSyncTrust?.status === "blocked";
   const largestRuntimeSection = runtimeStorageReport
     ? Object.entries(runtimeStorageReport.sections).sort((left, right) => right[1].sizeBytes - left[1].sizeBytes)[0]
     : null;
@@ -243,6 +252,37 @@ export function DataQualityTab({
               </div>
             </div>
           ) : null}
+
+          {validationFallbackDetails.length || validationTrackingRecoveredCount > 0 ? (
+            <div className="rounded-[24px] border border-border/70 bg-secondary/40 p-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="text-sm font-semibold text-foreground">Fallback recovery and hotspots</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Shared tracking recovery {validationTrackingRecoveredCount} tickers / {formatPercent(validationTrackingRecoveredPercent)}
+                  </p>
+                </div>
+                <div className="inline-flex rounded-full border border-border/70 bg-white/80 px-3 py-1 text-xs text-muted-foreground">
+                  Remaining fallback {validationFallbackDetails.length}
+                </div>
+              </div>
+              {validationFallbackDetails.length ? (
+                <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                  {validationFallbackDetails.slice(0, 6).map((item) => (
+                    <div key={`${item.ticker}-${item.basis}`} className="rounded-[22px] border border-border/70 bg-white/80 p-4">
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="text-sm font-semibold text-foreground">{item.ticker}</p>
+                        <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">{item.basis}</p>
+                      </div>
+                      <p className="mt-2 text-xs leading-5 text-muted-foreground">
+                        sample {item.sampleSize}. Lower this bucket first before widening rollout.
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+          ) : null}
         </CardContent>
       </Card>
 
@@ -284,6 +324,57 @@ export function DataQualityTab({
             ) : (
               <p className="text-sm text-muted-foreground">기록된 배치 step이 아직 없습니다.</p>
             )}
+            {failedBatchSteps.length ? (
+              <div className="rounded-[24px] border border-caution/25 bg-caution/8 p-4">
+                <p className="text-sm font-semibold text-foreground">Latest failed steps</p>
+                <div className="mt-3 space-y-2">
+                  {failedBatchSteps.slice(0, 4).map((step) => (
+                    <div key={`${step.name}-${step.status}`} className="rounded-[18px] border border-border/70 bg-white/80 p-3">
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="text-sm font-medium text-foreground">{step.name}</p>
+                        <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">{step.status}</p>
+                      </div>
+                      <p className="mt-2 text-xs leading-5 text-muted-foreground">{step.detail}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+            {runtimeSyncTrust ? (
+              <div className="rounded-[24px] border border-border/70 bg-secondary/35 p-4">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">Runtime sync trust</p>
+                    <p className="mt-1 text-xs text-muted-foreground">{runtimeSyncTrust.summary}</p>
+                  </div>
+                  <div
+                    className={
+                      runtimeSyncTrust.status === "blocked"
+                        ? "inline-flex rounded-full border border-destructive/25 bg-destructive/8 px-3 py-1 text-xs text-destructive"
+                        : runtimeSyncTrust.status === "watch"
+                          ? "inline-flex rounded-full border border-caution/25 bg-caution/10 px-3 py-1 text-xs text-caution"
+                          : "inline-flex rounded-full border border-positive/25 bg-positive/8 px-3 py-1 text-xs text-positive"
+                    }
+                  >
+                    {runtimeSyncTrust.label}
+                  </div>
+                </div>
+                <div className="mt-4 grid gap-3 md:grid-cols-2">
+                  {runtimeSyncTrust.checks.slice(0, 6).map((check) => (
+                    <div key={check.key} className="rounded-[18px] border border-border/70 bg-white/80 p-3">
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="text-sm font-medium text-foreground">{check.label}</p>
+                        <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">{check.status}</p>
+                      </div>
+                      <p className="mt-2 text-xs leading-5 text-muted-foreground">{check.note}</p>
+                      <p className="mt-2 text-[11px] text-muted-foreground">
+                        {check.updatedAt ? formatDateTime(check.updatedAt) : "missing"}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
           </CardContent>
         </Card>
 

@@ -2,6 +2,7 @@ import type { OpsVerificationSummary } from "@/lib/server/ops-verification";
 import type { OperationalIncident } from "@/lib/server/operational-incidents";
 import { getOperationalPolicy } from "@/lib/server/operations-policy";
 import type { AutoHealReport, DailyCycleReport, PostLaunchHistoryEntry } from "@/lib/server/ops-reports";
+import type { RuntimeSyncTrustSummary } from "@/lib/server/runtime-sync-trust";
 import type { HealthReport } from "@/lib/services/health-service";
 
 type ServiceReadinessStatus = "ready" | "monitor" | "blocked";
@@ -34,6 +35,7 @@ interface BuildServiceReadinessSummaryArgs {
   incidents: OperationalIncident[];
   postLaunchHistory: PostLaunchHistoryEntry[];
   opsVerification: OpsVerificationSummary | null;
+  runtimeSyncTrust?: RuntimeSyncTrustSummary | null;
   statusWarnings: string[];
   dataQualitySummary: {
     validationFallbackPercent: number | null;
@@ -253,7 +255,11 @@ function buildReleaseSafetyCheck(args: BuildServiceReadinessSummaryArgs): Servic
     (item) => item.overallStatus === "warning" || item.incidents.warningCount > 0
   ).length;
 
-  if (args.statusWarnings.length >= 3 || args.opsVerification?.status === "blocked") {
+  if (
+    args.statusWarnings.length >= 3 ||
+    args.opsVerification?.status === "blocked" ||
+    args.runtimeSyncTrust?.status === "blocked"
+  ) {
     return {
       key: "release-safety",
       label: "릴리스 세이프티",
@@ -265,7 +271,12 @@ function buildReleaseSafetyCheck(args: BuildServiceReadinessSummaryArgs): Servic
     };
   }
 
-  if (args.statusWarnings.length > 0 || warningHistoryCount > 0 || args.opsVerification?.status === "monitor") {
+  if (
+    args.statusWarnings.length > 0 ||
+    warningHistoryCount > 0 ||
+    args.opsVerification?.status === "monitor" ||
+    args.runtimeSyncTrust?.status === "watch"
+  ) {
     return {
       key: "release-safety",
       label: "릴리스 세이프티",
