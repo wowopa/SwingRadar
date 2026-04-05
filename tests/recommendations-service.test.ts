@@ -232,6 +232,23 @@ describe("listRecommendations", () => {
           company: "Beta",
           sector: "Bio",
           score: 70,
+          validationBasis: "실측 기반",
+          validationInsight: {
+            level: "높음",
+            basis: "실측 기반",
+            headline: "직접 표본 28건으로 확인했습니다.",
+            detail: "측정 표본이 충분합니다."
+          },
+          trackingDiagnostic: {
+            stage: "진입 추적 가능",
+            activationScore: 79,
+            watchThreshold: 60,
+            entryThreshold: 70,
+            isWatchEligible: true,
+            isEntryEligible: true,
+            blockers: [],
+            supports: ["장중 거래대금"]
+          },
           signalLabel: "Featured",
           rationale: "Beta setup",
           riskRewardRatio: "1 : 3"
@@ -271,7 +288,17 @@ describe("listRecommendations", () => {
     expect(result.todayActionBoard?.summary.buyReviewCount).toBe(1);
     expect(result.todayActionBoard?.sections[0]?.items[0]).toMatchObject({
       ticker: "BBB001",
-      boardStatus: "buy_review"
+      boardStatus: "buy_review",
+      validationBasis: "실측 기반",
+      validation: {
+        hitRate: 55,
+        avgReturn: 2,
+        sampleSize: 11,
+        maxDrawdown: -3
+      },
+      trackingDiagnostic: {
+        stage: "진입 추적 가능"
+      }
     });
   });
 
@@ -912,7 +939,6 @@ describe("listRecommendations", () => {
     const result = await listRecommendations({ sort: "score_desc" }, { userId: "user-1" });
 
     expect(result.personalRuleReminder).toMatchObject({
-      headline: "내 다음 규칙",
       primaryRule: "보류 상태에서는 진입 금지"
     });
     expect(result.personalRuleReminder?.secondaryRules).toContain("확인 가격 실패면 당일 보류");
@@ -941,6 +967,7 @@ describe("listRecommendations", () => {
         text: "보류 상태에서는 당일 진입하지 않기",
         sourceCategory: "next_rule",
         sourceLabel: "다음 규칙",
+        isActive: true,
         createdAt: "2026-03-08T08:00:00.000Z",
         updatedAt: "2026-03-08T08:00:00.000Z",
         updatedBy: "tester@example.com"
@@ -952,6 +979,42 @@ describe("listRecommendations", () => {
     expect(result.personalRuleReminder).toMatchObject({
       primaryRule: "보류 상태에서는 당일 진입하지 않기"
     });
+  });
+
+  it("ignores inactive personal rules in reminder copy", async () => {
+    mocks.getRecommendations.mockResolvedValue({
+      generatedAt: "2026-03-08T00:00:00.000Z",
+      items: [createRecommendation({ ticker: "AAA001", company: "Alpha", sector: "Tech", score: 90 })]
+    });
+    mocks.getDailyCandidates.mockResolvedValue({
+      generatedAt: "2026-03-08T01:00:00.000Z",
+      batchSize: 20,
+      concurrency: 2,
+      topCandidatesLimit: 10,
+      totalTickers: 100,
+      totalBatches: 5,
+      succeededBatches: 5,
+      failedBatches: [],
+      topCandidates: [createCandidate({ ticker: "AAA001", company: "Alpha", sector: "Tech" })],
+      batchSummaries: []
+    });
+    mocks.loadPortfolioCloseReviewsForUser.mockResolvedValue({});
+    mocks.loadPortfolioPersonalRulesForUser.mockResolvedValue([
+      {
+        id: "next_rule:보류 상태에서는 당일 진입하지 않기",
+        text: "보류 상태에서는 당일 진입하지 않기",
+        sourceCategory: "next_rule",
+        sourceLabel: "다음 규칙",
+        isActive: false,
+        createdAt: "2026-03-08T08:00:00.000Z",
+        updatedAt: "2026-03-08T08:00:00.000Z",
+        updatedBy: "tester@example.com"
+      }
+    ]);
+
+    const result = await listRecommendations({ sort: "score_desc" }, { userId: "user-1" });
+
+    expect(result.personalRuleReminder).toBeUndefined();
   });
 
   it("surfaces a stronger personal rule alert when avoided trades are repeatedly overridden", async () => {

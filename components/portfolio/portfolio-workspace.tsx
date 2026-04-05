@@ -9,6 +9,7 @@ import { AccountPortfolioPanel } from "@/components/account/account-portfolio-pa
 import { PortfolioJournalBoard } from "@/components/portfolio/portfolio-journal-board";
 import { PortfolioOverviewBoard } from "@/components/portfolio/portfolio-overview-board";
 import { PortfolioPerformanceBoard } from "@/components/portfolio/portfolio-performance-board";
+import { PortfolioRulesBoard } from "@/components/portfolio/portfolio-rules-board";
 import { PortfolioReviewsBoard } from "@/components/portfolio/portfolio-reviews-board";
 import {
   PortfolioTradeEventDialog,
@@ -19,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { HoldingActionBoardDto } from "@/lib/api-contracts/swing-radar";
+import type { OpeningCheckRiskPatternDto, TodayActionBoardDto } from "@/lib/api-contracts/swing-radar";
 import type { UserOpeningRecheckScanSnapshot } from "@/lib/server/user-opening-recheck-board";
 import type {
   PortfolioCloseReviewEntry,
@@ -28,8 +30,8 @@ import type {
   PortfolioTradeEventType
 } from "@/types/recommendation";
 
-type PortfolioWorkspaceTab = "holdings" | "journal" | "reviews" | "performance";
-const PORTFOLIO_WORKSPACE_TABS: PortfolioWorkspaceTab[] = ["holdings", "journal", "reviews", "performance"];
+type PortfolioWorkspaceTab = "holdings" | "journal" | "reviews" | "performance" | "rules";
+const PORTFOLIO_WORKSPACE_TABS: PortfolioWorkspaceTab[] = ["holdings", "journal", "reviews", "performance", "rules"];
 
 function isPortfolioWorkspaceTab(value: string | null | undefined): value is PortfolioWorkspaceTab {
   return Boolean(value && PORTFOLIO_WORKSPACE_TABS.includes(value as PortfolioWorkspaceTab));
@@ -136,6 +138,8 @@ export function PortfolioWorkspace({
   closeReviews,
   personalRules,
   holdingActionBoard,
+  todayActionBoard,
+  openingCheckRiskPatterns = [],
   initialSettingsOpen = false
 }: {
   initialProfile: PortfolioProfilePayload;
@@ -144,6 +148,8 @@ export function PortfolioWorkspace({
   closeReviews: Record<string, PortfolioCloseReviewEntry>;
   personalRules: PortfolioPersonalRuleEntry[];
   holdingActionBoard?: HoldingActionBoardDto;
+  todayActionBoard?: TodayActionBoardDto;
+  openingCheckRiskPatterns?: OpeningCheckRiskPatternDto[];
   initialSettingsOpen?: boolean;
 }) {
   const [profile, setProfile] = useState(initialProfile);
@@ -431,6 +437,9 @@ export function PortfolioWorkspace({
           <TabsTrigger value="performance" className="min-w-[120px]">
             Performance
           </TabsTrigger>
+          <TabsTrigger value="rules" className="min-w-[120px]">
+            Rules
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="holdings" className="mt-0">
@@ -476,6 +485,17 @@ export function PortfolioWorkspace({
               openingCheckScans={openingCheckScans}
               closeReviews={closeReviews}
               personalRules={personalRules}
+            />
+          </div>
+        </TabsContent>
+
+        <TabsContent value="rules" className="mt-0">
+          <div data-tutorial="portfolio-rules">
+            <PortfolioRulesBoard
+              personalRules={personalRules}
+              openingCheckScans={openingCheckScans}
+              openingCheckRiskPatterns={openingCheckRiskPatterns}
+              todayActionBoard={todayActionBoard}
             />
           </div>
         </TabsContent>

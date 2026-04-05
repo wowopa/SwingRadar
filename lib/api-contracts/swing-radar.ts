@@ -279,6 +279,11 @@ export interface TodayActionBoardItemDto {
   activationScore?: number;
   actionBucket?: RecommendationActionBucketDto;
   tradePlan?: RecommendationTradePlanDto;
+  validationSummary?: string;
+  validation?: ValidationStatsDto;
+  validationBasis?: ValidationBasisDto;
+  validationInsight?: ValidationInsightDto;
+  trackingDiagnostic?: TrackingDiagnosticDto;
   openingRecheck?: OpeningRecheckDecisionDto;
   boardStatus: TodayActionBoardStatusDto;
   boardReason: string;

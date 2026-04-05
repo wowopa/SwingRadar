@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { ArrowUpRight, Clock3, ShieldAlert, Target } from "lucide-react";
 
 import { OpeningCheckReviewCard } from "@/components/recommendations/opening-check-review-card";
+import { RecommendationTrustSummary as RecommendationTrustSummaryBlock } from "@/components/recommendations/recommendation-trust-summary";
 import { SignalToneBadge } from "@/components/shared/signal-tone-badge";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,6 +14,9 @@ import {
   buildOpeningCheckPatternPreview,
   type OpeningCheckPatternPreviewResult
 } from "@/lib/recommendations/opening-check-pattern-preview";
+import {
+  buildRecommendationTrustSummary
+} from "@/lib/recommendations/recommendation-trust";
 import type {
   DailyScanSummaryDto,
   HoldingActionBoardDto,
@@ -156,6 +160,25 @@ function getHoldingAttentionCount(board?: HoldingActionBoardDto) {
 interface BuyReviewPatternItem {
   item: TodayActionBoardItemDto;
   patternPreview: OpeningCheckPatternPreviewResult | null;
+  trustSummary: ReturnType<typeof buildRecommendationTrustSummary> | null;
+}
+
+function buildBuyReviewTrustSummary(
+  item: TodayActionBoardItemDto,
+  patternPreview: OpeningCheckPatternPreviewResult | null
+) {
+  if (!item.validation) {
+    return null;
+  }
+
+  return buildRecommendationTrustSummary({
+    validation: item.validation,
+    validationBasis: item.validationBasis,
+    validationSummary: item.validationSummary,
+    validationInsight: item.validationInsight,
+    trackingDiagnostic: item.trackingDiagnostic,
+    patternPreview
+  });
 }
 
 function buildBuyReviewPatternItem(
@@ -163,24 +186,27 @@ function buildBuyReviewPatternItem(
   openingCheckRiskPatterns: OpeningCheckRiskPatternDto[] = [],
   openingCheckPositivePattern?: OpeningCheckPositivePatternDto
 ): BuyReviewPatternItem {
+  const patternPreview = buildOpeningCheckPatternPreview(
+    {
+      actionBucket:
+        item.actionBucket ??
+        resolveRecommendationActionBucket({
+          signalTone: item.signalTone,
+          activationScore: item.activationScore,
+          featuredRank: item.featuredRank
+        }),
+      tradePlan: item.tradePlan
+    },
+    {
+      riskPatterns: openingCheckRiskPatterns,
+      positivePattern: openingCheckPositivePattern
+    }
+  );
+
   return {
     item,
-    patternPreview: buildOpeningCheckPatternPreview(
-      {
-        actionBucket:
-          item.actionBucket ??
-          resolveRecommendationActionBucket({
-            signalTone: item.signalTone,
-            activationScore: item.activationScore,
-            featuredRank: item.featuredRank
-          }),
-        tradePlan: item.tradePlan
-      },
-      {
-        riskPatterns: openingCheckRiskPatterns,
-        positivePattern: openingCheckPositivePattern
-      }
-    )
+    patternPreview,
+    trustSummary: buildBuyReviewTrustSummary(item, patternPreview)
   };
 }
 
@@ -289,6 +315,7 @@ export function DashboardFocusBoard({
   const hasPendingOpeningChecks = openingSummary.counts.pending > 0;
   const hasRuleAlert = Boolean(personalRuleAlert);
   const topBuyReviewPattern = buyReviewItems[0]?.patternPreview ?? null;
+  const topBuyReviewTrust = buyReviewItems[0]?.trustSummary ?? null;
   const openingSummaryLine = hasRuleAlert
     ? "반복 위반 경고가 있어 오늘은 저장 전 규칙을 다시 확인합니다."
     : personalRuleReminder
@@ -406,6 +433,16 @@ export function DashboardFocusBoard({
                 }
                 accent={isMarketClosed ? "primary" : buyReviewAccent}
                 icon={<Target className="h-4 w-4" />}
+                supportingContent={
+                  !isMarketClosed && topBuyReviewTrust && buyReviewItems[0] ? (
+                    <PrimaryActionTrustSnapshot
+                      company={buyReviewItems[0].item.company}
+                      ticker={buyReviewItems[0].item.ticker}
+                      summary={topBuyReviewTrust}
+                      accent={buyReviewAccent}
+                    />
+                  ) : null
+                }
               />
             </div>
             <div data-tutorial="today-holding-card" className="h-full">
@@ -471,7 +508,7 @@ export function DashboardFocusBoard({
               <CardContent>
                 {buyReviewItems.length ? (
                   <div className="space-y-3">
-                    {buyReviewItems.map(({ item, patternPreview }) => (
+                    {buyReviewItems.map(({ item, patternPreview, trustSummary }) => (
                       <div
                         key={item.ticker}
                         className="block rounded-[24px] border border-border/80 bg-[hsl(42_38%_97%)] p-4 transition hover:border-primary/28 hover:bg-white"
@@ -498,6 +535,9 @@ export function DashboardFocusBoard({
                               <p className="mt-2 text-xs leading-5 text-muted-foreground">{patternPreview.detail}</p>
                             ) : null}
                             <p className="mt-2 text-xs leading-5 text-muted-foreground">{item.boardReason}</p>
+                            {trustSummary ? (
+                              <RecommendationTrustSummaryBlock summary={trustSummary} mode="compact" className="mt-3" />
+                            ) : null}
                             <div className="mt-3 flex flex-wrap gap-2">
                               <Link
                                 href={`/analysis/${item.ticker}`}
@@ -1044,6 +1084,75 @@ function CompactRuleReminderBanner({ reminder }: { reminder: PersonalRuleReminde
   );
 }
 
+function PrimaryActionTrustSnapshot({
+  company,
+  ticker,
+  summary,
+  accent
+}: {
+  company: string;
+  ticker: string;
+  summary: ReturnType<typeof buildRecommendationTrustSummary>;
+  accent: "primary" | "positive" | "caution" | "muted";
+}) {
+  const isPrimary = accent === "primary";
+
+  return (
+    <div
+      className={cn(
+        "mt-4 rounded-[18px] border px-3 py-3",
+        isPrimary ? "border-white/12 bg-white/10" : "border-border/70 bg-white/82"
+      )}
+    >
+      <div className="flex flex-wrap items-center gap-2">
+        <span
+          className={cn(
+            "text-[11px] font-medium uppercase tracking-[0.16em]",
+            isPrimary ? "text-primary-foreground/62" : "text-muted-foreground"
+          )}
+        >
+          선두 후보 신뢰
+        </span>
+        <span className={cn("text-xs font-medium", isPrimary ? "text-primary-foreground/88" : "text-foreground/82")}>
+          {company} {ticker}
+        </span>
+      </div>
+      <div className="mt-2 flex flex-wrap items-center gap-1.5">
+        <Badge
+          variant={
+            summary.levelTone === "positive"
+              ? "positive"
+              : summary.levelTone === "caution"
+                ? "caution"
+                : "neutral"
+          }
+          className="h-5 px-2 text-[10px]"
+        >
+          {summary.levelLabel}
+        </Badge>
+        <Badge variant="secondary" className="h-5 px-2 text-[10px]">
+          {summary.basisLabel}
+        </Badge>
+        <Badge
+          variant={
+            summary.patternLabel.includes("강함")
+              ? "positive"
+              : summary.patternLabel.includes("약함")
+                ? "caution"
+                : "neutral"
+          }
+          className="h-5 px-2 text-[10px]"
+        >
+          {summary.patternLabel}
+        </Badge>
+      </div>
+      <p className={cn("mt-2 text-[11px] leading-5", isPrimary ? "text-primary-foreground/72" : "text-muted-foreground")}>
+        표본 {summary.sampleSize}건 · 적중률 {summary.hitRate}% · {summary.stageLabel ?? "장초 해석 기준 포함"}
+      </p>
+    </div>
+  );
+}
+
 function PrimaryActionCard({
   href,
   title,
@@ -1051,7 +1160,8 @@ function PrimaryActionCard({
   caption,
   summaryLine,
   accent,
-  icon
+  icon,
+  supportingContent
 }: {
   href: string;
   title: string;
@@ -1060,6 +1170,7 @@ function PrimaryActionCard({
   summaryLine: string;
   accent: "primary" | "positive" | "caution" | "muted";
   icon: ReactNode;
+  supportingContent?: ReactNode;
 }) {
   const toneByAccent = {
     primary:
@@ -1093,6 +1204,7 @@ function PrimaryActionCard({
       </div>
       <p className={cn("mt-3 text-sm font-medium", isPrimary ? "text-primary-foreground/88" : "text-foreground/88")}>{caption}</p>
       <p className={cn("mt-2 text-xs leading-5", isPrimary ? "text-primary-foreground/72" : "text-muted-foreground")}>{summaryLine}</p>
+      {supportingContent}
     </Link>
   );
 }

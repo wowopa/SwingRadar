@@ -19,24 +19,35 @@ export function PortfolioPersonalRuleButton({
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
-  const isPromoted = existingRules.some((rule) => rule.text === text);
+  const existingRule = existingRules.find((rule) => rule.text === text);
+  const isPromoted = Boolean(existingRule);
+  const isActive = existingRule?.isActive ?? false;
 
   async function promoteRule() {
-    if (isPromoted) {
+    if (isPromoted && isActive) {
       return;
     }
 
     setError(null);
 
     try {
-      const response = await fetch("/api/account/portfolio-personal-rules", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          text,
-          sourceCategory
-        })
-      });
+      const response = existingRule
+        ? await fetch("/api/account/portfolio-personal-rules", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              id: existingRule.id,
+              isActive: true
+            })
+          })
+        : await fetch("/api/account/portfolio-personal-rules", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              text,
+              sourceCategory
+            })
+          });
 
       if (!response.ok) {
         const payload = (await response.json().catch(() => ({}))) as { message?: string };
@@ -53,13 +64,14 @@ export function PortfolioPersonalRuleButton({
 
   return (
     <div className="flex flex-wrap items-center gap-2">
-      {isPromoted ? (
+      {isPromoted && isActive ? (
         <Badge variant="positive">개인 규칙 반영됨</Badge>
       ) : (
         <Button type="button" size="sm" variant="outline" onClick={() => void promoteRule()} disabled={isPending}>
-          {isPending ? "저장 중..." : "개인 규칙으로 승격"}
+          {isPending ? "저장 중..." : existingRule ? "다시 켜기" : "개인 규칙으로 승격"}
         </Button>
       )}
+      {isPromoted && !isActive ? <Badge variant="secondary">비활성화됨</Badge> : null}
       {error ? <p className="text-xs text-destructive">{error}</p> : null}
     </div>
   );

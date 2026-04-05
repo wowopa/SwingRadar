@@ -33,7 +33,7 @@ export function PrivateNav({ iconOnly = false }: { iconOnly?: boolean }) {
   return (
     <nav
       className={cn(
-        "flex gap-2",
+        "flex gap-1.5 sm:gap-2",
         iconOnly
           ? "items-center justify-end overflow-visible"
           : "items-center justify-center"
@@ -49,7 +49,7 @@ export function PrivateNav({ iconOnly = false }: { iconOnly?: boolean }) {
             href={item.href}
             className={cn(
               "group inline-flex shrink-0 items-center transition-colors duration-200",
-              iconOnly ? "h-10 w-10 justify-center rounded-full" : "h-10 gap-2 px-2.5",
+              iconOnly ? "h-9 w-9 justify-center rounded-full sm:h-10 sm:w-10" : "h-10 gap-2 px-2.5",
               isActive
                 ? "font-bold text-white"
                 : "font-medium text-slate-300 hover:text-white"
@@ -57,7 +57,7 @@ export function PrivateNav({ iconOnly = false }: { iconOnly?: boolean }) {
             aria-label={item.label}
             title={item.label}
           >
-            <div className={cn("flex items-center justify-center", iconOnly ? "h-10 w-10 rounded-full" : "h-4 w-4 rounded-none")}>
+            <div className={cn("flex items-center justify-center", iconOnly ? "h-9 w-9 rounded-full sm:h-10 sm:w-10" : "h-4 w-4 rounded-none")}>
               <Icon className="h-4 w-4" />
             </div>
             {!iconOnly ? (

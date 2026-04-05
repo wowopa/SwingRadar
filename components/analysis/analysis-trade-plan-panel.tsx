@@ -4,6 +4,7 @@ import { ArrowUpRight, Flag, ShieldAlert, Target } from "lucide-react";
 
 import { ActionBucketBadge } from "@/components/recommendations/action-bucket-badge";
 import { PersonalActionStatusBadge } from "@/components/recommendations/personal-action-status-badge";
+import { RecommendationTrustSummary } from "@/components/recommendations/recommendation-trust-summary";
 import { SignalToneBadge } from "@/components/shared/signal-tone-badge";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,6 +16,7 @@ import type {
 } from "@/lib/api-contracts/swing-radar";
 import { getFeaturedRankLabel } from "@/lib/copy/action-language";
 import { buildOpeningCheckPatternPreview } from "@/lib/recommendations/opening-check-pattern-preview";
+import { buildRecommendationTrustSummary } from "@/lib/recommendations/recommendation-trust";
 import type { DailyCandidate } from "@/lib/repositories/daily-candidates";
 import type { TickerAnalysis } from "@/types/analysis";
 
@@ -60,6 +62,16 @@ export function AnalysisTradePlanPanel({
       positivePattern: openingCheckPositivePattern
     }
   );
+  const trustSummary =
+    analysis.validation
+      ? buildRecommendationTrustSummary({
+          validation: analysis.validation,
+          validationBasis: analysis.validationBasis,
+          validationInsight: analysis.validationInsight,
+          trackingDiagnostic: analysis.trackingDiagnostic,
+          patternPreview
+        })
+      : null;
 
   const actionFlow = buildActionFlow({ ticker, featuredRank, personalActionItem });
 
@@ -93,6 +105,12 @@ export function AnalysisTradePlanPanel({
         <div className="rounded-[28px] border border-border/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(246,241,232,0.9))] p-5">
           <p className="text-sm leading-7 text-foreground/84">{plan.headline}</p>
         </div>
+
+        {trustSummary ? (
+          <div data-tutorial="analysis-trust">
+            <RecommendationTrustSummary summary={trustSummary} />
+          </div>
+        ) : null}
 
         <div data-tutorial="analysis-action-flow" className="grid gap-3 md:grid-cols-3">
           <ActionFlowStep

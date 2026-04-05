@@ -6,7 +6,8 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import {
   loadPortfolioPersonalRulesForUser,
-  savePortfolioPersonalRuleForUser
+  savePortfolioPersonalRuleForUser,
+  setPortfolioPersonalRuleActiveForUser
 } from "@/lib/server/portfolio-personal-rules";
 
 describe("portfolio personal rules storage", () => {
@@ -56,6 +57,7 @@ describe("portfolio personal rules storage", () => {
       text: "보류 상태에서는 당일 진입하지 않기",
       sourceCategory: "next_rule",
       sourceLabel: "다음 규칙",
+      isActive: true,
       updatedBy: "tester@example.com"
     });
     expect(user2Rules).toHaveLength(1);
@@ -63,7 +65,40 @@ describe("portfolio personal rules storage", () => {
       text: "확인 가격 실패면 당일 보류",
       sourceCategory: "watchouts",
       sourceLabel: "아쉬운 점",
+      isActive: true,
       updatedBy: "other@example.com"
+    });
+  });
+
+  it("can disable and re-enable a promoted rule", async () => {
+    const saved = await savePortfolioPersonalRuleForUser("user-1", {
+      text: "확인 가격 실패면 당일 보류",
+      sourceCategory: "watchouts",
+      updatedBy: "tester@example.com"
+    });
+
+    await setPortfolioPersonalRuleActiveForUser("user-1", {
+      id: saved.id,
+      isActive: false,
+      updatedBy: "tester@example.com"
+    });
+
+    let rules = await loadPortfolioPersonalRulesForUser("user-1");
+    expect(rules[0]).toMatchObject({
+      id: saved.id,
+      isActive: false
+    });
+
+    await savePortfolioPersonalRuleForUser("user-1", {
+      text: "확인 가격 실패면 당일 보류",
+      sourceCategory: "watchouts",
+      updatedBy: "tester@example.com"
+    });
+
+    rules = await loadPortfolioPersonalRulesForUser("user-1");
+    expect(rules[0]).toMatchObject({
+      id: saved.id,
+      isActive: true
     });
   });
 });

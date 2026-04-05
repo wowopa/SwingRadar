@@ -24,20 +24,21 @@ export function PrivateAppShell({
         <header className="relative overflow-visible rounded-b-[28px] border-x border-b border-white/12 bg-[linear-gradient(180deg,rgba(15,20,31,0.985),rgba(24,31,45,0.965))] shadow-[0_22px_60px_hsl(220_26%_8%_/_0.18)] backdrop-blur-xl">
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_12%_10%,hsl(42_76%_66%_/_0.13),transparent_18%),radial-gradient(circle_at_88%_22%,hsl(196_90%_72%_/_0.05),transparent_20%)]" />
 
-          <div className="relative grid min-h-[72px] grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 px-3 py-3 lg:hidden">
+          <div className="relative grid min-h-[72px] grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 px-3 py-3 xl:hidden">
             <Link href="/recommendations" className="justify-self-start">
               <BrandMark compact mode="plain" className="h-11 w-11" />
             </Link>
             <div className="min-w-0">
               <GlobalSymbolSearch compact />
             </div>
-            <div className="flex items-center justify-end gap-1.5">
-              <TutorialLauncherButton iconOnly tone="light" />
+            <div className="flex items-center justify-end gap-1 md:gap-1.5">
               <PrivateNav iconOnly />
+              <div className="h-5 w-px shrink-0 bg-white/12" />
+              <AuthCta session={session} compact tone="light" iconOnly />
             </div>
           </div>
 
-          <div className="relative hidden min-h-[76px] grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-4 px-5 py-3 lg:grid xl:px-6">
+          <div className="relative hidden min-h-[76px] grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-4 px-5 py-3 xl:grid xl:px-6">
             <Link href="/recommendations" className="min-w-0 justify-self-start">
               <BrandSignature compact className="min-w-0 gap-3" tone="light" markMode="plain" />
             </Link>
@@ -47,7 +48,7 @@ export function PrivateAppShell({
             </div>
 
             <div className="flex min-w-0 items-center justify-self-end gap-3">
-              <div className="w-[280px] xl:w-[320px]">
+              <div className="w-[260px] 2xl:w-[320px]">
                 <GlobalSymbolSearch compact />
               </div>
               <TutorialLauncherButton tone="light" />

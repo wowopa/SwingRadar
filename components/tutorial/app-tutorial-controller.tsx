@@ -9,6 +9,11 @@ import { usePathname } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
+  POPUP_NOTICE_STATE_EVENT,
+  readPopupNoticeState,
+  type PopupNoticeClientState
+} from "@/lib/popup-notice/popup-notice-events";
+import {
   APP_TUTORIAL_DEFINITIONS,
   resolveTutorialScope,
   type AppTutorialScope
@@ -128,10 +133,26 @@ export function AppTutorialController() {
   const [stepIndex, setStepIndex] = useState(0);
   const [spotlight, setSpotlight] = useState<SpotlightRect | null>(null);
   const [targetVersion, setTargetVersion] = useState(0);
+  const [popupNoticeState, setPopupNoticeState] = useState<PopupNoticeClientState>(() => readPopupNoticeState());
 
   useEffect(() => {
     setProgress(loadTutorialProgress());
     setIsHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    setPopupNoticeState(readPopupNoticeState());
+
+    function handlePopupNoticeState(event: Event) {
+      const customEvent = event as CustomEvent<{ state?: PopupNoticeClientState }>;
+      const nextState = customEvent.detail?.state;
+      setPopupNoticeState(nextState === "loading" || nextState === "open" || nextState === "closed" ? nextState : readPopupNoticeState());
+    }
+
+    window.addEventListener(POPUP_NOTICE_STATE_EVENT, handlePopupNoticeState as EventListener);
+    return () => {
+      window.removeEventListener(POPUP_NOTICE_STATE_EVENT, handlePopupNoticeState as EventListener);
+    };
   }, []);
 
   useEffect(() => {
@@ -180,19 +201,20 @@ export function AppTutorialController() {
   }, [scope]);
 
   const currentStep = definition?.steps[stepIndex] ?? null;
+  const canShowTutorial = isOpen && popupNoticeState === "closed";
 
   useEffect(() => {
-    if (!isOpen || !currentStep?.target) {
+    if (!canShowTutorial || !currentStep?.target) {
       return;
     }
 
     return observeTutorialTarget(currentStep.target, () => {
       setTargetVersion((current) => current + 1);
     });
-  }, [currentStep?.target, isOpen, pathname, stepIndex]);
+  }, [canShowTutorial, currentStep?.target, pathname, stepIndex]);
 
   useEffect(() => {
-    if (!isOpen || !currentStep?.target || targetVersion === 0) {
+    if (!canShowTutorial || !currentStep?.target || targetVersion === 0) {
       return;
     }
 
@@ -226,10 +248,10 @@ export function AppTutorialController() {
       top: nextTop,
       behavior: "smooth"
     });
-  }, [currentStep?.target, isOpen, pathname, targetVersion]);
+  }, [canShowTutorial, currentStep?.target, pathname, targetVersion]);
 
   useEffect(() => {
-    if (!isOpen || !currentStep?.target) {
+    if (!canShowTutorial || !currentStep?.target) {
       setSpotlight(null);
       return;
     }
@@ -282,14 +304,14 @@ export function AppTutorialController() {
     currentStep?.spotlightLabel,
     currentStep?.spotlightPadding,
     currentStep?.target,
-    isOpen,
+    canShowTutorial,
     pathname,
     stepIndex,
     targetVersion
   ]);
 
   useEffect(() => {
-    if (!isOpen || !scope || !currentStep) {
+    if (!canShowTutorial || !scope || !currentStep) {
       return;
     }
 
@@ -302,9 +324,9 @@ export function AppTutorialController() {
         }
       })
     );
-  }, [currentStep, isOpen, scope, stepIndex]);
+  }, [canShowTutorial, currentStep, scope, stepIndex]);
 
-  if (!isHydrated || !definition || !scope || !currentStep || !isOpen) {
+  if (!isHydrated || !definition || !scope || !currentStep || !canShowTutorial) {
     return null;
   }
 

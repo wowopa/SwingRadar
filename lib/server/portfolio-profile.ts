@@ -280,13 +280,15 @@ function getTradeEnteredAt(value?: string) {
 function buildPositionFromTradeEvent(event: SyncablePortfolioTradeEvent) {
   const ticker = resolveTicker(event.ticker);
   const symbol = getSymbolByTicker(ticker);
+  const fees = normalizeNonNegativeNumber(event.fees, 0);
+  const averagePrice = event.quantity > 0 ? (event.price * event.quantity + fees) / event.quantity : event.price;
 
   return {
     ticker,
     company: symbol?.company ?? ticker,
     sector: symbol?.sector ?? "미분류",
     quantity: event.quantity,
-    averagePrice: event.price,
+    averagePrice,
     enteredAt: getTradeEnteredAt(event.tradedAt),
     note: normalizeOptionalString(event.note)
   } satisfies PortfolioProfilePosition;

@@ -152,7 +152,12 @@ function ReviewRuleCandidateCard({
             <CardTitle className="text-lg text-foreground">반복 회고 규칙 후보</CardTitle>
             <p className="mt-2 text-sm leading-6 text-muted-foreground">{rules.summary}</p>
           </div>
-          <Badge variant="secondary">{rules.candidateCount}개 후보</Badge>
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge variant="secondary">{rules.candidateCount}개 후보</Badge>
+            <Button asChild size="sm" variant="ghost">
+              <Link href="/portfolio?tab=rules">규칙 관리</Link>
+            </Button>
+          </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
@@ -652,7 +657,70 @@ function ClosedReviewTable({
           </div>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
+          <div className="space-y-3 lg:hidden">
+            {groups.map((group) => {
+              const positionKey = getPortfolioCloseReviewKeyForGroup(group);
+              const reviewEntry = closeReviews[positionKey];
+              const isFocused = focusTicker === group.ticker;
+              const statusLabel = getClosedGroupStatusLabel(group);
+              const statusVariant =
+                group.latestEvent.type === "stop_loss"
+                  ? "caution"
+                  : group.latestEvent.type === "manual_exit"
+                    ? "neutral"
+                    : "positive";
+
+              return (
+                <div
+                  key={`${positionKey}-mobile`}
+                  className={
+                    isFocused
+                      ? "rounded-[22px] border border-primary/24 bg-primary/8 px-4 py-4"
+                      : "rounded-[22px] border border-border/80 bg-[hsl(42_40%_97%)] px-4 py-4"
+                  }
+                >
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="text-sm font-semibold text-foreground">{group.company}</p>
+                        <span className="text-xs text-muted-foreground">{group.ticker}</span>
+                        {isFocused ? <Badge variant="neutral">방금 기록</Badge> : null}
+                      </div>
+                      <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                        {group.sector} · {group.holdingDays}일 보유 · 실현 {formatSignedPrice(group.metrics.realizedPnl)}
+                      </p>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <Badge variant={statusVariant}>{statusLabel}</Badge>
+                      <Badge variant={reviewEntry ? "secondary" : "neutral"}>
+                        {reviewEntry ? "회고 작성됨" : "회고 작성 전"}
+                      </Badge>
+                    </div>
+                  </div>
+
+                  <p className="mt-3 text-xs leading-5 text-muted-foreground">
+                    최근 진행일 {formatReviewActivityDate(group.latestEvent.tradedAt)} · 이벤트 {group.events.length}건 · 부분 익절 {group.partialExitCount}회
+                  </p>
+
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setEditingKey(positionKey)}
+                    >
+                      {reviewEntry ? "회고 수정" : "회고 작성"}
+                    </Button>
+                    <Button asChild size="sm" variant="ghost">
+                      <Link href={`/portfolio/${group.ticker}`}>상세 보기</Link>
+                    </Button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="hidden overflow-x-auto lg:block">
             <table className="min-w-[780px] w-full border-separate border-spacing-0">
               <thead>
                 <tr className="text-left">

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import type { ReactNode } from "react";
 import { useMemo, useState } from "react";
 
@@ -143,7 +144,190 @@ export function PortfolioPerformanceBoard({
         </CardContent>
       </Card>
 
-      <div className="grid gap-5 xl:grid-cols-[1.2fr,0.8fr]">
+      <div className="space-y-4 lg:hidden">
+        <details className="rounded-3xl border border-border/80 bg-white/90 shadow-[0_18px_44px_-34px_rgba(24,32,42,0.2)]">
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-4 text-sm font-semibold text-foreground [&::-webkit-details-marker]:hidden">
+            손익 흐름
+            <Badge variant="secondary">주간 · 월간 · 누적</Badge>
+          </summary>
+          <div className="space-y-4 border-t border-border/70 px-4 py-4">
+            <PeriodFlowCard
+              title="최근 주간 손익 흐름"
+              periods={performance.weekly}
+              emptyLabel="최근 주간 손익이 쌓이면 이 영역에서 계좌 리듬을 바로 볼 수 있습니다."
+            />
+            <PeriodFlowCard
+              title="최근 월간 손익 흐름"
+              periods={performance.monthly}
+              emptyLabel="월간 종료 거래가 쌓이면 이 영역에서 월별 흐름을 바로 볼 수 있습니다."
+            />
+            <EquityCurveCard points={performance.equityCurve} />
+          </div>
+        </details>
+
+        <details className="rounded-3xl border border-border/80 bg-white/90 shadow-[0_18px_44px_-34px_rgba(24,32,42,0.2)]">
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-4 text-sm font-semibold text-foreground [&::-webkit-details-marker]:hidden">
+            판단 / 전략
+            <Badge variant="secondary">장초 · 태그 · 종료 이유</Badge>
+          </summary>
+          <div className="space-y-4 border-t border-border/70 px-4 py-4">
+            <Card className="border-border/80 bg-white/90 shadow-none">
+              <CardHeader className="space-y-3">
+                <CardTitle className="text-lg text-foreground">장초 판단 영향</CardTitle>
+                <p className="text-sm leading-6 text-muted-foreground">
+                  장초 통과 뒤 진입한 거래와 보류를 강행한 거래가 실제로 어떤 손익으로 끝났는지 바로 비교합니다.
+                </p>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {openingAnalytics?.behaviorImpacts.length ? (
+                  openingAnalytics.behaviorImpacts.map((impact) => (
+                    <InsightRow
+                      key={impact.key}
+                      title={impact.label}
+                      value={formatSignedPrice(impact.realizedPnl)}
+                      badge={`${impact.count}건 · 평균 ${formatSignedPrice(impact.averagePnl)}`}
+                      note={`${impact.note} · 승률 ${impact.winRate}%`}
+                      tone={impact.tone}
+                    />
+                  ))
+                ) : (
+                  <EmptyInsight label="아직 장초 판단 영향까지 비교할 종료 거래가 충분하지 않습니다." />
+                )}
+              </CardContent>
+            </Card>
+
+            <Card className="border-border/80 bg-white/90 shadow-none">
+              <CardHeader className="space-y-3">
+                <CardTitle className="text-lg text-foreground">전략 태그별 성과</CardTitle>
+                <p className="text-sm leading-6 text-muted-foreground">
+                  메모에 반복해서 남긴 전략 태그를 기준으로, 어떤 방식이 실제 수익과 더 자주 연결되는지 빠르게 봅니다.
+                </p>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {performance.strategyTags.length ? (
+                  performance.strategyTags.map((tag) => (
+                    <InsightRow
+                      key={tag.key}
+                      title={tag.label}
+                      value={formatSignedPrice(tag.realizedPnl)}
+                      badge={`${tag.count}건 · 승률 ${tag.winRate}%`}
+                      note={tag.note}
+                      tone={tag.realizedPnl > 0 ? "positive" : tag.realizedPnl < 0 ? "caution" : "neutral"}
+                    />
+                  ))
+                ) : (
+                  <EmptyInsight label="반복해서 남긴 전략 태그가 아직 충분하지 않습니다." />
+                )}
+              </CardContent>
+            </Card>
+
+            <Card className="border-border/80 bg-white/90 shadow-none">
+              <CardHeader className="space-y-3">
+                <CardTitle className="text-lg text-foreground">종료 이유 분포</CardTitle>
+                <p className="text-sm leading-6 text-muted-foreground">
+                  전량 매도, 손절, 수동 종료가 실제로 어떤 결과로 이어졌는지 종료 방식별로 나눠 봅니다.
+                </p>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {performance.exitReasons.map((reason) => (
+                  <InsightRow
+                    key={reason.key}
+                    title={reason.label}
+                    value={formatSignedPrice(reason.realizedPnl)}
+                    badge={`${reason.count}건 · ${reason.ratio}%`}
+                    note={`${reason.note} · 승률 ${reason.winRate}%`}
+                    tone={reason.tone}
+                  />
+                ))}
+              </CardContent>
+            </Card>
+          </div>
+        </details>
+
+        <details className="rounded-3xl border border-border/80 bg-white/90 shadow-[0_18px_44px_-34px_rgba(24,32,42,0.2)]">
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-4 text-sm font-semibold text-foreground [&::-webkit-details-marker]:hidden">
+            규칙 / 품질
+            <Badge variant="secondary">회고 규칙 · 운영 신호</Badge>
+          </summary>
+          <div className="space-y-4 border-t border-border/70 px-4 py-4">
+            <Card className="border-border/80 bg-white/90 shadow-none">
+              <CardHeader className="space-y-3">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <CardTitle className="text-lg text-foreground">반복 회고 규칙</CardTitle>
+                    <p className="text-sm leading-6 text-muted-foreground">{closeReviewRules.summary}</p>
+                  </div>
+                  <Badge variant="secondary">{closeReviewRules.reviewedCount}개 회고</Badge>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {closeReviewRules.candidates.length ? (
+                  closeReviewRules.candidates.slice(0, 4).map((candidate) => (
+                    <InsightRow
+                      key={candidate.id}
+                      title={candidate.text}
+                      value={`${candidate.count}회`}
+                      badge={candidate.categoryLabel}
+                      note={candidate.note}
+                      tone={candidate.tone}
+                      action={
+                        <PortfolioPersonalRuleButton
+                          text={candidate.text}
+                          sourceCategory={candidate.category}
+                          existingRules={personalRules}
+                        />
+                      }
+                    />
+                  ))
+                ) : (
+                  <EmptyInsight label="반복해서 남긴 종료 회고 문장이 아직 적어 규칙 후보가 뚜렷하지 않습니다." />
+                )}
+              </CardContent>
+            </Card>
+
+            <Card className="border-border/80 bg-white/90 shadow-none">
+              <CardHeader className="space-y-3">
+                <CardTitle className="text-lg text-foreground">운용 품질 신호</CardTitle>
+                <p className="text-sm leading-6 text-muted-foreground">
+                  주간·월간 성과 외에, 장초 기록과 실제 종료가 얼마나 잘 연결되고 있는지도 함께 봅니다.
+                </p>
+              </CardHeader>
+              <CardContent className="grid gap-3 sm:grid-cols-2">
+                <QualityMetric
+                  title="장초 기록 연결"
+                  value={openingAnalytics ? `${openingAnalytics.matchedCount}건` : "0건"}
+                  note={
+                    openingAnalytics
+                      ? `종료 거래 ${openingAnalytics.matchedCount}건이 장초 판단과 연결됐습니다.`
+                      : "아직 장초 판단과 연결된 종료 거래가 충분하지 않습니다."
+                  }
+                  tone="neutral"
+                />
+                <QualityMetric
+                  title="보류 강행"
+                  value={openingAnalytics ? `${openingAnalytics.overrideCount}건` : "0건"}
+                  note="보류/제외였는데도 진입한 종료 거래 수입니다."
+                  tone={openingAnalytics && openingAnalytics.overrideCount > 0 ? "caution" : "positive"}
+                />
+                <QualityMetric
+                  title="장초 후 수익 종료"
+                  value={openingAnalytics ? `${openingAnalytics.profitableCount}건` : "0건"}
+                  note="장초 기록이 남아 있는 종료 거래 중 수익으로 끝난 건수입니다."
+                  tone="positive"
+                />
+                <QualityMetric
+                  title="장초 후 손실 종료"
+                  value={openingAnalytics ? `${openingAnalytics.lossCount}건` : "0건"}
+                  note="장초 기록이 남아 있는 종료 거래 중 손실로 끝난 건수입니다."
+                  tone="caution"
+                />
+              </CardContent>
+            </Card>
+          </div>
+        </details>
+      </div>
+
+      <div className="hidden gap-5 lg:grid xl:grid-cols-[1.2fr,0.8fr]">
         <PeriodFlowCard
           title="최근 주간 손익 흐름"
           periods={performance.weekly}
@@ -156,7 +340,7 @@ export function PortfolioPerformanceBoard({
         />
       </div>
 
-      <div className="grid gap-5 xl:grid-cols-[1.15fr,0.85fr]">
+      <div className="hidden gap-5 lg:grid xl:grid-cols-[1.15fr,0.85fr]">
         <EquityCurveCard points={performance.equityCurve} />
 
         <Card className="border-border/80 bg-white/90 shadow-[0_18px_44px_-34px_rgba(24,32,42,0.2)]">
@@ -185,7 +369,7 @@ export function PortfolioPerformanceBoard({
         </Card>
       </div>
 
-      <div className="grid gap-5 xl:grid-cols-2">
+      <div className="hidden gap-5 lg:grid xl:grid-cols-2">
         <Card className="border-border/80 bg-white/90 shadow-[0_18px_44px_-34px_rgba(24,32,42,0.2)]">
           <CardHeader className="space-y-3">
             <CardTitle className="text-lg text-foreground">전략 태그별 성과</CardTitle>
@@ -233,14 +417,22 @@ export function PortfolioPerformanceBoard({
         </Card>
       </div>
 
-      <Card className="border-border/80 bg-white/90 shadow-[0_18px_44px_-34px_rgba(24,32,42,0.2)]">
+      <Card className="hidden border-border/80 bg-white/90 shadow-[0_18px_44px_-34px_rgba(24,32,42,0.2)] lg:block">
         <CardHeader className="space-y-3">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <CardTitle className="text-lg text-foreground">반복 회고 규칙</CardTitle>
               <p className="text-sm leading-6 text-muted-foreground">{closeReviewRules.summary}</p>
             </div>
-            <Badge variant="secondary">{closeReviewRules.reviewedCount}개 회고</Badge>
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge variant="secondary">{closeReviewRules.reviewedCount}개 회고</Badge>
+              <Link
+                href="/portfolio?tab=rules"
+                className="inline-flex h-8 items-center rounded-full border border-border/80 bg-white px-3 text-xs font-medium text-foreground/78 transition hover:border-primary/24 hover:text-primary"
+              >
+                규칙 관리
+              </Link>
+            </div>
           </div>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -268,7 +460,7 @@ export function PortfolioPerformanceBoard({
         </CardContent>
       </Card>
 
-      <Card className="border-border/80 bg-white/90 shadow-[0_18px_44px_-34px_rgba(24,32,42,0.2)]">
+      <Card className="hidden border-border/80 bg-white/90 shadow-[0_18px_44px_-34px_rgba(24,32,42,0.2)] lg:block">
         <CardHeader className="space-y-3">
           <CardTitle className="text-lg text-foreground">운용 품질 신호</CardTitle>
           <p className="text-sm leading-6 text-muted-foreground">

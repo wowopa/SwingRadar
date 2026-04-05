@@ -76,6 +76,7 @@ function normalizeRuleEntry(value: unknown): PortfolioPersonalRuleEntry | null {
     text,
     sourceCategory,
     sourceLabel: getSourceLabel(sourceCategory),
+    isActive: payload.isActive !== false,
     createdAt: normalizeTimestamp(payload.createdAt, now),
     updatedAt: normalizeTimestamp(payload.updatedAt, now),
     updatedBy
@@ -166,6 +167,7 @@ export async function savePortfolioPersonalRuleForUser(
     ? {
         ...existing,
         text,
+        isActive: true,
         updatedAt: now,
         updatedBy: input.updatedBy
       }
@@ -174,6 +176,7 @@ export async function savePortfolioPersonalRuleForUser(
         text,
         sourceCategory: input.sourceCategory,
         sourceLabel: getSourceLabel(input.sourceCategory),
+        isActive: true,
         createdAt: now,
         updatedAt: now,
         updatedBy: input.updatedBy
@@ -183,6 +186,35 @@ export async function savePortfolioPersonalRuleForUser(
     nextEntry,
     ...current.filter((entry) => entry.id !== id)
   ];
+  await saveDocument(document);
+  return nextEntry;
+}
+
+export async function setPortfolioPersonalRuleActiveForUser(
+  userId: string,
+  input: {
+    id: string;
+    isActive: boolean;
+    updatedBy: string;
+  }
+) {
+  const document = await loadDocument();
+  const current = document.rules[userId] ?? [];
+  const index = current.findIndex((entry) => entry.id === input.id);
+
+  if (index < 0) {
+    throw new Error("개인 규칙을 찾을 수 없습니다.");
+  }
+
+  const now = new Date().toISOString();
+  const nextEntry: PortfolioPersonalRuleEntry = {
+    ...current[index],
+    isActive: input.isActive,
+    updatedAt: now,
+    updatedBy: input.updatedBy
+  };
+
+  document.rules[userId] = [nextEntry, ...current.filter((entry) => entry.id !== input.id)];
   await saveDocument(document);
   return nextEntry;
 }

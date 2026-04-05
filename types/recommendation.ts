@@ -302,6 +302,7 @@ export interface PortfolioPersonalRuleEntry {
   text: string;
   sourceCategory: "strengths" | "watchouts" | "next_rule";
   sourceLabel: string;
+  isActive: boolean;
   createdAt: string;
   updatedAt: string;
   updatedBy: string;
@@ -333,6 +334,11 @@ export interface TodayActionBoardItem {
   activationScore?: number;
   actionBucket?: RecommendationActionBucket;
   tradePlan?: RecommendationTradePlan;
+  validationSummary?: string;
+  validation?: ValidationStats;
+  validationBasis?: ValidationBasis;
+  validationInsight?: ValidationInsight;
+  trackingDiagnostic?: TrackingDiagnostic;
   openingRecheck?: OpeningRecheckDecision;
   boardStatus: TodayActionBoardStatus;
   boardReason: string;

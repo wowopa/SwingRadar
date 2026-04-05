@@ -3,7 +3,8 @@ import { z } from "zod";
 import { jsonOk } from "@/lib/server/api-response";
 import {
   loadPortfolioPersonalRulesForUser,
-  savePortfolioPersonalRuleForUser
+  savePortfolioPersonalRuleForUser,
+  setPortfolioPersonalRuleActiveForUser
 } from "@/lib/server/portfolio-personal-rules";
 import { buildResponseMeta, withRouteTelemetry } from "@/lib/server/telemetry";
 import { requireUserSession } from "@/lib/server/user-auth";
@@ -11,6 +12,11 @@ import { requireUserSession } from "@/lib/server/user-auth";
 const personalRuleSchema = z.object({
   text: z.string().trim().min(1).max(240),
   sourceCategory: z.enum(["strengths", "watchouts", "next_rule"])
+});
+
+const personalRuleToggleSchema = z.object({
+  id: z.string().trim().min(1),
+  isActive: z.boolean()
 });
 
 export async function GET(request: Request) {
@@ -33,6 +39,26 @@ export async function POST(request: Request) {
     const session = await requireUserSession(request);
     const payload = personalRuleSchema.parse(await request.json());
     const rule = await savePortfolioPersonalRuleForUser(session.user.id, {
+      ...payload,
+      updatedBy: session.user.email
+    });
+
+    return jsonOk(
+      {
+        ok: true,
+        requestId: context.requestId,
+        rule
+      },
+      buildResponseMeta(context, 0)
+    );
+  });
+}
+
+export async function PATCH(request: Request) {
+  return withRouteTelemetry(request, { route: "/api/account/portfolio-personal-rules" }, async (context) => {
+    const session = await requireUserSession(request);
+    const payload = personalRuleToggleSchema.parse(await request.json());
+    const rule = await setPortfolioPersonalRuleActiveForUser(session.user.id, {
       ...payload,
       updatedBy: session.user.email
     });

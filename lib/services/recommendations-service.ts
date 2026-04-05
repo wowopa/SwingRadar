@@ -639,18 +639,27 @@ export async function listRecommendations(
   const openingCheckCandidates = isMarketClosed ? [] : dailyScanCandidates?.slice(0, openingCheckLimit) ?? [];
   const todayActionBoard = !isMarketClosed && openingCheckCandidates.length
     ? buildTodayActionBoard(
-        openingCheckCandidates.map((candidate, index) => ({
-          ticker: candidate.ticker,
-          company: candidate.company,
-          sector: candidate.sector,
-          signalTone: candidate.signalTone,
-          featuredRank: index + 1,
-          candidateScore: candidate.candidateScore,
-          activationScore: candidate.activationScore,
-          actionBucket: candidate.actionBucket,
-          tradePlan: candidate.tradePlan,
-          openingRecheck: candidate.openingRecheck
-        })),
+        openingCheckCandidates.map((candidate, index) => {
+          const sourceItem = sourceByTicker.get(candidate.ticker);
+
+          return {
+            ticker: candidate.ticker,
+            company: candidate.company,
+            sector: candidate.sector,
+            signalTone: candidate.signalTone,
+            featuredRank: index + 1,
+            candidateScore: candidate.candidateScore,
+            activationScore: candidate.activationScore,
+            actionBucket: candidate.actionBucket,
+            tradePlan: candidate.tradePlan,
+            validationSummary: sourceItem?.validationSummary,
+            validation: sourceItem?.validation,
+            validationBasis: sourceItem?.validationBasis,
+            validationInsight: sourceItem?.validationInsight,
+            trackingDiagnostic: sourceItem?.trackingDiagnostic,
+            openingRecheck: candidate.openingRecheck
+          };
+        }),
         {
           ...todaySummary,
           maxConcurrentPositions:
@@ -763,7 +772,8 @@ export async function listRecommendations(
   const openingCheckRiskPatterns = buildOpeningCheckRiskPatterns(openingCheckAnalytics);
   const openingCheckPositivePattern = buildOpeningCheckPositivePattern(openingCheckAnalytics);
   const strategyPerformanceHint = buildStrategyPerformanceHint(portfolioJournal);
-  const personalRuleReminder = buildPersonalRuleReminder(closeReviews, personalRules);
+  const activePersonalRules = personalRules.filter((rule) => rule.isActive);
+  const personalRuleReminder = buildPersonalRuleReminder(closeReviews, activePersonalRules);
   const personalRuleAlert = buildPersonalRuleAlert(openingCheckAnalytics, personalRuleReminder);
 
   return {

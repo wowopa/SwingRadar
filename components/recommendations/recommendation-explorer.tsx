@@ -3,7 +3,9 @@
 import type { ReactNode } from "react";
 import { useMemo, useState } from "react";
 
+import { RecommendationMobileList } from "@/components/recommendations/recommendation-mobile-list";
 import { RecommendationTable } from "@/components/recommendations/recommendation-table";
+import { RecommendationTrustSummary } from "@/components/recommendations/recommendation-trust-summary";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import type {
@@ -13,6 +15,10 @@ import type {
 } from "@/lib/api-contracts/swing-radar";
 import { getValidationBasisDisplayLabel } from "@/lib/copy/action-language";
 import { buildOpeningCheckPatternPreview } from "@/lib/recommendations/opening-check-pattern-preview";
+import {
+  buildRecommendationTrustSummary,
+  resolveRecommendationValidationBasis
+} from "@/lib/recommendations/recommendation-trust";
 import {
   resolveRecommendationActionBucket,
   type RecommendationActionBucket
@@ -41,15 +47,11 @@ const VALIDATION_BASIS_OPTIONS: ValidationBasis[] = [
 const ACTION_BUCKET_ORDER: RecommendationActionBucket[] = ["buy_now", "watch_only", "avoid"];
 
 function resolveValidationBasis(item: Recommendation): ValidationBasis {
-  if (item.validationBasis) {
-    return item.validationBasis;
-  }
-
-  if (item.validation.sampleSize >= 25 && !item.validationSummary.includes("참고") && !item.validationSummary.includes("보수")) {
-    return "실측 기반";
-  }
-
-  return "보수 계산";
+  return resolveRecommendationValidationBasis({
+    validation: item.validation,
+    validationBasis: item.validationBasis,
+    validationSummary: item.validationSummary
+  });
 }
 
 function getActionBucket(item: Recommendation) {
@@ -312,6 +314,73 @@ export function RecommendationExplorer({
     );
   }, [filteredItems]);
 
+  const trustLevelSummary = useMemo(() => {
+    return filteredItems.reduce(
+      (acc, item) => {
+        const patternPreview = openingCheckCandidateSet.has(item.ticker.toUpperCase())
+          ? buildOpeningCheckPatternPreview(
+              {
+                actionBucket: getActionBucket(item),
+                tradePlan: item.tradePlan
+              },
+              {
+                riskPatterns: openingCheckRiskPatterns,
+                positivePattern: openingCheckPositivePattern
+              }
+            )
+          : null;
+        const trustSummary = buildRecommendationTrustSummary({
+          validation: item.validation,
+          validationBasis: item.validationBasis,
+          validationSummary: item.validationSummary,
+          validationInsight: item.validationInsight,
+          trackingDiagnostic: item.trackingDiagnostic,
+          patternPreview
+        });
+
+        acc[trustSummary.level] += 1;
+        return acc;
+      },
+      {
+        high: 0,
+        medium: 0,
+        low: 0
+      }
+    );
+  }, [filteredItems, openingCheckCandidateSet, openingCheckPositivePattern, openingCheckRiskPatterns]);
+
+  const leadTrustCandidate = useMemo(() => {
+    const leadItem = filteredItems[0];
+    if (!leadItem) {
+      return null;
+    }
+
+    const patternPreview = openingCheckCandidateSet.has(leadItem.ticker.toUpperCase())
+      ? buildOpeningCheckPatternPreview(
+          {
+            actionBucket: getActionBucket(leadItem),
+            tradePlan: leadItem.tradePlan
+          },
+          {
+            riskPatterns: openingCheckRiskPatterns,
+            positivePattern: openingCheckPositivePattern
+          }
+        )
+      : null;
+
+    return {
+      item: leadItem,
+      summary: buildRecommendationTrustSummary({
+        validation: leadItem.validation,
+        validationBasis: leadItem.validationBasis,
+        validationSummary: leadItem.validationSummary,
+        validationInsight: leadItem.validationInsight,
+        trackingDiagnostic: leadItem.trackingDiagnostic,
+        patternPreview
+      })
+    };
+  }, [filteredItems, openingCheckCandidateSet, openingCheckPositivePattern, openingCheckRiskPatterns]);
+
   const actionableCount = bucketedItems.buy_now.length + bucketedItems.watch_only.length;
   const enoughInvalidationCount = filteredItems.filter((item) => item.invalidationDistance <= -6).length;
   const verifiedCount = filteredItems.filter((item) => resolveValidationBasis(item) !== "보수 계산").length;
@@ -401,6 +470,38 @@ export function RecommendationExplorer({
           <p className="mt-2 text-sm leading-6 text-muted-foreground">{quickViewSummary.detail}</p>
         </section>
       ) : null}
+
+      <section className="rounded-3xl border border-border/80 bg-white/92 p-4 shadow-[0_18px_46px_-32px_rgba(24,32,42,0.16)]">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge variant="neutral">종목 신뢰 읽기</Badge>
+              <p className="text-sm font-medium text-foreground">실측인지 fallback인지, 최근 장초 패턴이 강한지 약한지를 한 번에 봅니다.</p>
+            </div>
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">
+              각 종목 카드와 비교표의 신뢰 요약은 검증 근거, 최근 장초 패턴, 표본 규모를 함께 압축한 값입니다.
+            </p>
+          </div>
+          <div className="grid min-w-[220px] flex-1 gap-2 sm:max-w-[360px] sm:grid-cols-3">
+            <TrustCountBadge label="신뢰 높음" count={trustLevelSummary.high} tone="positive" />
+            <TrustCountBadge label="신뢰 보통" count={trustLevelSummary.medium} tone="neutral" />
+            <TrustCountBadge label="신뢰 주의" count={trustLevelSummary.low} tone="caution" />
+          </div>
+        </div>
+
+        {leadTrustCandidate ? (
+          <div className="mt-4">
+            <div className="mb-3 flex flex-wrap items-center gap-2">
+              <Badge variant="secondary">현재 상단 종목</Badge>
+              <p className="text-sm font-medium text-foreground">
+                {leadTrustCandidate.item.company}
+                <span className="ml-2 text-xs font-medium text-muted-foreground">{leadTrustCandidate.item.ticker}</span>
+              </p>
+            </div>
+            <RecommendationTrustSummary summary={leadTrustCandidate.summary} />
+          </div>
+        ) : null}
+      </section>
 
       <div className="space-y-3 lg:hidden">
         {highlightedRiskPatterns.length ? (
@@ -667,7 +768,7 @@ export function RecommendationExplorer({
               {tableSummary}
             </div>
           </div>
-          <RecommendationTable
+          <RecommendationMobileList
             items={filteredItems}
             favorites={favorites}
             onToggleFavorite={toggleFavorite}
@@ -675,8 +776,19 @@ export function RecommendationExplorer({
             openingCheckPositivePattern={openingCheckPositivePattern}
             openingCheckCandidateTickers={openingCheckCandidateTickers}
             personalActionByTicker={personalActionByTicker}
-            rowAccentMode={currentQuickView === "custom" ? undefined : currentQuickView}
           />
+          <div className="hidden lg:block">
+            <RecommendationTable
+              items={filteredItems}
+              favorites={favorites}
+              onToggleFavorite={toggleFavorite}
+              openingCheckRiskPatterns={openingCheckRiskPatterns}
+              openingCheckPositivePattern={openingCheckPositivePattern}
+              openingCheckCandidateTickers={openingCheckCandidateTickers}
+              personalActionByTicker={personalActionByTicker}
+              rowAccentMode={currentQuickView === "custom" ? undefined : currentQuickView}
+            />
+          </div>
         </section>
       ) : (
         <section className="rounded-3xl border border-border/80 bg-white/90 p-8 text-center shadow-[0_18px_46px_-32px_rgba(24,32,42,0.18)]">
@@ -882,6 +994,31 @@ function SummaryCard({
       <p className="text-xs font-medium">{label}</p>
       <p className="mt-2 text-2xl font-semibold">{value}</p>
       <p className="mt-2 text-xs leading-5 opacity-80">{detail}</p>
+    </div>
+  );
+}
+
+function TrustCountBadge({
+  label,
+  count,
+  tone
+}: {
+  label: string;
+  count: number;
+  tone: "positive" | "neutral" | "caution";
+}) {
+  return (
+    <div
+      className={`rounded-2xl border px-3 py-3 text-center ${
+        tone === "positive"
+          ? "border-positive/24 bg-[hsl(var(--positive)/0.1)]"
+          : tone === "caution"
+            ? "border-caution/24 bg-[hsl(var(--caution)/0.1)]"
+            : "border-border/80 bg-[hsl(42_40%_97%)]"
+      }`}
+    >
+      <p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">{label}</p>
+      <p className="mt-2 text-xl font-semibold text-foreground">{count}개</p>
     </div>
   );
 }

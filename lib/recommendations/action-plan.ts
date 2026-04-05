@@ -14,7 +14,10 @@ import type {
   TodayActionBoardStatus,
   TodayActionSummary,
   TodayOperatingWorkflow,
-  TrackingDiagnostic
+  TrackingDiagnostic,
+  ValidationBasis,
+  ValidationInsight,
+  ValidationStats
 } from "@/types/recommendation";
 
 type TrackingStage = Pick<TrackingDiagnostic, "isEntryEligible" | "isWatchEligible" | "stage">;
@@ -65,6 +68,11 @@ export interface TodayActionBoardCandidateInput {
   activationScore?: number | null;
   actionBucket?: RecommendationActionBucket | null;
   tradePlan?: RecommendationTradePlan | null;
+  validationSummary?: string | null;
+  validation?: ValidationStats | null;
+  validationBasis?: ValidationBasis | null;
+  validationInsight?: ValidationInsight | null;
+  trackingDiagnostic?: TrackingDiagnostic | null;
   openingRecheck?: OpeningRecheckDecision | null;
 }
 
@@ -691,6 +699,11 @@ export function buildTodayActionBoard(
       activationScore: candidate.activationScore ?? undefined,
       actionBucket: candidate.actionBucket ?? undefined,
       tradePlan: candidate.tradePlan ?? undefined,
+      validationSummary: candidate.validationSummary ?? undefined,
+      validation: candidate.validation ?? undefined,
+      validationBasis: candidate.validationBasis ?? undefined,
+      validationInsight: candidate.validationInsight ?? undefined,
+      trackingDiagnostic: candidate.trackingDiagnostic ?? undefined,
       openingRecheck,
       boardStatus,
       boardReason,

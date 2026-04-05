@@ -2,6 +2,7 @@
 
 import { FavoriteTickerButton } from "@/components/shared/favorite-ticker-button";
 import { PersonalActionStatusBadge } from "@/components/recommendations/personal-action-status-badge";
+import { RecommendationTrustSummary } from "@/components/recommendations/recommendation-trust-summary";
 import { SignalToneBadge } from "@/components/shared/signal-tone-badge";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,23 +12,11 @@ import type {
   OpeningCheckRiskPatternDto,
   TodayActionBoardItemDto
 } from "@/lib/api-contracts/swing-radar";
-import { getValidationBasisDisplayLabel } from "@/lib/copy/action-language";
 import { buildOpeningCheckPatternPreview } from "@/lib/recommendations/opening-check-pattern-preview";
 import { resolveRecommendationActionBucket } from "@/lib/recommendations/action-plan";
+import { buildRecommendationTrustSummary } from "@/lib/recommendations/recommendation-trust";
 import { cn, formatPercent } from "@/lib/utils";
 import type { Recommendation } from "@/types/recommendation";
-
-function resolveValidationBasis(item: Recommendation) {
-  if (item.validationBasis) {
-    return item.validationBasis;
-  }
-
-  if (item.validation.sampleSize >= 25 && !item.validationSummary.includes("참고") && !item.validationSummary.includes("보수")) {
-    return "실측 기반";
-  }
-
-  return "보수 계산";
-}
 
 export function RecommendationTable({
   items,
@@ -58,7 +47,7 @@ export function RecommendationTable({
       </CardHeader>
       <CardContent>
         <ScrollArea className="w-full">
-          <table className="min-w-[980px] w-full table-fixed text-left text-sm">
+          <table className="min-w-[1180px] w-full table-fixed text-left text-sm">
             <thead className="text-xs uppercase tracking-[0.22em] text-muted-foreground">
               <tr className="border-b border-border/80">
                 <th className="w-[72px] whitespace-nowrap pb-3 pr-6">순위</th>
@@ -70,6 +59,7 @@ export function RecommendationTable({
                 <th className="w-[180px] whitespace-nowrap pb-3 pr-6">신호 메모</th>
                 <th className="w-[72px] whitespace-nowrap pb-3 pr-6">표본 수</th>
                 <th className="w-[92px] whitespace-nowrap pb-3 pr-6">검증 근거</th>
+                <th className="w-[244px] whitespace-nowrap pb-3 pr-6">신뢰 요약</th>
                 <th className="w-[72px] whitespace-nowrap pb-3 pr-6">적중률</th>
                 <th className="w-[96px] whitespace-nowrap pb-3 pr-6">평균 수익</th>
                 <th className="w-[104px] whitespace-nowrap pb-3 pr-6">무효화 거리</th>
@@ -109,6 +99,14 @@ export function RecommendationTable({
                       : rowAccentMode === "my_actionable"
                         ? personalActionItem?.boardStatus === "buy_review" || personalActionItem?.boardStatus === "watch"
                         : false;
+                const trustSummary = buildRecommendationTrustSummary({
+                  validation: item.validation,
+                  validationBasis: item.validationBasis,
+                  validationSummary: item.validationSummary,
+                  validationInsight: item.validationInsight,
+                  trackingDiagnostic: item.trackingDiagnostic,
+                  patternPreview
+                });
                 return (
                   <tr
                     key={item.ticker}
@@ -167,7 +165,10 @@ export function RecommendationTable({
                       <div className="text-xs text-muted-foreground">{item.observationWindow}</div>
                     </td>
                     <td className="py-4 pr-6">{item.validation.sampleSize}</td>
-                    <td className="py-4 pr-6">{getValidationBasisDisplayLabel(resolveValidationBasis(item))}</td>
+                    <td className="py-4 pr-6">{trustSummary.basisLabel}</td>
+                    <td className="py-4 pr-6 align-top">
+                      <RecommendationTrustSummary summary={trustSummary} mode="compact" />
+                    </td>
                     <td className="py-4 pr-6">{item.validation.hitRate}%</td>
                     <td className="py-4 pr-6">{formatPercent(item.validation.avgReturn)}</td>
                     <td className="py-4 pr-6">{formatPercent(item.invalidationDistance)}</td>

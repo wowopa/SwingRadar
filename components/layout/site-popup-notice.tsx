@@ -12,6 +12,7 @@ import {
   DialogHeader,
   DialogTitle
 } from "@/components/ui/dialog";
+import { publishPopupNoticeState } from "@/lib/popup-notice/popup-notice-events";
 
 type PopupNoticePayload = {
   title: string;
@@ -94,6 +95,7 @@ export function SitePopupNotice() {
 
   useEffect(() => {
     const controller = new AbortController();
+    publishPopupNoticeState("loading");
 
     async function loadNotice() {
       try {
@@ -105,19 +107,28 @@ export function SitePopupNotice() {
         const nextNotice = json.notice ?? null;
 
         if (!nextNotice || wasDismissedToday(nextNotice.noticeKey)) {
+          setNotice(null);
+          setOpen(false);
+          publishPopupNoticeState("closed");
           return;
         }
 
         setNotice(nextNotice);
         setOpen(true);
+        setHideForToday(false);
+        publishPopupNoticeState("open");
       } catch {
         // Ignore popup failures so site entry stays smooth.
+        publishPopupNoticeState("closed");
       }
     }
 
     void loadNotice();
 
-    return () => controller.abort();
+    return () => {
+      controller.abort();
+      publishPopupNoticeState("closed");
+    };
   }, []);
 
   function closeNotice() {
@@ -126,6 +137,7 @@ export function SitePopupNotice() {
     }
 
     setOpen(false);
+    publishPopupNoticeState("closed");
   }
 
   if (!notice) {
@@ -145,6 +157,7 @@ export function SitePopupNotice() {
         }
 
         setOpen(nextOpen);
+        publishPopupNoticeState("open");
       }}
     >
       <DialogContent className="max-w-2xl overflow-hidden border-border/70 bg-white p-0 shadow-[0_28px_80px_hsl(28_32%_10%_/_0.24)]">
