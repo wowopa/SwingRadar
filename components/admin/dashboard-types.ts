@@ -286,6 +286,25 @@ export type ServiceReadinessPayload = {
   }>;
 };
 
+export type PrelaunchDryRunPayload = {
+  status: "ready" | "trial" | "blocked";
+  label: string;
+  summary: string;
+  nextAction: string;
+  recommendedCohort: string;
+  passCount: number;
+  warningCount: number;
+  failureCount: number;
+  blockers: string[];
+  dailyChecks: string[];
+  checks: Array<{
+    key: "ops" | "history" | "support" | "feedback";
+    label: string;
+    status: "pass" | "warn" | "fail";
+    note: string;
+  }>;
+};
+
 export type AdminUserItemPayload = {
   id: string;
   email: string;
@@ -344,6 +363,7 @@ export type AdminStatusPayload = {
   thresholdAdviceReport: ThresholdAdviceReportPayload | null;
   dataQualitySummary: AdminDataQualitySummaryPayload | null;
   serviceReadiness: ServiceReadinessPayload;
+  prelaunchDryRun: PrelaunchDryRunPayload;
   accessStatsReport: AccessStatsReportPayload | null;
   runtimeStorageReport: RuntimeStorageReportPayload | null;
   databaseStorageReport: DatabaseStorageReportPayload | null;

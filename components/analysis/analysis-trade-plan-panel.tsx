@@ -112,39 +112,91 @@ export function AnalysisTradePlanPanel({
           </div>
         ) : null}
 
-        <div data-tutorial="analysis-action-flow" className="grid gap-3 md:grid-cols-3">
-          <ActionFlowStep
-            label="공통 후보"
-            value={actionFlow.sharedLabel}
-            note={actionFlow.sharedNote}
-            badge={featuredRank ? <Badge variant="neutral">{getFeaturedRankLabel(featuredRank)}</Badge> : null}
-          />
-          <ActionFlowStep
-            label="내 기준 해석"
-            value={actionFlow.personalLabel}
-            note={actionFlow.personalNote}
-            badge={
-              personalActionItem ? (
-                <div className="flex flex-wrap items-center gap-2">
-                  <PersonalActionStatusBadge item={personalActionItem} />
-                  {personalActionItem.portfolioNote ? <Badge variant="neutral">{personalActionItem.portfolioNote}</Badge> : null}
-                </div>
-              ) : null
-            }
-          />
-          <ActionFlowStep
-            label="다음 이동"
-            value={actionFlow.nextLabel}
-            note={actionFlow.nextNote}
-            badge={
-              <Link
-                href={actionFlow.href}
-                className="inline-flex items-center rounded-full border border-primary/24 bg-primary/10 px-3 py-1 text-xs font-medium text-primary transition hover:bg-primary/14"
-              >
-                {actionFlow.hrefLabel}
-              </Link>
-            }
-          />
+        <div className="rounded-[24px] border border-primary/18 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(246,241,232,0.88))] p-4 md:hidden">
+          <p className="text-xs font-medium uppercase tracking-[0.18em] text-primary">모바일 한눈 요약</p>
+          <p className="mt-2 text-sm leading-6 text-foreground/84">{plan.bucketDescription}</p>
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            <CompactValue label="매수 구간" value={plan.entryLabel} />
+            <CompactValue label="손절 기준" value={plan.stopLabel} />
+            <CompactValue label="1차 목표" value={plan.targetLabel} />
+            <CompactValue label="다음 이동" value={actionFlow.nextLabel} />
+          </div>
+        </div>
+
+        <div data-tutorial="analysis-action-flow" className="space-y-3">
+          <div className="md:hidden">
+            <MobileDetailSection title="실행 흐름" badge={actionFlow.hrefLabel} defaultOpen>
+              <div className="grid gap-3">
+                <ActionFlowStep
+                  label="공통 후보"
+                  value={actionFlow.sharedLabel}
+                  note={actionFlow.sharedNote}
+                  badge={featuredRank ? <Badge variant="neutral">{getFeaturedRankLabel(featuredRank)}</Badge> : null}
+                />
+                <ActionFlowStep
+                  label="내 기준 해석"
+                  value={actionFlow.personalLabel}
+                  note={actionFlow.personalNote}
+                  badge={
+                    personalActionItem ? (
+                      <div className="flex flex-wrap items-center gap-2">
+                        <PersonalActionStatusBadge item={personalActionItem} />
+                        {personalActionItem.portfolioNote ? <Badge variant="neutral">{personalActionItem.portfolioNote}</Badge> : null}
+                      </div>
+                    ) : null
+                  }
+                />
+                <ActionFlowStep
+                  label="다음 이동"
+                  value={actionFlow.nextLabel}
+                  note={actionFlow.nextNote}
+                  badge={
+                    <Link
+                      href={actionFlow.href}
+                      className="inline-flex items-center rounded-full border border-primary/24 bg-primary/10 px-3 py-1 text-xs font-medium text-primary transition hover:bg-primary/14"
+                    >
+                      {actionFlow.hrefLabel}
+                    </Link>
+                  }
+                />
+              </div>
+            </MobileDetailSection>
+          </div>
+
+          <div className="hidden gap-3 md:grid md:grid-cols-3">
+            <ActionFlowStep
+              label="공통 후보"
+              value={actionFlow.sharedLabel}
+              note={actionFlow.sharedNote}
+              badge={featuredRank ? <Badge variant="neutral">{getFeaturedRankLabel(featuredRank)}</Badge> : null}
+            />
+            <ActionFlowStep
+              label="내 기준 해석"
+              value={actionFlow.personalLabel}
+              note={actionFlow.personalNote}
+              badge={
+                personalActionItem ? (
+                  <div className="flex flex-wrap items-center gap-2">
+                    <PersonalActionStatusBadge item={personalActionItem} />
+                    {personalActionItem.portfolioNote ? <Badge variant="neutral">{personalActionItem.portfolioNote}</Badge> : null}
+                  </div>
+                ) : null
+              }
+            />
+            <ActionFlowStep
+              label="다음 이동"
+              value={actionFlow.nextLabel}
+              note={actionFlow.nextNote}
+              badge={
+                <Link
+                  href={actionFlow.href}
+                  className="inline-flex items-center rounded-full border border-primary/24 bg-primary/10 px-3 py-1 text-xs font-medium text-primary transition hover:bg-primary/14"
+                >
+                  {actionFlow.hrefLabel}
+                </Link>
+              }
+            />
+          </div>
         </div>
 
         {patternPreview ? (
@@ -182,13 +234,28 @@ export function AnalysisTradePlanPanel({
           </div>
         ) : null}
 
-        <div data-tutorial="analysis-metrics" className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-          <MetricCard label="현재가 기준" value={plan.currentPriceLabel} note="최신 스냅샷 기준 가격 위치" icon={Flag} />
-          <MetricCard label="매수 구간" value={plan.entryLabel} note="지금 계획으로 확인할 가격 범위" icon={ArrowUpRight} />
-          <MetricCard label="손절 기준" value={plan.stopLabel} note="틀리면 다시 볼 가격" icon={ShieldAlert} />
-          <MetricCard label="1차 목표" value={plan.targetLabel} note="먼저 반응을 확인할 구간" icon={Target} />
-          <MetricCard label="예상 보유" value={plan.holdWindowLabel} note="이번 스윙에서 보는 시간축" icon={Flag} />
-          <MetricCard label="기대 손익비" value={plan.riskRewardLabel} note="확인 가격 기준 기대 비율" icon={Target} />
+        <div data-tutorial="analysis-metrics" className="space-y-3">
+          <div className="md:hidden">
+            <MobileDetailSection title="가격 기준과 기대값" badge={plan.riskRewardLabel}>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <MetricCard label="현재가 기준" value={plan.currentPriceLabel} note="최신 스냅샷 기준 가격 위치" icon={Flag} />
+                <MetricCard label="매수 구간" value={plan.entryLabel} note="지금 계획으로 확인할 가격 범위" icon={ArrowUpRight} />
+                <MetricCard label="손절 기준" value={plan.stopLabel} note="틀리면 다시 볼 가격" icon={ShieldAlert} />
+                <MetricCard label="1차 목표" value={plan.targetLabel} note="먼저 반응을 확인할 구간" icon={Target} />
+                <MetricCard label="예상 보유" value={plan.holdWindowLabel} note="이번 스윙에서 보는 시간축" icon={Flag} />
+                <MetricCard label="기대 손익비" value={plan.riskRewardLabel} note="확인 가격 기준 기대 비율" icon={Target} />
+              </div>
+            </MobileDetailSection>
+          </div>
+
+          <div className="hidden gap-3 md:grid md:grid-cols-2 xl:grid-cols-3">
+            <MetricCard label="현재가 기준" value={plan.currentPriceLabel} note="최신 스냅샷 기준 가격 위치" icon={Flag} />
+            <MetricCard label="매수 구간" value={plan.entryLabel} note="지금 계획으로 확인할 가격 범위" icon={ArrowUpRight} />
+            <MetricCard label="손절 기준" value={plan.stopLabel} note="틀리면 다시 볼 가격" icon={ShieldAlert} />
+            <MetricCard label="1차 목표" value={plan.targetLabel} note="먼저 반응을 확인할 구간" icon={Target} />
+            <MetricCard label="예상 보유" value={plan.holdWindowLabel} note="이번 스윙에서 보는 시간축" icon={Flag} />
+            <MetricCard label="기대 손익비" value={plan.riskRewardLabel} note="확인 가격 기준 기대 비율" icon={Target} />
+          </div>
         </div>
       </CardHeader>
 
@@ -202,13 +269,29 @@ export function AnalysisTradePlanPanel({
         </div>
 
         <div data-tutorial="analysis-guides" className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="space-y-3 md:hidden">
+            <MobileDetailSection title="진입 · 손절 · 목표 가이드" badge={plan.stretchTargetLabel} defaultOpen>
+              <div className="grid gap-4">
+                <DetailCard title="진입 전에 볼 것" body={plan.entryGuide} />
+                <DetailCard title="손절은 이렇게" body={plan.stopGuide} />
+                <DetailCard title="목표 구간 읽기" body={`${plan.targetGuide} 확장 목표는 ${plan.stretchTargetLabel}까지 이어집니다.`} />
+              </div>
+            </MobileDetailSection>
+            <MobileDetailSection title="지지 · 주의 포인트" badge={`${plan.supportPoints.length + plan.cautionPoints.length}개`}>
+              <div className="grid gap-4">
+                <BulletCard title="왜 지금 보는가" items={plan.supportPoints} />
+                <BulletCard title="조심할 점" items={plan.cautionPoints} />
+              </div>
+            </MobileDetailSection>
+          </div>
+
+          <div className="hidden gap-4 md:grid md:grid-cols-3">
             <DetailCard title="진입 전에 볼 것" body={plan.entryGuide} />
             <DetailCard title="손절은 이렇게" body={plan.stopGuide} />
             <DetailCard title="목표 구간 읽기" body={`${plan.targetGuide} 확장 목표는 ${plan.stretchTargetLabel}까지 이어집니다.`} />
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="hidden gap-4 md:grid md:grid-cols-2">
             <BulletCard title="왜 지금 보는가" items={plan.supportPoints} />
             <BulletCard title="조심할 점" items={plan.cautionPoints} />
           </div>
@@ -319,6 +402,40 @@ function ActionFlowStep({
       </div>
       <p className="mt-3 text-base font-semibold text-foreground">{value}</p>
       <p className="mt-2 text-sm leading-6 text-foreground/78">{note}</p>
+    </div>
+  );
+}
+
+function MobileDetailSection({
+  title,
+  badge,
+  children,
+  defaultOpen = false
+}: {
+  title: string;
+  badge?: string;
+  children: ReactNode;
+  defaultOpen?: boolean;
+}) {
+  return (
+    <details
+      open={defaultOpen}
+      className="rounded-[24px] border border-border/80 bg-white/92 shadow-[0_18px_44px_-34px_rgba(24,32,42,0.2)]"
+    >
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-4 text-sm font-semibold text-foreground [&::-webkit-details-marker]:hidden">
+        <span>{title}</span>
+        {badge ? <Badge variant="secondary">{badge}</Badge> : null}
+      </summary>
+      <div className="border-t border-border/70 px-4 py-4">{children}</div>
+    </details>
+  );
+}
+
+function CompactValue({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-[18px] border border-border/80 bg-white/84 px-3 py-3">
+      <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">{label}</p>
+      <p className="mt-1 text-sm font-semibold text-foreground">{value}</p>
     </div>
   );
 }

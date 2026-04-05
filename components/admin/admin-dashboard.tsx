@@ -22,6 +22,7 @@ import type {
   OpsHealthReportPayload,
   PopupNoticeDocument,
   PortfolioProfilePayload,
+  PrelaunchDryRunPayload,
   PostLaunchHistoryEntryPayload,
   RuntimeStorageReportPayload,
   ServiceReadinessPayload,
@@ -89,6 +90,7 @@ export function AdminDashboard() {
   const [thresholdAdviceReport, setThresholdAdviceReport] = useState<ThresholdAdviceReportPayload | null>(null);
   const [dataQualitySummary, setDataQualitySummary] = useState<AdminDataQualitySummaryPayload | null>(null);
   const [serviceReadiness, setServiceReadiness] = useState<ServiceReadinessPayload | null>(null);
+  const [prelaunchDryRun, setPrelaunchDryRun] = useState<PrelaunchDryRunPayload | null>(null);
   const [usersPayload, setUsersPayload] = useState<AdminUsersPayload | null>(null);
   const [accessStatsReport, setAccessStatsReport] = useState<AccessStatsReportPayload | null>(null);
   const [runtimeStorageReport, setRuntimeStorageReport] = useState<RuntimeStorageReportPayload | null>(null);
@@ -182,6 +184,7 @@ export function AdminDashboard() {
         setThresholdAdviceReport(null);
         setDataQualitySummary(null);
         setServiceReadiness(null);
+        setPrelaunchDryRun(null);
         setUsersPayload(null);
         setAccessStatsReport(null);
         setRuntimeStorageReport(null);
@@ -214,6 +217,7 @@ export function AdminDashboard() {
       setThresholdAdviceReport(statusJson.thresholdAdviceReport ?? null);
       setDataQualitySummary(statusJson.dataQualitySummary ?? null);
       setServiceReadiness(statusJson.serviceReadiness ?? null);
+      setPrelaunchDryRun(statusJson.prelaunchDryRun ?? null);
       setAccessStatsReport(statusJson.accessStatsReport ?? null);
       setRuntimeStorageReport(statusJson.runtimeStorageReport ?? null);
       setDatabaseStorageReport(statusJson.databaseStorageReport ?? null);
@@ -764,6 +768,7 @@ export function AdminDashboard() {
               snapshotGenerationReport={snapshotGenerationReport}
               dataQualitySummary={dataQualitySummary}
               serviceReadiness={serviceReadiness}
+              prelaunchDryRun={prelaunchDryRun}
               audits={audits}
               onSelectTab={(nextTab) => setTab(nextTab)}
             />

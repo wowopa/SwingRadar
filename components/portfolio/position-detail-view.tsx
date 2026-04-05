@@ -216,24 +216,48 @@ export function PositionDetailView({
                 </div>
               </div>
 
-              <div className="flex flex-wrap items-center gap-2">
+              <div className="grid w-full gap-2 sm:flex sm:w-auto sm:flex-wrap sm:items-center">
                 {!isClosed && quickTradePresets ? (
                   <>
-                    <Button type="button" size="sm" variant="outline" onClick={() => setQuickTradePreset(quickTradePresets.add)}>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="w-full sm:w-auto"
+                      onClick={() => setQuickTradePreset(quickTradePresets.add)}
+                    >
                       추가 매수
                     </Button>
-                    <Button type="button" size="sm" variant="outline" onClick={() => setQuickTradePreset(quickTradePresets.partial)}>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="w-full sm:w-auto"
+                      onClick={() => setQuickTradePreset(quickTradePresets.partial)}
+                    >
                       부분 익절
                     </Button>
-                    <Button type="button" size="sm" variant="outline" onClick={() => setQuickTradePreset(quickTradePresets.stop)}>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="w-full sm:w-auto"
+                      onClick={() => setQuickTradePreset(quickTradePresets.stop)}
+                    >
                       손절
                     </Button>
-                    <Button type="button" size="sm" variant="secondary" onClick={() => setQuickTradePreset(quickTradePresets.exit)}>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="secondary"
+                      className="w-full sm:w-auto"
+                      onClick={() => setQuickTradePreset(quickTradePresets.exit)}
+                    >
                       전량 매도
                     </Button>
                   </>
                 ) : null}
-                <Button asChild variant="outline">
+                <Button asChild variant="outline" className="w-full sm:w-auto">
                   <Link href={`/analysis/${ticker}`}>
                     분석 보기
                     <ArrowUpRight className="h-4 w-4" />
@@ -263,8 +287,35 @@ export function PositionDetailView({
           </CardContent>
         </Card>
 
+        <div className="flex gap-2 overflow-x-auto pb-1 lg:hidden">
+          <a
+            href="#position-chart-panel"
+            className="inline-flex shrink-0 items-center rounded-full border border-border/80 bg-white/88 px-3 py-2 text-xs font-medium text-foreground"
+          >
+            차트
+          </a>
+          <a
+            href="#position-plan-panel"
+            className="inline-flex shrink-0 items-center rounded-full border border-border/80 bg-white/88 px-3 py-2 text-xs font-medium text-foreground"
+          >
+            계획
+          </a>
+          <a
+            href="#position-timeline-panel"
+            className="inline-flex shrink-0 items-center rounded-full border border-border/80 bg-white/88 px-3 py-2 text-xs font-medium text-foreground"
+          >
+            타임라인
+          </a>
+          <a
+            href="#position-review-panel"
+            className="inline-flex shrink-0 items-center rounded-full border border-border/80 bg-white/88 px-3 py-2 text-xs font-medium text-foreground"
+          >
+            복기
+          </a>
+        </div>
+
         <div className="grid gap-6 xl:grid-cols-[1.4fr,0.92fr]">
-          <div data-tutorial="position-chart">
+          <div id="position-chart-panel" data-tutorial="position-chart" className="scroll-mt-32">
             <PortfolioPositionChartCard
               company={company}
               chartPoints={analysis?.chartSeries ?? []}
@@ -290,8 +341,9 @@ export function PositionDetailView({
             ) : null}
 
             <Card
+              id="position-plan-panel"
               data-tutorial="position-comparison"
-              className="border-border/80 bg-white/90 shadow-[0_18px_44px_-34px_rgba(24,32,42,0.2)]"
+              className="scroll-mt-32 border-border/80 bg-white/90 shadow-[0_18px_44px_-34px_rgba(24,32,42,0.2)]"
             >
               <CardHeader>
                 <CardTitle className="text-lg text-foreground">계획 대비 실제</CardTitle>
@@ -372,8 +424,9 @@ export function PositionDetailView({
 
         <div className="grid gap-6 xl:grid-cols-[1.16fr,0.84fr]">
           <Card
+            id="position-timeline-panel"
             data-tutorial="position-timeline"
-            className="border-border/80 bg-white/90 shadow-[0_18px_44px_-34px_rgba(24,32,42,0.2)]"
+            className="scroll-mt-32 border-border/80 bg-white/90 shadow-[0_18px_44px_-34px_rgba(24,32,42,0.2)]"
           >
             <CardHeader>
               <CardTitle className="text-lg text-foreground">체결 타임라인</CardTitle>
@@ -468,8 +521,9 @@ export function PositionDetailView({
             </Card>
 
             <Card
+              id="position-review-panel"
               data-tutorial="position-review"
-              className="border-border/80 bg-white/90 shadow-[0_18px_44px_-34px_rgba(24,32,42,0.2)]"
+              className="scroll-mt-32 border-border/80 bg-white/90 shadow-[0_18px_44px_-34px_rgba(24,32,42,0.2)]"
             >
               <CardHeader>
                 <CardTitle className="text-lg text-foreground">{isClosed ? "종료 회고" : "포지션 메모"}</CardTitle>

@@ -98,11 +98,18 @@ export function PortfolioPerformanceBoard({
                 {option.label}
               </button>
             ))}
-            <span className="text-xs leading-5 text-muted-foreground">{selectedRange.note}</span>
+            <span className="w-full text-xs leading-5 text-muted-foreground sm:w-auto">{selectedRange.note}</span>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
+          <div className="grid gap-3 sm:grid-cols-2 md:hidden">
+            <PerformanceMetric title="누적 실현손익" value={formatSignedPrice(performance.realizedPnlTotal)} tone="primary" />
+            <PerformanceMetric title="승률" value={`${performance.winRate}%`} tone="positive" />
+            <PerformanceMetric title="평균 보유" value={`${performance.averageHoldingDays}일`} tone="neutral" />
+            <PerformanceMetric title="손절 비율" value={`${performance.stopLossRate}%`} tone="caution" />
+          </div>
+
+          <div className="hidden gap-3 md:grid md:grid-cols-2 xl:grid-cols-6">
             <PerformanceMetric title="누적 실현손익" value={formatSignedPrice(performance.realizedPnlTotal)} tone="primary" />
             <PerformanceMetric title="승률" value={`${performance.winRate}%`} tone="positive" />
             <PerformanceMetric title="평균 보유일" value={`${performance.averageHoldingDays}일`} tone="neutral" />

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 
 import { PortfolioCloseReviewEditor } from "@/components/portfolio/portfolio-close-review-editor";
 import { PortfolioPersonalRuleButton } from "@/components/portfolio/portfolio-personal-rule-button";
@@ -117,16 +117,54 @@ export function PortfolioReviewsBoard({
         </CardContent>
       </Card>
 
-      <div className="grid gap-5 xl:grid-cols-[1.25fr,0.95fr]">
+      <div className="grid gap-3 sm:grid-cols-2 lg:hidden">
+        <ReviewMetric title="실현 손익 합계" value={formatSignedPrice(summary.realizedPnlTotal)} />
+        <ReviewMetric title="평균 보유일" value={`${summary.averageHoldingDays}일`} />
+        <ReviewMetric title="수익 종료" value={`${summary.profitableCount}건`} />
+        <ReviewMetric title="손실 종료" value={`${summary.lossCount}건`} />
+      </div>
+
+      <div className="space-y-4 lg:hidden">
+        <MobileReviewSection title="캘린더와 주간 흐름" badge={calendar.monthLabel} defaultOpen>
+          <div className="space-y-4">
+            <ReviewCalendarCard calendar={calendar} />
+            <ReviewBehaviorCard calendar={calendar} />
+          </div>
+        </MobileReviewSection>
+
+        <MobileReviewSection title="규칙 분석" badge="종료 거래 기준">
+          <ReviewStrategyCard analytics={analytics} />
+        </MobileReviewSection>
+
+        <MobileReviewSection title="반복 복기 규칙 후보" badge={`${closeReviewRules.candidateCount}개`}>
+          <ReviewRuleCandidateCard rules={closeReviewRules} personalRules={personalRules} />
+        </MobileReviewSection>
+
+        {openingCheckAnalytics ? (
+          <MobileReviewSection title="장초 판단 품질" badge={`${openingCheckAnalytics.matchedCount}건 연결`}>
+            <OpeningCheckQualityCard analytics={openingCheckAnalytics} />
+          </MobileReviewSection>
+        ) : null}
+      </div>
+
+      <div className="hidden gap-5 lg:grid xl:grid-cols-[1.25fr,0.95fr]">
         <ReviewCalendarCard calendar={calendar} />
         <ReviewBehaviorCard calendar={calendar} />
       </div>
 
-      <ReviewStrategyCard analytics={analytics} />
+      <div className="hidden lg:block">
+        <ReviewStrategyCard analytics={analytics} />
+      </div>
 
-      <ReviewRuleCandidateCard rules={closeReviewRules} personalRules={personalRules} />
+      <div className="hidden lg:block">
+        <ReviewRuleCandidateCard rules={closeReviewRules} personalRules={personalRules} />
+      </div>
 
-      {openingCheckAnalytics ? <OpeningCheckQualityCard analytics={openingCheckAnalytics} /> : null}
+      {openingCheckAnalytics ? (
+        <div className="hidden lg:block">
+          <OpeningCheckQualityCard analytics={openingCheckAnalytics} />
+        </div>
+      ) : null}
 
       <ClosedReviewTable
         groups={orderedClosedGroups}
@@ -486,6 +524,31 @@ function OpeningCheckQualityCard({
         </div>
       </CardContent>
     </Card>
+  );
+}
+
+function MobileReviewSection({
+  title,
+  badge,
+  children,
+  defaultOpen = false
+}: {
+  title: string;
+  badge?: string;
+  children: ReactNode;
+  defaultOpen?: boolean;
+}) {
+  return (
+    <details
+      open={defaultOpen}
+      className="rounded-[24px] border border-border/80 bg-white/92 shadow-[0_18px_44px_-34px_rgba(24,32,42,0.2)]"
+    >
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-4 text-sm font-semibold text-foreground [&::-webkit-details-marker]:hidden">
+        <span>{title}</span>
+        {badge ? <Badge variant="secondary">{badge}</Badge> : null}
+      </summary>
+      <div className="border-t border-border/70 px-4 py-4">{children}</div>
+    </details>
   );
 }
 

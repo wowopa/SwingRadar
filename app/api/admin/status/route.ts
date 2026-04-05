@@ -16,6 +16,7 @@ import {
   loadThresholdAdviceReport
 } from "@/lib/server/ops-reports";
 import { loadDatabaseStorageReport } from "@/lib/server/postgres-storage-report";
+import { buildPrelaunchDryRunSummary } from "@/lib/server/prelaunch-dry-run";
 import { buildServiceReadinessSummary } from "@/lib/server/service-readiness";
 import { getHealthReport } from "@/lib/services/health-service";
 import type { HealthReport } from "@/lib/services/health-service";
@@ -272,6 +273,12 @@ export async function GET(request: Request) {
         newsLiveFetchPercent
       }
     });
+    const prelaunchDryRun = buildPrelaunchDryRunSummary({
+      serviceReadiness,
+      postLaunchHistory: refreshedPostLaunchHistory.slice(-10),
+      recentAuditCount: audits.length,
+      uniqueVisitorsLast7Days: accessStatsReport?.last7Days.uniqueVisitors ?? null
+    });
 
     return jsonOk(
       {
@@ -287,6 +294,7 @@ export async function GET(request: Request) {
         thresholdAdviceReport,
         dataQualitySummary,
         serviceReadiness,
+        prelaunchDryRun,
         accessStatsReport,
         runtimeStorageReport,
         databaseStorageReport,

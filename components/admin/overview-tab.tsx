@@ -3,6 +3,7 @@
 import { AlertTriangle, CheckCircle2, ShieldAlert } from "lucide-react";
 
 import { MetricCard, formatAuditEventType, formatDateTime } from "@/components/admin/dashboard-shared";
+import { PrelaunchDryRunCard } from "@/components/admin/prelaunch-dry-run-card";
 import { ServiceReadinessCard } from "@/components/admin/service-readiness-card";
 import type {
   AdminDataQualitySummaryPayload,
@@ -10,6 +11,7 @@ import type {
   DailyCycleReportPayload,
   HealthPayload,
   OperationalIncident,
+  PrelaunchDryRunPayload,
   ServiceReadinessPayload,
   SnapshotGenerationReportPayload
 } from "@/components/admin/dashboard-types";
@@ -17,7 +19,7 @@ import { formatPercent, formatProviderLabel } from "@/components/admin/admin-sta
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-type OverviewTargetTab = "data-quality" | "candidate-ops" | "notices" | "portfolio";
+type OverviewTargetTab = "data-quality" | "candidate-ops" | "users" | "notices" | "portfolio";
 
 function StatusPill({
   label,
@@ -119,6 +121,7 @@ export function OverviewTab({
   snapshotGenerationReport,
   dataQualitySummary,
   serviceReadiness,
+  prelaunchDryRun,
   audits,
   onSelectTab
 }: {
@@ -129,6 +132,7 @@ export function OverviewTab({
   snapshotGenerationReport: SnapshotGenerationReportPayload | null;
   dataQualitySummary: AdminDataQualitySummaryPayload | null;
   serviceReadiness: ServiceReadinessPayload | null;
+  prelaunchDryRun: PrelaunchDryRunPayload | null;
   audits: AuditItem[];
   onSelectTab: (tab: OverviewTargetTab) => void;
 }) {
@@ -203,6 +207,15 @@ export function OverviewTab({
       {serviceReadiness ? (
         <ServiceReadinessCard
           readiness={serviceReadiness}
+          onSelectTab={(tab) => {
+            onSelectTab(tab);
+          }}
+        />
+      ) : null}
+
+      {prelaunchDryRun ? (
+        <PrelaunchDryRunCard
+          dryRun={prelaunchDryRun}
           onSelectTab={(tab) => {
             onSelectTab(tab);
           }}
