@@ -3,6 +3,7 @@
 import { AlertTriangle, CheckCircle2, ShieldAlert } from "lucide-react";
 
 import { MetricCard, formatAuditEventType, formatDateTime } from "@/components/admin/dashboard-shared";
+import { OpsVerificationCard } from "@/components/admin/ops-verification-card";
 import { PrelaunchDryRunCard } from "@/components/admin/prelaunch-dry-run-card";
 import { ServiceReadinessCard } from "@/components/admin/service-readiness-card";
 import type {
@@ -11,6 +12,7 @@ import type {
   DailyCycleReportPayload,
   HealthPayload,
   OperationalIncident,
+  OpsVerificationPayload,
   PrelaunchDryRunPayload,
   ServiceReadinessPayload,
   SnapshotGenerationReportPayload
@@ -121,6 +123,7 @@ export function OverviewTab({
   snapshotGenerationReport,
   dataQualitySummary,
   serviceReadiness,
+  opsVerification,
   prelaunchDryRun,
   audits,
   onSelectTab
@@ -132,6 +135,7 @@ export function OverviewTab({
   snapshotGenerationReport: SnapshotGenerationReportPayload | null;
   dataQualitySummary: AdminDataQualitySummaryPayload | null;
   serviceReadiness: ServiceReadinessPayload | null;
+  opsVerification: OpsVerificationPayload | null;
   prelaunchDryRun: PrelaunchDryRunPayload | null;
   audits: AuditItem[];
   onSelectTab: (tab: OverviewTargetTab) => void;
@@ -221,6 +225,8 @@ export function OverviewTab({
           }}
         />
       ) : null}
+
+      {opsVerification ? <OpsVerificationCard initialSummary={opsVerification} /> : null}
 
       <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
         <MetricCard label="incident" value={String(incidents.length)} note="즉시 확인할 운영 경고 수" />

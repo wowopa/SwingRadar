@@ -286,6 +286,29 @@ export type ServiceReadinessPayload = {
   }>;
 };
 
+export type OpsVerificationPayload = {
+  status: "ready" | "monitor" | "blocked";
+  label: string;
+  summary: string;
+  nextAction: string;
+  passCount: number;
+  warningCount: number;
+  failureCount: number;
+  blockers: string[];
+  updatedAt: string;
+  updatedBy: string | null;
+  checks: Array<{
+    key: "scheduler" | "backup" | "restore" | "rollback" | "smoke";
+    label: string;
+    status: "pass" | "warn" | "fail";
+    note: string;
+    checkedAt: string | null;
+    checkedBy: string | null;
+    operatorNote: string;
+    cadenceLabel: string;
+  }>;
+};
+
 export type PrelaunchDryRunPayload = {
   status: "ready" | "trial" | "blocked";
   label: string;
@@ -363,6 +386,7 @@ export type AdminStatusPayload = {
   thresholdAdviceReport: ThresholdAdviceReportPayload | null;
   dataQualitySummary: AdminDataQualitySummaryPayload | null;
   serviceReadiness: ServiceReadinessPayload;
+  opsVerification: OpsVerificationPayload;
   prelaunchDryRun: PrelaunchDryRunPayload;
   accessStatsReport: AccessStatsReportPayload | null;
   runtimeStorageReport: RuntimeStorageReportPayload | null;

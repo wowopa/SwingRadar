@@ -17,6 +17,7 @@ import {
 } from "@/lib/server/ops-reports";
 import { loadDatabaseStorageReport } from "@/lib/server/postgres-storage-report";
 import { buildPrelaunchDryRunSummary } from "@/lib/server/prelaunch-dry-run";
+import { buildOpsVerificationSummary, loadOpsVerificationDocument } from "@/lib/server/ops-verification";
 import { buildServiceReadinessSummary } from "@/lib/server/service-readiness";
 import { getHealthReport } from "@/lib/services/health-service";
 import type { HealthReport } from "@/lib/services/health-service";
@@ -46,7 +47,8 @@ export async function GET(request: Request) {
       loadAccessStatsReport(),
       loadRuntimeStorageReport(),
       loadDatabaseStorageReport(),
-      listAuditLogs(policy.audit.adminListLimit)
+      listAuditLogs(policy.audit.adminListLimit),
+      loadOpsVerificationDocument()
     ]);
 
     const statusWarnings: string[] = [];
@@ -62,7 +64,8 @@ export async function GET(request: Request) {
       accessStatsReportResult,
       runtimeStorageReportResult,
       databaseStorageReportResult,
-      auditsResult
+      auditsResult,
+      opsVerificationDocumentResult
     ] = results;
 
     const health: HealthReport =
@@ -167,6 +170,28 @@ export async function GET(request: Request) {
       );
     }
 
+    const opsVerificationDocument =
+      opsVerificationDocumentResult.status === "fulfilled"
+        ? opsVerificationDocumentResult.value
+        : {
+            scheduler: { checkedAt: null, checkedBy: null, note: "" },
+            backup: { checkedAt: null, checkedBy: null, note: "" },
+            restore: { checkedAt: null, checkedBy: null, note: "" },
+            rollback: { checkedAt: null, checkedBy: null, note: "" },
+            smoke: { checkedAt: null, checkedBy: null, note: "" },
+            updatedAt: "",
+            updatedBy: null
+          };
+    if (opsVerificationDocumentResult.status !== "fulfilled") {
+      statusWarnings.push(
+        `ops-verification: ${
+          opsVerificationDocumentResult.reason instanceof Error
+            ? opsVerificationDocumentResult.reason.message
+            : "Unexpected ops verification load failure"
+        }`
+      );
+    }
+
     const escalation = buildOperationalIncidents({
       health,
       opsHealthReport,
@@ -258,6 +283,11 @@ export async function GET(request: Request) {
       newsCacheFallbackPercent,
       newsFileFallbackPercent
     };
+    const opsVerification = buildOpsVerificationSummary({
+      document: opsVerificationDocument,
+      dailyCycleReport,
+      autoHealReport
+    });
     const serviceReadiness = buildServiceReadinessSummary({
       overallStatus: escalation.overallStatus as "ok" | "warning" | "critical",
       health,
@@ -265,6 +295,7 @@ export async function GET(request: Request) {
       autoHealReport,
       incidents: escalation.incidents,
       postLaunchHistory: refreshedPostLaunchHistory.slice(-3),
+      opsVerification,
       statusWarnings,
       dataQualitySummary: {
         validationFallbackPercent,
@@ -294,6 +325,7 @@ export async function GET(request: Request) {
         thresholdAdviceReport,
         dataQualitySummary,
         serviceReadiness,
+        opsVerification,
         prelaunchDryRun,
         accessStatsReport,
         runtimeStorageReport,

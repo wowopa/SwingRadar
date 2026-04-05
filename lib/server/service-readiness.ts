@@ -1,3 +1,4 @@
+import type { OpsVerificationSummary } from "@/lib/server/ops-verification";
 import type { OperationalIncident } from "@/lib/server/operational-incidents";
 import { getOperationalPolicy } from "@/lib/server/operations-policy";
 import type { AutoHealReport, DailyCycleReport, PostLaunchHistoryEntry } from "@/lib/server/ops-reports";
@@ -32,6 +33,7 @@ interface BuildServiceReadinessSummaryArgs {
   autoHealReport: AutoHealReport | null;
   incidents: OperationalIncident[];
   postLaunchHistory: PostLaunchHistoryEntry[];
+  opsVerification: OpsVerificationSummary | null;
   statusWarnings: string[];
   dataQualitySummary: {
     validationFallbackPercent: number | null;
@@ -251,22 +253,27 @@ function buildReleaseSafetyCheck(args: BuildServiceReadinessSummaryArgs): Servic
     (item) => item.overallStatus === "warning" || item.incidents.warningCount > 0
   ).length;
 
-  if (args.statusWarnings.length >= 3) {
+  if (args.statusWarnings.length >= 3 || args.opsVerification?.status === "blocked") {
     return {
       key: "release-safety",
       label: "릴리스 세이프티",
       status: "fail",
-      note: `admin status 로드 경고가 ${args.statusWarnings.length}건 발생했습니다.`
+      note:
+        args.opsVerification?.status === "blocked"
+          ? "운영 증빙 체크포인트가 비어 있어 배포와 공개를 안전하게 진행하기 어렵습니다."
+          : `admin status 로드 경고가 ${args.statusWarnings.length}건 발생했습니다.`
     };
   }
 
-  if (args.statusWarnings.length > 0 || warningHistoryCount > 0) {
+  if (args.statusWarnings.length > 0 || warningHistoryCount > 0 || args.opsVerification?.status === "monitor") {
     return {
       key: "release-safety",
       label: "릴리스 세이프티",
       status: "warn",
       note:
-        args.statusWarnings.length > 0
+        args.opsVerification?.status === "monitor"
+          ? "운영 증빙 체크포인트 중 다시 확인해야 할 항목이 있습니다."
+          : args.statusWarnings.length > 0
           ? `admin status 로드 경고 ${args.statusWarnings.length}건을 먼저 정리하세요.`
           : "최근 post-launch history에 운영 경고가 남아 있습니다."
     };
@@ -305,7 +312,7 @@ function getNextAction(check: ServiceReadinessCheck | undefined) {
     case "news":
       return "news fetch 경로와 cache/file fallback 비중을 먼저 점검하세요.";
     case "release-safety":
-      return "admin status 경고와 최근 post-launch history warning을 먼저 정리하세요.";
+      return "admin status 경고, 운영 증빙 체크포인트, 최근 post-launch history warning을 함께 정리하세요.";
     default:
       return "치명 항목 없이 최근 거래일 운영 로그가 안정적인지 계속 확인하세요.";
   }

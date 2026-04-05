@@ -16,6 +16,7 @@ export type AuditEventType =
   | "opening_recheck_update"
   | "provider_fallback"
   | "auto_heal_run"
+  | "admin_ops_verification_saved"
   | "admin_user_sessions_revoked"
   | "admin_user_updated"
   | "admin_user_suspended"

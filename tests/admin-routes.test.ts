@@ -19,6 +19,7 @@ const mocks = vi.hoisted(() => ({
   loadThresholdAdviceReport: vi.fn(),
   loadRuntimeStorageReport: vi.fn(),
   loadDatabaseStorageReport: vi.fn(),
+  loadOpsVerificationDocument: vi.fn(),
   publishEditorialDraft: vi.fn(),
   rollbackPublishedSnapshot: vi.fn(),
   loadNewsCuration: vi.fn(),
@@ -71,6 +72,14 @@ vi.mock("@/lib/server/ops-reports", () => ({
 vi.mock("@/lib/server/postgres-storage-report", () => ({
   loadDatabaseStorageReport: mocks.loadDatabaseStorageReport
 }));
+
+vi.mock("@/lib/server/ops-verification", async () => {
+  const actual = await vi.importActual<typeof import("@/lib/server/ops-verification")>("@/lib/server/ops-verification");
+  return {
+    ...actual,
+    loadOpsVerificationDocument: mocks.loadOpsVerificationDocument
+  };
+});
 
 vi.mock("@/lib/server/editorial-draft", () => ({
   publishEditorialDraft: mocks.publishEditorialDraft,
@@ -177,6 +186,15 @@ describe("admin routes", () => {
     mocks.loadThresholdAdviceReport.mockResolvedValue(null);
     mocks.loadRuntimeStorageReport.mockResolvedValue(null);
     mocks.loadDatabaseStorageReport.mockResolvedValue(null);
+    mocks.loadOpsVerificationDocument.mockResolvedValue({
+      scheduler: { checkedAt: "2026-03-08T00:00:00.000Z", checkedBy: "ops", note: "scheduler ok" },
+      backup: { checkedAt: "2026-03-08T00:00:00.000Z", checkedBy: "ops", note: "backup ok" },
+      restore: { checkedAt: "2026-03-01T00:00:00.000Z", checkedBy: "ops", note: "restore ok" },
+      rollback: { checkedAt: "2026-03-01T00:00:00.000Z", checkedBy: "ops", note: "rollback ok" },
+      smoke: { checkedAt: "2026-03-08T00:00:00.000Z", checkedBy: "ops", note: "smoke ok" },
+      updatedAt: "2026-03-08T00:00:00.000Z",
+      updatedBy: "ops"
+    });
     mocks.loadSnapshotBundleFromDisk.mockResolvedValue({
       recommendations: { generatedAt: "2026-03-08T00:00:00.000Z", items: [], dailyScan: null },
       analysis: { generatedAt: "2026-03-08T00:00:00.000Z", items: [] },
@@ -361,8 +379,8 @@ describe("admin routes", () => {
         overallStatus: "warning",
         serviceReadiness: {
           status: "blocked",
-          failureCount: 2,
-          warningCount: 4
+          failureCount: 3,
+          warningCount: 3
         },
         health: {
           status: "warning",

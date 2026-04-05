@@ -20,6 +20,7 @@ import type {
   NewsFetchReportPayload,
   OperationalIncident,
   OpsHealthReportPayload,
+  OpsVerificationPayload,
   PopupNoticeDocument,
   PortfolioProfilePayload,
   PrelaunchDryRunPayload,
@@ -90,6 +91,7 @@ export function AdminDashboard() {
   const [thresholdAdviceReport, setThresholdAdviceReport] = useState<ThresholdAdviceReportPayload | null>(null);
   const [dataQualitySummary, setDataQualitySummary] = useState<AdminDataQualitySummaryPayload | null>(null);
   const [serviceReadiness, setServiceReadiness] = useState<ServiceReadinessPayload | null>(null);
+  const [opsVerification, setOpsVerification] = useState<OpsVerificationPayload | null>(null);
   const [prelaunchDryRun, setPrelaunchDryRun] = useState<PrelaunchDryRunPayload | null>(null);
   const [usersPayload, setUsersPayload] = useState<AdminUsersPayload | null>(null);
   const [accessStatsReport, setAccessStatsReport] = useState<AccessStatsReportPayload | null>(null);
@@ -184,6 +186,7 @@ export function AdminDashboard() {
         setThresholdAdviceReport(null);
         setDataQualitySummary(null);
         setServiceReadiness(null);
+        setOpsVerification(null);
         setPrelaunchDryRun(null);
         setUsersPayload(null);
         setAccessStatsReport(null);
@@ -217,6 +220,7 @@ export function AdminDashboard() {
       setThresholdAdviceReport(statusJson.thresholdAdviceReport ?? null);
       setDataQualitySummary(statusJson.dataQualitySummary ?? null);
       setServiceReadiness(statusJson.serviceReadiness ?? null);
+      setOpsVerification(statusJson.opsVerification ?? null);
       setPrelaunchDryRun(statusJson.prelaunchDryRun ?? null);
       setAccessStatsReport(statusJson.accessStatsReport ?? null);
       setRuntimeStorageReport(statusJson.runtimeStorageReport ?? null);
@@ -768,6 +772,7 @@ export function AdminDashboard() {
               snapshotGenerationReport={snapshotGenerationReport}
               dataQualitySummary={dataQualitySummary}
               serviceReadiness={serviceReadiness}
+              opsVerification={opsVerification}
               prelaunchDryRun={prelaunchDryRun}
               audits={audits}
               onSelectTab={(nextTab) => setTab(nextTab)}

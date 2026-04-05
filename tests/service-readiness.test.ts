@@ -49,6 +49,19 @@ describe("buildServiceReadinessSummary", () => {
       },
       incidents: [],
       postLaunchHistory: [],
+      opsVerification: {
+        status: "ready",
+        label: "운영 검증 준비",
+        summary: "ready",
+        nextAction: "none",
+        passCount: 5,
+        warningCount: 0,
+        failureCount: 0,
+        blockers: [],
+        updatedAt: "2026-04-05T06:30:00.000Z",
+        updatedBy: "ops",
+        checks: []
+      },
       statusWarnings: [],
       dataQualitySummary: {
         validationFallbackPercent: 12,
@@ -83,6 +96,19 @@ describe("buildServiceReadinessSummary", () => {
         }
       ],
       postLaunchHistory: [],
+      opsVerification: {
+        status: "blocked",
+        label: "운영 증빙 필요",
+        summary: "blocked",
+        nextAction: "ops",
+        passCount: 0,
+        warningCount: 0,
+        failureCount: 5,
+        blockers: ["스케줄러 증빙"],
+        updatedAt: "",
+        updatedBy: null,
+        checks: []
+      },
       statusWarnings: ["status-health: unavailable"],
       dataQualitySummary: {
         validationFallbackPercent: 85,
