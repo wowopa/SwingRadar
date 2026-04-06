@@ -20,6 +20,7 @@ const mocks = vi.hoisted(() => ({
   loadRuntimeStorageReport: vi.fn(),
   loadDatabaseStorageReport: vi.fn(),
   loadOpsVerificationDocument: vi.fn(),
+  refetchTopCandidateMissingNews: vi.fn(),
   publishEditorialDraft: vi.fn(),
   rollbackPublishedSnapshot: vi.fn(),
   loadNewsCuration: vi.fn(),
@@ -81,6 +82,10 @@ vi.mock("@/lib/server/ops-verification", async () => {
   };
 });
 
+vi.mock("@/lib/server/admin-news-refetch", () => ({
+  refetchTopCandidateMissingNews: mocks.refetchTopCandidateMissingNews
+}));
+
 vi.mock("@/lib/server/editorial-draft", () => ({
   publishEditorialDraft: mocks.publishEditorialDraft,
   rollbackPublishedSnapshot: mocks.rollbackPublishedSnapshot
@@ -128,6 +133,7 @@ vi.mock("@/lib/server/portfolio-profile", () => ({
 import { GET as getIngestRoute, POST as postIngestRoute } from "@/app/api/admin/ingest/route";
 import { GET as getAuditRoute } from "@/app/api/admin/audit/route";
 import { GET as getNewsCurationRoute, POST as postNewsCurationRoute } from "@/app/api/admin/news-curation/route";
+import { POST as postNewsRefetchRoute } from "@/app/api/admin/news-refetch/route";
 import { GET as getPortfolioProfileRoute, POST as postPortfolioProfileRoute } from "@/app/api/admin/portfolio-profile/route";
 import { POST as postPublishRoute } from "@/app/api/admin/publish/route";
 import { POST as postRollbackRoute } from "@/app/api/admin/rollback/route";
@@ -194,6 +200,20 @@ describe("admin routes", () => {
       smoke: { checkedAt: "2026-03-08T00:00:00.000Z", checkedBy: "ops", note: "smoke ok" },
       updatedAt: "2026-03-08T00:00:00.000Z",
       updatedBy: "ops"
+    });
+    mocks.refetchTopCandidateMissingNews.mockResolvedValue({
+      scope: "top-candidate-missing",
+      requestedTickers: ["005930"],
+      missingTickersBefore: ["005930", "035420"],
+      missingTickersAfter: ["035420"],
+      resolvedTickers: ["005930"],
+      scripts: [
+        { name: "fetch-news-source.mjs", durationMs: 1200 },
+        { name: "sync-external-raw.mjs", durationMs: 320 }
+      ],
+      reportStartedAt: "2026-03-08T00:10:00.000Z",
+      reportCompletedAt: "2026-03-08T00:11:00.000Z",
+      noop: false
     });
     mocks.loadSnapshotBundleFromDisk.mockResolvedValue({
       recommendations: { generatedAt: "2026-03-08T00:00:00.000Z", items: [], dailyScan: null },
@@ -322,6 +342,41 @@ describe("admin routes", () => {
       expect(payload).toMatchObject({
         code: "ADMIN_FORBIDDEN",
         requestId: "req-test"
+      });
+    });
+  });
+
+  describe("admin news refetch route", () => {
+    it("reruns top candidate news fetch for requested missing tickers", async () => {
+      const response = await postNewsRefetchRoute(
+        createRequest("http://localhost/api/admin/news-refetch", {
+          method: "POST",
+          body: JSON.stringify({ tickers: ["005930"] })
+        })
+      );
+      const payload = await parseJson<{
+        ok: boolean;
+        requestId: string;
+        result: {
+          requestedTickers: string[];
+          resolvedTickers: string[];
+          missingTickersAfter: string[];
+        };
+      }>(response);
+
+      expect(response.status).toBe(200);
+      expect(mocks.refetchTopCandidateMissingNews).toHaveBeenCalledWith(["005930"]);
+      expect(mocks.recordAuditLog).toHaveBeenCalledWith(
+        expect.objectContaining({
+          eventType: "admin_news_refetch",
+          status: "success",
+          requestId: "req-test"
+        })
+      );
+      expect(payload.result).toMatchObject({
+        requestedTickers: ["005930"],
+        resolvedTickers: ["005930"],
+        missingTickersAfter: ["035420"]
       });
     });
   });

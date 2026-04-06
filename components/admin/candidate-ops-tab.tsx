@@ -53,6 +53,7 @@ export function CandidateOpsTab({
   dailyCandidates,
   watchlistTickers,
   loading,
+  focusedTicker,
   onPromoteCandidate,
   onSaveReview,
   symbolQuery,
@@ -73,6 +74,7 @@ export function CandidateOpsTab({
   dailyCandidates: UniverseDailyCandidates | null;
   watchlistTickers: string[];
   loading: boolean;
+  focusedTicker: string;
   onPromoteCandidate: (ticker: string) => void;
   onSaveReview: (ticker: string, status: UniverseReviewStatus, note: string) => void;
   symbolQuery: string;
@@ -91,6 +93,7 @@ export function CandidateOpsTab({
   onSelectTab: (tab: "data-quality" | "notices") => void;
 }) {
   const [reviewDrafts, setReviewDrafts] = useState<ReviewDraftState>({});
+  const [showExtraCandidates, setShowExtraCandidates] = useState(false);
 
   useEffect(() => {
     setReviewDrafts(
@@ -105,6 +108,20 @@ export function CandidateOpsTab({
       )
     );
   }, [dailyCandidates]);
+
+  useEffect(() => {
+    if (!focusedTicker) {
+      return;
+    }
+
+    setShowExtraCandidates((current) => {
+      if (current) {
+        return true;
+      }
+
+      return (dailyCandidates?.topCandidates ?? []).slice(6).some((item) => item.ticker === focusedTicker);
+    });
+  }, [dailyCandidates, focusedTicker]);
 
   const topCandidates = dailyCandidates?.topCandidates ?? [];
   const priorityCandidates = topCandidates.slice(0, 6);
@@ -181,9 +198,15 @@ export function CandidateOpsTab({
             priorityCandidates.map((item) => {
               const draft = reviewDrafts[item.ticker] ?? { status: "new" as UniverseReviewStatus, note: "" };
               const isPromoted = watchlistTickers.includes(item.ticker);
+              const isFocused = item.ticker === focusedTicker;
 
               return (
-                <div key={item.ticker} className="rounded-[24px] border border-border/70 bg-secondary/45 p-4">
+                <div
+                  key={item.ticker}
+                  className={`rounded-[24px] border p-4 ${
+                    isFocused ? "border-primary/35 bg-primary/10 shadow-[0_18px_40px_-28px_rgba(15,23,42,0.45)]" : "border-border/70 bg-secondary/45"
+                  }`}
+                >
                   <div className="grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
                     <div className="space-y-3">
                       <div className="flex flex-wrap items-center gap-2">
@@ -197,6 +220,11 @@ export function CandidateOpsTab({
                           <span className="inline-flex items-center gap-1 rounded-full border border-positive/30 bg-positive/10 px-2.5 py-1 text-[11px] text-positive">
                             <CheckCircle2 className="h-3.5 w-3.5" />
                             예외 편입됨
+                          </span>
+                        ) : null}
+                        {isFocused ? (
+                          <span className="inline-flex rounded-full border border-primary/30 bg-primary/10 px-2.5 py-1 text-[11px] font-medium text-primary">
+                            데이터 품질에서 열어둔 후보
                           </span>
                         ) : null}
                       </div>
@@ -285,7 +313,11 @@ export function CandidateOpsTab({
       </Card>
 
       {extraCandidates.length ? (
-        <details className="group rounded-[28px] border border-border/70 bg-white/85">
+        <details
+          className="group rounded-[28px] border border-border/70 bg-white/85"
+          open={showExtraCandidates}
+          onToggle={(event) => setShowExtraCandidates(event.currentTarget.open)}
+        >
           <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-6 py-5">
             <div>
               <p className="text-sm font-semibold text-foreground">후속 검토 후보 {extraCandidates.length}개</p>
@@ -299,9 +331,13 @@ export function CandidateOpsTab({
           <div className="space-y-3 border-t border-border/60 px-6 py-5">
             {extraCandidates.map((item) => {
               const isPromoted = watchlistTickers.includes(item.ticker);
+              const isFocused = item.ticker === focusedTicker;
 
               return (
-                <div key={item.ticker} className="rounded-[22px] border border-border/70 bg-secondary/35 p-4">
+                <div
+                  key={item.ticker}
+                  className={`rounded-[22px] border p-4 ${isFocused ? "border-primary/35 bg-primary/10" : "border-border/70 bg-secondary/35"}`}
+                >
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
                       <p className="text-sm font-semibold text-foreground">
@@ -312,6 +348,11 @@ export function CandidateOpsTab({
                       </p>
                     </div>
                     <div className="flex flex-wrap gap-2">
+                      {isFocused ? (
+                        <span className="inline-flex rounded-full border border-primary/30 bg-primary/10 px-2.5 py-1 text-[11px] font-medium text-primary">
+                          데이터 품질에서 열어둔 후보
+                        </span>
+                      ) : null}
                       {isPromoted ? (
                         <span className="inline-flex items-center gap-1 rounded-full border border-positive/30 bg-positive/10 px-2.5 py-1 text-[11px] text-positive">
                           <CheckCircle2 className="h-3.5 w-3.5" />

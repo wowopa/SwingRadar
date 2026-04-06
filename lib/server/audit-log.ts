@@ -12,6 +12,7 @@ export type AuditEventType =
   | "admin_publish"
   | "watchlist_add"
   | "watchlist_update"
+  | "admin_news_refetch"
   | "universe_review_update"
   | "opening_recheck_update"
   | "provider_fallback"

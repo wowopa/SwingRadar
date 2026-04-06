@@ -107,6 +107,7 @@ export function AdminDashboard() {
   const [watchlistBaseline, setWatchlistBaseline] = useState<WatchlistEntry[]>([]);
   const [watchlistSyncStatuses, setWatchlistSyncStatuses] = useState<Record<string, WatchlistSyncStatus>>({});
   const [activeWatchlistTicker, setActiveWatchlistTicker] = useState("");
+  const [focusedCandidateTicker, setFocusedCandidateTicker] = useState("");
   const [returnTo, setReturnTo] = useState("");
 
   const activeWatchlist = useMemo(
@@ -642,6 +643,55 @@ export function AdminDashboard() {
     }
   }
 
+  function openCandidateTicker(ticker: string) {
+    setFocusedCandidateTicker(ticker);
+    setSymbolQuery(ticker);
+    setTab("candidate-ops");
+    setActiveWatchlistTicker((current) => {
+      if (watchlist.some((item) => item.ticker === ticker)) {
+        return ticker;
+      }
+
+      return current;
+    });
+  }
+
+  async function refetchTopCandidateNews(tickers?: string[]) {
+    if (!authHeaders) {
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+    setMessage(null);
+
+    try {
+      const json = await fetchJson<{
+        result: {
+          requestedTickers: string[];
+          resolvedTickers: string[];
+          missingTickersAfter: string[];
+          noop: boolean;
+        };
+      }>("/api/admin/news-refetch", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...authHeaders },
+        body: JSON.stringify({ tickers: tickers ?? [] })
+      });
+
+      await loadDashboard();
+      setMessage(
+        json.result.noop
+          ? "지금은 다시 모을 누락 후보 뉴스가 없습니다."
+          : `뉴스 재수집을 마쳤습니다. 해결 ${json.result.resolvedTickers.length}개 / 남음 ${json.result.missingTickersAfter.length}개`
+      );
+    } catch (refetchError) {
+      setError(refetchError instanceof Error ? refetchError.message : "후보 뉴스 재수집에 실패했습니다.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
   return (
     <div className="space-y-6">
       <Card>
@@ -781,6 +831,7 @@ export function AdminDashboard() {
 
           <TabsContent value="data-quality">
             <DataQualityTab
+              loading={loading}
               dataQualitySummary={dataQualitySummary}
               dailyCycleReport={dailyCycleReport}
               opsHealthReport={opsHealthReport}
@@ -792,6 +843,8 @@ export function AdminDashboard() {
               databaseStorageReport={databaseStorageReport}
               postLaunchHistory={postLaunchHistory}
               onSelectTab={(nextTab) => setTab(nextTab)}
+              onOpenCandidateTicker={openCandidateTicker}
+              onRefetchTopCandidateNews={(tickers) => void refetchTopCandidateNews(tickers)}
             />
           </TabsContent>
 
@@ -800,6 +853,7 @@ export function AdminDashboard() {
               dailyCandidates={dailyCandidates}
               watchlistTickers={watchlistTickers}
               loading={loading}
+              focusedTicker={focusedCandidateTicker}
               onPromoteCandidate={(ticker) => void promoteUniverseCandidate(ticker)}
               onSaveReview={(ticker, status, note) => void saveUniverseReview(ticker, status, note)}
               symbolQuery={symbolQuery}

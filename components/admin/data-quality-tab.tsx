@@ -96,6 +96,7 @@ function getRecommendationAction(key: string): { label: string; tab: DataQuality
 }
 
 export function DataQualityTab({
+  loading,
   dataQualitySummary,
   dailyCycleReport,
   opsHealthReport,
@@ -106,8 +107,11 @@ export function DataQualityTab({
   runtimeStorageReport,
   databaseStorageReport,
   postLaunchHistory,
-  onSelectTab
+  onSelectTab,
+  onOpenCandidateTicker,
+  onRefetchTopCandidateNews
 }: {
+  loading: boolean;
   dataQualitySummary: AdminDataQualitySummaryPayload | null;
   dailyCycleReport: DailyCycleReportPayload | null;
   opsHealthReport: OpsHealthReportPayload | null;
@@ -119,6 +123,8 @@ export function DataQualityTab({
   databaseStorageReport: DatabaseStorageReportPayload | null;
   postLaunchHistory: PostLaunchHistoryEntryPayload[];
   onSelectTab: (tab: DataQualityTargetTab) => void;
+  onOpenCandidateTicker: (ticker: string) => void;
+  onRefetchTopCandidateNews: (tickers?: string[]) => void;
 }) {
   const currentPolicy = thresholdAdviceReport?.currentPolicy;
   const validationFallbackPercent = dataQualitySummary?.validationFallbackPercent ?? 0;
@@ -137,6 +143,8 @@ export function DataQualityTab({
   const topCandidateNewsCoverage = dataQualitySummary?.topCandidateNewsCoverage ?? null;
   const topCandidateLiveFetchPercent = topCandidateNewsCoverage?.liveFetchPercent ?? 0;
   const topCandidateCoveredPercent = topCandidateNewsCoverage?.coveredPercent ?? 0;
+  const missingTopCandidateTickers =
+    topCandidateNewsCoverage?.tickers.filter((item) => item.source === "missing") ?? [];
   const needsFollowup =
     validationFallbackPercent >= 50 ||
     newsLiveFetchPercent <= 70 ||
@@ -165,6 +173,16 @@ export function DataQualityTab({
             <Button variant="outline" size="sm" onClick={() => onSelectTab("notices")}>
               공지 열기
             </Button>
+            {missingTopCandidateTickers.length ? (
+              <Button
+                variant="secondary"
+                size="sm"
+                disabled={loading}
+                onClick={() => onRefetchTopCandidateNews(missingTopCandidateTickers.map((item) => item.ticker))}
+              >
+                누락 후보 뉴스 재수집
+              </Button>
+            ) : null}
             {needsFollowup ? (
               <span className="inline-flex rounded-full border border-caution/25 bg-caution/10 px-3 py-2 text-xs font-medium text-caution">
                 지금은 후보 운영 전 데이터 품질 경고를 먼저 확인하는 편이 좋습니다.
@@ -245,6 +263,57 @@ export function DataQualityTab({
                   missing {topCandidateNewsCoverage.missingTickers}
                 </div>
               </div>
+              {missingTopCandidateTickers.length ? (
+                <div className="mt-4 rounded-[22px] border border-caution/20 bg-caution/5 p-4">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-semibold text-foreground">뉴스가 비어 있는 상위 후보</p>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        후보 운영으로 바로 이동해 검색어와 키워드를 보고, 필요하면 같은 자리에서 뉴스 재수집을 다시 시도할 수 있습니다.
+                      </p>
+                    </div>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      disabled={loading}
+                      onClick={() => onRefetchTopCandidateNews(missingTopCandidateTickers.map((item) => item.ticker))}
+                    >
+                      누락 후보 일괄 재수집
+                    </Button>
+                  </div>
+                  <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                    {missingTopCandidateTickers.map((item) => (
+                      <div
+                        key={`missing-${item.rank}-${item.ticker}`}
+                        className="rounded-[22px] border border-caution/20 bg-white/90 p-4"
+                      >
+                        <div className="flex items-center justify-between gap-3">
+                          <p className="text-sm font-semibold text-foreground">
+                            #{item.rank} {item.ticker}
+                          </p>
+                          <span className="inline-flex rounded-full border border-caution/25 bg-caution/10 px-2.5 py-1 text-[11px] font-medium text-caution">
+                            missing
+                          </span>
+                        </div>
+                        <p className="mt-2 text-xs leading-5 text-muted-foreground">{item.company}</p>
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          <Button size="sm" variant="outline" onClick={() => onOpenCandidateTicker(item.ticker)}>
+                            후보 운영에서 보기
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            disabled={loading}
+                            onClick={() => onRefetchTopCandidateNews([item.ticker])}
+                          >
+                            재수집 실행
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
               <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
                 {topCandidateNewsCoverage.tickers.slice(0, 8).map((item) => (
                   <div key={`${item.rank}-${item.ticker}`} className="rounded-[22px] border border-border/70 bg-white/80 p-4">
