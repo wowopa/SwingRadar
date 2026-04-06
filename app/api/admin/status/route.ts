@@ -285,6 +285,25 @@ export async function GET(request: Request) {
     const newsFileFallbackPercent = newsFetchReport
       ? calculatePercent(newsFetchReport.fileFallbackTickers, newsFetchReport.totalTickers)
       : null;
+    const topCandidateNewsCoverage = newsFetchReport?.topCandidateCoverage
+      ? {
+          totalTickers: newsFetchReport.topCandidateCoverage.totalTickers,
+          liveFetchPercent: calculatePercent(
+            newsFetchReport.topCandidateCoverage.liveFetchTickers,
+            newsFetchReport.topCandidateCoverage.totalTickers
+          ),
+          coveredPercent: calculatePercent(
+            newsFetchReport.topCandidateCoverage.totalTickers - newsFetchReport.topCandidateCoverage.missingTickers,
+            newsFetchReport.topCandidateCoverage.totalTickers
+          ),
+          liveFetchTickers: newsFetchReport.topCandidateCoverage.liveFetchTickers,
+          cacheFallbackTickers: newsFetchReport.topCandidateCoverage.cacheFallbackTickers,
+          fileFallbackTickers: newsFetchReport.topCandidateCoverage.fileFallbackTickers,
+          missingTickers: newsFetchReport.topCandidateCoverage.missingTickers,
+          totalItems: newsFetchReport.topCandidateCoverage.totalItems,
+          tickers: newsFetchReport.topCandidateCoverage.tickers
+        }
+      : null;
     const runtimeSyncTrust = buildRuntimeSyncTrustSummary({
       opsHealthReport,
       dailyCycleReport,
@@ -311,6 +330,7 @@ export async function GET(request: Request) {
       newsLiveFetchPercent,
       newsCacheFallbackPercent,
       newsFileFallbackPercent,
+      topCandidateNewsCoverage,
       runtimeSyncTrust
     };
     const opsVerification = buildOpsVerificationSummary({

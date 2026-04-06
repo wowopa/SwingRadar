@@ -134,11 +134,16 @@ export function DataQualityTab({
   const runtimeSyncTrust = dataQualitySummary?.runtimeSyncTrust ?? null;
   const newsFallbackPercent =
     (dataQualitySummary?.newsCacheFallbackPercent ?? 0) + (dataQualitySummary?.newsFileFallbackPercent ?? 0);
+  const topCandidateNewsCoverage = dataQualitySummary?.topCandidateNewsCoverage ?? null;
+  const topCandidateLiveFetchPercent = topCandidateNewsCoverage?.liveFetchPercent ?? 0;
+  const topCandidateCoveredPercent = topCandidateNewsCoverage?.coveredPercent ?? 0;
   const needsFollowup =
     validationFallbackPercent >= 50 ||
     newsLiveFetchPercent <= 70 ||
     failedBatchPercent > 0 ||
-    runtimeSyncTrust?.status === "blocked";
+    runtimeSyncTrust?.status === "blocked" ||
+    (topCandidateNewsCoverage?.missingTickers ?? 0) > 0 ||
+    topCandidateLiveFetchPercent <= 80;
   const largestRuntimeSection = runtimeStorageReport
     ? Object.entries(runtimeStorageReport.sections).sort((left, right) => right[1].sizeBytes - left[1].sizeBytes)[0]
     : null;
@@ -171,7 +176,7 @@ export function DataQualityTab({
             )}
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-6">
             <QualityBadge
               label="validation fallback"
               value={formatPercent(validationFallbackPercent)}
@@ -208,7 +213,58 @@ export function DataQualityTab({
               )}`}
               tone={newsFallbackPercent >= 50 ? "caution" : "neutral"}
             />
+            <QualityBadge
+              label="top candidates"
+              value={formatPercent(topCandidateLiveFetchPercent)}
+              note={
+                topCandidateNewsCoverage
+                  ? `covered ${formatPercent(topCandidateCoveredPercent)} / missing ${topCandidateNewsCoverage.missingTickers}`
+                  : "상위 후보군 뉴스 커버리지 집계가 아직 없습니다."
+              }
+              tone={
+                !topCandidateNewsCoverage
+                  ? "neutral"
+                  : topCandidateNewsCoverage.missingTickers > 0 || topCandidateLiveFetchPercent <= 80
+                    ? "caution"
+                    : "positive"
+              }
+            />
           </div>
+
+          {topCandidateNewsCoverage ? (
+            <div className="rounded-[24px] border border-border/70 bg-secondary/40 p-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="text-sm font-semibold text-foreground">Top candidate news coverage</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    live {topCandidateNewsCoverage.liveFetchTickers}/{topCandidateNewsCoverage.totalTickers} / total items{" "}
+                    {topCandidateNewsCoverage.totalItems}
+                  </p>
+                </div>
+                <div className="inline-flex rounded-full border border-border/70 bg-white/80 px-3 py-1 text-xs text-muted-foreground">
+                  missing {topCandidateNewsCoverage.missingTickers}
+                </div>
+              </div>
+              <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                {topCandidateNewsCoverage.tickers.slice(0, 8).map((item) => (
+                  <div key={`${item.rank}-${item.ticker}`} className="rounded-[22px] border border-border/70 bg-white/80 p-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="text-sm font-semibold text-foreground">
+                        #{item.rank} {item.ticker}
+                      </p>
+                      <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">{item.source}</p>
+                    </div>
+                    <p className="mt-2 text-xs leading-5 text-muted-foreground">
+                      {item.company} / {item.itemCount} items
+                    </p>
+                    <p className="mt-2 text-[11px] text-muted-foreground">
+                      {item.providers.length ? item.providers.join(" → ") : "fallback only"}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
 
           {validationBasisPercentages ? (
             <div className="rounded-[24px] border border-border/70 bg-secondary/40 p-4">

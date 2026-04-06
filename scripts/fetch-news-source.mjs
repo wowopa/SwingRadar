@@ -37,6 +37,7 @@ Environment:
   SWING_RADAR_NEWS_MAX_ITEMS=5
   SWING_RADAR_NEWS_CONCURRENCY=4
   SWING_RADAR_NEWS_LIVE_FETCH_TICKER_LIMIT=200
+  SWING_RADAR_NEWS_TOP_CANDIDATE_LIMIT=20
   SWING_RADAR_NEWS_PRIORITY_WINDOW=100
   SWING_RADAR_NEWS_RETRY_LIMIT=2
   SWING_RADAR_NEWS_SOURCE_DIVERSITY_LIMIT=2
@@ -166,6 +167,17 @@ function resolveEffectiveMaxItems(maxItems, priorityRank) {
   return maxItems;
 }
 
+function createTopCandidateCoverageEntry(entry, rank) {
+  return {
+    rank,
+    ticker: entry.ticker,
+    company: entry.company,
+    source: "missing",
+    itemCount: 0,
+    providers: []
+  };
+}
+
 async function runEntriesInParallel(entries, concurrency, action) {
   const results = new Array(entries.length);
   let nextIndex = 0;
@@ -251,10 +263,12 @@ async function main() {
   const dailyCandidates = await readDailyCandidates(paths);
   const maxItems = Number(process.env.SWING_RADAR_NEWS_MAX_ITEMS ?? "5");
   const concurrency = normalizePositiveInteger(process.env.SWING_RADAR_NEWS_CONCURRENCY ?? "4", 4);
-  const liveFetchTickerLimit = normalizePositiveInteger(
+  const configuredLiveFetchTickerLimit = normalizePositiveInteger(
     process.env.SWING_RADAR_NEWS_LIVE_FETCH_TICKER_LIMIT ?? "200",
     200
   );
+  const topCandidateLimit = normalizePositiveInteger(process.env.SWING_RADAR_NEWS_TOP_CANDIDATE_LIMIT ?? "20", 20);
+  const liveFetchTickerLimit = Math.max(configuredLiveFetchTickerLimit, topCandidateLimit);
   const providerOrder = resolveProviderOrder();
   const cache = await readOptionalJson(path.resolve(args.cacheFile));
   const prioritizedWatchlist = prioritizeWatchlist(watchlist, dailyCandidates);
@@ -276,6 +290,8 @@ async function main() {
     totalTickers: watchlist.length,
     prioritizedTickers: Math.min(prioritizedWatchlist.length, liveFetchTickerLimit),
     liveFetchTickerLimit,
+    configuredLiveFetchTickerLimit,
+    topCandidateLimit,
     priorityWindow,
     concurrency,
     liveFetchTickers: 0,
@@ -285,7 +301,16 @@ async function main() {
     fileFallbackTickers: 0,
     retryCount: 0,
     providerFailures: [],
-    totalItems: 0
+    totalItems: 0,
+    topCandidateCoverage: {
+      totalTickers: Math.min(prioritizedWatchlist.length, topCandidateLimit),
+      liveFetchTickers: 0,
+      cacheFallbackTickers: 0,
+      fileFallbackTickers: 0,
+      missingTickers: 0,
+      totalItems: 0,
+      tickers: []
+    }
   };
   const curatedFeedPool = providerOrder.includes("curated-rss")
     ? await fetchCuratedRssPool({
@@ -311,8 +336,11 @@ async function main() {
     let fetched = [];
     const useLiveFetch = index < liveFetchTickerLimit;
     const priorityRank = index < priorityWindow ? index + 1 : null;
+    const topCandidateRank = index < topCandidateLimit ? index + 1 : null;
     const rankedProviderOrder = filterProviderOrderForRank(providerOrder, priorityRank);
     const effectiveMaxItems = resolveEffectiveMaxItems(maxItems, priorityRank);
+    const providerHits = [];
+    let coverageSource = "missing";
 
     if (useLiveFetch) {
       for (const provider of rankedProviderOrder) {
@@ -337,6 +365,9 @@ async function main() {
           if (providerItems.length) {
             fetched.push(...providerItems);
             successfulProviders.add(provider);
+            if (!providerHits.includes(provider)) {
+              providerHits.push(provider);
+            }
           }
         } catch (error) {
           report.providerFailures.push({
@@ -356,6 +387,7 @@ async function main() {
       fetched = dedupeArticles(fetched).slice(0, effectiveMaxItems);
       if (fetched.length) {
         anyLiveFetch = true;
+        coverageSource = "live";
         report.liveFetchTickers += 1;
         if (priorityRank) {
           report.liveFetchPriorityTickers += 1;
@@ -366,6 +398,7 @@ async function main() {
     if (!fetched.length) {
       fetched = loadCacheNews(cache, entry, effectiveMaxItems);
       if (fetched.length) {
+        coverageSource = "cache";
         report.cacheFallbackTickers += 1;
         if (priorityRank) {
           report.cacheFallbackPriorityTickers += 1;
@@ -376,15 +409,38 @@ async function main() {
     if (!fetched.length) {
       fetched = await loadFileNews(paths, entry, effectiveMaxItems);
       if (fetched.length) {
+        coverageSource = "file";
         report.fileFallbackTickers += 1;
       }
     }
 
-    items.push(...fetched.slice(0, effectiveMaxItems));
+    const finalItems = fetched.slice(0, effectiveMaxItems);
+    items.push(...finalItems);
+
+    if (topCandidateRank) {
+      report.topCandidateCoverage.tickers.push({
+        ...createTopCandidateCoverageEntry(entry, topCandidateRank),
+        source: coverageSource,
+        itemCount: finalItems.length,
+        providers: providerHits
+      });
+      report.topCandidateCoverage.totalItems += finalItems.length;
+
+      if (coverageSource === "live") {
+        report.topCandidateCoverage.liveFetchTickers += 1;
+      } else if (coverageSource === "cache") {
+        report.topCandidateCoverage.cacheFallbackTickers += 1;
+      } else if (coverageSource === "file") {
+        report.topCandidateCoverage.fileFallbackTickers += 1;
+      } else {
+        report.topCandidateCoverage.missingTickers += 1;
+      }
+    }
   });
 
   const normalizedItems = dedupeArticles(items);
   report.totalItems = normalizedItems.length;
+  report.topCandidateCoverage.tickers.sort((left, right) => left.rank - right.rank);
   report.completedAt = new Date().toISOString();
   const providerLabel = anyLiveFetch
     ? successfulProviders.size === 1

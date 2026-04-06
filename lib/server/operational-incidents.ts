@@ -128,6 +128,45 @@ export function buildOperationalIncidents({
     }
   }
 
+  if (newsFetchReport?.topCandidateCoverage && newsFetchReport.topCandidateCoverage.totalTickers > 0) {
+    const topCandidateTotal = newsFetchReport.topCandidateCoverage.totalTickers;
+    const topCandidateLiveFetchPercent = Math.round(
+      (newsFetchReport.topCandidateCoverage.liveFetchTickers / topCandidateTotal) * 100
+    );
+    const topCandidateMissingCount = newsFetchReport.topCandidateCoverage.missingTickers;
+    const topCandidateCriticalThreshold = Math.max(policy.escalation.newsLiveFetchCriticalPercent, 50);
+    const topCandidateWarningThreshold = Math.max(policy.escalation.newsLiveFetchWarningPercent, 80);
+    const topCandidateCriticalMissingCount = Math.max(2, Math.ceil(topCandidateTotal * 0.2));
+
+    if (
+      topCandidateMissingCount >= topCandidateCriticalMissingCount ||
+      topCandidateLiveFetchPercent <= topCandidateCriticalThreshold
+    ) {
+      incidents.push({
+        id: "top-candidate-news-critical",
+        severity: "critical",
+        source: "data-quality",
+        summary: "상위 후보군 뉴스 커버리지가 공개 기준보다 부족합니다",
+        detail: `live=${newsFetchReport.topCandidateCoverage.liveFetchTickers}/${topCandidateTotal}, cache=${newsFetchReport.topCandidateCoverage.cacheFallbackTickers}, file=${newsFetchReport.topCandidateCoverage.fileFallbackTickers}, missing=${topCandidateMissingCount}`,
+        detectedAt: newsFetchReport.completedAt ?? newsFetchReport.startedAt
+      });
+    } else if (
+      topCandidateMissingCount > 0 ||
+      topCandidateLiveFetchPercent <= topCandidateWarningThreshold ||
+      newsFetchReport.topCandidateCoverage.cacheFallbackTickers > 0 ||
+      newsFetchReport.topCandidateCoverage.fileFallbackTickers > 0
+    ) {
+      incidents.push({
+        id: "top-candidate-news-warning",
+        severity: "warning",
+        source: "data-quality",
+        summary: "상위 후보군 뉴스 커버리지를 한 번 더 점검해야 합니다",
+        detail: `live=${newsFetchReport.topCandidateCoverage.liveFetchTickers}/${topCandidateTotal}, cache=${newsFetchReport.topCandidateCoverage.cacheFallbackTickers}, file=${newsFetchReport.topCandidateCoverage.fileFallbackTickers}, missing=${topCandidateMissingCount}`,
+        detectedAt: newsFetchReport.completedAt ?? newsFetchReport.startedAt
+      });
+    }
+  }
+
   if (snapshotGenerationReport && snapshotGenerationReport.validationFallbackCount > 0) {
     const fallbackPercent = Math.round(
       (snapshotGenerationReport.validationFallbackCount / Math.max(snapshotGenerationReport.totalTickers, 1)) * 100

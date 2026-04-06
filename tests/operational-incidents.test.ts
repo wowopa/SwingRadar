@@ -56,7 +56,22 @@ describe("buildOperationalIncidents", () => {
         fileFallbackTickers: 3,
         retryCount: 6,
         providerFailures: [],
-        totalItems: 25
+        totalItems: 25,
+        topCandidateCoverage: {
+          totalTickers: 5,
+          liveFetchTickers: 1,
+          cacheFallbackTickers: 2,
+          fileFallbackTickers: 1,
+          missingTickers: 1,
+          totalItems: 11,
+          tickers: [
+            { rank: 1, ticker: "000660", company: "SK hynix", source: "live", itemCount: 4, providers: ["naver"] },
+            { rank: 2, ticker: "068270", company: "Celltrion", source: "cache", itemCount: 3, providers: [] },
+            { rank: 3, ticker: "207940", company: "Samsung Biologics", source: "cache", itemCount: 2, providers: [] },
+            { rank: 4, ticker: "005930", company: "Samsung Electronics", source: "file", itemCount: 2, providers: [] },
+            { rank: 5, ticker: "035420", company: "NAVER", source: "missing", itemCount: 0, providers: [] }
+          ]
+        }
       },
       snapshotGenerationReport: {
         startedAt: "2026-03-09T17:36:00.000Z",
@@ -120,6 +135,10 @@ describe("buildOperationalIncidents", () => {
         }),
         expect.objectContaining({
           id: "news-fetch-critical",
+          severity: "critical"
+        }),
+        expect.objectContaining({
+          id: "top-candidate-news-critical",
           severity: "critical"
         }),
         expect.objectContaining({

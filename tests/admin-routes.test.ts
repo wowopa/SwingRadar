@@ -478,12 +478,29 @@ describe("admin routes", () => {
         providerOrder: ["naver", "gnews"],
         requestedProvider: "naver",
         totalTickers: 20,
+        configuredLiveFetchTickerLimit: 20,
         liveFetchTickers: 18,
+        topCandidateLimit: 5,
         cacheFallbackTickers: 1,
         fileFallbackTickers: 1,
         retryCount: 3,
         providerFailures: [],
-        totalItems: 62
+        totalItems: 62,
+        topCandidateCoverage: {
+          totalTickers: 5,
+          liveFetchTickers: 5,
+          cacheFallbackTickers: 0,
+          fileFallbackTickers: 0,
+          missingTickers: 0,
+          totalItems: 24,
+          tickers: [
+            { rank: 1, ticker: "005930", company: "Samsung Electronics", source: "live", itemCount: 6, providers: ["naver"] },
+            { rank: 2, ticker: "000660", company: "SK hynix", source: "live", itemCount: 5, providers: ["naver"] },
+            { rank: 3, ticker: "035420", company: "NAVER", source: "live", itemCount: 4, providers: ["naver", "gnews"] },
+            { rank: 4, ticker: "051910", company: "LG Chem", source: "live", itemCount: 5, providers: ["naver"] },
+            { rank: 5, ticker: "005380", company: "Hyundai Motor", source: "live", itemCount: 4, providers: ["naver"] }
+          ]
+        }
       });
       mocks.loadSnapshotGenerationReport.mockResolvedValue({
         startedAt: "2026-04-05T04:42:10.000Z",
@@ -618,8 +635,13 @@ describe("admin routes", () => {
           validationFallbackPercent: 5,
           validationTrackingRecoveredCount: 2,
           failedBatchSteps: [{ name: "recommendations" }],
-          runtimeSyncTrust: { status: "healthy" },
-          newsLiveFetchPercent: 90
+          runtimeSyncTrust: { status: "watch" },
+          newsLiveFetchPercent: 90,
+          topCandidateNewsCoverage: {
+            totalTickers: 5,
+            liveFetchTickers: 5,
+            missingTickers: 0
+          }
         },
         postLaunchHistory: [
           {

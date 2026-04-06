@@ -87,7 +87,9 @@ export type NewsFetchReportPayload = {
   providerOrder: string[];
   requestedProvider: string;
   totalTickers: number;
+  configuredLiveFetchTickerLimit?: number;
   liveFetchTickers: number;
+  topCandidateLimit?: number;
   cacheFallbackTickers: number;
   fileFallbackTickers: number;
   retryCount: number;
@@ -102,6 +104,22 @@ export type NewsFetchReportPayload = {
     message?: string;
   }>;
   totalItems: number;
+  topCandidateCoverage?: {
+    totalTickers: number;
+    liveFetchTickers: number;
+    cacheFallbackTickers: number;
+    fileFallbackTickers: number;
+    missingTickers: number;
+    totalItems: number;
+    tickers: Array<{
+      rank: number;
+      ticker: string;
+      company: string;
+      source: "live" | "cache" | "file" | "missing";
+      itemCount: number;
+      providers: string[];
+    }>;
+  };
 };
 
 export type SnapshotGenerationReportPayload = {
@@ -307,6 +325,26 @@ export type AdminDataQualitySummaryPayload = {
   newsLiveFetchPercent: number | null;
   newsCacheFallbackPercent: number | null;
   newsFileFallbackPercent: number | null;
+  topCandidateNewsCoverage:
+    | {
+        totalTickers: number;
+        liveFetchPercent: number | null;
+        coveredPercent: number | null;
+        liveFetchTickers: number;
+        cacheFallbackTickers: number;
+        fileFallbackTickers: number;
+        missingTickers: number;
+        totalItems: number;
+        tickers: Array<{
+          rank: number;
+          ticker: string;
+          company: string;
+          source: "live" | "cache" | "file" | "missing";
+          itemCount: number;
+          providers: string[];
+        }>;
+      }
+    | null;
   runtimeSyncTrust: RuntimeSyncTrustPayload | null;
 };
 

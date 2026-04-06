@@ -50,6 +50,11 @@ When `SWING_RADAR_FOCUSED_WATCHLIST_ENABLED=true`, the default external refresh 
 
 This lets the daily external fetch keep 6-month price/news/disclosure history for the symbols that matter most without pulling the full universe every run.
 
+The news fetch step now treats the daily top candidate slice as a first-class lane:
+- the top candidate window defaults to `20`
+- those tickers are always included in the live-fetch budget
+- the ops report now records live/cache/file/missing coverage for that slice so `/admin` can tell whether the highest-priority names were actually covered
+
 Focused watchlist entries also carry source tags so later screens and ops logs can tell whether a ticker came from:
 - `관심종목`
 - `최근후보`
@@ -84,6 +89,7 @@ SWING_RADAR_NAVER_CLIENT_ID=replace-with-naver-client-id
 SWING_RADAR_NAVER_CLIENT_SECRET=replace-with-naver-client-secret
 SWING_RADAR_NEWS_API_KEY=replace-with-gnews-api-key
 SWING_RADAR_NEWS_MAX_ITEMS=5
+SWING_RADAR_NEWS_TOP_CANDIDATE_LIMIT=20
 SWING_RADAR_DISCLOSURE_PROVIDER=dart
 SWING_RADAR_DART_API_KEY=replace-with-open-dart-api-key
 SWING_RADAR_DISCLOSURE_LOOKBACK_DAYS=21
