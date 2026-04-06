@@ -59,6 +59,7 @@ describe("recommendation action plan", () => {
     ]);
 
     expect(summary.marketStance).toBe("selective");
+    expect(summary.marketStanceLabel).toBe("신규 매수 1개 검토");
     expect(summary.maxNewPositions).toBe(1);
     expect(summary.bucketCounts).toEqual({
       buy_now: 1,
@@ -70,7 +71,7 @@ describe("recommendation action plan", () => {
   it("builds a three-step workflow around the daily summary", () => {
     const workflow = buildTodayOperatingWorkflow({
       marketStance: "selective",
-      marketStanceLabel: "선별 매수",
+      marketStanceLabel: "신규 매수 1개 검토",
       summary: "장초 확인을 통과한 종목 한 개만 조심스럽게 본다.",
       maxNewPositions: 1,
       maxConcurrentPositions: 4,
@@ -86,6 +87,39 @@ describe("recommendation action plan", () => {
     expect(workflow.steps[0]?.key).toBe("preopen_candidates");
     expect(workflow.steps[1]?.key).toBe("opening_recheck");
     expect(workflow.openingChecklist[0]?.failLabel).toContain("추격 금지");
+  });
+
+  it("uses a clearer label when two or more names are buy now", () => {
+    const summary = buildTodayOperatingSummary([
+      {
+        ticker: "111111",
+        company: "Alpha",
+        signalTone: "긍정",
+        activationScore: 75,
+        score: 80,
+        signalLabel: "장초 통과 시 검토",
+        trackingDiagnostic: {
+          isEntryEligible: true,
+          stage: "진입 추적 가능"
+        }
+      },
+      {
+        ticker: "222222",
+        company: "Beta",
+        signalTone: "긍정",
+        activationScore: 74,
+        score: 78,
+        signalLabel: "장초 통과 시 검토",
+        trackingDiagnostic: {
+          isEntryEligible: true,
+          stage: "진입 추적 가능"
+        }
+      }
+    ]);
+
+    expect(summary.marketStance).toBe("attack");
+    expect(summary.marketStanceLabel).toBe("신규 매수 2개 검토");
+    expect(summary.maxNewPositions).toBe(2);
   });
 
   it("builds position sizing for buy-review candidates when a portfolio profile is present", () => {

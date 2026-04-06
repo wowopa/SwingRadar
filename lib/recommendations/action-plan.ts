@@ -499,8 +499,8 @@ export function buildTodayOperatingSummary(items: RecommendationActionItem[]): T
   if (bucketCounts.buy_now >= 2) {
     return {
       marketStance: "attack",
-      marketStanceLabel: "공격 가능",
-      summary: "오늘은 장초 확인만 통과하면 매수 검토까지 볼 수 있는 종목이 몇 개 있습니다. 그래도 상위 1~2개만 선별해서 보는 날입니다.",
+      marketStanceLabel: "신규 매수 2개 검토",
+      summary: "오늘은 장초 확인을 통과한 종목이 2개 이상 있어도, 실제 신규 매수는 최대 2개까지만 좁혀서 보는 날입니다.",
       maxNewPositions: 2,
       maxConcurrentPositions: 5,
       bucketCounts,
@@ -511,8 +511,8 @@ export function buildTodayOperatingSummary(items: RecommendationActionItem[]): T
   if (bucketCounts.buy_now >= 1 || bucketCounts.watch_only >= 3) {
     return {
       marketStance: "selective",
-      marketStanceLabel: "선별 매수",
-      summary: "오늘은 장초 확인을 통과한 종목 1개 정도만 신중하게 볼 만한 날입니다.",
+      marketStanceLabel: "신규 매수 1개 검토",
+      summary: "오늘은 장초 확인을 통과한 종목 1개 정도만 신중하게 보는 편이 좋은 날입니다.",
       maxNewPositions: 1,
       maxConcurrentPositions: 4,
       bucketCounts,
@@ -522,7 +522,7 @@ export function buildTodayOperatingSummary(items: RecommendationActionItem[]): T
 
   return {
     marketStance: "watch",
-    marketStanceLabel: "관찰 우위",
+    marketStanceLabel: "관찰 중심",
     summary: "오늘은 장초 확인을 통과해도 신규 매수를 공격적으로 늘리지 않고, 기존 보유 관리와 관찰에 무게를 두는 편이 좋습니다.",
     maxNewPositions: 0,
     maxConcurrentPositions: 4,
