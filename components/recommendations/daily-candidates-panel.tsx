@@ -673,18 +673,23 @@ export function DailyCandidatesPanel({
             <p className="mt-2 text-base font-semibold text-foreground">{personalRuleReminder.primaryRule}</p>
             <p className="mt-1 text-xs leading-5 text-muted-foreground">{personalRuleReminder.note}</p>
             {personalRuleReminder.secondaryRules.length ? (
-              <div className="mt-3 flex flex-wrap items-center gap-2">
-                <span className="text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
-                  함께 보기
-                </span>
-                {personalRuleReminder.secondaryRules.map((rule) => (
-                  <span
-                    key={rule}
-                    className="rounded-full border border-caution/24 bg-white/88 px-2.5 py-1 text-[11px] leading-5 text-foreground/78"
-                  >
-                    {rule}
+              <div className="mt-3 border-t border-caution/20 pt-3">
+                <div className="flex items-center gap-2">
+                  <span className="shrink-0 text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
+                    함께 보기
                   </span>
-                ))}
+                  <div className="h-px flex-1 bg-caution/18" />
+                </div>
+                <div className="mt-2 flex flex-wrap items-center gap-2">
+                  {personalRuleReminder.secondaryRules.map((rule) => (
+                    <span
+                      key={rule}
+                      className="rounded-full border border-caution/24 bg-white/88 px-2.5 py-1 text-[11px] leading-5 text-foreground/78"
+                    >
+                      {rule}
+                    </span>
+                  ))}
+                </div>
               </div>
             ) : null}
           </div>
